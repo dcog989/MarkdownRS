@@ -9,9 +9,9 @@ pub async fn save_session(
     mut active_tabs: Vec<TabState>,
     mut closed_tabs: Vec<TabState>,
 ) -> Result<(), String> {
-    log::info!("[Rust] save_session called");
-    log::info!("  Active tabs: {}", active_tabs.len());
-    log::info!("  Closed tabs: {}", closed_tabs.len());
+    log::debug!("[Rust] save_session called");
+    log::debug!("  Active tabs: {}", active_tabs.len());
+    log::debug!("  Closed tabs: {}", closed_tabs.len());
 
     let mut tabs_with_content = 0;
     for tab in &mut active_tabs {
@@ -20,15 +20,16 @@ pub async fn save_session(
             tabs_with_content += 1;
         }
     }
-    log::info!("  Tabs with content to save: {}", tabs_with_content);
+    log::debug!("  Tabs with content to save: {}", tabs_with_content);
 
     closed_tabs.iter_mut().for_each(|tab| tab.normalize_newlines());
 
     let active_len = active_tabs.len();
     let closed_len = closed_tabs.len();
+    let with_content = tabs_with_content;
     let db = state.db.clone();
 
-    crate::timed_info!(
+    crate::timed_debug!(
         "[Storage]",
         "save_session",
         {
@@ -41,12 +42,13 @@ pub async fn save_session(
         },
         active_tabs = active_len,
         closed_tabs = closed_len,
+        with_content = with_content,
     )
 }
 
 #[tauri::command]
 pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, String> {
-    log::info!("[Rust] restore_session called");
+    log::debug!("[Rust] restore_session called");
 
     // Seed file history from existing session data (Backfill)
     let seed_db = state.db.clone();
@@ -73,7 +75,7 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
 
     if let Ok(ref session) = result {
         let tabs_with_content = session.active_tabs.iter().filter(|t| t.content.is_some()).count();
-        log::info!(
+        log::debug!(
             "[Storage] restore_session | duration={:?} | active_tabs={} | closed_tabs={} | with_content={}",
             duration,
             session.active_tabs.len(),
@@ -99,7 +101,7 @@ pub async fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Res
     });
 
     if let Ok(ref tab_data) = result {
-        log::info!(
+        log::debug!(
             "[Storage] load_tab_content | duration={:?} | tab_id={} | size={} bytes",
             duration,
             tab_id,

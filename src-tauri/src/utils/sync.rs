@@ -71,3 +71,19 @@ macro_rules! timed_info {
         __result
     }};
 }
+
+/// Times a block and logs the duration at debug level in one step.
+/// Extra `key = value` pairs are appended to the log line.
+#[macro_export]
+macro_rules! timed_debug {
+    ($section:literal, $name:literal, $body:block $(, $key:ident = $val:expr)* $(,)?) => {{
+        let __start = ::std::time::Instant::now();
+        let __result = $body;
+        let __duration = __start.elapsed();
+        log::debug!(
+            concat!($section, " ", $name, " | duration={:?}", $(" | ", stringify!($key), "={}",)*),
+            __duration $(, $val)*
+        );
+        __result
+    }};
+}

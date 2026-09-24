@@ -131,7 +131,7 @@ export async function persistSession(): Promise<void> {
     await callBackend("save_session", { activeTabs: activeRustTabs, closedTabs: closedTabs }, "Session:Save");
 
     const tabsWithContent = activeRustTabs.filter((t) => t.content !== null).length;
-    logger.session.info("SessionSaved", {
+    logger.session.debug("SessionSaved", {
       duration: formatDuration(start),
       activeTabs: activeRustTabs.length,
       closedTabs: closedTabs.length,
@@ -342,7 +342,7 @@ export async function loadSession(): Promise<void> {
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
 
-    logger.session.info("SessionLoaded", {
+    logger.session.debug("SessionLoaded", {
       duration: formatDuration(start),
       activeTabs: editorStore.tabs.length,
       closedTabs: editorStore.closedTabsHistory.length,

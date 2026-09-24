@@ -235,7 +235,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
         isDirty: isTabDirty({ path: currentTab.path, content, lastSavedHash }),
       });
 
-      logger.session.info("TabContentLoaded", {
+      logger.session.debug("TabContentLoaded", {
         tabId,
         sizeBytes,
         wordCount,

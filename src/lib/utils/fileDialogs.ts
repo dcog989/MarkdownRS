@@ -124,7 +124,7 @@ export async function openFile(path?: string): Promise<void> {
     await fileWatcher.watch(sanitizedPath);
     appContext.app.activeTabId = id;
 
-    logger.file.info("FileOpened", {
+    logger.file.debug("FileOpened", {
       duration: formatDuration(start),
       path: sanitizedPath,
       size: metadata.size,

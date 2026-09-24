@@ -60,7 +60,7 @@ pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Resul
     });
     let result = result?;
 
-    log::info!(
+    log::debug!(
         "[Storage] read_text_file | duration={:?} | size={} bytes | path={}",
         duration,
         result.content.len(),
