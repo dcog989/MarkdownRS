@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install cocogitto
-        uses: taiki-e/install-action@26e9283f268b880168bdbd2c545dfcd60ec2c6ab
+        uses: taiki-e/install-action@7623a79cdfecb99d681017af368ca353d9f49bb5
         with:
           tool: cocogitto
 
