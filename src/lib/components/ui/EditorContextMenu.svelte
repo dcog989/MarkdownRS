@@ -241,21 +241,21 @@ async function handleSendToBrowser() {
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
   {#snippet children({
-  submenuSide: _submenuSide,
-})}
+    submenuSide: _submenuSide,
+  })}
     {#snippet opSubmenu(
-  IconCmp: typeof ArrowUpDown,
-  label: string,
-  key: "sort" | "case" | "format" | "transform",
-  ops: MenuOption[],
-)}
+      IconCmp: typeof ArrowUpDown,
+      label: string,
+      key: "sort" | "case" | "format" | "transform",
+      ops: MenuOption[],
+    )}
       <Submenu
         show={activeSubmenu === key}
         side={_submenuSide}
         onOpen={() => (activeSubmenu = key)}
         onClose={() => {
-  if (activeSubmenu === key) activeSubmenu = null;
-}}
+          if (activeSubmenu === key) activeSubmenu = null;
+        }}
       >
         {#snippet trigger()}
           <button type="button" class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
@@ -309,15 +309,15 @@ async function handleSendToBrowser() {
             type="button"
             class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={async () => {
-  const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
-  spellcheckState.customDictionary = newDict;
+              const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
+              spellcheckState.customDictionary = newDict;
 
-  spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
+              spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
 
-  onDictionaryUpdate?.();
-  closeMenuAndReset();
-  await addToDictionary(targetWord);
-}}
+              onDictionaryUpdate?.();
+              closeMenuAndReset();
+              await addToDictionary(targetWord);
+            }}
           >
             <BookPlus size={14} />
             <span class="truncate">{$_("editorContextMenu.addToDictionary", { values: { word: targetWord } })}</span
@@ -343,9 +343,9 @@ async function handleSendToBrowser() {
           type="button"
           class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
-  onCut?.();
-  closeMenuAndReset();
-}}
+            onCut?.();
+            closeMenuAndReset();
+          }}
         >
           <Scissors size={14} /><span>{$_("editorContextMenu.cut")}</span
           ><span class="text-ui-sm ml-auto opacity-50">{cutShortcut}</span>
@@ -354,9 +354,9 @@ async function handleSendToBrowser() {
           type="button"
           class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
-  onCopy?.();
-  closeMenuAndReset();
-}}
+            onCopy?.();
+            closeMenuAndReset();
+          }}
         >
           <ClipboardCopy size={14} /><span>{$_("editorContextMenu.copy")}</span
           ><span class="text-ui-sm ml-auto opacity-50">{copyShortcut}</span>
@@ -366,9 +366,9 @@ async function handleSendToBrowser() {
         type="button"
         class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={() => {
-  onPaste?.();
-  closeMenuAndReset();
-}}
+          onPaste?.();
+          closeMenuAndReset();
+        }}
       >
         <ClipboardPaste size={14} /><span>{$_("editorContextMenu.paste")}</span
         ><span class="text-ui-sm ml-auto opacity-50">{pasteShortcut}</span>

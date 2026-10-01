@@ -148,7 +148,7 @@ function handleKeydown(e: KeyboardEvent) {
   >
     <div class="flex flex-1 flex-wrap items-center gap-1.5">
       {#if selected.length === 0}
-        <span class="text-ui-sm opacity-50">{$_('dictionary.placeholder')}</span>
+        <span class="text-ui-sm opacity-50">{$_("dictionary.placeholder")}</span>
       {:else}
         {#each selected as code (code)}
           <span
@@ -159,7 +159,7 @@ function handleKeydown(e: KeyboardEvent) {
               type="button"
               onclick={(e) => removeDict(code, e)}
               class="hover:text-danger flex items-center transition-colors"
-              aria-label={$_('dictionary.removeLanguage', { values: { code } })}
+              aria-label={$_("dictionary.removeLanguage", { values: { code } })}
             >
               <X size={12} />
             </button>
@@ -169,18 +169,16 @@ function handleKeydown(e: KeyboardEvent) {
     </div>
     <ChevronDown
       size={14}
-      class="mt-0.5 shrink-0 self-start opacity-50 transition-transform {isOpen
-                ? 'rotate-180'
-                : ''}"
+      class="mt-0.5 shrink-0 self-start opacity-50 transition-transform {isOpen ? "rotate-180" : ""}"
     />
   </div>
 
   {#if isOpen}
     <div
       class="bg-bg-panel bg-border-main absolute z-50 w-full overflow-y-auto rounded border shadow-lg {dropdownPosition ===
-            'above'
-                ? 'bottom-full mb-1'
-                : 'top-full mt-1'}"
+      "above"
+        ? "bottom-full mb-1"
+        : "top-full mt-1"}"
       style:max-height={`${dropdownMaxHeight}px`}
     >
       {#each availableDictionaries as dict (dict.code)}

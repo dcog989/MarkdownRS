@@ -219,11 +219,11 @@ function handleKeydown(e: KeyboardEvent) {
 <Modal bind:isOpen {onClose} {position} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={$_('bookmarks.title')}
+      title={$_("bookmarks.title")}
       icon={Bookmark}
       bind:searchValue={searchQuery}
       focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-      searchPlaceholder={$_('bookmarks.placeholder')}
+      searchPlaceholder={$_("bookmarks.placeholder")}
       {onClose}
       onKeydown={handleKeydown}
     >
@@ -233,17 +233,17 @@ function handleKeydown(e: KeyboardEvent) {
             bind:value={sortBy}
             class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border pl-1 pr-5 py-1 outline-none w-auto"
           >
-            <option value="most-recent">{$_('bookmarks.sortMostRecent')}</option>
-            <option value="alphabetical">{$_('bookmarks.sortAlphabetical')}</option>
-            <option value="last-updated">{$_('bookmarks.sortLastUpdated')}</option>
+            <option value="most-recent">{$_("bookmarks.sortMostRecent")}</option>
+            <option value="alphabetical">{$_("bookmarks.sortAlphabetical")}</option>
+            <option value="last-updated">{$_("bookmarks.sortLastUpdated")}</option>
           </select>
           <button
             type="button"
             onclick={toggleSortDirection}
             class="text-fg-muted hover-surface rounded p-1 transition-colors"
-            title={sortDirection === 'asc' ? $_('common.sortAscending') : $_('common.sortDescending')}
+            title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
-            {#if sortDirection === 'asc'}
+            {#if sortDirection === "asc"}
               <ArrowUp size={16} />
             {:else}
               <ArrowDown size={16} />
@@ -255,7 +255,7 @@ function handleKeydown(e: KeyboardEvent) {
           type="button"
           class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
           onclick={startAdd}
-          title={$_('bookmarks.addBookmark')}
+          title={$_("bookmarks.addBookmark")}
         >
           <Plus size={16} />
         </button>
@@ -270,7 +270,7 @@ function handleKeydown(e: KeyboardEvent) {
           <Input
             bind:value={addPath}
             type="text"
-            placeholder={$_('bookmarks.filePathPlaceholder')}
+            placeholder={$_("bookmarks.filePathPlaceholder")}
             class="bg-bg-panel flex-1"
           />
           <button
@@ -278,22 +278,22 @@ function handleKeydown(e: KeyboardEvent) {
             onclick={handleBrowse}
             class="btn-base btn-sm bg-bg-panel text-fg-default border-border-main font-medium transition-colors"
           >
-            {$_('common.browse')}
+            {$_("common.browse")}
           </button>
         </div>
         <Input
           bind:value={addTitle}
           type="text"
-          placeholder={$_('bookmarks.bookmarkTitlePlaceholder')}
+          placeholder={$_("bookmarks.bookmarkTitlePlaceholder")}
           class="bg-bg-panel"
         />
-        <Input bind:value={addTags} type="text" placeholder={$_('bookmarks.tagsPlaceholder')} class="bg-bg-panel" />
+        <Input bind:value={addTags} type="text" placeholder={$_("bookmarks.tagsPlaceholder")} class="bg-bg-panel" />
         {#if browseError}
           <div class="text-ui-sm text-danger-text">{browseError}</div>
         {/if}
         <div class="flex justify-end gap-2">
           <button type="button" onclick={() => (showAddForm = false)} class="btn-base btn-sm btn-secondary">
-            {$_('common.cancel')}
+            {$_("common.cancel")}
           </button>
           <button
             type="button"
@@ -301,7 +301,7 @@ function handleKeydown(e: KeyboardEvent) {
             disabled={!addPath || !addTitle}
             class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium disabled:opacity-50"
           >
-            {$_('common.add')}
+            {$_("common.add")}
           </button>
         </div>
       </div>
@@ -323,17 +323,17 @@ function handleKeydown(e: KeyboardEvent) {
             {#if editingId === bookmark.id}
               <div class="space-y-2">
                 <Input bind:value={editTitle} type="text" />
-                <Input bind:value={editTags} type="text" placeholder={$_('bookmarks.tagsPlaceholder')} />
+                <Input bind:value={editTags} type="text" placeholder={$_("bookmarks.tagsPlaceholder")} />
                 <div class="flex justify-end gap-2">
                   <button type="button" onclick={cancelEdit} class="btn-base btn-sm btn-secondary">
-                    {$_('common.cancel')}
+                    {$_("common.cancel")}
                   </button>
                   <button
                     type="button"
                     onclick={() => saveEdit(bookmark.id)}
                     class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent"
                   >
-                    {$_('common.save')}
+                    {$_("common.save")}
                   </button>
                 </div>
               </div>
@@ -343,7 +343,9 @@ function handleKeydown(e: KeyboardEvent) {
                 tabindex="0"
                 class="flex cursor-pointer items-start gap-3"
                 onclick={() => handleOpenBookmark(bookmark)}
-                onkeydown={(e) => { if (e.key === 'Enter') handleOpenBookmark(bookmark); }}
+                onkeydown={(e) => {
+                  if (e.key === "Enter") handleOpenBookmark(bookmark);
+                }}
                 onmouseenter={() => nav.select(index)}
               >
                 <div class="min-w-0 flex-1">
@@ -366,9 +368,9 @@ function handleKeydown(e: KeyboardEvent) {
                     </div>
                   {/if}
                   <div class="date text-ui-sm mt-1">
-                    {$_('bookmarks.added')} {formatDate(bookmark.created)}
+                    {$_("bookmarks.added")} {formatDate(bookmark.created)}
                     {#if bookmark.last_accessed}
-                      • {$_('bookmarks.accessed')} {formatDate(bookmark.last_accessed)}
+                      • {$_("bookmarks.accessed")} {formatDate(bookmark.last_accessed)}
                     {/if}
                   </div>
                 </div>
@@ -376,9 +378,9 @@ function handleKeydown(e: KeyboardEvent) {
                   <button
                     type="button"
                     onclick={(e) => {
-                                            e.stopPropagation();
-                                            startEdit(bookmark);
-                                        }}
+                      e.stopPropagation();
+                      startEdit(bookmark);
+                    }}
                     class="icon-btn rounded p-1.5 transition-colors"
                   >
                     <Pen size={14} />
@@ -397,13 +399,13 @@ function handleKeydown(e: KeyboardEvent) {
         {/each}
       </div>
     {:else if searchQuery.length >= 2}
-      <div class="text-fg-muted px-4 py-8 text-center">{$_('bookmarks.noMatch')}</div>
+      <div class="text-fg-muted px-4 py-8 text-center">{$_("bookmarks.noMatch")}</div>
     {:else if appContext.bookmarks.bookmarks.length === 0}
       <div class="text-fg-muted px-4 py-8 text-center">
         <Bookmark size={48} class="mx-auto mb-2 opacity-30" />
-        <div class="mb-1">{$_('bookmarks.none')}</div>
+        <div class="mb-1">{$_("bookmarks.none")}</div>
         <div class="text-ui-sm opacity-70">
-          {$_('bookmarks.helper')}
+          {$_("bookmarks.helper")}
         </div>
       </div>
     {/if}

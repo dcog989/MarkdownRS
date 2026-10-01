@@ -60,10 +60,10 @@ let tooltipContent = $derived.by(() => {
   style:flex="1 1 auto"
   onclick={() => onclick?.(tab.id)}
   oncontextmenu={(e) => {
-        e.preventDefault();
-        oncontextmenu?.(e, tab.id);
-    }}
-  onkeydown={(e) => e.key === 'Enter' && onclick?.(tab.id)}
+    e.preventDefault();
+    oncontextmenu?.(e, tab.id);
+  }}
+  onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
   use:tooltip={isCollapsed ? tooltipContent : null}
 >
   {#if isFileMissing}
@@ -73,25 +73,25 @@ let tooltipContent = $derived.by(() => {
       <PencilLine
         size={14}
         class="shrink-0 {isActive && tab.isDirty
-                    ? 'text-dirty-active'
-                    : isActive
-                      ? 'text-fg-inverse'
-                      : 'text-fg-muted'}"
+          ? "text-dirty-active"
+          : isActive
+            ? "text-fg-inverse"
+            : "text-fg-muted"}"
       />
     {:else}
-      <Pencil size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
+      <Pencil size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
     {/if}
   {:else if tab.isDirty}
     <SquarePen
       size={14}
       class="shrink-0 {isActive && tab.isDirty
-                ? 'text-dirty-active'
-                : isActive
-                  ? 'text-fg-inverse'
-                  : 'text-accent-secondary'}"
+        ? "text-dirty-active"
+        : isActive
+          ? "text-fg-inverse"
+          : "text-accent-secondary"}"
     />
   {:else}
-    <FileText size={14} class="shrink-0 {isActive ? 'text-fg-inverse' : 'text-fg-muted'}" />
+    <FileText size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
   {/if}
 
   {#if !isCollapsed}
@@ -100,23 +100,23 @@ let tooltipContent = $derived.by(() => {
     </div>
 
     {#if tab.isPinned}
-      <Pin size={14} class="shrink-0 {isActive ? 'text-accent-secondary' : 'text-fg-muted'}" />
+      <Pin size={14} class="shrink-0 {isActive ? "text-accent-secondary" : "text-fg-muted"}" />
     {:else}
       <div
         class="close-btn-wrapper absolute top-0 right-0 bottom-0 z-10 flex w-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
-        style:top={isActive ? '2px' : '0'}
-        style:background={`linear-gradient(to right, transparent 0%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 40%, ${isActive ? 'var(--editor-bg)' : 'var(--surface-hover)'} 100%)`}
+        style:top={isActive ? "2px" : "0"}
+        style:background={`linear-gradient(to right, transparent 0%, ${isActive ? "var(--editor-bg)" : "var(--surface-hover)"} 40%, ${isActive ? "var(--editor-bg)" : "var(--surface-hover)"} 100%)`}
       >
         <button
           type="button"
-          aria-label={$_('tabButton.closeTab', { values: { title: tab.title } })}
+          aria-label={$_("tabButton.closeTab", { values: { title: tab.title } })}
           class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
           onclick={(e) => {
-                        e.stopPropagation();
-                        onclose?.(e, tab.id);
-                    }}
-          onkeydown={(e) => e.key === 'Enter' && onclose?.(e, tab.id)}
-          use:tooltip={$_('tabButton.closeTab', { values: { title: tab.title } })}
+            e.stopPropagation();
+            onclose?.(e, tab.id);
+          }}
+          onkeydown={(e) => e.key === "Enter" && onclose?.(e, tab.id)}
+          use:tooltip={$_("tabButton.closeTab", { values: { title: tab.title } })}
         >
           <X size={14} class="transition-colors" />
         </button>

@@ -278,7 +278,7 @@ let contextMenuY = $state(0);
   <div class="min-h-0 flex-1">
     {#if !fileTreeStore.root}
       <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-xs">
-        {$_('fileTree.emptyState')}
+        {$_("fileTree.emptyState")}
       </div>
     {:else}
       <div
@@ -286,16 +286,16 @@ let contextMenuY = $state(0);
         role="list"
         class="ft-scroll h-full overflow-y-auto"
         onscroll={(e) => {
-                    scrollTop = e.currentTarget.scrollTop;
-                }}
+          scrollTop = e.currentTarget.scrollTop;
+        }}
         oncontextmenu={(e) => {
-                    if ((e.target as HTMLElement).closest('.ft-row')) return;
-                    e.preventDefault();
-                    contextMenuEntry = null;
-                    contextMenuDir = fileTreeStore.root;
-                    contextMenuX = e.clientX;
-                    contextMenuY = e.clientY;
-                }}
+          if ((e.target as HTMLElement).closest(".ft-row")) return;
+          e.preventDefault();
+          contextMenuEntry = null;
+          contextMenuDir = fileTreeStore.root;
+          contextMenuX = e.clientX;
+          contextMenuY = e.clientY;
+        }}
       >
         <div class="ft-spacer relative" style:height={`${spacerHeight}px`}>
           {#each visibleRows as row, i (row.entry.path)}
@@ -306,28 +306,26 @@ let contextMenuY = $state(0);
               style:top={`${rowIndex * ROW_HEIGHT}px`}
               style:padding-left={`${8 + row.depth * INDENT_STEP}px`}
               class:ft-active={!row.isRoot && !row.isParent && row.entry.path === activeFilePath}
-              class:opacity-70={!row.isRoot && !row.isParent && row.entry.name.startsWith('.')}
+              class:opacity-70={!row.isRoot && !row.isParent && row.entry.name.startsWith(".")}
               title={row.entry.path}
               onclick={(e) => handleRowClick(e, row)}
               ondblclick={() => handleRowDoubleClick(row)}
               oncontextmenu={(e) => {
-                                if (row.isRoot || row.isParent) return;
-                                e.preventDefault();
-                                e.stopPropagation();
-                                contextMenuEntry = row.entry;
-                                contextMenuDir = row.entry.is_dir
-                                    ? row.entry.path
-                                    : dirname(row.entry.path);
-                                contextMenuX = e.clientX;
-                                contextMenuY = e.clientY;
-                            }}
+                if (row.isRoot || row.isParent) return;
+                e.preventDefault();
+                e.stopPropagation();
+                contextMenuEntry = row.entry;
+                contextMenuDir = row.entry.is_dir ? row.entry.path : dirname(row.entry.path);
+                contextMenuX = e.clientX;
+                contextMenuY = e.clientY;
+              }}
             >
               <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
                 {#if row.entry.is_dir && !row.isParent}
                   {#if row.loading}
                     <LoaderCircle size={12} class="text-fg-muted animate-spin" />
                   {:else}
-                    <ChevronRight size={12} class="text-fg-muted shrink-0 {row.expanded ? 'rotate-90' : ''}" />
+                    <ChevronRight size={12} class="text-fg-muted shrink-0 {row.expanded ? "rotate-90" : ""}" />
                   {/if}
                 {/if}
               </span>
@@ -361,7 +359,7 @@ let contextMenuY = $state(0);
       </div>
       {#if filterActive && !treeViewStore.filterLoading && allRows.length <= 1}
         <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
-          {$_('fileTree.noFilterMatch')}
+          {$_("fileTree.noFilterMatch")}
         </div>
       {/if}
     {/if}
@@ -376,9 +374,9 @@ let contextMenuY = $state(0);
       x={contextMenuX}
       y={contextMenuY}
       onClose={() => {
-                contextMenuEntry = null;
-                contextMenuDir = '';
-            }}
+        contextMenuEntry = null;
+        contextMenuDir = "";
+      }}
     />
   {/if}
 </div>

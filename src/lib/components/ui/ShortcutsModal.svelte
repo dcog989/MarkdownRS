@@ -132,11 +132,11 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={$_('shortcuts.title')}
+      title={$_("shortcuts.title")}
       icon={Keyboard}
       bind:searchValue={searchQuery}
       bind:inputRef={searchInputEl}
-      searchPlaceholder={$_('shortcuts.placeholder')}
+      searchPlaceholder={$_("shortcuts.placeholder")}
       {onClose}
       onKeydown={nav.handleKeydown}
     />
@@ -153,30 +153,30 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
           role="button"
           tabindex="-1"
           onclick={handleCancelConflict}
-          onkeydown={(e) => e.key === 'Enter' && handleCancelConflict()}
+          onkeydown={(e) => e.key === "Enter" && handleCancelConflict()}
         ></div>
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
-            <h3 class="text-fg-default mb-4 text-base font-semibold">{$_('shortcuts.conflictTitle')}</h3>
+            <h3 class="text-fg-default mb-4 text-base font-semibold">{$_("shortcuts.conflictTitle")}</h3>
             <p class="text-fg-muted mb-3 text-sm leading-relaxed">
               <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
-              {$_('shortcuts.alreadyAssigned')} <strong>{translate(commandLabel(conflict.command))}</strong>.
+              {$_("shortcuts.alreadyAssigned")} <strong>{translate(commandLabel(conflict.command))}</strong>.
             </p>
             <p class="text-fg-muted mb-5 text-sm leading-relaxed">
-              {$_('shortcuts.reassignTo')}
+              {$_("shortcuts.reassignTo")}
               <strong
                 >{(() => {
                   const c = shortcutManager.getDefinitions().find((d) => d.id === conflict.targetId);
-                  return c ? translate(commandLabel(c)) : '';
+                  return c ? translate(commandLabel(c)) : "";
                 })()}</strong
               >?
             </p>
             <div class="flex justify-end gap-3">
               <button type="button" class="btn-base btn-secondary px-4 py-2" onclick={handleCancelConflict}>
-                {$_('shortcuts.cancel')}
+                {$_("shortcuts.cancel")}
               </button>
               <button type="button" class="btn-base px-4 py-2" onclick={handleReassign}>
-                {$_('shortcuts.reassign')}
+                {$_("shortcuts.reassign")}
               </button>
             </div>
           </div>
@@ -202,19 +202,17 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 <div
                   class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
                   style:background-color={isSelected
-                                        ? 'var(--accent-primary)'
-                                        : currentIndex % 2 === 1
-                                          ? 'var(--surface-row)'
-                                          : 'transparent'}
+                    ? "var(--accent-primary)"
+                    : currentIndex % 2 === 1
+                      ? "var(--surface-row)"
+                      : "transparent"}
                   use:scrollIntoView={isSelected}
                   onmouseenter={() => nav.select(currentIndex)}
                 >
                   <button
                     type="button"
                     class="flex-1 cursor-pointer text-left transition-colors outline-none"
-                    style:color={isSelected
-                                            ? 'var(--text-inverse)'
-                                            : 'var(--text-primary)'}
+                    style:color={isSelected ? "var(--text-inverse)" : "var(--text-primary)"}
                     onclick={() => startRecording(def.id)}
                   >
                     {translate(commandLabel(def))}
@@ -224,25 +222,23 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                       type="button"
                       class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
 												{recordingCommandId === def.id
-                                                ? 'bg-accent-primary border-accent-primary text-fg-inverse animate-pulse'
-                                                : isSelected
-                                                  ? 'bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse'
-                                                  : 'bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary'}"
+                        ? "bg-accent-primary border-accent-primary text-fg-inverse animate-pulse"
+                        : isSelected
+                          ? "bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse"
+                          : "bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary"}"
                       onclick={() => startRecording(def.id)}
                     >
                       {recordingCommandId === def.id
-                                                ? $_('shortcuts.pressKeys')
-                                                : shortcutManager.getShortcutDisplay(def.id)}
+                        ? $_("shortcuts.pressKeys")
+                        : shortcutManager.getShortcutDisplay(def.id)}
                     </button>
                     {#if appContext.settings.customShortcuts[def.id]}
                       <button
                         type="button"
                         class="p-1 transition-all opacity-0 group-hover:opacity-100"
-                        style:color={isSelected
-                                                    ? 'var(--text-inverse)'
-                                                    : 'var(--accent-primary)'}
+                        style:color={isSelected ? "var(--text-inverse)" : "var(--accent-primary)"}
                         onclick={() => resetShortcut(def.id)}
-                        title={$_('shortcuts.resetToDefault')}
+                        title={$_("shortcuts.resetToDefault")}
                       >
                         <RotateCcw size={14} />
                       </button>
@@ -255,12 +251,12 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
         {/each}
       {:else if searchQuery.length >= 1}
         <div class="text-fg-muted px-4 py-8 text-center">
-          {$_('shortcuts.noMatch')}
+          {$_("shortcuts.noMatch")}
         </div>
       {:else}
         <div class="text-fg-muted px-4 py-8 text-center">
           <Keyboard size={48} class="mx-auto mb-2 opacity-30" />
-          <div>{$_('shortcuts.none')}</div>
+          <div>{$_("shortcuts.none")}</div>
         </div>
       {/if}
     </div>

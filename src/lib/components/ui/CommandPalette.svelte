@@ -105,11 +105,11 @@ function close() {
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={$_('commandPalette.title')}
+      title={$_("commandPalette.title")}
       icon={Zap}
       bind:searchValue={query}
       bind:inputRef
-      searchPlaceholder={$_('commandPalette.placeholder')}
+      searchPlaceholder={$_("commandPalette.placeholder")}
       onClose={close}
     >
       {#snippet extraActions()}
@@ -146,12 +146,8 @@ function close() {
               <button
                 type="button"
                 class="bg-border-main hover-surface flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none"
-                style="background-color: {isSelected
-                                  ? 'var(--accent-primary)'
-                                  : 'var(--surface-2)'};
-                                  color: {isSelected
-                                  ? 'var(--text-inverse)'
-                                  : 'var(--text-primary)'};"
+                style="background-color: {isSelected ? "var(--accent-primary)" : "var(--surface-2)"};
+                                  color: {isSelected ? "var(--text-inverse)" : "var(--text-primary)"};"
                 use:scrollIntoView={isSelected}
                 onmouseenter={() => globalIndex !== undefined && nav.select(globalIndex)}
                 onclick={() => execute(command)}
@@ -161,7 +157,7 @@ function close() {
                   {#if shortcut}
                     <div
                       class="mt-0.5 truncate text-xs"
-                      style:color={isSelected ? 'var(--text-inverse)' : 'var(--text-secondary)'}
+                      style:color={isSelected ? "var(--text-inverse)" : "var(--text-secondary)"}
                     >
                       <span class="opacity-60">{shortcut}</span>
                     </div>
@@ -175,7 +171,7 @@ function close() {
     {:else}
       <div class="text-fg-muted px-4 py-8 text-center">
         <Zap size={48} class="mx-auto mb-2 opacity-30" />
-        <div>{$_('commandPalette.noMatch')}</div>
+        <div>{$_("commandPalette.noMatch")}</div>
       </div>
     {/if}
   </div>

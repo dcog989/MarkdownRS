@@ -20,16 +20,16 @@ let { value = $bindable(""), loading = false } = $props<{
     type="text"
     class="ft-filter-input"
     bind:value
-    placeholder={$_('fileTree.filterPlaceholder')}
-    aria-label={$_('fileTree.filterPlaceholder')}
+    placeholder={$_("fileTree.filterPlaceholder")}
+    aria-label={$_("fileTree.filterPlaceholder")}
   >
   {#if value}
     <button
       type="button"
       class="hover-surface ft-filter-clear"
-      aria-label={$_('fileTree.clearFilter')}
-      title={$_('fileTree.clearFilter')}
-      onclick={() => (value = '')}
+      aria-label={$_("fileTree.clearFilter")}
+      title={$_("fileTree.clearFilter")}
+      onclick={() => (value = "")}
     >
       <X size={12} />
     </button>

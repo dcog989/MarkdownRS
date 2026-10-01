@@ -158,10 +158,10 @@ $effect(() => {
   <div
     role="button"
     tabindex="0"
-    aria-label={$_('modal.closeModal')}
-    class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === 'center'
-            ? 'items-center'
-            : 'items-start pt-12'}"
+    aria-label={$_("modal.closeModal")}
+    class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === "center"
+      ? "items-center"
+      : "items-start pt-12"}"
     style:z-index={zIndex}
     onclick={handleBackdropClick}
     onkeydown={handleKeydown}
@@ -191,7 +191,7 @@ $effect(() => {
             type="button"
             class="text-fg-muted hover-surface rounded p-1"
             onclick={onClose}
-            aria-label={$_('common.close')}
+            aria-label={$_("common.close")}
           >
             <X size={18} />
           </button>

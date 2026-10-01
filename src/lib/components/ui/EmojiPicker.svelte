@@ -51,11 +51,11 @@ function insertEmoji(char: string) {
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={translate('emojiPicker.title')}
+      title={translate("emojiPicker.title")}
       icon={SmilePlus}
       bind:searchValue={query}
       bind:inputRef
-      searchPlaceholder={translate('emojiPicker.placeholder')}
+      searchPlaceholder={translate("emojiPicker.placeholder")}
       onClose={() => (isOpen = false)}
     />
   {/snippet}
@@ -76,7 +76,7 @@ function insertEmoji(char: string) {
   {:else}
     <div class="text-fg-muted px-4 py-8 text-center">
       <SmilePlus size={48} class="mx-auto mb-2 opacity-30" />
-      <div>{$_('emojiPicker.noMatch')}</div>
+      <div>{$_("emojiPicker.noMatch")}</div>
     </div>
   {/if}
 </Modal>

@@ -99,13 +99,13 @@ async function saveConfig() {
   {#snippet header()}
     <div class="flex items-center gap-2">
       <Settings2 size={16} class="text-accent-secondary" />
-      <h2 class="text-fg-default text-sm font-semibold">{$_('rumdlConfig.title')}</h2>
+      <h2 class="text-fg-default text-sm font-semibold">{$_("rumdlConfig.title")}</h2>
     </div>
     <button
       type="button"
       class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
       onclick={onClose}
-      aria-label={$_('common.close')}
+      aria-label={$_("common.close")}
     >
       <X size={16} />
     </button>
@@ -115,28 +115,28 @@ async function saveConfig() {
     <div class="bg-bg-input border-border-light flex w-max items-center gap-1 rounded border p-1">
       <button
         type="button"
-        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === 'project'
-                    ? 'bg-accent-primary text-fg-inverse'
-                    : 'text-fg-muted hover:text-fg-default'}"
-        onclick={() => setScope('project')}
+        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === "project"
+          ? "bg-accent-primary text-fg-inverse"
+          : "text-fg-muted hover:text-fg-default"}"
+        onclick={() => setScope("project")}
         disabled={busy || !loaded}
       >
-        {translate('rumdlConfig.scopeProject')}
+        {translate("rumdlConfig.scopeProject")}
       </button>
       <button
         type="button"
-        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === 'user'
-                    ? 'bg-accent-primary text-fg-inverse'
-                    : 'text-fg-muted hover:text-fg-default'}"
-        onclick={() => setScope('user')}
+        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === "user"
+          ? "bg-accent-primary text-fg-inverse"
+          : "text-fg-muted hover:text-fg-default"}"
+        onclick={() => setScope("user")}
         disabled={busy || !loaded}
       >
-        {translate('rumdlConfig.scopeUser')}
+        {translate("rumdlConfig.scopeUser")}
       </button>
     </div>
 
     <div class="flex items-center gap-2">
-      <span class="text-ui-sm text-fg-muted shrink-0">{translate('rumdlConfig.targetLabel')}</span>
+      <span class="text-ui-sm text-fg-muted shrink-0">{translate("rumdlConfig.targetLabel")}</span>
       <span
         class="bg-bg-panel border-border-light text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono"
       >
@@ -146,11 +146,11 @@ async function saveConfig() {
 
     {#if loadedPath && loadedPath !== targetPath}
       <p class="text-ui-sm text-fg-muted">
-        {translate('rumdlConfig.currentlyLoaded', { values: { path: loadedPath } })}
+        {translate("rumdlConfig.currentlyLoaded", { values: { path: loadedPath } })}
       </p>
     {:else if !exists}
       <p class="text-ui-sm text-accent-primary">
-        {translate('rumdlConfig.willCreate')}
+        {translate("rumdlConfig.willCreate")}
       </p>
     {/if}
 
@@ -158,21 +158,21 @@ async function saveConfig() {
       bind:value={content}
       oninput={() => (hasChanges = true)}
       onkeydown={(e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                    e.preventDefault();
-                    void saveConfig();
-                }
-            }}
+        if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+          e.preventDefault();
+          void saveConfig();
+        }
+      }}
       spellcheck="false"
       disabled={busy || !loaded}
-      placeholder={translate('rumdlConfig.placeholder')}
+      placeholder={translate("rumdlConfig.placeholder")}
       class="bg-bg-input text-fg-default text-ui font-mono w-full rounded border p-4 leading-relaxed outline-none disabled:opacity-50 rumdl-config-textarea"
     ></textarea>
   </div>
 
   {#snippet footer()}
     <button type="button" class="btn-base btn-sm hover-surface whitespace-nowrap" onclick={onClose} disabled={busy}>
-      {$_('common.cancel')}
+      {$_("common.cancel")}
     </button>
     <button
       type="button"
@@ -180,7 +180,7 @@ async function saveConfig() {
       onclick={saveConfig}
       disabled={busy || !loaded || !hasChanges}
     >
-      {$_('common.save')}
+      {$_("common.save")}
     </button>
   {/snippet}
 </Modal>

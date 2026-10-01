@@ -130,11 +130,11 @@ function updateSetting(setting: SettingDef, value: unknown) {
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={$_('settings.modalTitle')}
+      title={$_("settings.modalTitle")}
       icon={Settings}
       bind:searchValue={searchQuery}
       focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-      searchPlaceholder={$_('settings.searchPlaceholder')}
+      searchPlaceholder={$_("settings.searchPlaceholder")}
       {onClose}
     >
       {#snippet extraActions()}
@@ -142,11 +142,11 @@ function updateSetting(setting: SettingDef, value: unknown) {
           type="button"
           class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
           onclick={() => {
-                        onClose();
-                        toggleShortcuts();
-                    }}
-          title={`${$_('settings.keyboardShortcuts')} (${shortcutsShortcut})`}
-          aria-label={$_('settings.keyboardShortcuts')}
+            onClose();
+            toggleShortcuts();
+          }}
+          title={`${$_("settings.keyboardShortcuts")} (${shortcutsShortcut})`}
+          aria-label={$_("settings.keyboardShortcuts")}
         >
           <Keyboard size={16} />
         </button>
@@ -154,11 +154,11 @@ function updateSetting(setting: SettingDef, value: unknown) {
           type="button"
           class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
           onclick={() => {
-                        onClose();
-                        toggleRumdlConfig();
-                    }}
-          title={$_('rumdlConfig.title')}
-          aria-label={$_('rumdlConfig.title')}
+            onClose();
+            toggleRumdlConfig();
+          }}
+          title={$_("rumdlConfig.title")}
+          aria-label={$_("rumdlConfig.title")}
         >
           <Settings2 size={16} />
         </button>
@@ -166,11 +166,11 @@ function updateSetting(setting: SettingDef, value: unknown) {
           type="button"
           class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
           onclick={() => {
-                        onClose();
-                        toggleData();
-                    }}
-          title={$_('settings.data')}
-          aria-label={$_('settings.data')}
+            onClose();
+            toggleData();
+          }}
+          title={$_("settings.data")}
+          aria-label={$_("settings.data")}
         >
           <Database size={16} />
         </button>
@@ -182,7 +182,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
     {#if sortedSettings.length > 0}
       <div class="settings-grid">
         {#each sortedSettings as setting, index (setting.key)}
-          {@const rowClass = index % 2 === 1 ? 'bg-row-even' : ''}
+          {@const rowClass = index % 2 === 1 ? "bg-row-even" : ""}
 
           <div class="settings-row {rowClass}">
             <div class="settings-category text-ui-sm py-2.5 pl-3">
@@ -213,7 +213,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
         {/each}
       </div>
     {:else}
-      <div class="text-fg-muted px-4 py-8 text-center">{$_('settings.noMatch')}</div>
+      <div class="text-fg-muted px-4 py-8 text-center">{$_("settings.noMatch")}</div>
     {/if}
   </div>
 </Modal>

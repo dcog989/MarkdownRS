@@ -18,14 +18,16 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  {#snippet children({ submenuSide: _submenuSide })}
+  {#snippet children({
+    submenuSide: _submenuSide,
+  })}
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={ctx.handleNewFile}
     >
       <FilePlus size={14} class="opacity-70" />
-      <span class="flex-1">{$_('fileTree.newFile')}</span>
+      <span class="flex-1">{$_("fileTree.newFile")}</span>
     </button>
     <button
       type="button"
@@ -33,7 +35,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
       onclick={ctx.handleNewFolder}
     >
       <FolderPlus size={14} class="opacity-70" />
-      <span class="flex-1">{$_('fileTree.newFolder')}</span>
+      <span class="flex-1">{$_("fileTree.newFolder")}</span>
     </button>
 
     {#if entry}
@@ -45,7 +47,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
           onclick={ctx.handleOpen}
         >
           <FolderOpen size={14} class="opacity-70" />
-          <span class="flex-1">{$_('fileTree.open')}</span>
+          <span class="flex-1">{$_("fileTree.open")}</span>
         </button>
       {/if}
       <button
@@ -54,7 +56,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
         onclick={ctx.handleRename}
       >
         <FilePen size={14} class="opacity-70" />
-        <span class="flex-1">{$_('fileTree.rename')}</span>
+        <span class="flex-1">{$_("fileTree.rename")}</span>
       </button>
       <button
         type="button"
@@ -62,7 +64,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
         onclick={ctx.handleCopyPath}
       >
         <Copy size={14} class="opacity-70" />
-        <span class="flex-1">{$_('fileTree.copyPath')}</span>
+        <span class="flex-1">{$_("fileTree.copyPath")}</span>
       </button>
       <button
         type="button"
@@ -70,7 +72,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
         onclick={ctx.handleRevealInFileManager}
       >
         <FolderSearch size={14} class="opacity-70" />
-        <span class="flex-1">{$_('fileTree.revealInFileManager')}</span>
+        <span class="flex-1">{$_("fileTree.revealInFileManager")}</span>
       </button>
 
       <div class="bg-border-main my-1 h-px"></div>
@@ -81,7 +83,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
         onclick={ctx.handleDelete}
       >
         <Trash2 size={14} class="opacity-70" />
-        <span class="flex-1">{$_('fileTree.deleteToWastebin')}</span>
+        <span class="flex-1">{$_("fileTree.deleteToWastebin")}</span>
       </button>
     {/if}
   {/snippet}

@@ -116,7 +116,7 @@ onDestroy(() => {
       role="menu"
       tabindex="-1"
       data-submenu="true"
-      data-open={show ? 'true' : 'false'}
+      data-open={show ? "true" : "false"}
     >
       {@render children()}
     </div>

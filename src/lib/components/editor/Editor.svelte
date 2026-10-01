@@ -256,8 +256,8 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 
 <div
   class="bg-bg-main relative h-full w-full overflow-hidden"
-  style:padding-right={appContext.settings.showMinimap ? '64px' : '0'}
-  style:--find-panel-right={appContext.settings.showMinimap ? '64px' : '16px'}
+  style:padding-right={appContext.settings.showMinimap ? "64px" : "0"}
+  style:--find-panel-right={appContext.settings.showMinimap ? "64px" : "16px"}
 >
   <EditorViewComponent
     bind:cmView
@@ -303,7 +303,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
           class="bg-bg-panel border-border-light pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
         >
           <div class="text-fg-muted border-border-light border-b px-4 py-3 text-xs font-medium uppercase tracking-wide">
-            {$_('editor.recentlyClosed')}
+            {$_("editor.recentlyClosed")}
           </div>
           <div class="flex flex-col closed-tabs-list">
             {#each appContext.editor.closedTabsHistory.slice(0, 8) as entry, i (entry.tab.id)}
@@ -350,30 +350,30 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     onClose={() => (showContextMenu = false)}
     onDictionaryUpdate={handleDictionaryUpdate}
     onCut={() => {
-            if (!cmView) return;
-            const { from, to } = getCopyRange(cmView, snapRenderedCopy);
-            navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
-            cmView.dispatch({ changes: { from, to, insert: '' } });
-        }}
+      if (!cmView) return;
+      const { from, to } = getCopyRange(cmView, snapRenderedCopy);
+      navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
+      cmView.dispatch({ changes: { from, to, insert: "" } });
+    }}
     onCopy={() => {
-            if (!cmView) return;
-            const { from, to } = getCopyRange(cmView, snapRenderedCopy);
-            navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
-        }}
+      if (!cmView) return;
+      const { from, to } = getCopyRange(cmView, snapRenderedCopy);
+      navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
+    }}
     onPaste={async () => {
-            if (!cmView) return;
-            showContextMenu = false;
-            cmView.focus();
-            await pasteFromClipboard(cmView);
-        }}
+      if (!cmView) return;
+      showContextMenu = false;
+      cmView.focus();
+      await pasteFromClipboard(cmView);
+    }}
     onReplaceWord={(w) => {
-            if (!cmView) return;
-            cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
-            showContextMenu = false;
-            // No delay needed: the dispatch applies synchronously and
-            // refreshSpellcheck awaits the custom-dictionary reload before
-            // re-linting, so the replaced word is settled by then.
-            refreshSpellcheck(cmView);
-        }}
+      if (!cmView) return;
+      cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
+      showContextMenu = false;
+      // No delay needed: the dispatch applies synchronously and
+      // refreshSpellcheck awaits the custom-dictionary reload before
+      // re-linting, so the replaced word is settled by then.
+      refreshSpellcheck(cmView);
+    }}
   />
 {/if}

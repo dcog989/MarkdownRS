@@ -43,15 +43,18 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
   <div
     role="button"
     tabindex="0"
-    aria-label={$_('common.close')}
+    aria-label={$_("common.close")}
     class="ui-backdrop"
     onclick={handleBackdropClick}
-    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); if (e.key === 'Escape') onClose(); }}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") onClose();
+      if (e.key === "Escape") onClose();
+    }}
   >
     <div class="ui-panel">
       <div class="ui-header">
-        <h3 class="text-fg-default text-sm font-semibold">{$_('mruTabs.title')}</h3>
-        <p class="text-ui-sm text-fg-muted mt-1">{$_('mruTabs.hint')}</p>
+        <h3 class="text-fg-default text-sm font-semibold">{$_("mruTabs.title")}</h3>
+        <p class="text-ui-sm text-fg-muted mt-1">{$_("mruTabs.hint")}</p>
       </div>
 
       <div class="relative flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -60,13 +63,13 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
             {@const isSelected = tab.id === selectedId}
             <button
               type="button"
-              class="mru-item {index % 2 === 1 ? 'mru-item-even' : ''}"
+              class="mru-item {index % 2 === 1 ? "mru-item-even" : ""}"
               data-selected={isSelected}
               use:scrollIntoView={isSelected}
               onclick={() => {
-                                onSelect(tab.id);
-                                onClose();
-                            }}
+                onSelect(tab.id);
+                onClose();
+              }}
             >
               <div class="mru-badge">
                 {index + 1}
@@ -98,7 +101,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
               </div>
 
               {#if tab.isDirty}
-                <div class="mru-dot" use:tooltip={$_('mruTabs.modified')}></div>
+                <div class="mru-dot" use:tooltip={$_("mruTabs.modified")}></div>
               {/if}
             </button>
           {/each}

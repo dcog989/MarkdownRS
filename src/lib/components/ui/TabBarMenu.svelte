@@ -56,10 +56,12 @@ function closeMenu() {
   <div
     role="button"
     tabindex="0"
-    aria-label={$_('tabBarMenu.closeMenu')}
+    aria-label={$_("tabBarMenu.closeMenu")}
     class="fixed inset-0 z-200"
     onclick={closeMenu}
-    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeMenu(); }}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") closeMenu();
+    }}
   ></div>
   <div
     role="dialog"
@@ -72,36 +74,36 @@ function closeMenu() {
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleCommandPalette();
-                closeMenu();
-            }}
+        toggleCommandPalette();
+        closeMenu();
+      }}
     >
       <Zap size={14} class="opacity-70" />
-      <span class="flex-1">{$_('tabBarMenu.commandPalette')}</span
+      <span class="flex-1">{$_("tabBarMenu.commandPalette")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
     </button>
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleBookmarks();
-                closeMenu();
-            }}
+        toggleBookmarks();
+        closeMenu();
+      }}
     >
       <Bookmark size={14} class="opacity-70" />
-      <span class="flex-1">{$_('tabBarMenu.bookmarks')}</span
+      <span class="flex-1">{$_("tabBarMenu.bookmarks")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
     </button>
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleFileHistory();
-                closeMenu();
-            }}
+        toggleFileHistory();
+        closeMenu();
+      }}
     >
       <History size={14} class="opacity-70" />
-      <span class="flex-1">{$_('tabBarMenu.fileHistory')}</span
+      <span class="flex-1">{$_("tabBarMenu.fileHistory")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.fileHistory}</span>
     </button>
 
@@ -113,43 +115,43 @@ function closeMenu() {
       class:opacity-50={!isPreviewAvailable}
       class:cursor-not-allowed={!isPreviewAvailable}
       onclick={() => {
-                if (isPreviewAvailable) {
-                    toggleSplit();
-                    closeMenu();
-                }
-            }}
+        if (isPreviewAvailable) {
+          toggleSplit();
+          closeMenu();
+        }
+      }}
     >
       {#if isPreviewAvailable}
         <Eye size={14} class="opacity-70" />
       {:else}
         <EyeOff size={14} class="opacity-50" />
       {/if}
-      <span class="flex-1">{$_('tabBarMenu.toggleSplitPreview')}</span
+      <span class="flex-1">{$_("tabBarMenu.toggleSplitPreview")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
     </button>
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleFileTree();
-                saveSettings();
-                closeMenu();
-            }}
+        toggleFileTree();
+        saveSettings();
+        closeMenu();
+      }}
     >
       <FolderTree size={14} class="opacity-70" />
-      <span class="flex-1">{$_('tabBarMenu.toggleFileTree')}</span
+      <span class="flex-1">{$_("tabBarMenu.toggleFileTree")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.fileTree}</span>
     </button>
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                handleWriterMode();
-                closeMenu();
-            }}
+        handleWriterMode();
+        closeMenu();
+      }}
     >
       <Feather size={14} class="opacity-70" />
-      <span class="flex-1">{$_('tabBarMenu.writerMode')}</span
+      <span class="flex-1">{$_("tabBarMenu.writerMode")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
     </button>
 
@@ -159,22 +161,22 @@ function closeMenu() {
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleSettings();
-                closeMenu();
-            }}
+        toggleSettings();
+        closeMenu();
+      }}
     >
-      <Settings size={14} class="opacity-70" /><span class="flex-1">{$_('tabBarMenu.settings')}</span
+      <Settings size={14} class="opacity-70" /><span class="flex-1">{$_("tabBarMenu.settings")}</span
       ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
     </button>
     <button
       type="button"
       class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
-                toggleAbout();
-                closeMenu();
-            }}
+        toggleAbout();
+        closeMenu();
+      }}
     >
-      <img src="/logo.svg" alt="" class="h-4 w-4"><span>{$_('tabBarMenu.about')}</span>
+      <img src="/logo.svg" alt="" class="h-4 w-4"><span>{$_("tabBarMenu.about")}</span>
     </button>
   </div>
 {/if}

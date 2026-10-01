@@ -112,11 +112,11 @@ function injectHtml(node: HTMLElement, content: string) {
       type="button"
       class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
       onclick={() => toggleOrientation()}
-      use:tooltip={appContext.settings.splitOrientation === 'vertical'
-                ? $_('preview.switchHorizontal')
-                : $_('preview.switchVertical')}
+      use:tooltip={appContext.settings.splitOrientation === "vertical"
+        ? $_("preview.switchHorizontal")
+        : $_("preview.switchVertical")}
     >
-      {#if appContext.settings.splitOrientation === 'vertical'}
+      {#if appContext.settings.splitOrientation === "vertical"}
         <FlipVertical size={16} />
       {:else}
         <FlipHorizontal size={16} />
@@ -126,7 +126,7 @@ function injectHtml(node: HTMLElement, content: string) {
       type="button"
       class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
       onclick={() => toggleSplitView()}
-      use:tooltip={$_('preview.closePreview')}
+      use:tooltip={$_("preview.closePreview")}
     >
       <X size={16} />
     </button>
@@ -136,24 +136,23 @@ function injectHtml(node: HTMLElement, content: string) {
     bind:this={container}
     id="active-preview-container"
     onclick={(e) => {
-            const a = (e.target as HTMLElement).closest('a');
-            if (a) {
-                e.preventDefault();
-                const href = a.getAttribute('href') || '';
-                if (href.startsWith('#')) {
-                    container?.querySelector(href)?.scrollIntoView({
-                        behavior: 'smooth',
-                        block: 'start',
-                    });
-                    return;
-                }
-                navigateToPath(href);
-            }
-        }}
+      const a = (e.target as HTMLElement).closest("a");
+      if (a) {
+        e.preventDefault();
+        const href = a.getAttribute("href") || "";
+        if (href.startsWith("#")) {
+          container?.querySelector(href)?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+          return;
+        }
+        navigateToPath(href);
+      }
+    }}
     role="none"
     class="preview-root no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
-    style="font-family: {appContext.settings.previewFontFamily}; font-size: {appContext.settings
-            .previewFontSize}px;"
+    style="font-family: {appContext.settings.previewFontFamily}; font-size: {appContext.settings.previewFontSize}px;"
     spellcheck="false"
   >
     {#if !isMarkdown}
@@ -161,13 +160,13 @@ function injectHtml(node: HTMLElement, content: string) {
         class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none"
       >
         <FileText size={64} class="mb-4" />
-        <p>{$_('preview.notAvailable')}</p>
+        <p>{$_("preview.notAvailable")}</p>
       </div>
     {:else if renderer.showSpinner || (renderer.isRendering && !renderer.htmlContent)}
       <div class="absolute inset-0 flex items-center justify-center opacity-50">
         <div class="flex flex-col items-center gap-2">
           <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
-          <div class="text-sm">{$_('preview.rendering')}</div>
+          <div class="text-sm">{$_("preview.rendering")}</div>
         </div>
       </div>
     {:else if renderer.renderError}
@@ -177,7 +176,7 @@ function injectHtml(node: HTMLElement, content: string) {
     {:else if !renderer.htmlContent}
       <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
         <Logo class="mb-4 h-24 w-24 grayscale" />
-        <h1 class="text-3xl font-bold">{$_('app.name')}</h1>
+        <h1 class="text-3xl font-bold">{$_("app.name")}</h1>
       </div>
     {:else}
       <div class="display-contents" use:injectHtml={renderer.htmlContent}></div>

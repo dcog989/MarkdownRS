@@ -81,11 +81,11 @@ function toggleSortDirection() {
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={$_('fileHistory.title')}
+      title={$_("fileHistory.title")}
       icon={History}
       bind:searchValue={searchQuery}
       focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
-      searchPlaceholder={$_('fileHistory.placeholder')}
+      searchPlaceholder={$_("fileHistory.placeholder")}
       {onClose}
       onKeydown={nav.handleKeydown}
     >
@@ -95,9 +95,9 @@ function toggleSortDirection() {
             type="button"
             onclick={toggleSortDirection}
             class="text-fg-muted hover-surface rounded p-1 transition-colors"
-            title={sortDirection === 'asc' ? $_('common.sortAscending') : $_('common.sortDescending')}
+            title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
-            {#if sortDirection === 'asc'}
+            {#if sortDirection === "asc"}
               <ArrowUp size={16} />
             {:else}
               <ArrowDown size={16} />
@@ -108,7 +108,7 @@ function toggleSortDirection() {
               type="button"
               class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
               onclick={handleClearAll}
-              use:tooltip={$_('fileHistory.clearHistory')}
+              use:tooltip={$_("fileHistory.clearHistory")}
             >
               <Trash2 size={16} />
             </button>
@@ -134,7 +134,9 @@ function toggleSortDirection() {
               tabindex="0"
               class="flex cursor-pointer items-center justify-between gap-3"
               onclick={() => handleOpenFile(path)}
-              onkeydown={(e) => { if (e.key === 'Enter') handleOpenFile(path); }}
+              onkeydown={(e) => {
+                if (e.key === "Enter") handleOpenFile(path);
+              }}
               onmouseenter={() => nav.select(index)}
             >
               <div class="min-w-0 flex-1">
@@ -149,7 +151,7 @@ function toggleSortDirection() {
                 type="button"
                 onclick={(e) => handleRemove(path, e)}
                 class="file-history-remove rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
-                title={$_('fileHistory.removeFromHistory')}
+                title={$_("fileHistory.removeFromHistory")}
               >
                 <X size={16} />
               </button>
@@ -158,12 +160,12 @@ function toggleSortDirection() {
         {/each}
       </div>
     {:else if searchQuery.length > 0}
-      <div class="text-fg-muted px-4 py-8 text-center">{$_('fileHistory.noMatch')}</div>
+      <div class="text-fg-muted px-4 py-8 text-center">{$_("fileHistory.noMatch")}</div>
     {:else}
       <div class="text-fg-muted px-4 py-8 text-center">
         <Clock size={48} class="mx-auto mb-2 opacity-30" />
-        <div class="mb-1">{$_('fileHistory.none')}</div>
-        <div class="text-ui-sm opacity-70">{$_('fileHistory.helper')}</div>
+        <div class="mb-1">{$_("fileHistory.none")}</div>
+        <div class="text-ui-sm opacity-70">{$_("fileHistory.helper")}</div>
       </div>
     {/if}
   </div>

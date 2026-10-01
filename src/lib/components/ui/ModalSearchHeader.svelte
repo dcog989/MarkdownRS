@@ -60,7 +60,7 @@ let {
       type="button"
       class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
       onclick={onClose}
-      aria-label={$_('common.close')}
+      aria-label={$_("common.close")}
     >
       <X size={16} />
     </button>

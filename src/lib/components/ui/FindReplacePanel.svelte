@@ -258,13 +258,13 @@ onMount(() => {
     onmouseenter={() => (isMouseOver = true)}
     onmouseleave={() => (isMouseOver = false)}
     role="dialog"
-    aria-label={$_('findReplace.aria')}
+    aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
     <div class="bg-border-main text-fg-default flex items-center border-b p-2">
       <div class="flex flex-1 items-center gap-2">
         <span class="text-ui font-semibold"
-          >{$_('findReplace.find')} {isReplaceMode ? $_('findReplace.andReplace') : ''}</span
+          >{$_("findReplace.find")} {isReplaceMode ? $_("findReplace.andReplace") : ""}</span
         >
         <button
           type="button"
@@ -272,7 +272,7 @@ onMount(() => {
           class:bg-bg-active={isReplaceMode}
           class:text-accent-secondary={isReplaceMode}
           onclick={() => (isReplaceMode = !isReplaceMode)}
-          title={$_('findReplace.toggleReplaceMode')}
+          title={$_("findReplace.toggleReplaceMode")}
         >
           <Replace size={14} />
         </button>
@@ -281,7 +281,7 @@ onMount(() => {
         type="button"
         class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
         onclick={close}
-        title={$_('findReplace.closeEsc')}
+        title={$_("findReplace.closeEsc")}
       >
         <X size={14} />
       </button>
@@ -293,26 +293,24 @@ onMount(() => {
           bind:ref={searchInputRef}
           type="text"
           bind:value={searchState.findText}
-          placeholder={$_('findReplace.find')}
-          class="flex-1 text-ui-sm leading-6 {searchState.regexError
-                        ? 'border-danger'
-                        : ''}"
+          placeholder={$_("findReplace.find")}
+          class="flex-1 text-ui-sm leading-6 {searchState.regexError ? "border-danger" : ""}"
           oninput={onInput}
           spellcheck="false"
         />
         <div class="text-fg-muted min-w-8 text-right text-ui-sm whitespace-nowrap">
-          {#if searchScope === 'current'}
+          {#if searchScope === "current"}
             {#if searchState.currentMatches > 0}
               {searchState.currentIndex + 1}
               / {searchState.currentMatches}
             {:else if searchState.findText}
               0 / 0
             {/if}
-          {:else if searchScope === 'all'}
+          {:else if searchScope === "all"}
             {#if searchState.allTabsResults.size > 0}
-              {$_('findReplace.tabs', { values: { count: searchState.allTabsResults.size } })}
+              {$_("findReplace.tabs", { values: { count: searchState.allTabsResults.size } })}
             {:else if searchState.findText}
-              {$_('findReplace.zeroTabs')}
+              {$_("findReplace.zeroTabs")}
             {/if}
           {/if}
         </div>
@@ -329,7 +327,7 @@ onMount(() => {
           <Input
             type="text"
             bind:value={searchState.replaceText}
-            placeholder={$_('findReplace.replace')}
+            placeholder={$_("findReplace.replace")}
             class="flex-1 text-ui-sm leading-6"
             oninput={onReplaceInput}
             spellcheck="false"
@@ -345,7 +343,7 @@ onMount(() => {
             onchange={() => cmView && executeSearch(cmView, false)}
             class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
           >
-          <span>{$_('findReplace.matchCase')}</span>
+          <span>{$_("findReplace.matchCase")}</span>
         </label>
         <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
           <input
@@ -354,7 +352,7 @@ onMount(() => {
             onchange={() => cmView && executeSearch(cmView, false)}
             class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
           >
-          <span>{$_('findReplace.wholeWord')}</span>
+          <span>{$_("findReplace.wholeWord")}</span>
         </label>
         <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
           <input
@@ -363,7 +361,7 @@ onMount(() => {
             onchange={() => cmView && executeSearch(cmView, false)}
             class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
           >
-          <span>{$_('findReplace.regex')}</span>
+          <span>{$_("findReplace.regex")}</span>
         </label>
       </div>
 
@@ -376,7 +374,7 @@ onMount(() => {
             onchange={onScopeChange}
             class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
           >
-          <span>{$_('findReplace.currentDocument')}</span>
+          <span>{$_("findReplace.currentDocument")}</span>
         </label>
         <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
           <input
@@ -386,7 +384,7 @@ onMount(() => {
             onchange={onScopeChange}
             class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
           >
-          <span>{$_('findReplace.allOpenDocuments')}</span>
+          <span>{$_("findReplace.allOpenDocuments")}</span>
         </label>
       </div>
 
@@ -395,19 +393,19 @@ onMount(() => {
           type="button"
           class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindPrevious}
-          disabled={searchScope === 'all' || !!searchState.regexError}
+          disabled={searchScope === "all" || !!searchState.regexError}
         >
           <Search size={12} />
-          {$_('common.previous')}
+          {$_("common.previous")}
         </button>
         <button
           type="button"
           class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindNext}
-          disabled={searchScope === 'all' || !!searchState.regexError}
+          disabled={searchScope === "all" || !!searchState.regexError}
         >
           <Search size={12} />
-          {$_('common.next')}
+          {$_("common.next")}
         </button>
       </div>
       {#if isReplaceMode}
@@ -416,10 +414,10 @@ onMount(() => {
             type="button"
             class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
             onclick={onReplace}
-            disabled={searchScope === 'all' || !!searchState.regexError}
+            disabled={searchScope === "all" || !!searchState.regexError}
           >
             <Replace size={12} />
-            {$_('common.replace')}
+            {$_("common.replace")}
           </button>
           <button
             type="button"
@@ -428,14 +426,14 @@ onMount(() => {
             disabled={!!searchState.regexError}
           >
             <Replace size={12} />
-            {$_('findReplace.replaceAll')}
+            {$_("findReplace.replaceAll")}
           </button>
         </div>
       {/if}
 
-      {#if searchScope === 'all' && searchState.allTabsResults.size > 0}
+      {#if searchScope === "all" && searchState.allTabsResults.size > 0}
         <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-          <div class="text-fg-muted mb-1 text-ui-sm font-semibold">{$_('findReplace.results')}</div>
+          <div class="text-fg-muted mb-1 text-ui-sm font-semibold">{$_("findReplace.results")}</div>
           {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
             {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
             {#if tab}

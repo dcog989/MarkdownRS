@@ -83,15 +83,15 @@ $effect(() => {
 });
 </script>
 
-<div use:tooltip={setting.type === 'file' ? null : tooltipText} class="w-full">
-  {#if setting.type === 'text'}
+<div use:tooltip={setting.type === "file" ? null : tooltipText} class="w-full">
+  {#if setting.type === "text"}
     <Input
       id={setting.key}
       type="text"
       value={String(value ?? setting.defaultValue)}
       oninput={(e) => onChange(e.currentTarget.value)}
     />
-  {:else if setting.type === 'number'}
+  {:else if setting.type === "number"}
     <Input
       id={setting.key}
       type="number"
@@ -100,7 +100,7 @@ $effect(() => {
       max={setting.max}
       oninput={(e) => onChange(Number(e.currentTarget.value))}
     />
-  {:else if setting.type === 'range'}
+  {:else if setting.type === "range"}
     <div class="flex items-center gap-3">
       <input
         id={setting.key}
@@ -116,7 +116,7 @@ $effect(() => {
         {Number(value ?? setting.defaultValue)}%
       </span>
     </div>
-  {:else if setting.type === 'boolean'}
+  {:else if setting.type === "boolean"}
     <input
       id={setting.key}
       type="checkbox"
@@ -124,8 +124,8 @@ $effect(() => {
       onchange={(e) => onChange(e.currentTarget.checked)}
       class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
     >
-  {:else if setting.type === 'color'}
-    {@const displayColor = String(value ?? '') || resolvedDefaultAccent}
+  {:else if setting.type === "color"}
+    {@const displayColor = String(value ?? "") || resolvedDefaultAccent}
     <div class="flex items-center gap-2">
       <label
         class="relative block h-7 w-10 shrink-0 cursor-pointer overflow-hidden rounded border border-border-primary"
@@ -143,13 +143,13 @@ $effect(() => {
         <button
           type="button"
           class="text-ui text-fg-muted hover-surface rounded px-2 py-0.5"
-          onclick={() => onChange('')}
+          onclick={() => onChange("")}
         >
-          {$_('common.resetToDefault')}
+          {$_("common.resetToDefault")}
         </button>
       {/if}
     </div>
-  {:else if setting.type === 'select'}
+  {:else if setting.type === "select"}
     <div class="select-wrap">
       <select
         id={setting.key}
@@ -164,11 +164,11 @@ $effect(() => {
         {/each}
       </select>
     </div>
-  {:else if setting.type === 'dictionary-multi-select'}
+  {:else if setting.type === "dictionary-multi-select"}
     <div>
       <DictionarySelector selected={value as string[]} onChange={(dicts) => onChange(dicts)} />
     </div>
-  {:else if setting.type === 'custom-context-menu'}
+  {:else if setting.type === "custom-context-menu"}
     <input
       id={setting.key}
       type="checkbox"
@@ -177,27 +177,27 @@ $effect(() => {
       class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
       disabled={isCheckingContextMenu}
     >
-  {:else if setting.type === 'file'}
+  {:else if setting.type === "file"}
     <div class="w-full min-w-0" bind:this={pathContainer}>
       <div class="flex items-center gap-2" use:tooltip={tooltipText}>
         <button
           type="button"
           class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
           onclick={async () => {
-                        const selected = await open({
-                            multiple: false,
-                            filters: [{ name: translate('fileOps.markdownFilter'), extensions: MARKDOWN_EXTENSIONS }],
-                        });
-                        if (selected && typeof selected === 'string') {
-                            onChange(selected);
-                        }
-                    }}
+            const selected = await open({
+              multiple: false,
+              filters: [{ name: translate("fileOps.markdownFilter"), extensions: MARKDOWN_EXTENSIONS }],
+            });
+            if (selected && typeof selected === "string") {
+              onChange(selected);
+            }
+          }}
         >
-          {$_('common.browse')}
+          {$_("common.browse")}
         </button>
         {#if value}
-          <button type="button" class="btn-base btn-sm hover-surface whitespace-nowrap" onclick={() => onChange('')}>
-            {$_('common.clear')}
+          <button type="button" class="btn-base btn-sm hover-surface whitespace-nowrap" onclick={() => onChange("")}>
+            {$_("common.clear")}
           </button>
         {/if}
       </div>

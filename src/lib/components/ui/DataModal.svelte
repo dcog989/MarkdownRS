@@ -163,13 +163,13 @@ const actions = $derived<Action[]>([
   {#snippet header()}
     <div class="flex items-center gap-2">
       <Database size={16} class="text-accent-secondary" />
-      <h2 class="text-fg-default text-sm font-semibold">{$_('data.title')}</h2>
+      <h2 class="text-fg-default text-sm font-semibold">{$_("data.title")}</h2>
     </div>
     <button
       type="button"
       class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
       onclick={onClose}
-      aria-label={$_('common.close')}
+      aria-label={$_("common.close")}
     >
       <X size={16} />
     </button>
@@ -184,9 +184,7 @@ const actions = $derived<Action[]>([
           class:text-danger-text={action.danger}
           onclick={action.handler}
           disabled={busy}
-          use:tooltip={action.danger
-                        ? translate('data.deleteOrphansDesc')
-                        : ''}
+          use:tooltip={action.danger ? translate("data.deleteOrphansDesc") : ""}
         >
           {action.label}
         </button>

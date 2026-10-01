@@ -121,10 +121,12 @@ function handleKeydown(e: KeyboardEvent) {
   <div
     role="button"
     tabindex="0"
-    aria-label={$_('tabDropdown.close')}
+    aria-label={$_("tabDropdown.close")}
     class="fixed inset-0 z-40"
     onclick={onClose}
-    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") onClose();
+    }}
   ></div>
   <div
     class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
@@ -136,7 +138,7 @@ function handleKeydown(e: KeyboardEvent) {
         bind:this={searchInputRef}
         bind:value={searchQuery}
         type="text"
-        placeholder={$_('tabDropdown.filterPlaceholder')}
+        placeholder={$_("tabDropdown.filterPlaceholder")}
         class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
         onkeydown={handleKeydown}
       >
@@ -150,20 +152,20 @@ function handleKeydown(e: KeyboardEvent) {
           <div
             role="none"
             class="group flex w-full items-stretch {isSelected
-                            ? 'bg-accent-primary'
-                            : index % 2 === 1
-                              ? 'bg-row-even'
-                              : 'bg-transparent'}"
+              ? "bg-accent-primary"
+              : index % 2 === 1
+                ? "bg-row-even"
+                : "bg-transparent"}"
             onmousemove={(e) => handleHover(index, e)}
             use:scrollIntoView={isSelected}
           >
             <button
               type="button"
               class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none transition-opacity {isSelected
-                                ? 'text-fg-inverse opacity-100'
-                                : isActive
-                                  ? 'text-accent-secondary opacity-60 hover:opacity-100'
-                                  : 'text-fg-default opacity-50 hover:opacity-100'}"
+                ? "text-fg-inverse opacity-100"
+                : isActive
+                  ? "text-accent-secondary opacity-60 hover:opacity-100"
+                  : "text-fg-default opacity-50 hover:opacity-100"}"
               onclick={() => handleSelect(tab.id)}
               role="menuitem"
               use:tooltip={getTooltipContent(tab)}
@@ -176,63 +178,48 @@ function handleKeydown(e: KeyboardEvent) {
                     size={14}
                     class="shrink-0"
                     style="color: {isActive && tab.isDirty
-                                            ? 'var(--dirty-indicator)'
-                                            : isSelected
-                                              ? 'var(--text-inverse)'
-                                              : 'var(--text-secondary)'};"
+                      ? "var(--dirty-indicator)"
+                      : isSelected
+                        ? "var(--text-inverse)"
+                        : "var(--text-secondary)"};"
                   />
                 {:else}
-                  <Pencil
-                    size={14}
-                    class="shrink-0 {isSelected
-                                            ? 'text-fg-inverse'
-                                            : 'text-fg-muted'}"
-                  />
+                  <Pencil size={14} class="shrink-0 {isSelected ? "text-fg-inverse" : "text-fg-muted"}" />
                 {/if}
               {:else if tab.isDirty}
                 <SquarePen
                   size={14}
                   class="shrink-0"
                   style="color: {isActive && tab.isDirty
-                                        ? 'var(--dirty-indicator)'
-                                        : isSelected
-                                          ? 'var(--text-inverse)'
-                                          : 'var(--accent-secondary)'}"
+                    ? "var(--dirty-indicator)"
+                    : isSelected
+                      ? "var(--text-inverse)"
+                      : "var(--accent-secondary)"}"
                 />
               {:else}
-                <FileText
-                  size={14}
-                  class="shrink-0 {isSelected
-                                        ? 'text-fg-inverse'
-                                        : 'text-fg-muted'}"
-                />
+                <FileText size={14} class="shrink-0 {isSelected ? "text-fg-inverse" : "text-fg-muted"}" />
               {/if}
 
               <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
 
               {#if tab.isPinned}
-                <Pin
-                  size={12}
-                  class="ml-1 shrink-0 {isSelected
-                                        ? 'text-fg-inverse'
-                                        : 'text-accent-secondary'}"
-                />
+                <Pin size={12} class="ml-1 shrink-0 {isSelected ? "text-fg-inverse" : "text-accent-secondary"}" />
               {/if}
             </button>
 
             <button
               type="button"
               class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
-                                ? 'text-fg-muted cursor-not-allowed opacity-30'
-                                : isSelected
-                                  ? 'text-fg-inverse hover:text-danger-text hover:bg-black/40'
-                                  : 'text-fg-muted hover:text-danger-text hover:bg-black/30'}"
+                ? "text-fg-muted cursor-not-allowed opacity-30"
+                : isSelected
+                  ? "text-fg-inverse hover:text-danger-text hover:bg-black/40"
+                  : "text-fg-muted hover:text-danger-text hover:bg-black/30"}"
               disabled={tab.isPinned}
               onclick={(e) => {
-                                e.stopPropagation();
-                                requestCloseTab(tab.id);
-                            }}
-              aria-label={$_('tabDropdown.closeTab')}
+                e.stopPropagation();
+                requestCloseTab(tab.id);
+              }}
+              aria-label={$_("tabDropdown.closeTab")}
             >
               <X size={14} />
             </button>

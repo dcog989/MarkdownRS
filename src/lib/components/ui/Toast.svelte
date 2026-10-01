@@ -97,8 +97,8 @@ onMount(() => {
     >
       <div
         class="bg-border-main bg-bg-panel text-fg-default flex items-center gap-3 rounded-lg border border-l-3 px-4 py-3 shadow-lg {colorClass.split(
-                    ' ',
-                )[1]}"
+          " ",
+        )[1]}"
       >
         <Icon size={16} class="shrink-0 {iconColorClass}" />
         <span class="flex-1 text-ui-sm leading-snug">{toast.message}</span>
@@ -107,9 +107,9 @@ onMount(() => {
             type="button"
             class="text-accent-link hover:text-accent-link-hover cursor-pointer rounded border-none bg-transparent px-2 py-1 text-ui-sm font-medium transition-colors"
             onclick={() => {
-                            toast.action?.onClick();
-                            dismissToast(toast.id);
-                        }}
+              toast.action?.onClick();
+              dismissToast(toast.id);
+            }}
           >
             {toast.action.label}
           </button>
@@ -118,7 +118,7 @@ onMount(() => {
           type="button"
           class="text-fg-muted hover:bg-bg-hover hover:text-fg-default flex shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent p-1 transition-all"
           onclick={() => dismissToast(toast.id)}
-          aria-label={$_('common.dismiss')}
+          aria-label={$_("common.dismiss")}
         >
           <X size={14} />
         </button>

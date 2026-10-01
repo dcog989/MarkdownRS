@@ -91,47 +91,50 @@ async function copyAllStats() {
 
 <footer
   class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex shrink-0 items-center justify-between overflow-hidden border-t px-3 py-1.5 whitespace-nowrap transition-colors duration-200 select-none"
-  style:background-color="color-mix(in srgb, var(--surface-2), transparent {appContext.settings.statusBarTransparency}%)"
+  style:background-color="color-mix(in srgb, var(--surface-2), transparent {appContext.settings
+    .statusBarTransparency}%)"
 >
   <div
     role="button"
     tabindex="0"
-    aria-label={$_('statusBar.options')}
+    aria-label={$_("statusBar.options")}
     class="flex w-full items-center justify-between"
     oncontextmenu={handleContextMenu}
-    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.preventDefault(); }}
+    onkeydown={(e) => {
+      if (e.key === "Enter" || e.key === " ") e.preventDefault();
+    }}
   >
     <div
       class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
       style:opacity={textOpacity}
     >
-      <div class="flex items-center gap-1" use:tooltip={$_('statusBar.linePosition')}>
-        <span class="font-mono opacity-70">{$_('statusBar.ln')}</span>
+      <div class="flex items-center gap-1" use:tooltip={$_("statusBar.linePosition")}>
+        <span class="font-mono opacity-70">{$_("statusBar.ln")}</span>
         <span class="inline-block min-w-[3ch] text-right font-mono">{formatNumber(appContext.metrics.cursorLine)}</span>
         <span class="opacity-30">/</span>
         <span class="inline-block min-w-[3ch] text-left font-mono">{formatNumber(totalLines)}</span>
       </div>
       <span class="opacity-40">|</span>
 
-      <div class="flex items-center gap-1" use:tooltip={$_('statusBar.columnPosition')}>
-        <span class="font-mono opacity-70">{$_('statusBar.col')}</span>
+      <div class="flex items-center gap-1" use:tooltip={$_("statusBar.columnPosition")}>
+        <span class="font-mono opacity-70">{$_("statusBar.col")}</span>
         <span class="inline-block min-w-[3ch] text-right font-mono">{formatNumber(appContext.metrics.cursorCol)}</span>
         <span class="opacity-30">/</span>
         <span class="inline-block min-w-[3ch] text-left font-mono">
           {formatNumber(
-                    Math.max(
-                        appContext.metrics.currentLineLength,
-                        appContext.metrics.cursorCol > appContext.metrics.currentLineLength
-                            ? appContext.metrics.cursorCol
-                            : appContext.metrics.currentLineLength,
-                    ),
-                )}
+            Math.max(
+              appContext.metrics.currentLineLength,
+              appContext.metrics.cursorCol > appContext.metrics.currentLineLength
+                ? appContext.metrics.cursorCol
+                : appContext.metrics.currentLineLength,
+            ),
+          )}
         </span>
       </div>
       <span class="opacity-40">|</span>
 
-      <div class="flex items-center gap-1" use:tooltip={$_('statusBar.charPosition')}>
-        <span class="font-mono opacity-70">{$_('statusBar.char')}</span>
+      <div class="flex items-center gap-1" use:tooltip={$_("statusBar.charPosition")}>
+        <span class="font-mono opacity-70">{$_("statusBar.char")}</span>
         <span class="inline-block min-w-[4ch] text-right font-mono"
           >{formatNumber(appContext.metrics.cursorOffset)}</span
         >
@@ -140,23 +143,20 @@ async function copyAllStats() {
       </div>
       <span class="opacity-40">|</span>
 
-      <div class="flex items-center gap-1" use:tooltip={$_('statusBar.wordPosition')}>
-        <span class="font-mono opacity-70">{$_('statusBar.word')}</span>
+      <div class="flex items-center gap-1" use:tooltip={$_("statusBar.wordPosition")}>
+        <span class="font-mono opacity-70">{$_("statusBar.word")}</span>
         <span class="inline-block min-w-[3ch] text-right font-mono"
           >{formatNumber(appContext.metrics.currentWordIndex)}</span
         >
         <span class="opacity-30">/</span>
-        <span
-          class="inline-block min-w-[3ch] text-left font-mono {wordCountPending
-                    ? 'opacity-50'
-                    : ''}"
+        <span class="inline-block min-w-[3ch] text-left font-mono {wordCountPending ? "opacity-50" : ""}"
           >{formatNumber(totalWords)}</span
         >
       </div>
 
       <span class="opacity-40">|</span>
 
-      <div class="flex items-center gap-1" use:tooltip={$_('statusBar.fileSize')}>
+      <div class="flex items-center gap-1" use:tooltip={$_("statusBar.fileSize")}>
         <span class="inline-block min-w-[7ch] text-right font-mono">{fileSizeDisplay}</span>
       </div>
     </div>
@@ -167,7 +167,7 @@ async function copyAllStats() {
     >
       <span class="opacity-40">|</span>
 
-      {#if fileType === 'markdown'}
+      {#if fileType === "markdown"}
         <MarkdownLintStatus />
         <span class="opacity-40">|</span>
       {/if}
@@ -176,12 +176,12 @@ async function copyAllStats() {
         type="button"
         class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
         onclick={toggleLineEnding}
-        use:tooltip={$_('statusBar.toggleLineEnding')}
+        use:tooltip={$_("statusBar.toggleLineEnding")}
       >
         {lineEnding}
       </button>
 
-      <span class="cursor-default opacity-70" use:tooltip={$_('statusBar.fileEncoding')}>
+      <span class="cursor-default opacity-70" use:tooltip={$_("statusBar.fileEncoding")}>
         {encoding}
       </span>
       <span class="opacity-40">|</span>
@@ -189,26 +189,28 @@ async function copyAllStats() {
       <button
         type="button"
         class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
-                .settings.wrapGuideColumn >= 0
-                ? 'text-accent-secondary'
-                : 'text-inherit'}"
+          .settings.wrapGuideColumn >= 0
+          ? "text-accent-secondary"
+          : "text-inherit"}"
         onclick={toggleWordWrap}
-        use:tooltip={$_('statusBar.toggleWordWrap')}
+        use:tooltip={$_("statusBar.toggleWordWrap")}
       >
         <TextWrap size={14} />
       </button>
 
-      {#if fileType === 'markdown'}
+      {#if fileType === "markdown"}
         <button
           type="button"
           class="hover:text-fg-default hover-surface flex cursor-pointer items-center rounded px-1 transition-colors {appContext
-                    .settings.viewMode === 'rendered'
-                    ? 'text-accent-secondary'
-                    : 'text-inherit'}"
+            .settings.viewMode === "rendered"
+            ? "text-accent-secondary"
+            : "text-inherit"}"
           onclick={toggleViewMode}
-          use:tooltip={appContext.settings.viewMode === 'rendered' ? $_('statusBar.renderedMode') : $_('statusBar.rawMode')}
+          use:tooltip={appContext.settings.viewMode === "rendered"
+            ? $_("statusBar.renderedMode")
+            : $_("statusBar.rawMode")}
         >
-          {#if appContext.settings.viewMode === 'rendered'}
+          {#if appContext.settings.viewMode === "rendered"}
             <Eye size={14} />
           {:else}
             <EyeOff size={14} />
@@ -221,13 +223,13 @@ async function copyAllStats() {
           type="button"
           class="text-accent-primary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
           onclick={toggleFileType}
-          use:tooltip={$_('statusBar.toggleFileType')}
+          use:tooltip={$_("statusBar.toggleFileType")}
         >
-          <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
+          <span class="w-5 text-center font-bold">{fileType === "markdown" ? "M" : "T"}</span>
         </button>
       {:else}
-        <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={$_('statusBar.fileType')}>
-          <span class="w-5 text-center font-bold">{fileType === 'markdown' ? 'M' : 'T'}</span>
+        <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={$_("statusBar.fileType")}>
+          <span class="w-5 text-center font-bold">{fileType === "markdown" ? "M" : "T"}</span>
         </span>
       {/if}
     </div>
@@ -242,7 +244,7 @@ async function copyAllStats() {
       onclick={copyAllStats}
     >
       <ClipboardCopy size={14} class="opacity-70" />
-      <span>{$_('statusBar.copyAllStats')}</span>
+      <span>{$_("statusBar.copyAllStats")}</span>
     </button>
   </ContextMenu>
 {/if}

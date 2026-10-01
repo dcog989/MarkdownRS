@@ -207,7 +207,7 @@ $effect(() => {
   >
     <button
       type="button"
-      use:tooltip={$_('tabBar.switchTab')}
+      use:tooltip={$_("tabBar.switchTab")}
       class="text-fg-muted hover-surface flex h-full items-center gap-1 text-xs"
       onclick={() => (showDropdown = !showDropdown)}
     >
@@ -217,10 +217,10 @@ $effect(() => {
     <TabDropdown
       isOpen={showDropdown}
       onSelect={(id) => {
-                appContext.app.activeTabId = id;
-                pushToMru(id);
-                showDropdown = false;
-            }}
+        appContext.app.activeTabId = id;
+        pushToMru(id);
+        showDropdown = false;
+      }}
       onClose={() => (showDropdown = false)}
     />
   </div>
@@ -239,23 +239,17 @@ $effect(() => {
       class="no-scrollbar tab-scroll-container flex h-full w-full items-stretch overflow-x-auto"
       onscroll={updateFadeIndicators}
       oncontextmenu={(e) => {
-                const target = asHTMLElement(e.target);
-                if (!target) return;
-                if (
-                    target.classList.contains("tab-scroll-container") ||
-                    target.closest(".tab-scroll-container")
-                ) {
-                    if (
-                        !target.closest('[data-tab-item="true"]') &&
-                        !target.closest("button")
-                    ) {
-                        e.preventDefault();
-                        showTabBarContextMenu = true;
-                        tabBarContextMenuX = e.clientX;
-                        tabBarContextMenuY = e.clientY;
-                    }
-                }
-            }}
+        const target = asHTMLElement(e.target);
+        if (!target) return;
+        if (target.classList.contains("tab-scroll-container") || target.closest(".tab-scroll-container")) {
+          if (!target.closest('[data-tab-item="true"]') && !target.closest("button")) {
+            e.preventDefault();
+            showTabBarContextMenu = true;
+            tabBarContextMenuX = e.clientX;
+            tabBarContextMenuY = e.clientY;
+          }
+        }
+      }}
     >
       {#each appContext.editor.tabs as tab (tab.id)}
         {@const isTabCollapsed = appContext.settings.collapsePinnedTabs && tab.isPinned}
@@ -267,19 +261,10 @@ $effect(() => {
           animate:flip={{ duration: sortController.draggingId === tab.id ? 0 : 250 }}
           style:opacity={sortController.isDragging && sortController.draggingId === tab.id ? 0.4 : 1}
           style:z-index={sortController.isDragging && sortController.draggingId === tab.id ? 100 : 0}
-          style:flex={isTabCollapsed || tab.isPinned ? '0 0 auto' : '0 1 auto'}
-          style:min-width={isTabCollapsed || tab.isPinned
-                        ? 'auto'
-                        : `${effectiveTabWidthMin}px`}
-          style:max-width={isTabCollapsed || tab.isPinned
-                        ? 'none'
-                        : `${appContext.settings.tabWidthMax}px`}
-          onpointerdown={(e) =>
-                        sortController.startDrag(
-                            e,
-                            tab.id,
-                            assertHTMLElement(e.currentTarget, "TabBar drag"),
-                        )}
+          style:flex={isTabCollapsed || tab.isPinned ? "0 0 auto" : "0 1 auto"}
+          style:min-width={isTabCollapsed || tab.isPinned ? "auto" : `${effectiveTabWidthMin}px`}
+          style:max-width={isTabCollapsed || tab.isPinned ? "none" : `${appContext.settings.tabWidthMax}px`}
+          onpointerdown={(e) => sortController.startDrag(e, tab.id, assertHTMLElement(e.currentTarget, "TabBar drag"))}
         >
           <TabButton
             {tab}
@@ -287,22 +272,22 @@ $effect(() => {
             onclick={activateTab}
             onclose={(_, id) => requestCloseTab(id)}
             oncontextmenu={(e, id) => {
-                            contextMenuTabId = id;
-                            contextMenuX = e.clientX;
-                            contextMenuY = e.clientY;
-                        }}
+              contextMenuTabId = id;
+              contextMenuX = e.clientX;
+              contextMenuY = e.clientY;
+            }}
           />
         </div>
       {/each}
 
       <button
         type="button"
-        use:tooltip={`${$_('tabBar.newTab')}${shortcutManager.getShortcutDisplay('file.new') ? ` (${shortcutManager.getShortcutDisplay('file.new')})` : ''}`}
+        use:tooltip={`${$_("tabBar.newTab")}${shortcutManager.getShortcutDisplay("file.new") ? ` (${shortcutManager.getShortcutDisplay("file.new")})` : ""}`}
         class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
         onclick={async () => {
-                    const newTabId = await createNewFile();
-                    appContext.app.activeTabId = newTabId;
-                }}
+          const newTabId = await createNewFile();
+          appContext.app.activeTabId = newTabId;
+        }}
       >
         <Plus size={16} />
       </button>
@@ -333,7 +318,7 @@ $effect(() => {
   <div class="flex h-full items-stretch border-l">
     <button
       type="button"
-      use:tooltip={$_('tabBar.menu')}
+      use:tooltip={$_("tabBar.menu")}
       class="relative text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
       onclick={() => (showMenu = !showMenu)}
     >
@@ -360,12 +345,10 @@ $effect(() => {
   isOpen={mru.showPopup}
   onClose={() => (mru.showPopup = false)}
   onSelect={(id) => {
-        appContext.app.activeTabId = id;
-        pushToMru(id);
-    }}
-  selectedId={mru.isCycling
-        ? appContext.editor.mruStack[mru.selectedIndex]
-        : appContext.app.activeTabId}
+    appContext.app.activeTabId = id;
+    pushToMru(id);
+  }}
+  selectedId={mru.isCycling ? appContext.editor.mruStack[mru.selectedIndex] : appContext.app.activeTabId}
 />
 
 <style>

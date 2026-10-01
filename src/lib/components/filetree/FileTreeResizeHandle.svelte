@@ -48,7 +48,7 @@ function handleResizeClick() {
 <div
   role="button"
   tabindex="0"
-  aria-label={$_('fileTree.resizeAria')}
+  aria-label={$_("fileTree.resizeAria")}
   class="ft-resize-handle"
   class:cursor-col-resize={isResizing}
   class:ft-resize-hover={hovered}

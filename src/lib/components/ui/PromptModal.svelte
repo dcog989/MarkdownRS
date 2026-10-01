@@ -47,7 +47,7 @@ function handleKeydown(e: KeyboardEvent) {
         type="text"
         bind:value={inputValue}
         onkeydown={handleKeydown}
-        aria-label={dialogStore.promptOptions.message || $_('modal.promptInput')}
+        aria-label={dialogStore.promptOptions.message || $_("modal.promptInput")}
         class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
       >
     </div>
@@ -55,10 +55,10 @@ function handleKeydown(e: KeyboardEvent) {
 
   {#snippet footer()}
     <button type="button" class="btn-base btn-sm" onclick={handleConfirm}>
-      {$_('common.ok')}
+      {$_("common.ok")}
     </button>
     <button type="button" class="btn-base btn-sm btn-secondary" onclick={() => resolvePrompt(null)}>
-      {$_('common.cancel')}
+      {$_("common.cancel")}
     </button>
   {/snippet}
 </Modal>

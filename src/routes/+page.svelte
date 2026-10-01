@@ -78,27 +78,27 @@ function onResizeMouseDown(e: MouseEvent) {
           >
             <button
               type="button"
-              aria-label={$_('fileTree.showFileTree')}
+              aria-label={$_("fileTree.showFileTree")}
               class="ft-peek-toolbar"
-              use:tooltip={$_('fileTree.showFileTree')}
+              use:tooltip={$_("fileTree.showFileTree")}
               onclick={handleToggleFileTree}
             >
               <FolderTree
                 size={14}
-                class="shrink-0 transition-colors {peekHovered ? 'text-fg-default' : 'text-fg-muted'}"
+                class="shrink-0 transition-colors {peekHovered ? "text-fg-default" : "text-fg-muted"}"
               />
             </button>
             <div class="flex min-h-0 flex-1 items-center justify-center">
               <button
                 type="button"
-                aria-label={$_('fileTree.showFileTree')}
+                aria-label={$_("fileTree.showFileTree")}
                 class="ft-peek"
-                use:tooltip={$_('fileTree.showFileTree')}
+                use:tooltip={$_("fileTree.showFileTree")}
                 onclick={handleToggleFileTree}
               >
                 <ChevronRight
                   size={44}
-                  class="text-fg-muted transition-opacity {peekHovered ? 'opacity-100' : 'opacity-0'}"
+                  class="text-fg-muted transition-opacity {peekHovered ? "opacity-100" : "opacity-0"}"
                 />
               </button>
             </div>
@@ -123,10 +123,10 @@ function onResizeMouseDown(e: MouseEvent) {
             <TabDropdown
               isOpen={showWriterTabDropdown}
               onSelect={(id) => {
-                                appContext.app.activeTabId = id;
-                                pushToMru(id);
-                                showWriterTabDropdown = false;
-                            }}
+                appContext.app.activeTabId = id;
+                pushToMru(id);
+                showWriterTabDropdown = false;
+              }}
               onClose={() => (showWriterTabDropdown = false)}
             />
           </div>
@@ -141,16 +141,14 @@ function onResizeMouseDown(e: MouseEvent) {
             <div
               class="writer-content relative h-full overflow-hidden"
               style:--writer-wrap={appContext.settings.writerWrapLength}
-              style:flex={showPreview
-                                ? `0 0 ${appContext.settings.splitPercentage * 100}%`
-                                : '1 1 100%'}
+              style:flex={showPreview ? `0 0 ${appContext.settings.splitPercentage * 100}%` : "1 1 100%"}
             >
               {#if appContext.app.writerMode}
-                <div class="absolute top-2 pr-3 z-20" style:right={appContext.settings.showMinimap ? '64px' : '16px'}>
+                <div class="absolute top-2 pr-3 z-20" style:right={appContext.settings.showMinimap ? "64px" : "16px"}>
                   <button
                     type="button"
-                    aria-label={$_('tabBar.menu')}
-                    use:tooltip={$_('tabBar.menu')}
+                    aria-label={$_("tabBar.menu")}
+                    use:tooltip={$_("tabBar.menu")}
                     class="bg-bg-panel border-border-light hover:bg-bg-hover text-fg-default group flex items-center rounded-lg border px-3 py-2 shadow-lg transition-colors"
                     onclick={() => (showWriterMenu = !showWriterMenu)}
                   >
@@ -166,7 +164,7 @@ function onResizeMouseDown(e: MouseEvent) {
               <div
                 role="button"
                 tabindex="0"
-                aria-label={$_('common.resizeSplitView')}
+                aria-label={$_("common.resizeSplitView")}
                 class="resize-handle"
                 style:cursor={splitResize.resizeCursor}
                 onmousedown={onResizeMouseDown}
@@ -184,7 +182,7 @@ function onResizeMouseDown(e: MouseEvent) {
         {:else}
           <div class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
             <Logo class="mb-4 h-16 w-16 opacity-50 grayscale" />
-            <p class="text-sm">{$_('app.newFileHint')}</p>
+            <p class="text-sm">{$_("app.newFileHint")}</p>
           </div>
         {/if}
       </div>

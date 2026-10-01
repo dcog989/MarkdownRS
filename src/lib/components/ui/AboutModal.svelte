@@ -87,16 +87,16 @@ async function checkForUpdates() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} {position} title={$_('about.title')}>
+<Modal bind:isOpen {onClose} {position} title={$_("about.title")}>
   <div class="text-ui flex flex-col items-center gap-4 p-6">
-    <img src="/logo.svg" alt={$_('app.logoAlt')} class="h-20 w-20">
+    <img src="/logo.svg" alt={$_("app.logoAlt")} class="h-20 w-20">
     <h1 class="text-fg-default text-2xl font-bold">{appInfo.name}</h1>
-    <p class="text-fg-muted">{$_('app.tagline')}</p>
-    <p class="text-accent-secondary text-center italic">"{$_('app.quote')}"</p>
+    <p class="text-fg-muted">{$_("app.tagline")}</p>
+    <p class="text-accent-secondary text-center italic">"{$_("app.quote")}"</p>
 
     <div class="mt-4 w-full space-y-2">
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.version')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.version")}</span>
         <span class="text-fg-default flex-1 text-left font-mono font-bold">{appInfo.version}</span>
         <button
           type="button"
@@ -109,12 +109,12 @@ async function checkForUpdates() {
           {:else}
             <RefreshCw size={12} />
           {/if}
-          <span>{$_('about.update')}</span>
+          <span>{$_("about.update")}</span>
         </button>
       </div>
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('common.install')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("common.install")}</span>
         <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.install_path}
           >{appInfo.install_path}</span
         >
@@ -123,12 +123,12 @@ async function checkForUpdates() {
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.install_path)}
         >
-          {$_('common.copy')}
+          {$_("common.copy")}
         </button>
       </div>
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.data')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.data")}</span>
         <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.data_path}
           >{appInfo.data_path}</span
         >
@@ -137,12 +137,12 @@ async function checkForUpdates() {
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.data_path)}
         >
-          {$_('common.copy')}
+          {$_("common.copy")}
         </button>
       </div>
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.config')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.config")}</span>
         <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.config_path}
           >{appInfo.config_path}</span
         >
@@ -151,12 +151,12 @@ async function checkForUpdates() {
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.config_path)}
         >
-          {$_('common.copy')}
+          {$_("common.copy")}
         </button>
       </div>
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.cache')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.cache")}</span>
         <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.cache_path}
           >{appInfo.cache_path}</span
         >
@@ -165,12 +165,12 @@ async function checkForUpdates() {
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.cache_path)}
         >
-          {$_('common.copy')}
+          {$_("common.copy")}
         </button>
       </div>
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_('about.logs')}</span>
+        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.logs")}</span>
         <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.logs_path}
           >{appInfo.logs_path}</span
         >
@@ -179,7 +179,7 @@ async function checkForUpdates() {
           class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.logs_path)}
         >
-          {$_('common.copy')}
+          {$_("common.copy")}
         </button>
       </div>
     </div>
@@ -189,7 +189,7 @@ async function checkForUpdates() {
       class="text-ui-sm text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
       onclick={openLogFile}
     >
-      <span>{$_('about.openLogFile')}</span>
+      <span>{$_("about.openLogFile")}</span>
       <ExternalLink size={12} />
     </button>
 
@@ -200,8 +200,8 @@ async function checkForUpdates() {
     {/if}
 
     <div class="mt-4 text-center text-xs">
-      <p class="text-fg-muted">{$_('app.giants')}</p>
-      <p class="text-fg-muted mt-1">{$_('app.rights')}</p>
+      <p class="text-fg-muted">{$_("app.giants")}</p>
+      <p class="text-fg-muted mt-1">{$_("app.rights")}</p>
     </div>
   </div>
 </Modal>

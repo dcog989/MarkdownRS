@@ -218,10 +218,12 @@ function handleBackdropContextMenu(e: MouseEvent) {
 <div
   role="button"
   tabindex="0"
-  aria-label={$_('modal.closeContextMenu')}
+  aria-label={$_("modal.closeContextMenu")}
   class="fixed inset-0 z-200"
   onclick={onClose}
-  onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClose(); }}
+  onkeydown={(e) => {
+    if (e.key === "Enter" || e.key === " ") onClose();
+  }}
   oncontextmenu={handleBackdropContextMenu}
 >
   <div
@@ -239,17 +241,17 @@ function handleBackdropContextMenu(e: MouseEvent) {
     onkeydown={handleKeydown}
     onmousemove={handleMouseMove}
     onmouseenter={(e) => {
-            // When mouse enters a button, blur any focused element to clear keyboard selection
-            const target = asHTMLElement(e.target);
-            if (!target) return;
-            if (target.tagName === 'BUTTON' && !(target as HTMLButtonElement).disabled) {
-                isKeyboardNav = false;
-                const activeEl = getActiveHTMLElement();
-                if (document.activeElement && activeEl && menuItems.includes(activeEl)) {
-                    activeEl.blur();
-                }
-            }
-        }}
+      // When mouse enters a button, blur any focused element to clear keyboard selection
+      const target = asHTMLElement(e.target);
+      if (!target) return;
+      if (target.tagName === "BUTTON" && !(target as HTMLButtonElement).disabled) {
+        isKeyboardNav = false;
+        const activeEl = getActiveHTMLElement();
+        if (document.activeElement && activeEl && menuItems.includes(activeEl)) {
+          activeEl.blur();
+        }
+      }
+    }}
     data-keyboard-nav={isKeyboardNav}
   >
     {@render children({ submenuSide })}

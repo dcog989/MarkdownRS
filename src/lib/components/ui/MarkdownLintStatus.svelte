@@ -57,7 +57,7 @@ async function copyConfigPath() {
   bind:this={buttonEl}
   type="button"
   class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
-  use:tooltip={$_('lint.title')}
+  use:tooltip={$_("lint.title")}
   onclick={() => (showPopup = true)}
 >
   {#if severityEntry}
@@ -71,7 +71,10 @@ async function copyConfigPath() {
   {/if}
 </button>
 
-{#snippet issueSection(title: string, diags: LintDiagnostic[])}
+{#snippet issueSection(
+  title: string,
+  diags: LintDiagnostic[],
+)}
   <div class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted">
     {title}
     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal"> ({diags.length}) </span>
@@ -85,7 +88,7 @@ async function copyConfigPath() {
     >
       <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
       <div class="min-w-0 flex-1">
-        <span class="font-mono text-xs text-fg-muted"> {translate('statusBar.ln')} {diag.line} </span>
+        <span class="font-mono text-xs text-fg-muted"> {translate("statusBar.ln")} {diag.line} </span>
         <p class="truncate text-fg-default">
           {diag.message}
         </p>
@@ -100,53 +103,55 @@ async function copyConfigPath() {
 {#if showPopup && buttonEl}
   {@const rect = buttonEl.getBoundingClientRect()}
   <ContextMenu x={rect.left} y={rect.bottom + 2} onClose={() => (showPopup = false)}>
-    {#snippet children(_: { submenuSide: 'left' | 'right' })}
+    {#snippet children(_: {
+      submenuSide: "left" | "right";
+    })}
       <div class="min-w-72">
         <div
           class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted"
         >
-          {translate('lint.title')}
+          {translate("lint.title")}
           <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
             ({markdownLintState.issueCount})
           </span>
         </div>
         {#if markdownLintState.diagnostics.length === 0}
           <div class="px-3 py-4 text-center text-sm text-fg-muted">
-            {translate('lint.noIssues')}
+            {translate("lint.noIssues")}
           </div>
         {:else}
           <div class="max-h-80 overflow-y-auto">
             {#if markdownDiags.length > 0}
-              {@render issueSection(translate('lint.issuesTitle'), markdownDiags)}
+              {@render issueSection(translate("lint.issuesTitle"), markdownDiags)}
             {/if}
             {#if grammarDiags.length > 0}
-              {@render issueSection(translate('lint.grammarTitle'), grammarDiags)}
+              {@render issueSection(translate("lint.grammarTitle"), grammarDiags)}
             {/if}
           </div>
         {/if}
         <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
           <span class="text-fg-muted text-[10px]">
-            {translate('lint.rumdlLabel')}: {configPath ?? translate('lint.noConfigFile')}
+            {translate("lint.rumdlLabel")}: {configPath ?? translate("lint.noConfigFile")}
           </span>
           {#if configPath}
             <button
               type="button"
               class="hover:text-fg-default shrink-0 transition-colors"
               onclick={copyConfigPath}
-              title={translate('lint.copyConfigPath')}
+              title={translate("lint.copyConfigPath")}
             >
-              <ClipboardCopy size={10} class={copied ? 'text-accent' : 'text-fg-muted'} />
+              <ClipboardCopy size={10} class={copied ? "text-accent" : "text-fg-muted"} />
             </button>
           {/if}
           <button
             type="button"
             class="text-accent-primary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
             onclick={() => {
-                            showPopup = false;
-                            appContext.interface.showRumdlConfig = true;
-                        }}
+              showPopup = false;
+              appContext.interface.showRumdlConfig = true;
+            }}
           >
-            {translate('lint.editConfig')}
+            {translate("lint.editConfig")}
           </button>
         </div>
       </div>

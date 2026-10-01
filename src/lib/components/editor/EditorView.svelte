@@ -368,8 +368,8 @@ onMount(() => {
   role="none"
   tabindex="-1"
   class="bg-bg-main relative h-full w-full overflow-hidden"
-  class:raw-mode={effectiveMarkdown && appContext.settings.viewMode === 'raw'}
-  class:rendered-mode={effectiveMarkdown && appContext.settings.viewMode === 'rendered'}
+  class:raw-mode={effectiveMarkdown && appContext.settings.viewMode === "raw"}
+  class:rendered-mode={effectiveMarkdown && appContext.settings.viewMode === "rendered"}
   class:markdown-mode={effectiveMarkdown}
   bind:this={editorContainer}
   onclick={() => view?.focus()}
