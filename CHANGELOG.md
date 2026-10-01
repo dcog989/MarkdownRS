@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.62.1 - 2026-10-01
+
+#### Bug Fixes
+
+- (8635278) add accessible label to logo svg - dcog989
+
+- (865d7bb) drop manual log-file creation, use flexi_logger rotation only - dcog989
+
+- (c87c534) use stable log filename and create file eagerly - dcog989
+
+- (de35a10) prefix theme labels for palette search - dcog989
+
+- (f331554) prefix sort operation labels with "Sort" for palette search - dcog989
+
+- (68eb306) escape `&#64;` in changelog - dcog989
+
+#### Refactoring
+
+- (1358034) demote hot-path session, storage and tab events to debug - dcog989
+
+- (ca7fa4d) replace tauri-plugin-log with flexi_logger - dcog989
+
+- - -
+
 ## v1.62.0 - 2026-09-23
 
 #### Features
