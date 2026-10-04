@@ -84,15 +84,16 @@ export const createSpellCheckLinter = () => {
 
               if (customDict.has(wLower)) continue;
 
+              // The backend checks case-sensitively (e.g. "Firefox" is valid but
+              // "firefox" is not), so valid/misspelled caches must preserve case.
               const checkWord = stripPossessiveSuffix(word);
-              const checkLower = checkWord.toLowerCase();
-              if (checkLower !== wLower && customDict.has(checkLower)) continue;
+              if (checkWord !== word && customDict.has(checkWord.toLowerCase())) continue;
 
-              if (validCache.has(checkLower)) {
+              if (validCache.has(checkWord)) {
                 continue;
               }
 
-              if (misspelledCache.has(checkLower)) {
+              if (misspelledCache.has(checkWord)) {
                 const key = `${globalFrom}-${globalTo}`;
                 if (!diagnosticKeys.has(key)) {
                   diagnosticKeys.add(key);
@@ -121,14 +122,11 @@ export const createSpellCheckLinter = () => {
           const misspelled = await callBackend("check_words", { words: wordsArray }, "Editor:Init");
 
           if (misspelled) {
-            const misspelledSet = new Set(misspelled.map((w: string) => w.toLowerCase()));
+            const misspelledSet = new Set(misspelled);
 
             for (const word of wordsArray) {
-              const wLower = word.toLowerCase();
-              const baseLower = stripPossessiveSuffix(word).toLowerCase();
-
-              if (misspelledSet.has(wLower)) {
-                misspelledCache.add(baseLower);
+              if (misspelledSet.has(word)) {
+                misspelledCache.add(word);
 
                 const ranges = wordsToVerify.get(word);
                 if (ranges) {
@@ -147,7 +145,7 @@ export const createSpellCheckLinter = () => {
                   }
                 }
               } else {
-                spellcheckState.addValidWord(baseLower);
+                spellcheckState.addValidWord(word);
               }
             }
           }

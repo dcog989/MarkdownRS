@@ -110,6 +110,12 @@ pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) 
             let mut suggestions = Vec::new();
             dictionary.suggest(&word, &mut suggestions);
             for suggestion in suggestions {
+                // A valid word can be returned as its own "correction" by the
+                // suggester (e.g. a word cached as misspelled due to casing).
+                // Never offer the queried word itself back to the user.
+                if suggestion == word {
+                    continue;
+                }
                 if custom_snapshot.contains(&suggestion.to_lowercase()) {
                     continue;
                 }

@@ -26,7 +26,7 @@ import { addToDictionary } from "$lib/services/dictionaryService";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 
 function opShortcut(opId: string): string {
   return shortcutManager.getShortcutDisplay(`textop.${opId}`);
@@ -194,11 +194,11 @@ function findInvalidWords(text: string): string[] {
 }
 
 async function handleAddAll() {
-  const invalidWords = invalidWordsInSelection.map((w) => w.toLowerCase());
+  const invalidWords = invalidWordsInSelection;
 
-  const newDict = new SvelteSet([...spellcheckState.customDictionary, ...invalidWords]);
+  const newDict = new SvelteSet([...spellcheckState.customDictionary, ...invalidWords.map((w) => w.toLowerCase())]);
   invalidWords.forEach((w) => {
-    spellcheckState.misspelledCache.delete(w);
+    spellcheckState.misspelledCache.delete(stripPossessiveSuffix(w));
   });
   spellcheckState.customDictionary = newDict;
 
@@ -312,7 +312,7 @@ async function handleSendToBrowser() {
               const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
               spellcheckState.customDictionary = newDict;
 
-              spellcheckState.misspelledCache.delete(targetWord.toLowerCase());
+              spellcheckState.misspelledCache.delete(stripPossessiveSuffix(targetWord));
 
               onDictionaryUpdate?.();
               closeMenuAndReset();

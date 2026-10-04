@@ -2,7 +2,7 @@ import { forceLinting } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
 import { SvelteSet } from "svelte/reactivity";
 import { addWordsToDictionary } from "$lib/services/dictionaryService";
-import { spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 import {
   applyImmediateSpellcheck,
   createSpellCheckLinter,
@@ -55,7 +55,7 @@ export const spellCheckKeymap = [
       spellcheckState.customDictionary = newDict;
 
       for (const w of invalidWords) {
-        spellcheckState.misspelledCache.delete(w.toLowerCase());
+        spellcheckState.misspelledCache.delete(stripPossessiveSuffix(w));
       }
 
       invalidateSpellcheckCache();

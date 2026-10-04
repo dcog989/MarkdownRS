@@ -23,7 +23,9 @@ const INIT_COMPLETION_FALLBACK_MS = 60_000;
 // The linter stores possessive forms ("word's") under their base ("word") in
 // both validCache and misspelledCache, and the custom dictionary holds base
 // forms too, so every lookup must strip the suffix through this single helper
-// (preserving the original casing for display) to avoid logic drift.
+// (preserving the original casing for display) to avoid logic drift. The
+// custom dictionary is matched case-insensitively, but the valid/misspelled
+// caches preserve case to match the backend's case-sensitive checking.
 export function stripPossessiveSuffix(word: string): string {
   return word.toLowerCase().endsWith("'s") ? word.slice(0, -2) : word;
 }
@@ -152,8 +154,8 @@ export class SpellcheckManager {
 
   isWordValid(word: string): boolean {
     if (!this.dictionaryLoaded) return true;
-    const w = stripPossessiveSuffix(word).toLowerCase();
-    if (this.customDictionary.has(w)) return true;
+    const w = stripPossessiveSuffix(word);
+    if (this.customDictionary.has(w.toLowerCase())) return true;
     return !this.misspelledCache.has(w);
   }
 
@@ -174,7 +176,7 @@ export class SpellcheckManager {
     const w = word.trim();
     if (!w || !this.dictionaryLoaded) return;
 
-    if (!this.misspelledCache.has(stripPossessiveSuffix(w).toLowerCase())) return;
+    if (!this.misspelledCache.has(stripPossessiveSuffix(w))) return;
 
     if (this.suggestionCache.has(w) || this.pendingFetches.has(w)) return;
 
