@@ -1,6 +1,6 @@
 # MarkdownRS
 
-MarkdownRS is a focused Markdown editor. It prioritises performance and a clean, minimal UI while still being fully featured for technical and general users.
+A Markdown editor that focuses performance and a clean, minimal UI while still being fully featured for technical and general users.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
@@ -13,15 +13,15 @@ The only Markdown editor you need? Many people are saying so.
 ### Editing & Authoring
 
 - Markdown Flavors: GFM (GitHub Flavored Markdown) and CommonMark.
-- Smart Formatting: Auto-Markdown formatting for standards=compliant, consistent output.
+- Smart Formatting: Auto-Markdown formatting for standards-compliant, consistent output.
 - Text Operations: Sort lines, trim whitespace, change case, etc.
 - Rendered Mode: Edit in rendered or raw Markdown mode.
 - Find & Replace: Across all open documents.
 
 ### Performance & Reliability
 
-- Fast, Low Resource Use: Built with a Rust backend for instant startup and smooth editing.
-- Auto-Save: Session persistence with hot-exit support — never lose your work.
+- Fast, Low Resource Use: Tauri / Rust backend and Svelte / TypeScript frontend.
+- Auto-Save: Session persistence with hot-exit support.
 
 ### Preview & Rendering
 
@@ -55,7 +55,7 @@ Flowcharts, sequence diagrams, and other diagrams render in the preview from ```
 
 ### Export
 
-- Export your documents to PDF, PNG, WEBP, or HTML.
+- Export documents to PDF, PNG, WebP, or HTML.
 
 ### Markdown Linting / Formatting
 
@@ -86,7 +86,7 @@ chmod +x MarkdownRS_*.AppImage
 ./MarkdownRS_*.AppImage
 ```
 
-To add it to your application menu and file associations, use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) or [GearLever](https://github.com/mijorus/gearlever).
+To add it to application menu and file associations, use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) or [GearLever](https://github.com/mijorus/gearlever).
 
 #### Debian / Ubuntu
 
@@ -125,12 +125,14 @@ See [Development](#development). You'll need [Rust](https://rustup.rs/), [bun](h
 
 ---
 
-## Code / Dev Stack
+## Technical
+
+### Dev Stack
 
 - [bun](https://bun.com/)
 - [Biome](https://biomejs.dev/)
 - [CodeMirror](https://codemirror.net/)
-- [lefthook](https://github.com/evilmartians/lefthook)
+- [Lefthook](https://github.com/evilmartians/lefthook)
 - [Node.js](https://nodejs.org/)
 - [Rust](https://www.rust-lang.org/)
 - [SQLite](https://sqlite.org/)
@@ -140,7 +142,7 @@ See [Development](#development). You'll need [Rust](https://rustup.rs/), [bun](h
 - [Vite](https://vite.dev/)
 - [Vitest](https://vitest.dev/)
 
-## Development
+### Development
 
 ```sh
 bun install          # Install dependencies
@@ -154,9 +156,7 @@ bun run clean        # Remove build artifacts, target, and node_modules
 bun run package      # build and install
 ```
 
-## Contributing
-
-[Pull Requests](https://github.com/dcog989/MarkdownRS/pulls) and [bug reports / feature requests](https://github.com/dcog989/MarkdownRS/issues) are welcomed.
+---
 
 ## License
 
