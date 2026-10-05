@@ -29,6 +29,7 @@ let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
+let panelOpacity = $derived(isMouseOver ? 1 : 1 - appContext.settings.findPanelTransparency / 100);
 
 export function focusInput() {
   if (searchInputRef) {
@@ -252,7 +253,7 @@ onMount(() => {
   <div
     bind:this={panelRef}
     class="find-panel bg-border-main absolute top-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
-    class:opacity-[0.15]={appContext.settings.findPanelTransparent && !isMouseOver}
+    style:opacity={panelOpacity}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
     onmouseenter={() => (isMouseOver = true)}

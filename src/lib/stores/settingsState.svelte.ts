@@ -36,7 +36,7 @@ export const settingsState = $state({
   defaultIndent: 2,
   lineEndingPreference: "system" as "system" | "LF" | "CRLF",
   tooltipDelay: 1250,
-  findPanelTransparent: false,
+  findPanelTransparency: 0,
   findPanelCloseOnBlur: false,
   languageDictionaries: ["en-US"] as string[],
   technicalDictionaries: false,

@@ -97,6 +97,9 @@ export async function initSettings() {
   if (legacy?.enableAutocomplete === false) {
     settingsState.autocompleteDelay = -1;
   }
+  if (legacy?.findPanelTransparent === true && !Object.hasOwn(legacy, "findPanelTransparency")) {
+    settingsState.findPanelTransparency = 85;
+  }
 
   syncThemeFromSystem();
 
