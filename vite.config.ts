@@ -1,5 +1,12 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import adapter from "@sveltejs/adapter-static";
 import { sveltekit } from "@sveltejs/kit/vite";
+import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 import { defineConfig } from "vite";
+
+const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+const libDir = fileURLToPath(new URL("./src/lib", import.meta.url));
 
 const rawHost = process.env.TAURI_DEV_HOST;
 const unsafeHosts = new Set(["0.0.0.0", "::", "::0", ""]);
@@ -10,7 +17,34 @@ if (rawHost && !host) {
 }
 
 export default defineConfig({
-  plugins: await sveltekit(),
+  plugins: await sveltekit({
+    preprocess: vitePreprocess({ script: true }),
+    onwarn: (warning, handler) => {
+      if (warning.code === "state_referenced_locally" && warning.filename?.includes(".svelte-kit")) {
+        return;
+      }
+      // False positive: Svelte's static analysis can't trace imports used only inside $effect
+      if (warning.code === "unused_import" && warning.filename?.includes("FindReplacePanel.svelte")) {
+        return;
+      }
+      handler(warning);
+    },
+    version: {
+      name: pkg.version,
+    },
+    adapter: adapter({
+      pages: "build",
+      assets: "build",
+      fallback: "404.html",
+      precompress: true,
+      strict: true,
+    }),
+  }),
+  resolve: {
+    alias: {
+      $lib: libDir,
+    },
+  },
   clearScreen: false,
   server: {
     port: 1420,
