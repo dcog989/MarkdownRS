@@ -28,8 +28,8 @@
 - Install: `bun install`
 - Dev: `bun run dev`
 - Test: `bun run test`
-- Lint: `bun run check` (types + frontend (Biome) + backend (cargo clippy))
-- Format: `bun run format` (Biome + cargo fmt)
+- Lint: `bun run check` (types + frontend (Biome) + backend (cargo check + clippy))
+- Fix: `bun run fix` (Biome autofix + cargo clippy --fix + cargo fmt)
 - Build: `bun run build`
 - Release: `bun run release` (Cocogitto, external Rust binary — `cargo install cocogitto` / `pacman -S cocogitto`; config in `cog.toml`, `tag_prefix = "v"`). Bumps the version from conventional commits, syncs manifests via `scripts/sync_version.sh`, writes `CHANGELOG.md` (template `changelog.tpl`), commits and tags, then pushes. Manual version: `bun run version -- 1.2.3`.
 - Update crates: `bun run crates` (requires `cargo-edit`, external Rust binary — `cargo install cargo-edit` / `pacman -S cargo-edit`).

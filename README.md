@@ -147,7 +147,7 @@ See [Development](#development). You'll need [Rust](https://rustup.rs/), [bun](h
 ```sh
 bun install          # Install dependencies
 bun run check        # Full check: Svelte types, Biome lint, and cargo check + clippy
-bun run format       # Format code with Biome + 'cargo fmt'
+bun run fix          # Apply all fixes: Biome autofix, cargo clippy --fix, cargo fmt
 bun run update       # Update packages + crates
 bun run dev          # Start dev server / HMR
 bun run preview      # Preview the production build
