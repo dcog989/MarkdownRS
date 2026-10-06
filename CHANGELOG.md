@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.63.0 - 2026-10-06
+
+#### Features
+
+- (ae26ce0) replace Find Panel Hides toggle with transparency slider - dcog989
+
+#### Bug Fixes
+
+- (2acd526) migrate svelte config into vite plugin for sveltekit 3 - dcog989
+
+- (dccc23e) preserve word casing in valid/misspelled caches - dcog989
+
+#### Refactoring
+
+- (9548a1d) use opacity instead of transparency for sliders - dcog989
+
+- (fa65a1b) unify check/fix scripts and drop format scripts, tidy - dcog989
+
+- - -
+
 ## v1.62.1 - 2026-10-01
 
 #### Bug Fixes
