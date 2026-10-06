@@ -29,7 +29,7 @@ let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
-let panelOpacity = $derived(isMouseOver ? 1 : 1 - appContext.settings.findPanelTransparency / 100);
+let panelOpacity = $derived(isMouseOver ? 1 : appContext.settings.findPanelOpacity / 100);
 
 export function focusInput() {
   if (searchInputRef) {

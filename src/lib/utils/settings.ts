@@ -97,8 +97,17 @@ export async function initSettings() {
   if (legacy?.enableAutocomplete === false) {
     settingsState.autocompleteDelay = -1;
   }
-  if (legacy?.findPanelTransparent === true && !Object.hasOwn(legacy, "findPanelTransparency")) {
-    settingsState.findPanelTransparency = 85;
+  if (legacy && !Object.hasOwn(legacy, "statusBarOpacity")) {
+    if (typeof legacy.statusBarTransparency === "number") {
+      settingsState.statusBarOpacity = 100 - legacy.statusBarTransparency;
+    }
+  }
+  if (legacy && !Object.hasOwn(legacy, "findPanelOpacity")) {
+    if (typeof legacy.findPanelTransparency === "number") {
+      settingsState.findPanelOpacity = 100 - legacy.findPanelTransparency;
+    } else if (legacy.findPanelTransparent === true) {
+      settingsState.findPanelOpacity = 15;
+    }
   }
 
   syncThemeFromSystem();

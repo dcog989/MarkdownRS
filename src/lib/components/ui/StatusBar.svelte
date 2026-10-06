@@ -28,7 +28,7 @@ let preferredExtension = $derived(activeTab?.preferredExtension);
 let path = $derived(activeTab?.path);
 let tabId = $derived(activeTab?.id);
 
-let textOpacity = $derived(1 - appContext.settings.statusBarTransparency / 100);
+let textOpacity = $derived(appContext.settings.statusBarOpacity / 100);
 let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
 let fileType = $derived.by(() => {
@@ -91,8 +91,8 @@ async function copyAllStats() {
 
 <footer
   class="text-ui-sm bg-bg-panel bg-border-main hover:bg-bg-panel! group pointer-events-auto z-50 flex shrink-0 items-center justify-between overflow-hidden border-t px-3 py-1.5 whitespace-nowrap transition-colors duration-200 select-none"
-  style:background-color="color-mix(in srgb, var(--surface-2), transparent {appContext.settings
-    .statusBarTransparency}%)"
+  style:background-color="color-mix(in srgb, var(--surface-2), transparent {100 -
+    appContext.settings.statusBarOpacity}%)"
 >
   <div
     role="button"
