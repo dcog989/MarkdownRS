@@ -346,7 +346,7 @@ export const en = {
     defaultIndentTooltip: "Number of spaces used for indentation.",
     recentChangesCount: "Recent Changes Count",
     recentChangesCountTooltip: "Highlight recent changes. Maximum 99. -1 disables.",
-    recentChangesTimespan: "Recent Changes Time Span in seconds.",
+    recentChangesTimespan: "Recent Changes Period (secs).",
     recentChangesTimespanTooltip: "Time period for recent changes in seconds. Max 9999. 0 unlimited.",
     autoSaveInterval: "Auto Save (secs)",
     autoSaveIntervalTooltip: "Automatically save active file interval in seconds. -1 disables.",
