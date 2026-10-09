@@ -69,16 +69,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
     },
 
     {
-      key: "viewMode",
-      label: "settings.viewMode",
-      type: "select",
-      category: "settings.category.editor",
-      defaultValue: "rendered",
-      options: ["raw", "rendered"],
-      optionLabels: ["settings.viewModeRaw", "settings.viewModeRendered"],
-      tooltip: "settings.viewModeTooltip",
-    },
-    {
       key: "editorFontFamily",
       label: "settings.fontFamily",
       type: "text",
