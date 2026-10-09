@@ -44,20 +44,31 @@ export const createSpellCheckLinter = () => {
 
       const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
 
+      // Container nodes (Paragraph, ListItem, headings) span inline code and
+      // links, so their ranges must be known before scanning container text.
+      const excludedRanges: { from: number; to: number }[] = [];
       syntaxTree(state).iterate({
         from: view.viewport.from,
         to: view.viewport.to,
         enter: (node: SyntaxNodeRef): boolean | undefined => {
           if (
             node.name.includes("Code") ||
-            node.name.includes("Link") ||
-            node.name.includes("Url") ||
+            node.name === "URL" ||
+            node.name === "Autolink" ||
             node.name.includes("Comment") ||
             node.name.includes("Attribute") ||
             node.name === "HtmlTag"
-          )
+          ) {
+            excludedRanges.push({ from: node.from, to: node.to });
             return false;
+          }
+        },
+      });
 
+      syntaxTree(state).iterate({
+        from: view.viewport.from,
+        to: view.viewport.to,
+        enter: (node: SyntaxNodeRef): boolean | undefined => {
           if (safeNodeTypes.has(node.name)) {
             const nodeText = doc.sliceString(node.from, node.to);
             let match: RegExpExecArray | null;
@@ -73,6 +84,8 @@ export const createSpellCheckLinter = () => {
 
               const globalFrom = node.from + match.index;
               const globalTo = globalFrom + word.length;
+
+              if (excludedRanges.some((range) => globalFrom < range.to && globalTo > range.from)) continue;
 
               const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
               const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : "";
