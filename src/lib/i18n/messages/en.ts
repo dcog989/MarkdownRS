@@ -483,6 +483,9 @@ export const en = {
     noMatch: "No files match your search",
     none: "No file history yet",
     helper: "Files you open will appear here",
+    sortBy: "Sort by",
+    sortRecent: "Recent",
+    sortAlphabetical: "Alphabetical",
   },
   data: {
     title: "Data",

@@ -25,15 +25,28 @@ interface Props {
 
 let { isOpen = $bindable(false), onClose }: Props = $props();
 
+type SortOption = "recent" | "alphabetical";
 type SortDirection = "asc" | "desc";
 
 let searchQuery = $state("");
+let sortBy = $state<SortOption>("recent");
 let sortDirection = $state<SortDirection>("desc");
 let filteredFiles = $derived(
   fileHistoryStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
 );
 
-let sortedFiles = $derived(sortDirection === "asc" ? [...filteredFiles].reverse() : filteredFiles);
+let sortedFiles = $derived.by(() => {
+  const files = [...filteredFiles];
+  if (sortBy === "alphabetical") {
+    files.sort((a, b) => {
+      const byName = getFilename(a).localeCompare(getFilename(b));
+      return byName !== 0 ? byName : a.localeCompare(b);
+    });
+    return sortDirection === "desc" ? files.reverse() : files;
+  }
+  // Store order is most-recently-opened first.
+  return sortDirection === "asc" ? files.reverse() : files;
+});
 
 const nav = createListNavigation(
   () => sortedFiles.length,
@@ -53,6 +66,7 @@ $effect(() => {
 
 $effect(() => {
   void searchQuery;
+  void sortBy;
   void sortDirection;
   nav.reset();
 });
@@ -91,6 +105,14 @@ function toggleSortDirection() {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
+          <select
+            bind:value={sortBy}
+            class="text-ui bg-bg-input text-fg-default bg-border-main w-auto cursor-pointer rounded border py-1 pl-3 outline-none"
+            title={$_("fileHistory.sortBy")}
+          >
+            <option value="recent">{$_("fileHistory.sortRecent")}</option>
+            <option value="alphabetical">{$_("fileHistory.sortAlphabetical")}</option>
+          </select>
           <button
             type="button"
             onclick={toggleSortDirection}
