@@ -122,7 +122,7 @@ async function copyConfigPath() {
             {translate("lint.noIssues")}
           </div>
         {:else}
-          <div class="max-h-80 overflow-y-auto">
+          <div class="custom-scrollbar max-h-80 overflow-y-auto">
             {#if markdownDiags.length > 0}
               {@render issueSection(translate("lint.issuesTitle"), markdownDiags)}
             {/if}
@@ -132,7 +132,7 @@ async function copyConfigPath() {
           </div>
         {/if}
         <div class="border-border-secondary flex items-center gap-1 border-t px-3 py-1.5">
-          <span class="text-fg-muted text-[10px]">
+          <span class="text-fg-muted min-w-0 truncate text-[10px]">
             {translate("lint.rumdlLabel")}: {configPath ?? translate("lint.noConfigFile")}
           </span>
           {#if configPath}
