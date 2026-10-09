@@ -11,6 +11,10 @@
   cursor: not-allowed;
 }
 
+.cursor-help {
+  cursor: help;
+}
+
 /* Utility Classes - Overflow */
 .overflow-hidden {
   overflow: hidden;
@@ -31,6 +35,10 @@
 
 .whitespace-pre-line {
   white-space: pre-line;
+}
+
+.text-ellipsis {
+  text-overflow: ellipsis;
 }
 
 .truncate {

@@ -75,7 +75,7 @@ async function copyConfigPath() {
   title: string,
   diags: LintDiagnostic[],
 )}
-  <div class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-wider text-fg-muted">
+  <div class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted">
     {title}
     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal"> ({diags.length}) </span>
   </div>
@@ -108,7 +108,7 @@ async function copyConfigPath() {
     })}
       <div class="min-w-72">
         <div
-          class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-wider text-fg-muted"
+          class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted"
         >
           {translate("lint.title")}
           <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
@@ -140,7 +140,7 @@ async function copyConfigPath() {
               onclick={copyConfigPath}
               title={translate("lint.copyConfigPath")}
             >
-              <ClipboardCopy size={10} class={copied ? "text-accent" : "text-fg-muted"} />
+              <ClipboardCopy size={10} class={copied ? "text-accent-primary" : "text-fg-muted"} />
             </button>
           {/if}
           <button

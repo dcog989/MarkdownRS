@@ -1,5 +1,6 @@
 <script lang="ts">
 import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
@@ -26,10 +27,6 @@ let searchQuery = $state("");
 // @ts-expect-error: used by bind:this in template
 let searchInputRef = $state<HTMLInputElement | null>();
 let dropdownListRef = $state<HTMLDivElement>();
-let lastClientX = 0;
-let lastClientY = 0;
-let ignoreMouseMovement = $state(false);
-let mouseMovementTimer: number | null = null;
 
 let filteredTabs = $derived.by(() => {
   const tabs = appContext.editor.tabs;
@@ -71,40 +68,14 @@ function getTooltipContent(tab: EditorTab): string {
 
 $effect(() => {
   if (isOpen) {
-    lastClientX = 0;
-    lastClientY = 0;
     searchQuery = "";
-    nav.reset();
-    ignoreMouseMovement = true;
-
-    if (mouseMovementTimer !== null) {
-      clearTimeout(mouseMovementTimer);
-    }
-
-    mouseMovementTimer = window.setTimeout(() => {
-      ignoreMouseMovement = false;
-      mouseMovementTimer = null;
-    }, 100);
-  } else {
-    if (mouseMovementTimer !== null) {
-      clearTimeout(mouseMovementTimer);
-      mouseMovementTimer = null;
-    }
+    const activeIndex = untrack(() => appContext.editor.tabs.findIndex((tab) => tab.id === appContext.app.activeTabId));
+    nav.select(activeIndex >= 0 ? activeIndex : 0);
   }
 });
 
 function handleSelect(id: string) {
   onSelect(id);
-}
-
-function handleHover(index: number, e: MouseEvent) {
-  if (ignoreMouseMovement) return;
-
-  if (e.clientX === lastClientX && e.clientY === lastClientY) return;
-
-  lastClientX = e.clientX;
-  lastClientY = e.clientY;
-  nav.select(index);
 }
 
 function handleKeydown(e: KeyboardEvent) {
@@ -129,7 +100,8 @@ function handleKeydown(e: KeyboardEvent) {
     }}
   ></div>
   <div
-    class="bg-bg-panel border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
+    class="border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
+    style:background-color="var(--surface-2)"
     role="menu"
   >
     <div class="border-border-light shrink-0 border-b p-2">
@@ -154,14 +126,13 @@ function handleKeydown(e: KeyboardEvent) {
             class="group flex w-full items-stretch {isSelected
               ? "bg-accent-primary"
               : index % 2 === 1
-                ? "bg-row-even"
-                : "bg-transparent"}"
-            onmousemove={(e) => handleHover(index, e)}
+                ? "bg-row-even hover:bg-bg-hover"
+                : "bg-transparent hover:bg-bg-hover"}"
             use:scrollIntoView={isSelected}
           >
             <button
               type="button"
-              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-ui outline-none transition-opacity {isSelected
+              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-ui outline-none {isSelected
                 ? "text-fg-inverse opacity-100"
                 : isActive
                   ? "text-accent-secondary opacity-60 hover:opacity-100"
@@ -212,8 +183,8 @@ function handleKeydown(e: KeyboardEvent) {
               class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
                 ? "text-fg-muted cursor-not-allowed opacity-30"
                 : isSelected
-                  ? "text-fg-inverse hover:text-danger-text hover:bg-black/40"
-                  : "text-fg-muted hover:text-danger-text hover:bg-black/30"}"
+                  ? "text-fg-inverse hover:text-danger-text hover:bg-bg-hover"
+                  : "text-fg-muted hover:text-danger-text hover:bg-bg-hover"}"
               disabled={tab.isPinned}
               onclick={(e) => {
                 e.stopPropagation();

@@ -35,6 +35,10 @@
   background-color: var(--surface-active, var(--surface-hover));
 }
 
+.bg-surface-backdrop {
+  background-color: var(--surface-backdrop);
+}
+
 .bg-editor-bg {
   background-color: var(--editor-bg);
 }
@@ -90,6 +94,18 @@
 
 .text-accent-link-hover {
   color: var(--accent-link-hover, var(--accent-link));
+}
+
+.text-accent-file {
+  color: var(--accent-file);
+}
+
+.text-accent-filepath {
+  color: var(--accent-filepath);
+}
+
+.text-accent-url {
+  color: var(--accent-url);
 }
 
 .text-danger {

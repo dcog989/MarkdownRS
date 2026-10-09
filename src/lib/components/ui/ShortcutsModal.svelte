@@ -149,14 +149,14 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                  regardless of scroll position within the shortcuts list -->
       <div class="fixed inset-0 z-50">
         <div
-          class="absolute inset-0 bg-black/40"
+          class="absolute inset-0 bg-surface-backdrop"
           role="button"
           tabindex="-1"
           onclick={handleCancelConflict}
           onkeydown={(e) => e.key === "Enter" && handleCancelConflict()}
         ></div>
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
+          <div class="bg-bg-panel border-border-primary pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
             <h3 class="text-fg-default mb-4 text-base font-semibold">{$_("shortcuts.conflictTitle")}</h3>
             <p class="text-fg-muted mb-3 text-ui leading-relaxed">
               <span class="text-fg-default font-mono text-ui">{conflict.key}</span>

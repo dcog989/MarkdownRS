@@ -289,7 +289,7 @@ select {
   color: var(--text-inverse);
 }
 
-.mru-item:hover {
+.mru-item:hover:not([data-selected="true"]) {
   background-color: var(--surface-hover);
   cursor: pointer;
 }

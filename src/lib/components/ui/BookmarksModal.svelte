@@ -273,7 +273,7 @@ function handleKeydown(e: KeyboardEvent) {
           <button
             type="button"
             onclick={handleBrowse}
-            class="btn-base btn-sm bg-bg-panel text-fg-default border-border-main font-medium transition-colors"
+            class="btn-base btn-sm bg-bg-panel text-fg-default border-border-primary font-medium transition-colors"
           >
             {$_("common.browse")}
           </button>

@@ -200,7 +200,7 @@ const actions = $derived<Action[]>([
       <div class="flex flex-col gap-2 items-start">
         <button
           type="button"
-          class="text-ui bg-bg-input text-fg-default border border-border-main rounded py-1.5 px-3 text-left outline-none transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-40 w-fit"
+          class="text-ui bg-bg-input text-fg-default border border-border-primary rounded py-1.5 px-3 text-left outline-none transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-50 w-fit"
           class:text-danger-text={action.danger}
           onclick={action.handler}
           disabled={busy}

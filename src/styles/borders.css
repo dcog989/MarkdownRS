@@ -67,6 +67,10 @@
   border-color: transparent;
 }
 
+.border-border-primary {
+  border-color: var(--border-primary);
+}
+
 .border-border-light {
   border-color: var(--border-secondary);
 }

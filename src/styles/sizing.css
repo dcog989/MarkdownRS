@@ -15,6 +15,10 @@
   width: max-content;
 }
 
+.w-fit {
+  width: fit-content;
+}
+
 .w-px {
   width: 1px;
 }
@@ -95,6 +99,10 @@
   width: 20rem;
 }
 
+.w-96 {
+  width: 24rem;
+}
+
 .w-100 {
   width: 25rem;
 }
@@ -107,6 +115,10 @@
   min-width: 0;
 }
 
+.min-w-8 {
+  min-width: 2rem;
+}
+
 .min-w-17\.5 {
   min-width: 4.375rem;
 }
@@ -115,12 +127,24 @@
   min-width: 5rem;
 }
 
+.min-w-25 {
+  min-width: 6.25rem;
+}
+
 .min-w-40 {
   min-width: 10rem;
 }
 
 .min-w-50 {
   min-width: 12.5rem;
+}
+
+.min-w-60 {
+  min-width: 15rem;
+}
+
+.min-w-72 {
+  min-width: 18rem;
 }
 
 .min-w-75 {
@@ -149,6 +173,10 @@
 
 .max-w-75 {
   max-width: 18.75rem;
+}
+
+.max-w-80 {
+  max-width: 20rem;
 }
 
 .max-w-87\.5 {
@@ -354,6 +382,10 @@
 
 .max-h-3xl {
   max-height: 48rem;
+}
+
+.max-h-80 {
+  max-height: 20rem;
 }
 
 .max-h-96 {

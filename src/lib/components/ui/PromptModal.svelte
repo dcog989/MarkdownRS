@@ -48,7 +48,7 @@ function handleKeydown(e: KeyboardEvent) {
         bind:value={inputValue}
         onkeydown={handleKeydown}
         aria-label={dialogStore.promptOptions.message || $_("modal.promptInput")}
-        class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-ui outline-none focus:ring-2"
+        class="text-fg-default rounded-lg border px-3 py-2 text-ui outline-none"
       >
     </div>
   </div>

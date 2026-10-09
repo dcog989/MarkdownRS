@@ -165,7 +165,7 @@ function injectHtml(node: HTMLElement, content: string) {
     {:else if renderer.showSpinner || (renderer.isRendering && !renderer.htmlContent)}
       <div class="absolute inset-0 flex items-center justify-center opacity-50">
         <div class="flex flex-col items-center gap-2">
-          <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
+          <div class="h-8 w-8 animate-spin rounded-full border-4 border-border-light border-t-accent-secondary"></div>
           <div class="text-ui">{$_("preview.rendering")}</div>
         </div>
       </div>
