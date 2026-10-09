@@ -113,7 +113,7 @@ async function saveConfig() {
   {/snippet}
 
   <div class="flex flex-col gap-4 p-6">
-    <div class="bg-bg-input border-border-light flex w-max items-center gap-1 rounded border p-1">
+    <div class="bg-bg-input border-border-secondary flex w-max items-center gap-1 rounded border p-1">
       <button
         type="button"
         class="text-ui rounded px-3 py-1 transition-colors {scope === "project"
@@ -139,7 +139,7 @@ async function saveConfig() {
     <div class="flex items-center gap-2">
       <span class="text-ui text-fg-muted shrink-0">{translate("rumdlConfig.targetLabel")}</span>
       <span
-        class="bg-bg-panel border-border-light text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono"
+        class="bg-bg-panel border-border-secondary text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono"
       >
         {targetPath}
       </span>

@@ -193,7 +193,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             >
               {translate(commandCategoryKey(category))}
             </h3>
-            <div class="divide-border-main/30 divide-y">
+            <div class="divide-border-primary/30 divide-y">
               {#each defs as def (def.id)}
                 {@const currentIndex = ++globalIndex.value}
                 {@const isSelected = currentIndex === nav.selectedIndex}
@@ -218,7 +218,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                         ? "bg-accent-primary border-accent-primary text-fg-inverse animate-pulse"
                         : isSelected
                           ? "bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse"
-                          : "bg-bg-input text-fg-default bg-border-main hover:border-accent-secondary"}"
+                          : "bg-bg-input text-fg-default bg-border-primary hover:border-accent-secondary"}"
                       onclick={() => startRecording(def.id)}
                     >
                       {recordingCommandId === def.id

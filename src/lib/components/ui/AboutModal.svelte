@@ -100,7 +100,7 @@ async function checkForUpdates() {
         <span class="text-fg-default flex-1 text-left font-mono font-bold">{appInfo.version}</span>
         <button
           type="button"
-          class="text-ui bg-bg-input text-fg-default border-border-light flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
+          class="text-ui bg-bg-input text-fg-default border-border-secondary flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
           onclick={checkForUpdates}
           disabled={isChecking}
         >

@@ -118,7 +118,7 @@ function toggleSortDirection() {
 
   <div class="text-ui">
     {#if sortedFiles.length > 0}
-      <div class="divide-border-main divide-y">
+      <div class="divide-border-primary divide-y">
         {#each sortedFiles as path, index (path)}
           {@const isSelected = index === nav.selectedIndex}
           <div

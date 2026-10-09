@@ -252,7 +252,7 @@ onMount(() => {
 {#if isOpen}
   <div
     bind:this={panelRef}
-    class="find-panel bg-border-main absolute top-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+    class="find-panel bg-border-primary absolute top-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
     style:opacity={panelOpacity}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
@@ -262,14 +262,14 @@ onMount(() => {
     aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
-    <div class="bg-border-main text-fg-default flex items-center border-b p-2">
+    <div class="bg-border-primary text-fg-default flex items-center border-b p-2">
       <div class="flex flex-1 items-center gap-2">
         <span class="text-ui font-semibold"
           >{$_("findReplace.find")} {isReplaceMode ? $_("findReplace.andReplace") : ""}</span
         >
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
+          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
           class:bg-bg-active={isReplaceMode}
           class:text-accent-secondary={isReplaceMode}
           onclick={() => (isReplaceMode = !isReplaceMode)}
@@ -280,7 +280,7 @@ onMount(() => {
       </div>
       <button
         type="button"
-        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
+        class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
         onclick={close}
         title={$_("findReplace.closeEsc")}
       >
@@ -392,7 +392,7 @@ onMount(() => {
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindPrevious}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -401,7 +401,7 @@ onMount(() => {
         </button>
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindNext}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -413,7 +413,7 @@ onMount(() => {
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
             onclick={onReplace}
             disabled={searchScope === "all" || !!searchState.regexError}
           >
@@ -422,7 +422,7 @@ onMount(() => {
           </button>
           <button
             type="button"
-            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
             onclick={onReplaceAll}
             disabled={!!searchState.regexError}
           >

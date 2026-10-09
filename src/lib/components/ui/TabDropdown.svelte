@@ -100,11 +100,11 @@ function handleKeydown(e: KeyboardEvent) {
     }}
   ></div>
   <div
-    class="border-border-light absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
+    class="border-border-secondary absolute top-full left-0 z-50 mt-1 flex max-h-[calc(100vh-120px)] w-80 flex-col rounded-lg border shadow-2xl"
     style:background-color="var(--surface-2)"
     role="menu"
   >
-    <div class="border-border-light shrink-0 border-b p-2">
+    <div class="border-border-secondary shrink-0 border-b p-2">
       <input
         use:focusOnMount={CONFIG.UI_TIMING.FOCUS_DELAY_MS}
         bind:this={searchInputRef}

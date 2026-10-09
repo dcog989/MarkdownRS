@@ -71,7 +71,7 @@
   border-color: var(--border-primary);
 }
 
-.border-border-light {
+.border-border-secondary {
   border-color: var(--border-secondary);
 }
 
@@ -136,11 +136,11 @@
   border-color: var(--border-primary);
 }
 
-.divide-border-main > :not([hidden]) ~ :not([hidden]) {
+.divide-border-primary > :not([hidden]) ~ :not([hidden]) {
   border-color: var(--border-primary);
 }
 
-.divide-border-main\/30 > :not([hidden]) ~ :not([hidden]) {
+.divide-border-primary\/30 > :not([hidden]) ~ :not([hidden]) {
   border-color: oklch(from var(--border-primary) l c h / 0.3);
 }
 

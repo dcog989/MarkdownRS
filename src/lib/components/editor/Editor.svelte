@@ -300,10 +300,10 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         style="padding-top: 7.5rem"
       >
         <div
-          class="bg-bg-panel border-border-light pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
+          class="bg-bg-panel border-border-secondary pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
         >
           <div
-            class="text-fg-muted border-border-light border-b px-4 py-3 text-ui-sm font-medium uppercase tracking-wide"
+            class="text-fg-muted border-border-secondary border-b px-4 py-3 text-ui-sm font-medium uppercase tracking-wide"
           >
             {$_("editor.recentlyClosed")}
           </div>

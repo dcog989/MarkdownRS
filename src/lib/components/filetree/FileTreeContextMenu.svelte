@@ -39,7 +39,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
     </button>
 
     {#if entry}
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
       {#if !entry.is_dir}
         <button
           type="button"
@@ -75,7 +75,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
         <span class="flex-1">{$_("fileTree.revealInFileManager")}</span>
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"

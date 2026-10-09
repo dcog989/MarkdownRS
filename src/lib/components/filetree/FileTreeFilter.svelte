@@ -8,7 +8,7 @@ let { value = $bindable(""), loading = false } = $props<{
 }>();
 </script>
 
-<div class="ft-filter border-border-light shrink-0 border-b">
+<div class="ft-filter border-border-secondary shrink-0 border-b">
   <span class="ft-filter-icon">
     {#if loading}
       <LoaderCircle size={13} class="animate-spin" />

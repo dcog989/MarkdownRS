@@ -56,7 +56,7 @@ async function handleNewTab() {
         {/if}
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"
@@ -70,7 +70,7 @@ async function handleNewTab() {
         {/if}
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
     </div>
 
     <Submenu

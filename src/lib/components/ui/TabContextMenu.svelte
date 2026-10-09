@@ -63,7 +63,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         {/if}
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"
@@ -95,7 +95,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         {/if}
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
     </div>
 
     <Submenu
@@ -121,7 +121,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       {/each}
     </Submenu>
 
-    <div class="bg-border-main my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
+    <div class="bg-border-primary my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
 
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
       <button
@@ -141,7 +141,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         <ArrowRight size={14} class="opacity-70" /><span>{$_("tabContextMenu.moveToEnd")}</span>
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"
@@ -185,7 +185,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       {/each}
     </Submenu>
 
-    <div class="bg-border-main my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
+    <div class="bg-border-primary my-1 h-px" onmouseenter={() => (ctx.activeSubmenu = null)} role="none"></div>
 
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
       <button
@@ -242,7 +242,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
     </Submenu>
 
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"
@@ -275,7 +275,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         <FolderSearch size={14} class="opacity-70" /><span>{$_("tabContextMenu.revealInFileManager")}</span>
       </button>
 
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
 
       <button
         type="button"

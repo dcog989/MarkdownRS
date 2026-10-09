@@ -47,10 +47,6 @@
   background-color: transparent;
 }
 
-.bg-white\/10 {
-  background-color: oklch(from var(--text-primary) l c h / 0.08);
-}
-
 .bg-danger\/10 {
   background-color: oklch(from var(--danger) l c h / 0.1);
 }
@@ -59,12 +55,8 @@
   background-color: oklch(from var(--accent-primary) l c h / 0.2);
 }
 
-.bg-border-main {
+.bg-border-primary {
   background-color: var(--border-primary);
-}
-
-.bg-border-light {
-  background-color: var(--border-secondary);
 }
 
 /* Color Classes - Text */

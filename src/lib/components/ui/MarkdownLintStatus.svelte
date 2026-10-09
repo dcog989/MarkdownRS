@@ -75,7 +75,9 @@ async function copyConfigPath() {
   title: string,
   diags: LintDiagnostic[],
 )}
-  <div class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted">
+  <div
+    class="border-border-secondary border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted"
+  >
     {title}
     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal"> ({diags.length}) </span>
   </div>
@@ -95,7 +97,7 @@ async function copyConfigPath() {
       </div>
     </button>
     {#if i < diags.length - 1}
-      <div class="border-border-light border-t"></div>
+      <div class="border-border-secondary border-t"></div>
     {/if}
   {/each}
 {/snippet}
@@ -108,7 +110,7 @@ async function copyConfigPath() {
     })}
       <div class="min-w-72">
         <div
-          class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted"
+          class="border-border-secondary border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-widest text-fg-muted"
         >
           {translate("lint.title")}
           <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
@@ -129,7 +131,7 @@ async function copyConfigPath() {
             {/if}
           </div>
         {/if}
-        <div class="border-border-light flex items-center gap-1 border-t px-3 py-1.5">
+        <div class="border-border-secondary flex items-center gap-1 border-t px-3 py-1.5">
           <span class="text-fg-muted text-[10px]">
             {translate("lint.rumdlLabel")}: {configPath ?? translate("lint.noConfigFile")}
           </span>

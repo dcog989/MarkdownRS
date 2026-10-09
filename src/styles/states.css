@@ -1,8 +1,4 @@
 /* Hover States */
-.hover\:bg-white\/10:hover {
-  background-color: oklch(from var(--text-primary) l c h / 0.08);
-}
-
 .hover\:bg-accent-primary:hover {
   background-color: var(--accent-primary);
 }

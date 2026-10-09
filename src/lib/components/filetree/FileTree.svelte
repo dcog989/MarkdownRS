@@ -265,7 +265,7 @@ let contextMenuY = $state(0);
 </script>
 
 <div
-  class="bg-bg-panel border-border-light file-tree-root relative flex h-full flex-col overflow-hidden border-r"
+  class="bg-bg-panel border-border-secondary file-tree-root relative flex h-full flex-col overflow-hidden border-r"
   style:width={`${appContext.settings.fileTreeWidth}px`}
   style:--ft-row-height={`${ROW_HEIGHT}px`}
 >

@@ -66,7 +66,7 @@ function closeMenu() {
   <div
     role="dialog"
     tabindex="-1"
-    class="bg-bg-panel border-border-light text-fg-default absolute top-full right-0 z-200 mt-1 rounded-lg border py-1 shadow-xl w-80"
+    class="bg-bg-panel border-border-secondary text-fg-default absolute top-full right-0 z-200 mt-1 rounded-lg border py-1 shadow-xl w-80"
     onclick={(e) => e.stopPropagation()}
     onkeydown={() => {}}
   >
@@ -107,7 +107,7 @@ function closeMenu() {
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.fileHistory}</span>
     </button>
 
-    <div class="bg-border-main my-1 h-px"></div>
+    <div class="bg-border-primary my-1 h-px"></div>
 
     <button
       type="button"
@@ -155,7 +155,7 @@ function closeMenu() {
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.writerMode}</span>
     </button>
 
-    <div class="bg-border-main my-1 h-px"></div>
+    <div class="bg-border-primary my-1 h-px"></div>
 
     <button
       type="button"

@@ -144,7 +144,7 @@ function handleKeydown(e: KeyboardEvent) {
     tabindex="0"
     onclick={toggleDropdown}
     onkeydown={handleKeydown}
-    class="text-ui bg-bg-input text-fg-default bg-border-main focus:border-accent-primary flex w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none"
+    class="text-ui bg-bg-input text-fg-default bg-border-primary focus:border-accent-primary flex w-full cursor-pointer items-center justify-between gap-2 rounded border px-2 py-1.5 text-left transition-colors outline-none"
   >
     <div class="flex flex-1 flex-wrap items-center gap-1.5">
       {#if selected.length === 0}
@@ -173,7 +173,7 @@ function handleKeydown(e: KeyboardEvent) {
 
   {#if isOpen}
     <div
-      class="bg-bg-panel bg-border-main absolute z-50 w-full overflow-y-auto rounded border shadow-lg {dropdownPosition ===
+      class="bg-bg-panel bg-border-primary absolute z-50 w-full overflow-y-auto rounded border shadow-lg {dropdownPosition ===
       "above"
         ? "bottom-full mb-1"
         : "top-full mt-1"}"

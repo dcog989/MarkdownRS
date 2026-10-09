@@ -264,7 +264,7 @@ async function handleSendToBrowser() {
         {/snippet}
         {#each ops as op, i (i)}
           {#if op.divider}
-            <div class="bg-border-main my-1 h-px"></div>
+            <div class="bg-border-primary my-1 h-px"></div>
           {:else}
             {@const id = op.id}
             <button
@@ -304,7 +304,7 @@ async function handleSendToBrowser() {
           </button>
         {/each}
         {#if canAddSingle}
-          <div class="bg-border-main my-1 h-px"></div>
+          <div class="bg-border-primary my-1 h-px"></div>
           <button
             type="button"
             class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
@@ -334,7 +334,7 @@ async function handleSendToBrowser() {
           </button>
         {/if}
       {/if}
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
     {/if}
 
     <div onmouseenter={() => (activeSubmenu = null)} role="none">
@@ -375,7 +375,7 @@ async function handleSendToBrowser() {
       </button>
     </div>
 
-    <div class="bg-border-main my-1 h-px"></div>
+    <div class="bg-border-primary my-1 h-px"></div>
 
     <button
       type="button"
@@ -392,14 +392,14 @@ async function handleSendToBrowser() {
     </button>
 
     {#if selectedText}
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
       {@render opSubmenu(CaseSensitive, $_("editorContextMenu.changeCase"), "case", caseOps)}
       {@render opSubmenu(TextAlignStart, $_("editorContextMenu.formatLines"), "format", formatOps)}
       {@render opSubmenu(ArrowUpDown, $_("editorContextMenu.sortLines"), "sort", sortOps)}
       {@render opSubmenu(Rotate3d, $_("editorContextMenu.transformLines"), "transform", transformOps)}
     {/if}
 
-    <div class="bg-border-main my-1 h-px"></div>
+    <div class="bg-border-primary my-1 h-px"></div>
 
     <button
       type="button"
@@ -414,7 +414,7 @@ async function handleSendToBrowser() {
     </button>
 
     {#if selectedText}
-      <div class="bg-border-main my-1 h-px"></div>
+      <div class="bg-border-primary my-1 h-px"></div>
       <button
         type="button"
         class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"

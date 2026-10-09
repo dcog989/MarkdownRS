@@ -96,7 +96,7 @@ onMount(() => {
       aria-live="polite"
     >
       <div
-        class="bg-border-main bg-bg-panel text-fg-default flex items-center gap-3 rounded-lg border border-l-3 px-4 py-3 shadow-lg {colorClass.split(
+        class="bg-border-primary bg-bg-panel text-fg-default flex items-center gap-3 rounded-lg border border-l-3 px-4 py-3 shadow-lg {colorClass.split(
           " ",
         )[1]}"
       >

@@ -23,7 +23,7 @@ function handleLockToggle() {
 }
 </script>
 
-<div class="border-border-light flex h-8 shrink-0 items-center gap-1 border-b pl-2 pr-1">
+<div class="border-border-secondary flex h-8 shrink-0 items-center gap-1 border-b pl-2 pr-1">
   <div class="text-fg-muted flex shrink-0 items-center">
     <button
       type="button"

@@ -261,7 +261,7 @@ function handleKeydown(e: KeyboardEvent) {
   {/snippet}
 
   {#if showAddForm}
-    <div class="bg-bg-input bg-border-main border-b px-4 py-3">
+    <div class="bg-bg-input bg-border-primary border-b px-4 py-3">
       <div class="space-y-2">
         <div class="flex gap-2">
           <Input
@@ -307,7 +307,7 @@ function handleKeydown(e: KeyboardEvent) {
 
   <div class="text-ui">
     {#if sortedBookmarks.length > 0}
-      <div class="divide-border-main divide-y">
+      <div class="divide-border-primary divide-y">
         {#each sortedBookmarks as bookmark, index (bookmark.id)}
           {@const isSelected = index === nav.selectedIndex}
           <div
