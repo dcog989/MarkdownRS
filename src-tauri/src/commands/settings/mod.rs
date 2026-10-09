@@ -36,7 +36,7 @@ pub async fn get_theme_css(app_handle: tauri::AppHandle, theme_name: String) -> 
     } else {
         themes::read_css(&app_handle, &theme_name).await?
     };
-    Ok(themes::wrap_theme_css(&css))
+    Ok(css)
 }
 
 #[tauri::command]

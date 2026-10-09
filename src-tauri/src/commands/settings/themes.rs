@@ -16,17 +16,6 @@ const MAX_CACHED_THEMES: usize = 32;
 
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
-const SHARED_EDITOR_CSS: &str = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/_editor.css"));
-
-pub fn wrap_theme_css(css: &str) -> String {
-    let mut result = String::with_capacity(SHARED_EDITOR_CSS.len() + css.len() + 2);
-    result.push_str(SHARED_EDITOR_CSS);
-    result.push('\n');
-    result.push('\n');
-    result.push_str(css);
-    result
-}
-
 fn keyed(name: &str) -> String {
     name.trim().to_lowercase().replace(' ', "-")
 }
