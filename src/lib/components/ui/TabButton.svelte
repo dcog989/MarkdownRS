@@ -124,3 +124,13 @@ let tooltipContent = $derived.by(() => {
     {/if}
   {/if}
 </div>
+
+<style>
+/* Keep the close button on a persistent compositing layer. WebKitGTK
+     otherwise builds and tears down the layer as an unpinned tab is hovered,
+     re-rasterizing the editor beneath and making the document flash. */
+.close-btn-wrapper {
+  will-change: opacity;
+  transform: translateZ(0);
+}
+</style>

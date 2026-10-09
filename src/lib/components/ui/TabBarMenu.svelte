@@ -72,7 +72,7 @@ function closeMenu() {
   >
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleCommandPalette();
         closeMenu();
@@ -84,7 +84,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleBookmarks();
         closeMenu();
@@ -96,7 +96,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleFileHistory();
         closeMenu();
@@ -111,7 +111,7 @@ function closeMenu() {
 
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       class:opacity-50={!isPreviewAvailable}
       class:cursor-not-allowed={!isPreviewAvailable}
       onclick={() => {
@@ -131,7 +131,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleFileTree();
         saveSettings();
@@ -144,7 +144,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         handleWriterMode();
         closeMenu();
@@ -159,7 +159,7 @@ function closeMenu() {
 
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleSettings();
         closeMenu();
@@ -170,7 +170,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui menu-item"
       onclick={() => {
         toggleAbout();
         closeMenu();

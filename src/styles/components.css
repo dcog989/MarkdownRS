@@ -340,6 +340,20 @@ select {
   color: var(--text-inverse);
 }
 
+/* Context-menu rows: layout + hover fade. The hover background itself comes
+   from `.bg-bg-panel button:hover` (states.css) for every menu button. */
+.menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  text-align: left;
+  transition-property: background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
 /* MRU List Items */
 .mru-item {
   display: flex;

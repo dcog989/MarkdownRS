@@ -45,11 +45,7 @@ async function handleNewTab() {
     submenuSide: _submenuSide,
   })}
     <div onmouseenter={() => (activeSubmenu = null)} role="none">
-      <button
-        type="button"
-        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={handleNewTab}
-      >
+      <button type="button" class="text-ui menu-item" onclick={handleNewTab}>
         <FilePlus size={14} class="opacity-70" /><span class="flex-1">{$_("tabBarContextMenu.newTab")}</span>
         {#if newTabShortcut}
           <span class="text-ui-sm opacity-40">{newTabShortcut}</span>
@@ -58,12 +54,7 @@ async function handleNewTab() {
 
       <div class="bg-border-primary my-1 h-px"></div>
 
-      <button
-        type="button"
-        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        disabled={!hasUnsavedTabs}
-        onclick={handleSaveAll}
-      >
+      <button type="button" class="text-ui menu-item" disabled={!hasUnsavedTabs} onclick={handleSaveAll}>
         <Save size={14} class="opacity-70" /><span class="flex-1">{$_("tabBarContextMenu.saveAll")}</span>
         {#if saveAllShortcut}
           <span class="text-ui-sm opacity-40">{saveAllShortcut}</span>
@@ -82,24 +73,19 @@ async function handleNewTab() {
       }}
     >
       {#snippet trigger()}
-        <button type="button" class="text-ui hover-surface flex w-full items-center px-3 py-1.5 text-left">
+        <button type="button" class="text-ui menu-item">
           <Files size={14} class="mr-2 opacity-70" />
           <span>{$_("tabBarContextMenu.closeMany")}</span>
           <span class="ml-auto opacity-60">›</span>
         </button>
       {/snippet}
 
-      <button
-        type="button"
-        class="text-ui hover-surface w-full px-3 py-1.5 text-left"
-        disabled={!hasSavedTabs}
-        onclick={() => handleCloseMany("saved")}
-      >
+      <button type="button" class="text-ui menu-item" disabled={!hasSavedTabs} onclick={() => handleCloseMany("saved")}>
         {$_("tabBarContextMenu.closeSaved")}
       </button>
       <button
         type="button"
-        class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+        class="text-ui menu-item"
         disabled={!hasUnsavedTabs}
         onclick={() => handleCloseMany("unsaved")}
       >
@@ -108,18 +94,14 @@ async function handleNewTab() {
       {#if hasPinnedTabs}
         <button
           type="button"
-          class="text-ui hover-surface w-full px-3 py-1.5 text-left"
+          class="text-ui menu-item"
           disabled={!hasUnpinnedTabs}
           onclick={() => handleCloseMany("unpinned")}
         >
           {$_("tabBarContextMenu.closeUnpinned")}
         </button>
       {/if}
-      <button
-        type="button"
-        class="text-ui hover-surface w-full px-3 py-1.5 text-left"
-        onclick={() => handleCloseMany("all")}
-      >
+      <button type="button" class="text-ui menu-item" onclick={() => handleCloseMany("all")}>
         {$_("tabBarContextMenu.closeAll")}
       </button>
     </Submenu>

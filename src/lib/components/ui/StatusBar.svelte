@@ -238,11 +238,7 @@ async function copyAllStats() {
 
 {#if showMenu}
   <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
-    <button
-      type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-      onclick={copyAllStats}
-    >
+    <button type="button" class="text-ui menu-item" onclick={copyAllStats}>
       <ClipboardCopy size={14} class="opacity-70" />
       <span>{$_("statusBar.copyAllStats")}</span>
     </button>

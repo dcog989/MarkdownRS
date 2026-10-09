@@ -258,7 +258,7 @@ async function handleSendToBrowser() {
         }}
       >
         {#snippet trigger()}
-          <button type="button" class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
+          <button type="button" class="text-ui menu-item">
             <IconCmp size={14} /><span>{label}</span><span class="ml-auto opacity-50">›</span>
           </button>
         {/snippet}
@@ -267,11 +267,7 @@ async function handleSendToBrowser() {
             <div class="bg-border-primary my-1 h-px"></div>
           {:else}
             {@const id = op.id}
-            <button
-              type="button"
-              class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-              onclick={() => handleOp(id)}
-            >
+            <button type="button" class="text-ui menu-item" onclick={() => handleOp(id)}>
               <span class="flex-1">{translate(op.label ?? "")}</span>
               {#if id && opShortcut(id)}
                 <span class="text-ui-sm opacity-40">{opShortcut(id)}</span>
@@ -295,11 +291,7 @@ async function handleSendToBrowser() {
         </div>
       {:else}
         {#each suggestions as s, i (i)}
-          <button
-            type="button"
-            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium"
-            onclick={() => onReplaceWord?.(s)}
-          >
+          <button type="button" class="text-ui menu-item font-medium" onclick={() => onReplaceWord?.(s)}>
             <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
           </button>
         {/each}
@@ -307,7 +299,7 @@ async function handleSendToBrowser() {
           <div class="bg-border-primary my-1 h-px"></div>
           <button
             type="button"
-            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            class="text-ui menu-item"
             onclick={async () => {
               const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
               spellcheckState.customDictionary = newDict;
@@ -325,11 +317,7 @@ async function handleSendToBrowser() {
           </button>
         {/if}
         {#if canAddAll}
-          <button
-            type="button"
-            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-            onclick={handleAddAll}
-          >
+          <button type="button" class="text-ui menu-item" onclick={handleAddAll}>
             <BookText size={14} /><span>{$_("editorContextMenu.addAllInvalid")}</span>
           </button>
         {/if}
@@ -341,7 +329,7 @@ async function handleSendToBrowser() {
       {#if selectedText}
         <button
           type="button"
-          class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+          class="text-ui menu-item"
           onclick={() => {
             onCut?.();
             closeMenuAndReset();
@@ -352,7 +340,7 @@ async function handleSendToBrowser() {
         </button>
         <button
           type="button"
-          class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+          class="text-ui menu-item"
           onclick={() => {
             onCopy?.();
             closeMenuAndReset();
@@ -364,7 +352,7 @@ async function handleSendToBrowser() {
       {/if}
       <button
         type="button"
-        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui menu-item"
         onclick={() => {
           onPaste?.();
           closeMenuAndReset();
@@ -377,11 +365,7 @@ async function handleSendToBrowser() {
 
     <div class="bg-border-primary my-1 h-px"></div>
 
-    <button
-      type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-      onclick={() => handleOp("format-document")}
-    >
+    <button type="button" class="text-ui menu-item" onclick={() => handleOp("format-document")}>
       <WandSparkles size={14} />
       <span class="flex-1"
         >{selectedText ? $_("editorContextMenu.formatSelection") : $_("editorContextMenu.formatDocument")}</span
@@ -401,11 +385,7 @@ async function handleSendToBrowser() {
 
     <div class="bg-border-primary my-1 h-px"></div>
 
-    <button
-      type="button"
-      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-      onclick={() => handleOp("generate-toc")}
-    >
+    <button type="button" class="text-ui menu-item" onclick={() => handleOp("generate-toc")}>
       <List size={14} />
       <span class="flex-1">{$_("editorContextMenu.generateToc")}</span>
       {#if opShortcut("generate-toc")}
@@ -415,11 +395,7 @@ async function handleSendToBrowser() {
 
     {#if selectedText}
       <div class="bg-border-primary my-1 h-px"></div>
-      <button
-        type="button"
-        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
-        onclick={handleSendToBrowser}
-      >
+      <button type="button" class="text-ui menu-item" onclick={handleSendToBrowser}>
         <Search size={14} />
         <span>{$_("editorContextMenu.sendToBrowser")}</span>
       </button>
