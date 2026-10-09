@@ -7118,9 +7118,9 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.78"
+version = "0.2.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d27c32d4d87974aef6e275eb4dff7a3bad1addaa0abbcc0290185d4ad02845a"
+checksum = "16327d5335d93032bfd5643d3ca5588719ac4e55682249b8d4b7d6b5343b2b08"
 dependencies = [
  "blake3",
  "chrono",
@@ -7159,6 +7159,7 @@ dependencies = [
  "toml 1.1.8+spec-1.1.0",
  "toml_edit 0.25.17+spec-1.1.0",
  "tower-lsp",
+ "unicase",
  "unicode-normalization",
  "unicode-width",
  "windows-sys 0.61.2",
@@ -11113,9 +11114,9 @@ dependencies = [
 
 [[package]]
 name = "zstd-sys"
-version = "2.1.0+zstd.1.5.7"
+version = "2.1.1+zstd.1.5.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ef0a8027ec3ee71300ab3bcbcd0393f434aa72b91ca6d635a39941deae8eea0"
+checksum = "aeec9eaf2dffbbd09201e23bd0ffcbaa33bb8e9266a10734fd7ed90a85eca078"
 dependencies = [
  "cc",
  "pkg-config",
