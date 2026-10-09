@@ -60,6 +60,7 @@ export const settingsState = $state({
   fileTreeLocked: false,
   fileTreeLockedRoot: "",
   commandPaletteSort: "categories" as "alphabetical" | "recent" | "most-used" | "categories",
+  commandPaletteSortDirection: "asc" as "asc" | "desc",
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
 });

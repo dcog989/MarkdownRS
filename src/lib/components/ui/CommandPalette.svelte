@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ArrowUpDown, Zap } from "lucide-svelte";
+import { ArrowDown, ArrowUp, Zap } from "lucide-svelte";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import type { Command } from "$lib/commands/commands";
@@ -9,7 +9,7 @@ import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
-import { cycleSortMode, SORT_LABEL_KEYS, sortCommands } from "$lib/utils/commandPaletteSort";
+import { SORT_LABEL_KEYS, SORT_MODES, sortCommands } from "$lib/utils/commandPaletteSort";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
 import { shortcutManager } from "$lib/utils/shortcuts";
@@ -39,6 +39,7 @@ let flatOps = $derived(
   sortCommands(
     filteredCommands,
     settingsState.commandPaletteSort,
+    settingsState.commandPaletteSortDirection,
     settingsState.commandUsage,
     settingsState.commandUsageCounts,
   ),
@@ -100,6 +101,10 @@ function close() {
   isOpen = false;
   if (onClose) onClose();
 }
+
+function toggleSortDirection() {
+  settingsState.commandPaletteSortDirection = settingsState.commandPaletteSortDirection === "asc" ? "desc" : "asc";
+}
 </script>
 
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
@@ -113,15 +118,31 @@ function close() {
       onClose={close}
     >
       {#snippet extraActions()}
-        <button
-          type="button"
-          class="flex shrink-0 items-center gap-1 rounded px-2 py-1 text-xs text-fg-muted transition-colors outline-none hover-surface"
-          title={translate(SORT_LABEL_KEYS[settingsState.commandPaletteSort])}
-          onclick={cycleSortMode}
-        >
-          <ArrowUpDown size={14} />
-          {translate(SORT_LABEL_KEYS[settingsState.commandPaletteSort])}
-        </button>
+        <div class="flex shrink-0 items-center gap-1">
+          <select
+            bind:value={settingsState.commandPaletteSort}
+            class="text-ui bg-bg-input text-fg-default bg-border-main w-auto cursor-pointer rounded border py-1 pl-1 pr-5 outline-none"
+            title={$_("commandPalette.sortBy")}
+          >
+            {#each SORT_MODES as mode (mode)}
+              <option value={mode}>{translate(SORT_LABEL_KEYS[mode])}</option>
+            {/each}
+          </select>
+          <button
+            type="button"
+            onclick={toggleSortDirection}
+            class="text-fg-muted hover-surface rounded p-1 transition-colors outline-none"
+            title={settingsState.commandPaletteSortDirection === "asc"
+              ? $_("common.sortAscending")
+              : $_("common.sortDescending")}
+          >
+            {#if settingsState.commandPaletteSortDirection === "asc"}
+              <ArrowUp size={16} />
+            {:else}
+              <ArrowDown size={16} />
+            {/if}
+          </button>
+        </div>
       {/snippet}
     </ModalSearchHeader>
   {/snippet}
