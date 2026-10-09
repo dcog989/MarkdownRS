@@ -122,7 +122,11 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     c.imagePasteComp.of(config.isMarkdown ? [createImagePasteExtension()] : []),
     c.decorationComp.of(
       config.isMarkdown
-        ? createMarkdownDecorationsPlugin(appContext.settings.viewMode === "rendered", getTabDirectory)
+        ? createMarkdownDecorationsPlugin(
+            appContext.settings.viewMode === "rendered",
+            getTabDirectory,
+            appContext.settings.colorSwatches,
+          )
         : [],
     ),
     c.rulerComp.of(rulerPlugin),

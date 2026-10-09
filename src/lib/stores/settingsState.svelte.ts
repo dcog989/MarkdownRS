@@ -21,6 +21,7 @@ export const settingsState = $state({
   wrapGuideColumn: 0,
   showWhitespace: false,
   enableFolding: true,
+  colorSwatches: false,
   autocompleteDelay: 850,
   recentChangesTimespan: 600,
   recentChangesCount: 16,

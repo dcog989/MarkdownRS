@@ -30,6 +30,7 @@ export interface DecorationWalk {
   codeBlockLines: Set<number>;
   parserHrs: Set<number>;
   blockquoteLines: Set<number>;
+  colorSwatches: boolean;
 }
 
 /**

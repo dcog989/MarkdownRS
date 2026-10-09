@@ -336,6 +336,8 @@ export const en = {
     autocompleteDelayTooltip: "Autocomplete suggestion delay (ms). -1 disables.",
     minimap: "Minimap",
     minimapTooltip: "Display minimap in place of the scrollbar.",
+    colorSwatches: "Color Swatches",
+    colorSwatchesTooltip: "Show a swatch before color values (HEX, RGB, HSL, OKLCH, …) in rendered mode.",
     folding: "Content Folding",
     foldingTooltip: "Show fold arrows in the gutter to collapse headings and code blocks.",
     writerWrapLength: "Writer Mode Wrap Length.",

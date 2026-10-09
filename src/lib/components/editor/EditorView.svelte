@@ -224,8 +224,11 @@ $effect(() => {
   if (!view) return;
   const md = effectiveMarkdown;
   const rendered = appContext.settings.viewMode === "rendered";
+  const colorSwatches = appContext.settings.colorSwatches;
   view.dispatch({
-    effects: comps.decorationComp.reconfigure(md ? createMarkdownDecorationsPlugin(rendered, getTabDirectory) : []),
+    effects: comps.decorationComp.reconfigure(
+      md ? createMarkdownDecorationsPlugin(rendered, getTabDirectory, colorSwatches) : [],
+    ),
   });
 });
 

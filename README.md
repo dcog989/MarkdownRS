@@ -16,6 +16,7 @@ The only Markdown editor you need? Many people are saying so.
 - Smart Formatting: Auto-Markdown formatting for standards-compliant, consistent output.
 - Text Operations: Sort lines, trim whitespace, change case, etc.
 - Rendered Mode: Edit in rendered or raw Markdown mode.
+- Optional color swatches prefixed to HEX, RGB, HSL, etc.
 - Find & Replace: Across all open documents.
 
 ### Performance & Reliability

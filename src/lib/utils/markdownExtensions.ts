@@ -8,6 +8,7 @@ import {
   collectCallouts,
   collectRawCalloutDecorations,
 } from "./markdownCallout";
+import { collectColorSwatches } from "./markdownColorSwatch";
 import { renderedCopyHandler } from "./markdownCopy";
 import {
   type CalloutInfo,
@@ -312,6 +313,7 @@ function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   collectBulletPoint(walk, line);
   collectStrikethrough(walk, line);
   collectHorizontalRule(walk, line);
+  collectColorSwatches(walk, line);
 }
 
 function collectBlockquoteLine(walk: DecorationWalk, line: Line): void {
@@ -392,6 +394,7 @@ function buildRawDecorations(
     codeBlockLines: new Set<number>(),
     parserHrs: new Set<number>(),
     blockquoteLines: new Set<number>(),
+    colorSwatches: false,
   };
 
   for (const { from, to } of view.visibleRanges) {
@@ -438,7 +441,12 @@ function buildRawDecorations(
  * construct lives in its own collector so the passes stay readable without
  * splitting into repeated per-construct tree walks.
  */
-function buildDecorations(view: EditorView, rendered: boolean, getTabDirectory: GetTabDirectory): DecorationSet {
+function buildDecorations(
+  view: EditorView,
+  rendered: boolean,
+  getTabDirectory: GetTabDirectory,
+  colorSwatches: boolean,
+): DecorationSet {
   const callouts = collectCallouts(view);
   const ranges: Range<Decoration>[] = [];
 
@@ -462,6 +470,7 @@ function buildDecorations(view: EditorView, rendered: boolean, getTabDirectory: 
     codeBlockLines: new Set<number>(),
     parserHrs: new Set<number>(),
     blockquoteLines: new Set<number>(),
+    colorSwatches,
   };
 
   collectCalloutDecorations(walk);
@@ -489,13 +498,17 @@ function buildDecorations(view: EditorView, rendered: boolean, getTabDirectory: 
   return Decoration.set(ranges, true);
 }
 
-export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirectory: GetTabDirectory): Extension[] {
+export function createMarkdownDecorationsPlugin(
+  rendered: boolean,
+  getTabDirectory: GetTabDirectory,
+  colorSwatches = false,
+): Extension[] {
   return [
     ViewPlugin.fromClass(
       class {
         decorations: DecorationSet;
         constructor(view: EditorView) {
-          this.decorations = buildDecorations(view, rendered, getTabDirectory);
+          this.decorations = buildDecorations(view, rendered, getTabDirectory, colorSwatches);
         }
         update(update: ViewUpdate) {
           if (
@@ -508,7 +521,7 @@ export function createMarkdownDecorationsPlugin(rendered: boolean, getTabDirecto
             // headings, callouts) paint right after a tab switch or scroll.
             syntaxTree(update.startState) !== syntaxTree(update.state)
           ) {
-            this.decorations = buildDecorations(update.view, rendered, getTabDirectory);
+            this.decorations = buildDecorations(update.view, rendered, getTabDirectory, colorSwatches);
           }
         }
       },

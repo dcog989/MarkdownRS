@@ -123,6 +123,14 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: "settings.minimapTooltip",
     },
     {
+      key: "colorSwatches",
+      label: "settings.colorSwatches",
+      type: "boolean",
+      category: "settings.category.editor",
+      defaultValue: false,
+      tooltip: "settings.colorSwatchesTooltip",
+    },
+    {
       key: "enableFolding",
       label: "settings.folding",
       type: "boolean",
