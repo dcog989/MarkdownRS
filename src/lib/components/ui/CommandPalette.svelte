@@ -35,11 +35,13 @@ let filteredCommands = $derived(
   commands.filter((c: Command) => translate(commandLabel(c)).toLowerCase().includes(query.toLowerCase())),
 );
 
+let sortDirection = $derived(settingsState.commandPaletteSortDirections[settingsState.commandPaletteSort] ?? "asc");
+
 let flatOps = $derived(
   sortCommands(
     filteredCommands,
     settingsState.commandPaletteSort,
-    settingsState.commandPaletteSortDirection,
+    sortDirection,
     settingsState.commandUsage,
     settingsState.commandUsageCounts,
   ),
@@ -103,7 +105,8 @@ function close() {
 }
 
 function toggleSortDirection() {
-  settingsState.commandPaletteSortDirection = settingsState.commandPaletteSortDirection === "asc" ? "desc" : "asc";
+  settingsState.commandPaletteSortDirections[settingsState.commandPaletteSort] =
+    sortDirection === "asc" ? "desc" : "asc";
 }
 </script>
 
@@ -132,11 +135,9 @@ function toggleSortDirection() {
             type="button"
             onclick={toggleSortDirection}
             class="text-fg-muted hover-surface rounded p-1 transition-colors outline-none"
-            title={settingsState.commandPaletteSortDirection === "asc"
-              ? $_("common.sortAscending")
-              : $_("common.sortDescending")}
+            title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
-            {#if settingsState.commandPaletteSortDirection === "asc"}
+            {#if sortDirection === "asc"}
               <ArrowUp size={16} />
             {:else}
               <ArrowDown size={16} />

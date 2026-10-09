@@ -289,9 +289,9 @@ export const en = {
     placeholder: "Search Commands...",
     noMatch: "No commands match your search",
     sortBy: "Sort by",
-    sortAZ: "A-Z",
+    sortAZ: "Alphabetical",
     sortRecent: "Recent",
-    sortMostUsed: "Most Used",
+    sortMostUsed: "Frequent",
     sortCategories: "Categories",
   },
   emojiPicker: {

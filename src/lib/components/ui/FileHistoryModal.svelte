@@ -30,7 +30,10 @@ type SortDirection = "asc" | "desc";
 
 let searchQuery = $state("");
 let sortBy = $state<SortOption>("recent");
-let sortDirection = $state<SortDirection>("desc");
+// Direction is per sort option: alphabetical reads ascending (A-Z), recent reads
+// descending (newest first).
+let sortDirections = $state<Record<SortOption, SortDirection>>({ recent: "desc", alphabetical: "asc" });
+let sortDirection = $derived(sortDirections[sortBy]);
 let filteredFiles = $derived(
   fileHistoryStore.files.filter((path) => path.toLowerCase().includes(searchQuery.toLowerCase())),
 );
@@ -88,7 +91,7 @@ async function handleClearAll() {
 }
 
 function toggleSortDirection() {
-  sortDirection = sortDirection === "asc" ? "desc" : "asc";
+  sortDirections[sortBy] = sortDirection === "asc" ? "desc" : "asc";
 }
 </script>
 

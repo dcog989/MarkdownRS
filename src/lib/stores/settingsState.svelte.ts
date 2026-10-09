@@ -60,7 +60,14 @@ export const settingsState = $state({
   fileTreeLocked: false,
   fileTreeLockedRoot: "",
   commandPaletteSort: "categories" as "alphabetical" | "recent" | "most-used" | "categories",
-  commandPaletteSortDirection: "asc" as "asc" | "desc",
+  // Direction is per sort mode: alphabetical/categories read naturally ascending,
+  // while recent/most-used read naturally descending (newest/most-used first).
+  commandPaletteSortDirections: {
+    alphabetical: "asc",
+    categories: "asc",
+    recent: "desc",
+    "most-used": "desc",
+  } as Record<"alphabetical" | "recent" | "most-used" | "categories", "asc" | "desc">,
   commandUsage: {} as Record<string, number>,
   commandUsageCounts: {} as Record<string, number>,
 });
