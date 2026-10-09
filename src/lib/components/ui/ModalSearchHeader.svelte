@@ -56,12 +56,7 @@ let {
       {@render extraActions()}
     {/if}
 
-    <button
-      type="button"
-      class="btn-icon btn-icon--danger outline-none"
-      onclick={onClose}
-      aria-label={$_("common.close")}
-    >
+    <button type="button" class="btn-icon outline-none" onclick={onClose} aria-label={$_("common.close")}>
       <X size={16} />
     </button>
   </div>

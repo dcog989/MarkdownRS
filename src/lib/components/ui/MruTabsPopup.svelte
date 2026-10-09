@@ -81,19 +81,19 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         </div>
 
         {#if tab.fileCheckFailed}
-          <div class="mru-icon">
+          <div class="row-icon">
             <CircleAlert size={14} class="shrink-0" />
           </div>
         {:else if tab.path && tab.isDirty}
-          <div class="mru-icon mru-icon--dirty">
+          <div class="row-icon mru-icon--dirty">
             <SquarePen size={14} class="shrink-0" />
           </div>
         {:else if !tab.path}
-          <div class="mru-icon">
+          <div class="row-icon">
             <PencilLine size={14} class="shrink-0" />
           </div>
         {:else}
-          <div class="mru-icon">
+          <div class="row-icon">
             <FileText size={14} class="shrink-0" />
           </div>
         {/if}
@@ -101,7 +101,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         <div class="min-w-0 flex-1">
           <div class="truncate font-medium">{tab.title}</div>
           {#if tab.path}
-            <div class="mru-path">{tab.path}</div>
+            <div class="mru-path row-meta">{tab.path}</div>
           {/if}
         </div>
 

@@ -213,12 +213,9 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                   <div class="flex items-center gap-2">
                     <button
                       type="button"
-                      class="min-w-25 rounded border px-3 py-1 text-center font-mono text-ui transition-all
-												{recordingCommandId === def.id
-                        ? "bg-accent-primary border-accent-primary text-fg-inverse animate-pulse"
-                        : isSelected
-                          ? "bg-fg-inverse/20 border-fg-inverse/30 text-fg-inverse"
-                          : "bg-bg-input text-fg-default bg-border-primary hover:border-accent-secondary"}"
+                      class="row-chip min-w-25 rounded border px-3 py-1 text-center font-mono text-ui transition-all"
+                      class:animate-pulse={recordingCommandId === def.id}
+                      class:row-chip--recording={recordingCommandId === def.id}
                       onclick={() => startRecording(def.id)}
                     >
                       {recordingCommandId === def.id
@@ -228,8 +225,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                     {#if appContext.settings.customShortcuts[def.id]}
                       <button
                         type="button"
-                        class="p-1 opacity-0 group-hover:opacity-100"
-                        style:color={isSelected ? "var(--text-inverse)" : "var(--accent-primary)"}
+                        class="btn-icon btn-icon--accent opacity-0 group-hover:opacity-100"
                         onclick={() => resetShortcut(def.id)}
                         title={$_("shortcuts.resetToDefault")}
                       >

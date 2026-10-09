@@ -185,12 +185,7 @@ const actions = $derived<Action[]>([
       <Database size={16} class="text-accent-secondary" />
       <h2 class="text-fg-default text-lg font-semibold">{$_("data.title")}</h2>
     </div>
-    <button
-      type="button"
-      class="btn-icon btn-icon--danger outline-none"
-      onclick={onClose}
-      aria-label={$_("common.close")}
-    >
+    <button type="button" class="btn-icon outline-none" onclick={onClose} aria-label={$_("common.close")}>
       <X size={16} />
     </button>
   {/snippet}

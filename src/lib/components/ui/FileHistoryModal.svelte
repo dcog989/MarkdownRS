@@ -121,7 +121,7 @@ function toggleSortDirection() {
         {#each sortedFiles as path, index (path)}
           {@const isSelected = index === nav.selectedIndex}
           <div
-            class="list-row file-history-row group px-4 py-2.5 transition-colors"
+            class="list-row group px-4 py-2.5 transition-colors"
             class:bg-row-even={index % 2 === 1 && !isSelected}
             data-selected={isSelected}
             use:scrollIntoView={isSelected}
@@ -136,10 +136,10 @@ function toggleSortDirection() {
               }}
             >
               <div class="min-w-0 flex-1">
-                <div class="file-history-title truncate font-medium">
+                <div class="truncate font-medium">
                   {getFilename(path)}
                 </div>
-                <div class="file-history-path text-ui truncate">
+                <div class="row-meta text-ui truncate">
                   {path}
                 </div>
               </div>
@@ -166,32 +166,3 @@ function toggleSortDirection() {
     {/if}
   </div>
 </Modal>
-
-<style>
-.file-history-title {
-  color: var(--text-primary);
-}
-
-.file-history-path {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.file-history-row[data-selected="true"] .file-history-title,
-.file-history-row[data-selected="true"] .file-history-path {
-  color: var(--text-inverse);
-}
-
-.file-history-row[data-selected="true"] .file-history-path {
-  opacity: 0.8;
-}
-
-.file-history-row[data-selected="true"] .btn-icon {
-  color: var(--text-inverse);
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.file-history-row[data-selected="true"] .btn-icon:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-</style>

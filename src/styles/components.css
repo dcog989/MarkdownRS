@@ -328,8 +328,13 @@ select {
   color: var(--text-primary);
 }
 
-/* Selectable list rows: single source of truth for hover + selected state.
+/* Selectable list rows: single source of truth for hover, selected state and
+   the inverse-color treatment applied to content inside a selected row.
    Pair with .bg-row-even for the alternating tint. */
+.list-row {
+  color: var(--text-primary);
+}
+
 .list-row:hover:not([data-selected="true"]) {
   background-color: var(--surface-hover);
   cursor: pointer;
@@ -338,6 +343,71 @@ select {
 .list-row[data-selected="true"] {
   background-color: var(--accent-primary);
   color: var(--text-inverse);
+}
+
+/* Muted secondary text inside a row (paths, dates, hints). */
+.row-meta {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+/* Leading or status icon inside a row. */
+.row-icon {
+  color: var(--icon-color, var(--text-secondary));
+}
+
+/* Tag chip inside a row. */
+.row-tag {
+  background-color: var(--surface-input);
+  color: var(--text-secondary);
+}
+
+/* Bordered chip inside a row (e.g. a keyboard shortcut). */
+.row-chip {
+  background-color: var(--surface-input);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.row-chip:hover:not(.row-chip--recording) {
+  border-color: var(--accent-secondary);
+}
+
+.list-row[data-selected="true"] .row-meta {
+  color: var(--text-inverse);
+  opacity: 0.8;
+}
+
+.list-row[data-selected="true"] .row-icon {
+  color: var(--text-inverse);
+}
+
+.list-row[data-selected="true"] .row-tag {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-inverse);
+}
+
+.list-row[data-selected="true"] .row-chip {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: var(--text-inverse);
+}
+
+/* Recording wins over both the default and the selected chip treatment. */
+.row-chip--recording,
+.list-row[data-selected="true"] .row-chip--recording {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+.list-row[data-selected="true"] .btn-icon {
+  color: var(--text-inverse);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.list-row[data-selected="true"] .btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Context-menu rows: layout + hover fade. The hover background itself comes
@@ -367,7 +437,6 @@ select {
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 100ms;
-  color: var(--text-primary);
 }
 
 .mru-badge {
@@ -389,8 +458,6 @@ select {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.6875rem;
-  opacity: 0.7;
-  color: var(--text-secondary);
 }
 
 .mru-dot {
@@ -401,25 +468,13 @@ select {
   background-color: var(--accent-secondary);
 }
 
-.mru-icon {
-  color: var(--icon-color, var(--text-secondary));
-}
-
 .mru-item[data-selected="true"] .mru-badge {
   background-color: var(--text-inverse);
   color: var(--accent-primary);
 }
 
-.mru-item[data-selected="true"] .mru-path {
-  color: var(--text-inverse);
-}
-
 .mru-item[data-selected="true"] .mru-dot {
   background-color: var(--text-inverse);
-}
-
-.mru-item[data-selected="true"] .mru-icon {
-  color: var(--text-inverse);
 }
 
 /* Scrollbar Styling */

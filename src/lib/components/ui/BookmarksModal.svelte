@@ -307,7 +307,7 @@ function handleKeydown(e: KeyboardEvent) {
           {@const isSelected = index === nav.selectedIndex}
           <div
             out:slide={{ duration: 200 }}
-            class="list-row bookmark-row px-4 py-2.5 transition-colors overflow-hidden"
+            class="list-row px-4 py-2.5 transition-colors overflow-hidden"
             class:bg-row-even={index % 2 === 1 && !isSelected}
             data-selected={isSelected}
             use:scrollIntoView={isSelected}
@@ -336,25 +336,25 @@ function handleKeydown(e: KeyboardEvent) {
                 }}
               >
                 <div class="min-w-0 flex-1">
-                  <div class="title truncate font-medium">
+                  <div class="truncate font-medium">
                     {bookmark.title}
                   </div>
-                  <div class="path text-ui-sm truncate">
+                  <div class="row-meta text-ui-sm truncate">
                     {bookmark.path}
                   </div>
                   {#if bookmark.tags.length > 0}
                     <div class="mt-1 flex flex-wrap items-center gap-1">
-                      <span class="tag-icon">
+                      <span class="row-icon">
                         <Tag size={12} class="opacity-50" />
                       </span>
                       {#each bookmark.tags as tag (tag)}
-                        <span class="tag text-ui-sm rounded px-1.5 py-0.5">
+                        <span class="row-tag text-ui-sm rounded px-1.5 py-0.5">
                           {tag}
                         </span>
                       {/each}
                     </div>
                   {/if}
-                  <div class="date text-ui-sm mt-1">
+                  <div class="row-meta text-ui-sm mt-1">
                     {$_("bookmarks.added")} {formatDate(bookmark.created)}
                     {#if bookmark.last_accessed}
                       • {$_("bookmarks.accessed")} {formatDate(bookmark.last_accessed)}
@@ -398,50 +398,3 @@ function handleKeydown(e: KeyboardEvent) {
     {/if}
   </div>
 </Modal>
-
-<style>
-.bookmark-row .path {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.bookmark-row .date {
-  color: var(--text-secondary);
-  opacity: 0.5;
-}
-
-.bookmark-row[data-selected="true"] .title,
-.bookmark-row[data-selected="true"] .path,
-.bookmark-row[data-selected="true"] .date,
-.bookmark-row[data-selected="true"] .tag-icon {
-  color: var(--text-inverse);
-}
-
-.bookmark-row[data-selected="true"] .path,
-.bookmark-row[data-selected="true"] .date {
-  opacity: 0.8;
-}
-
-.bookmark-row .tag {
-  background-color: var(--surface-input);
-  color: var(--text-secondary);
-}
-
-.bookmark-row[data-selected="true"] .tag {
-  background-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-inverse);
-}
-
-.bookmark-row[data-selected="true"] .tag-icon {
-  opacity: 0.7;
-}
-
-.bookmark-row[data-selected="true"] .btn-icon {
-  color: var(--text-inverse);
-  background-color: rgba(255, 255, 255, 0.15);
-}
-
-.bookmark-row[data-selected="true"] .btn-icon:hover {
-  background-color: rgba(255, 255, 255, 0.25);
-}
-</style>
