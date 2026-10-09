@@ -114,20 +114,6 @@
   --callout-warning-accent: oklch(from var(--color-callout-warning) var(--l-content) c h);
   --callout-caution-accent: oklch(from var(--color-callout-caution) var(--l-content) c h);
 
-  /* Preview */
-  --preview-bg-code: var(--code-bg);
-  --preview-bg-pre: var(--pre-bg);
-  --preview-fg-pre: var(--pre-fg);
-  --preview-bg-quote: var(--quote-bg);
-  --preview-border-primary: var(--border-primary);
-  --preview-border-quote: var(--quote-fg);
-  --preview-fg-body: var(--text-primary);
-  --preview-fg-code: var(--code-fg);
-  --preview-fg-heading: var(--syntax-heading);
-  --preview-fg-link: var(--accent-link);
-  --preview-fg-quote: var(--quote-fg);
-  --preview-surface-2: var(--surface-2);
-
   /* Editor Content (theme-scoped) — themes only override these */
   --editor-bg: #1e1e1e;
   --editor-fg: #d4d4d4;
@@ -250,10 +236,6 @@
   --pre-bg: #f0f0f0;
   --pre-fg: #1a1a1a;
   --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
-
-  /* Preview - Light Theme (only values that differ from dark) */
-  --preview-border-quote: var(--quote-fg);
-  --preview-fg-quote: var(--text-secondary);
 
   /* Editor Content (theme-scoped) - Light Theme */
   --editor-bg: #fcfcfc;
