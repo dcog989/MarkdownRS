@@ -191,6 +191,16 @@ select:focus {
   border-color: var(--accent-primary);
 }
 
+/* Error state: overrides the base and focus border, so it needs to match the
+   global element selector's specificity (and win by source order). */
+input.border-danger,
+input.border-danger:focus,
+textarea.border-danger,
+select.border-danger,
+select.border-danger:focus {
+  border-color: var(--danger);
+}
+
 input::placeholder,
 textarea::placeholder {
   color: var(--text-secondary);

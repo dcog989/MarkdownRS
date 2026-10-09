@@ -34,14 +34,7 @@ let {
   </div>
 
   <div class="relative flex-1 min-w-0">
-    <Input
-      {focusDelay}
-      bind:ref={inputRef}
-      bind:value={searchValue}
-      type="text"
-      class="w-full px-2 h-7"
-      onkeydown={onKeydown}
-    />
+    <Input {focusDelay} bind:ref={inputRef} bind:value={searchValue} type="text" class="h-7" onkeydown={onKeydown} />
 
     {#if !searchValue}
       <div class="pointer-events-none absolute inset-0 flex items-center px-2 text-fg-muted opacity-50">
