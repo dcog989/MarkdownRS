@@ -316,7 +316,7 @@ export const en = {
       system: "System",
     },
     logLevel: "Log Level",
-    logLevelTooltip: "Controls the verbosity of application logs. Requires restart to take effect.",
+    logLevelTooltip: "Controls the verbosity of application logs.",
     newFileTemplate: "New File Template",
     newFileTemplateTooltip: "Specify a Markdown file as a template for new files. Leave empty to create blank files.",
     theme: "Theme",

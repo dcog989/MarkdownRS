@@ -16,7 +16,7 @@ pub async fn render_markdown(content: String, flavor: Option<String>) -> Result<
         flavor: MarkdownFlavor::from_option_str(flavor),
     };
 
-    crate::timed_info!(
+    crate::timed_debug!(
         "[Markdown]",
         "render_markdown",
         {

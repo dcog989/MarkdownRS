@@ -31,7 +31,7 @@ export const settingsState = $state({
   markdownFlavor: "gfm" as "commonmark" | "gfm",
   harperEnabled: false,
   harperLinters: {} as Record<string, boolean>,
-  logLevel: "info" as "trace" | "debug" | "info" | "warn" | "error",
+  logLevel: "info" as "trace" | "debug" | "info" | "warn" | "error" | "off",
   formatOnSave: false,
   defaultIndent: 2,
   lineEndingPreference: "system" as "system" | "LF" | "CRLF",

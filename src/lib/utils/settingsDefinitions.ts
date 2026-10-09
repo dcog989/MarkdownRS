@@ -34,7 +34,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       type: "select",
       category: "settings.category.system",
       defaultValue: "info",
-      options: ["trace", "debug", "info", "warn", "error"],
+      options: ["trace", "debug", "info", "warn", "error", "off"],
       tooltip: "settings.logLevelTooltip",
       onChange: onLogLevelChange,
     },

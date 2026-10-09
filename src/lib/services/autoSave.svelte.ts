@@ -13,7 +13,7 @@ export function setupAutoSave() {
     if (!tab?.isDirty || !tab.path) return;
     autoSaveCurrentFile().then((saved) => {
       if (saved) {
-        logger.file.info("AutoSaved", { path: tab.path });
+        logger.file.debug("AutoSaved", { path: tab.path });
       }
     });
   }

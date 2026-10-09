@@ -50,6 +50,8 @@ export interface ErrorOptions {
   additionalInfo?: Record<string, unknown>;
   severity?: ErrorSeverity;
   logToDisk?: boolean;
+  /** Set for errors already logged by the Rust backend, to avoid a duplicate disk entry. */
+  fromBackend?: boolean;
 }
 
 // Helper to truncate long strings in error logs
@@ -75,6 +77,7 @@ export class AppError extends Error {
   public readonly severity: ErrorSeverity;
   public readonly additionalInfo?: Record<string, unknown>;
   public readonly originalError?: Error;
+  public readonly fromBackend: boolean;
 
   constructor(
     context: ErrorContext,
@@ -88,6 +91,7 @@ export class AppError extends Error {
     this.severity = options.severity || "error";
     this.additionalInfo = options.additionalInfo;
     this.originalError = options.originalError;
+    this.fromBackend = options.fromBackend ?? false;
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError);
@@ -116,7 +120,7 @@ export class AppError extends Error {
 
     logger.editor.error(this.formatForDiskLog());
 
-    this.logError(logToDisk).catch((err) => {
+    this.logError(logToDisk && !this.fromBackend).catch((err) => {
       logger.editor.warn("DiskLogFailed", { error: String(err) });
     });
 

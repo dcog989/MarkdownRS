@@ -67,7 +67,7 @@ pub async fn list_directory(path: String, show_hidden: bool) -> Result<Vec<FileE
     });
     let entries = result.await?;
 
-    log::info!(
+    log::debug!(
         "[Storage] list_directory | duration={:?} | entries={} | path={}",
         duration,
         entries.len(),

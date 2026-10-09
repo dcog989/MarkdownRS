@@ -79,7 +79,7 @@ pub async fn write_text_file(
 ) -> Result<WriteFileResult, String> {
     let content_size = content.len();
 
-    crate::timed_info!(
+    crate::timed_debug!(
         "[Storage]",
         "write_text_file",
         {

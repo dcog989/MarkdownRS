@@ -59,6 +59,8 @@ export async function callBackend<K extends CommandName>(
       severity: "error" as const,
       userMessage: options?.msg,
       showToast: options?.report ? true : !options?.ignore,
+      // The backend logs every command error itself; don't duplicate it to disk.
+      fromBackend: true,
     };
 
     if (options?.report) {

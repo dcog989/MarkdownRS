@@ -2,10 +2,19 @@ pub trait MutexExt<T> {
     fn lock_or_recover(&self) -> std::sync::MutexGuard<'_, T>;
 }
 
+/// A poisoned lock is a single fault that every later access would otherwise
+/// re-report, flooding the log; warn once per process instead.
+fn warn_poisoned_once(message: &str) {
+    static WARNED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+    if WARNED.set(()).is_ok() {
+        log::warn!("{}", message);
+    }
+}
+
 impl<T> MutexExt<T> for std::sync::Mutex<T> {
     fn lock_or_recover(&self) -> std::sync::MutexGuard<'_, T> {
         self.lock().unwrap_or_else(|e| {
-            log::warn!("Mutex poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once("Mutex poisoned, continuing with potentially corrupt state");
             e.into_inner()
         })
     }
@@ -21,14 +30,14 @@ pub trait RwLockExt<T> {
 impl<T> RwLockExt<T> for std::sync::RwLock<T> {
     fn read_or_recover(&self) -> std::sync::RwLockReadGuard<'_, T> {
         self.read().unwrap_or_else(|e| {
-            log::warn!("RwLock poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once("RwLock poisoned, continuing with potentially corrupt state");
             e.into_inner()
         })
     }
 
     fn write_or_recover(&self) -> std::sync::RwLockWriteGuard<'_, T> {
         self.write().unwrap_or_else(|e| {
-            log::warn!("RwLock poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once("RwLock poisoned, continuing with potentially corrupt state");
             e.into_inner()
         })
     }

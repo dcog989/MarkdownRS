@@ -32,9 +32,10 @@ fn parse_log_level(level: &str) -> LevelFilter {
         s if s.eq_ignore_ascii_case("error") => LevelFilter::Error,
         s if s.eq_ignore_ascii_case("warn") || s.eq_ignore_ascii_case("warning") => LevelFilter::Warn,
         s if s.eq_ignore_ascii_case("info") => LevelFilter::Info,
+        s if s.eq_ignore_ascii_case("debug") => LevelFilter::Debug,
         s if s.eq_ignore_ascii_case("trace") => LevelFilter::Trace,
         s if s.eq_ignore_ascii_case("off") => LevelFilter::Off,
-        _ => LevelFilter::Debug,
+        _ => LevelFilter::Info,
     }
 }
 
