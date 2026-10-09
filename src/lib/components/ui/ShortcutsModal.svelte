@@ -222,16 +222,18 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                         ? $_("shortcuts.pressKeys")
                         : shortcutManager.getShortcutDisplay(def.id)}
                     </button>
-                    {#if appContext.settings.customShortcuts[def.id]}
-                      <button
-                        type="button"
-                        class="btn-icon btn-icon--accent opacity-0 group-hover:opacity-100"
-                        onclick={() => resetShortcut(def.id)}
-                        title={$_("shortcuts.resetToDefault")}
-                      >
-                        <RotateCcw size={14} />
-                      </button>
-                    {/if}
+                    <span class="flex w-6 shrink-0 items-center justify-center">
+                      {#if appContext.settings.customShortcuts[def.id]}
+                        <button
+                          type="button"
+                          class="btn-icon btn-icon--accent"
+                          onclick={() => resetShortcut(def.id)}
+                          title={$_("shortcuts.resetToDefault")}
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      {/if}
+                    </span>
                   </div>
                 </div>
               {/each}
