@@ -163,20 +163,16 @@ function toggleSortDirection() {
               {@const shortcut = shortcutManager.getShortcutDisplay(command.id)}
               <button
                 type="button"
-                class="bg-border-main hover-surface flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none"
-                style="background-color: {isSelected ? "var(--accent-primary)" : "var(--surface-2)"};
-                                  color: {isSelected ? "var(--text-inverse)" : "var(--text-primary)"};"
+                class="flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none {isSelected
+                  ? "bg-accent-primary border-transparent text-fg-inverse"
+                  : "bg-bg-panel text-fg-default hover:bg-bg-hover"}"
                 use:scrollIntoView={isSelected}
-                onmouseenter={() => globalIndex !== undefined && nav.select(globalIndex)}
                 onclick={() => execute(command)}
               >
                 <div class="min-w-0 flex-1">
                   <div class="text-ui font-medium whitespace-nowrap">{translate(commandLabel(command))}</div>
                   {#if shortcut}
-                    <div
-                      class="mt-0.5 truncate text-ui-sm"
-                      style:color={isSelected ? "var(--text-inverse)" : "var(--text-secondary)"}
-                    >
+                    <div class="mt-0.5 truncate text-ui-sm {isSelected ? "text-fg-inverse" : "text-fg-muted"}">
                       <span class="opacity-60">{shortcut}</span>
                     </div>
                   {/if}

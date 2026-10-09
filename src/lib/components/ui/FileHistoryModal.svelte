@@ -135,7 +135,6 @@ function toggleSortDirection() {
               onkeydown={(e) => {
                 if (e.key === "Enter") handleOpenFile(path);
               }}
-              onmouseenter={() => nav.select(index)}
             >
               <div class="min-w-0 flex-1">
                 <div class="file-history-title truncate font-medium">
@@ -148,7 +147,7 @@ function toggleSortDirection() {
               <button
                 type="button"
                 onclick={(e) => handleRemove(path, e)}
-                class="file-history-remove rounded p-1.5 opacity-0 transition-all group-hover:opacity-100"
+                class="file-history-remove rounded p-1.5 opacity-0 group-hover:opacity-100"
                 title={$_("fileHistory.removeFromHistory")}
               >
                 <X size={16} />
@@ -170,6 +169,10 @@ function toggleSortDirection() {
 </Modal>
 
 <style>
+.file-history-row:hover:not([data-selected="true"]) {
+  background-color: var(--surface-hover);
+}
+
 .file-history-row[data-selected="true"] {
   background-color: var(--accent-primary);
 }

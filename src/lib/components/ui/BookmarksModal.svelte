@@ -343,7 +343,6 @@ function handleKeydown(e: KeyboardEvent) {
                 onkeydown={(e) => {
                   if (e.key === "Enter") handleOpenBookmark(bookmark);
                 }}
-                onmouseenter={() => nav.select(index)}
               >
                 <div class="min-w-0 flex-1">
                   <div class="title truncate font-medium">
@@ -410,6 +409,10 @@ function handleKeydown(e: KeyboardEvent) {
 </Modal>
 
 <style>
+.bookmark-row:hover:not([data-selected="true"]) {
+  background-color: var(--surface-hover);
+}
+
 .bookmark-row[data-selected="true"] {
   background-color: var(--accent-primary);
 }

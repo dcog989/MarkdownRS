@@ -197,17 +197,13 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
               {#each defs as def (def.id)}
                 {@const currentIndex = ++globalIndex.value}
                 {@const isSelected = currentIndex === nav.selectedIndex}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <!-- biome-ignore lint/a11y/noStaticElementInteractions: hover-based navigation item -->
                 <div
-                  class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
-                  style:background-color={isSelected
-                    ? "var(--accent-primary)"
+                  class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors {isSelected
+                    ? "bg-accent-primary"
                     : currentIndex % 2 === 1
-                      ? "var(--surface-row)"
-                      : "transparent"}
+                      ? "bg-row-even hover:bg-bg-hover"
+                      : "hover:bg-bg-hover"}"
                   use:scrollIntoView={isSelected}
-                  onmouseenter={() => nav.select(currentIndex)}
                 >
                   <button
                     type="button"
@@ -235,7 +231,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                     {#if appContext.settings.customShortcuts[def.id]}
                       <button
                         type="button"
-                        class="p-1 transition-all opacity-0 group-hover:opacity-100"
+                        class="p-1 opacity-0 group-hover:opacity-100"
                         style:color={isSelected ? "var(--text-inverse)" : "var(--accent-primary)"}
                         onclick={() => resetShortcut(def.id)}
                         title={$_("shortcuts.resetToDefault")}
