@@ -32,7 +32,7 @@
 }
 
 .bg-bg-active {
-  background-color: var(--surface-active, var(--surface-hover));
+  background-color: var(--surface-active);
 }
 
 .bg-surface-backdrop {

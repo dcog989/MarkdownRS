@@ -12,7 +12,7 @@
 }
 
 .hover\:bg-bg-active:hover {
-  background-color: var(--surface-active, var(--surface-hover));
+  background-color: var(--surface-active);
 }
 
 .hover\:bg-bg-panel:hover {
