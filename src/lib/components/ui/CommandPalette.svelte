@@ -6,6 +6,7 @@ import type { Command } from "$lib/commands/commands";
 import { commandCategoryKey, commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import Select from "$lib/components/ui/Select.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
@@ -122,15 +123,11 @@ function toggleSortDirection() {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
-          <select
-            bind:value={settingsState.commandPaletteSort}
-            class="ui-select w-auto"
-            title={$_("commandPalette.sortBy")}
-          >
+          <Select bind:value={settingsState.commandPaletteSort} title={$_("commandPalette.sortBy")}>
             {#each SORT_MODES as mode (mode)}
               <option value={mode}>{translate(SORT_LABEL_KEYS[mode])}</option>
             {/each}
-          </select>
+          </Select>
           <button
             type="button"
             onclick={toggleSortDirection}

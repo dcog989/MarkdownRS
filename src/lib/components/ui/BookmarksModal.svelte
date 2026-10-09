@@ -6,6 +6,7 @@ import { _ } from "svelte-i18n";
 import Input from "$lib/components/ui/Input.svelte";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import Select from "$lib/components/ui/Select.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import {
@@ -229,11 +230,11 @@ function handleKeydown(e: KeyboardEvent) {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
-          <select bind:value={sortBy} class="ui-select w-auto">
+          <Select bind:value={sortBy}>
             <option value="most-recent">{$_("bookmarks.sortMostRecent")}</option>
             <option value="alphabetical">{$_("bookmarks.sortAlphabetical")}</option>
             <option value="last-updated">{$_("bookmarks.sortLastUpdated")}</option>
-          </select>
+          </Select>
           <button
             type="button"
             onclick={toggleSortDirection}

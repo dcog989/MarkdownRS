@@ -9,6 +9,7 @@ import type { SettingDef } from "$lib/utils/settingsDefinitions";
 import { elideMiddle } from "$lib/utils/textElide";
 import DictionarySelector from "./DictionarySelector.svelte";
 import Input from "./Input.svelte";
+import Select from "./Select.svelte";
 
 let {
   setting,
@@ -150,20 +151,18 @@ $effect(() => {
       {/if}
     </div>
   {:else if setting.type === "select"}
-    <div class="select-wrap">
-      <select
-        id={setting.key}
-        value={String(value ?? setting.defaultValue)}
-        onchange={(e) => onChange(e.currentTarget.value)}
-        class="ui-select w-full"
-      >
-        {#each setting.options || [] as option, idx (option)}
-          <option value={option}>
-            {setting.optionLabels?.[idx] ? translate(setting.optionLabels[idx]) : option}
-          </option>
-        {/each}
-      </select>
-    </div>
+    <Select
+      id={setting.key}
+      value={String(value ?? setting.defaultValue)}
+      onchange={(e) => onChange(e.currentTarget.value)}
+      class="w-full"
+    >
+      {#each setting.options || [] as option, idx (option)}
+        <option value={option}>
+          {setting.optionLabels?.[idx] ? translate(setting.optionLabels[idx]) : option}
+        </option>
+      {/each}
+    </Select>
   {:else if setting.type === "dictionary-multi-select"}
     <div>
       <DictionarySelector selected={value as string[]} onChange={(dicts) => onChange(dicts)} />

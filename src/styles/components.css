@@ -164,30 +164,26 @@ input[type="radio"]:checked::before {
   background-color: var(--accent-primary);
 }
 
-/* Dropdown/Select Arrow */
+/* Selects: base styling lives here; the chevron is drawn by .select-wrap
+   (rendered by Select.svelte), the single arrow implementation app-wide. */
 select {
+  cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 0.5rem center;
-  background-size: 0.75rem;
-  padding-right: 2rem;
+  padding: 0.25rem 2rem 0.25rem 0.75rem;
+  line-height: 1.5;
 }
 
-[data-theme="light"] select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23444' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-}
-
-/* Select Wrapper (reliable dropdown arrow across webviews) */
+/* Select Wrapper (single dropdown arrow implementation across webviews) */
 .select-wrap {
   position: relative;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .select-wrap select {
-  background-image: none;
-  padding-right: 2rem;
+  width: 100%;
 }
 
 .select-wrap::after {
@@ -241,24 +237,6 @@ select {
   padding: 0.75rem 1rem;
   background-color: var(--surface-3);
   color: var(--text-primary);
-}
-
-/* Single source of truth for native select styling across the app. */
-.ui-select {
-  cursor: pointer;
-  border: 1px solid var(--border-primary);
-  border-radius: 0.25rem;
-  background-color: var(--surface-input);
-  color: var(--text-primary);
-  padding: 0.25rem 2rem 0.25rem 0.75rem;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  outline: none;
-  transition: border-color 150ms;
-}
-
-.ui-select:focus {
-  border-color: var(--accent-primary);
 }
 
 /* MRU List Items */
