@@ -184,7 +184,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
         {#each sortedSettings as setting, index (setting.key)}
           {@const rowClass = index % 2 === 1 ? "bg-row-even" : ""}
 
-          <div class="settings-row {rowClass}">
+          <div class="settings-row hover-surface {rowClass}">
             <div class="settings-category text-ui py-2.5 pl-3">
               {translate(setting.category)}
             </div>
