@@ -230,7 +230,7 @@ function handleBackdropContextMenu(e: MouseEvent) {
     bind:this={menuEl}
     role="menu"
     tabindex="-1"
-    class="bg-bg-panel border-border-secondary text-fg-default no-scrollbar absolute z-200 max-h-[calc(100vh-64px)] max-w-80 min-w-60 overflow-y-auto rounded-lg border py-1 shadow-xl"
+    class="bg-bg-panel border-border-secondary text-fg-default custom-scrollbar absolute z-200 max-h-[calc(100vh-64px)] max-w-80 min-w-60 overflow-y-auto rounded-lg border py-1 shadow-xl"
     style="
             left: {adjustedX}px;
             top: {adjustedY}px;
