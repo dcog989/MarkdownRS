@@ -6,7 +6,7 @@ import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";
 import { pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
-import { pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
+import { clearFileHistory, pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { AppError } from "$lib/utils/errorHandling";
@@ -106,6 +106,20 @@ async function importFileHistory() {
   }
 }
 
+async function clearHistory() {
+  if (busy) return;
+  if (!confirm(translate("data.confirmClearFileHistory"))) return;
+  busy = true;
+  try {
+    await clearFileHistory();
+    showToast("success", translate("data.clearedFileHistory"));
+  } catch (err) {
+    AppError.handle("Data:ClearFileHistory", err, { showToast: true });
+  } finally {
+    busy = false;
+  }
+}
+
 async function deleteOrphans() {
   if (busy) return;
   busy = true;
@@ -151,6 +165,12 @@ const actions = $derived<Action[]>([
     handler: importFileHistory,
   },
   {
+    label: translate("data.clearFileHistory"),
+    description: translate("data.clearFileHistoryDesc"),
+    handler: clearHistory,
+    danger: true,
+  },
+  {
     label: translate("data.deleteOrphans"),
     description: translate("data.deleteOrphansDesc"),
     handler: deleteOrphans,
@@ -184,7 +204,7 @@ const actions = $derived<Action[]>([
           class:text-danger-text={action.danger}
           onclick={action.handler}
           disabled={busy}
-          use:tooltip={action.danger ? translate("data.deleteOrphansDesc") : ""}
+          use:tooltip={action.danger ? action.description : ""}
         >
           {action.label}
         </button>

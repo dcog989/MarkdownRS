@@ -1,17 +1,10 @@
 <script lang="ts">
-import { ArrowDown, ArrowUp, Clock, History, Trash2, X } from "lucide-svelte";
+import { ArrowDown, ArrowUp, Clock, History, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
-import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { translate } from "$lib/i18n";
-import {
-  clearFileHistory,
-  fileHistoryStore,
-  loadFileHistory,
-  removeFromFileHistory,
-} from "$lib/stores/fileHistoryStore.svelte";
+import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { openFileByPath } from "$lib/utils/fileSystem";
 import { getFilename } from "$lib/utils/fileValidation";
@@ -84,12 +77,6 @@ async function handleRemove(path: string, e: MouseEvent) {
   await removeFromFileHistory(path);
 }
 
-async function handleClearAll() {
-  if (confirm(translate("fileHistory.confirmClear"))) {
-    await clearFileHistory();
-  }
-}
-
 function toggleSortDirection() {
   sortDirections[sortBy] = sortDirection === "asc" ? "desc" : "asc";
 }
@@ -124,16 +111,6 @@ function toggleSortDirection() {
               <ArrowDown size={16} />
             {/if}
           </button>
-          {#if fileHistoryStore.files.length > 0}
-            <button
-              type="button"
-              class="text-fg-muted hover:text-danger-text hover-surface rounded p-1 transition-colors"
-              onclick={handleClearAll}
-              use:tooltip={$_("fileHistory.clearHistory")}
-            >
-              <Trash2 size={16} />
-            </button>
-          {/if}
         </div>
       {/snippet}
     </ModalSearchHeader>
