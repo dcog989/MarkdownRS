@@ -150,7 +150,7 @@ function toggleSortDirection() {
         <div>
           {#if group.category}
             <div class="mb-3 flex items-center gap-2">
-              <Zap size={16} class="text-accent-primary" />
+              <Zap size={16} class="text-accent-secondary" />
               <h3 class="text-fg-default text-ui font-semibold tracking-wide uppercase">
                 {categoryLabel(group.category)}
               </h3>

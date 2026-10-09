@@ -171,7 +171,7 @@ function injectHtml(node: HTMLElement, content: string) {
       </div>
     {:else if renderer.renderError}
       <div class="absolute inset-0 flex flex-col items-center justify-center px-8 opacity-60">
-        <div class="text-danger-text text-center text-ui">{renderer.renderError}</div>
+        <div class="text-danger text-center text-ui">{renderer.renderError}</div>
       </div>
     {:else if !renderer.htmlContent}
       <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">

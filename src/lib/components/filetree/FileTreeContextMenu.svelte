@@ -79,7 +79,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
 
       <button
         type="button"
-        class="text-ui text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui text-danger hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleDelete}
       >
         <Trash2 size={14} class="opacity-70" />

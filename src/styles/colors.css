@@ -80,10 +80,6 @@
   color: var(--text-inverse);
 }
 
-.text-accent-primary {
-  color: var(--accent-secondary);
-}
-
 .text-accent-secondary {
   color: var(--accent-secondary);
 }
@@ -114,10 +110,6 @@
 
 .text-warning {
   color: var(--warning);
-}
-
-.text-danger-text {
-  color: var(--danger-text);
 }
 
 .text-dirty-active {

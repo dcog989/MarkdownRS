@@ -221,7 +221,7 @@ async function copyAllStats() {
       {#if canToggleFileType}
         <button
           type="button"
-          class="text-accent-primary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
+          class="text-accent-secondary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
           onclick={toggleFileType}
           use:tooltip={$_("statusBar.toggleFileType")}
         >

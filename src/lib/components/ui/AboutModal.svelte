@@ -120,7 +120,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.install_path)}
         >
           {$_("common.copy")}
@@ -134,7 +134,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.data_path)}
         >
           {$_("common.copy")}
@@ -148,7 +148,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.config_path)}
         >
           {$_("common.copy")}
@@ -162,7 +162,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.cache_path)}
         >
           {$_("common.copy")}
@@ -176,7 +176,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.logs_path)}
         >
           {$_("common.copy")}
@@ -194,7 +194,7 @@ async function checkForUpdates() {
     </button>
 
     {#if updateStatus}
-      <div class="text-ui text-accent-primary py-1 text-center">
+      <div class="text-ui text-accent-secondary py-1 text-center">
         {updateStatus}
       </div>
     {/if}

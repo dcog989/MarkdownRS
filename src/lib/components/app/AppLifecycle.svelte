@@ -101,7 +101,7 @@ onDestroy(() => {
     <Logo class="mb-4 h-16 w-16 animate-pulse opacity-50" />
     <p class="text-fg-muted text-ui">{$_("app.loading")}</p>
     {#if appInit.initError}
-      <p class="text-danger-text mt-2 text-ui-sm">{appInit.initError}</p>
+      <p class="text-danger mt-2 text-ui-sm">{appInit.initError}</p>
     {/if}
   </div>
 {:else}

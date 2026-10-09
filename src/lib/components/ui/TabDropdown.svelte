@@ -142,7 +142,7 @@ function handleKeydown(e: KeyboardEvent) {
               use:tooltip={getTooltipContent(tab)}
             >
               {#if tab.fileCheckFailed}
-                <CircleAlert size={14} class="text-danger-text shrink-0" />
+                <CircleAlert size={14} class="text-danger shrink-0" />
               {:else if !tab.path}
                 {#if tab.content.length > 0}
                   <PencilLine
@@ -183,8 +183,8 @@ function handleKeydown(e: KeyboardEvent) {
               class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
                 ? "text-fg-muted cursor-not-allowed opacity-30"
                 : isSelected
-                  ? "text-fg-inverse hover:text-danger-text hover:bg-bg-hover"
-                  : "text-fg-muted hover:text-danger-text hover:bg-bg-hover"}"
+                  ? "text-fg-inverse hover:text-danger hover:bg-bg-hover"
+                  : "text-fg-muted hover:text-danger hover:bg-bg-hover"}"
               disabled={tab.isPinned}
               onclick={(e) => {
                 e.stopPropagation();
@@ -203,9 +203,3 @@ function handleKeydown(e: KeyboardEvent) {
     </div>
   </div>
 {/if}
-
-<style>
-.max-h-60vh {
-  max-height: 60vh;
-}
-</style>

@@ -187,7 +187,7 @@ function handleKeydown(e: KeyboardEvent) {
         >
           <span>{dict.name}</span>
           {#if selected.includes(dict.code)}
-            <Check size={14} class="text-accent-primary" />
+            <Check size={14} class="text-accent-secondary" />
           {/if}
         </button>
       {/each}

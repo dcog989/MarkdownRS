@@ -67,7 +67,7 @@ let tooltipContent = $derived.by(() => {
   use:tooltip={isCollapsed ? tooltipContent : null}
 >
   {#if isFileMissing}
-    <CircleAlert size={14} class="text-danger-text shrink-0" />
+    <CircleAlert size={14} class="text-danger shrink-0" />
   {:else if !tab.path}
     {#if tab.content.length > 0}
       <PencilLine
@@ -110,7 +110,7 @@ let tooltipContent = $derived.by(() => {
         <button
           type="button"
           aria-label={$_("tabButton.closeTab", { values: { title: tab.title } })}
-          class="text-fg-muted hover:text-danger-text flex cursor-pointer items-center justify-center rounded p-1"
+          class="text-fg-muted hover:text-danger flex cursor-pointer items-center justify-center rounded p-1"
           onclick={(e) => {
             e.stopPropagation();
             onclose?.(e, tab.id);

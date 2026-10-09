@@ -250,7 +250,7 @@ function handleKeydown(e: KeyboardEvent) {
 
         <button
           type="button"
-          class="text-accent-primary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
+          class="text-accent-secondary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
           onclick={startAdd}
           title={$_("bookmarks.addBookmark")}
         >
@@ -286,7 +286,7 @@ function handleKeydown(e: KeyboardEvent) {
         />
         <Input bind:value={addTags} type="text" placeholder={$_("bookmarks.tagsPlaceholder")} class="bg-bg-panel" />
         {#if browseError}
-          <div class="text-ui-sm text-danger-text">{browseError}</div>
+          <div class="text-ui-sm text-danger">{browseError}</div>
         {/if}
         <div class="flex justify-end gap-2">
           <button type="button" onclick={() => (showAddForm = false)} class="btn-base btn-sm btn-secondary">

@@ -55,16 +55,7 @@ let { value = $bindable(""), loading = false } = $props<{
   width: 100%;
   padding: 0.25rem 1.75rem 0.25rem 2rem;
   font-size: 0.75rem;
-  color: var(--text-primary);
-  background-color: var(--surface-input);
-  border: 1px solid var(--border-primary);
-  border-radius: 0.25rem;
   outline: none;
-}
-
-.ft-filter-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
 }
 
 .ft-filter-clear {

@@ -140,12 +140,12 @@ async function copyConfigPath() {
               onclick={copyConfigPath}
               title={translate("lint.copyConfigPath")}
             >
-              <ClipboardCopy size={10} class={copied ? "text-accent-primary" : "text-fg-muted"} />
+              <ClipboardCopy size={10} class={copied ? "text-accent-secondary" : "text-fg-muted"} />
             </button>
           {/if}
           <button
             type="button"
-            class="text-accent-primary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
+            class="text-accent-secondary hover-surface ml-auto shrink-0 rounded px-1.5 py-0.5 text-[10px] transition-colors"
             onclick={() => {
               showPopup = false;
               appContext.interface.showRumdlConfig = true;

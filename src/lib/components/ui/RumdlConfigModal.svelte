@@ -150,7 +150,7 @@ async function saveConfig() {
         {translate("rumdlConfig.currentlyLoaded", { values: { path: loadedPath } })}
       </p>
     {:else if !exists}
-      <p class="text-ui-sm text-accent-primary">
+      <p class="text-ui-sm text-accent-secondary">
         {translate("rumdlConfig.willCreate")}
       </p>
     {/if}
@@ -190,10 +190,5 @@ async function saveConfig() {
 .rumdl-config-textarea {
   field-sizing: content;
   min-height: 10rem;
-}
-
-.rumdl-config-textarea::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.6;
 }
 </style>
