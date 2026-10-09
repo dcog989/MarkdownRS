@@ -1,7 +1,10 @@
 use crate::bootstrap::paths::AppPaths;
 use crate::utils;
-use flexi_logger::{Age, Cleanup, Criterion, Duplicate, FileSpec, LogSpecification, Logger, LoggerHandle, Naming};
-use log::LevelFilter;
+use flexi_logger::{
+    AdaptiveFormat, Age, Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, LogSpecification, Logger, LoggerHandle,
+    Naming, TS_DASHES_BLANK_COLONS_DOT_BLANK, style,
+};
+use log::{LevelFilter, Record};
 use std::sync::OnceLock;
 
 const KEPT_LOG_FILES: usize = 9;
@@ -48,6 +51,37 @@ fn build_log_spec(level: &str) -> LogSpecification {
     builder.build()
 }
 
+fn timestamped_format(
+    w: &mut dyn std::io::Write,
+    now: &mut DeferredNow,
+    record: &Record,
+) -> Result<(), std::io::Error> {
+    write!(
+        w,
+        "[{}] {} [{}] {}",
+        now.format(TS_DASHES_BLANK_COLONS_DOT_BLANK),
+        record.level(),
+        record.module_path().unwrap_or("<unnamed>"),
+        record.args(),
+    )
+}
+
+fn timestamped_colored_format(
+    w: &mut dyn std::io::Write,
+    now: &mut DeferredNow,
+    record: &Record,
+) -> Result<(), std::io::Error> {
+    let level = record.level();
+    write!(
+        w,
+        "[{}] {} [{}] {}",
+        style(level).paint(now.format(TS_DASHES_BLANK_COLONS_DOT_BLANK).to_string()),
+        style(level).paint(level.to_string()),
+        record.module_path().unwrap_or("<unnamed>"),
+        style(level).paint(record.args().to_string()),
+    )
+}
+
 pub fn init(config_path: &std::path::Path, log_dir: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
     let settings_level = read_log_level_from_settings(config_path);
 
@@ -65,6 +99,9 @@ pub fn init(config_path: &std::path::Path, log_dir: &std::path::Path) -> Result<
     let handle = Logger::with(build_log_spec(&settings_level))
         .log_to_file(file_spec)
         .duplicate_to_stdout(Duplicate::All)
+        .format_for_files(timestamped_format)
+        .adaptive_format_for_stdout(AdaptiveFormat::Custom(timestamped_format, timestamped_colored_format))
+        .adaptive_format_for_stderr(AdaptiveFormat::Custom(timestamped_format, timestamped_colored_format))
         .rotate(
             Criterion::Age(Age::Day),
             Naming::TimestampsCustomFormat {
