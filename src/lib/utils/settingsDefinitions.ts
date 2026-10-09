@@ -20,6 +20,7 @@ export type SettingDef = {
   max?: number;
   step?: number;
   tooltip?: string;
+  unit?: string;
   labelWarning?: string;
   visibleWhen?: { key: string; value: unknown };
   groupWith?: string;
@@ -85,6 +86,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 8,
       max: 32,
       tooltip: "settings.fontSizeTooltip",
+      unit: "settings.unitPx",
     },
     {
       key: "wrapGuideColumn",
@@ -113,6 +115,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: -1,
       max: 2000,
       tooltip: "settings.autocompleteDelayTooltip",
+      unit: "settings.unitMs",
     },
     {
       key: "showMinimap",
@@ -157,6 +160,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 2,
       max: 8,
       tooltip: "settings.defaultIndentTooltip",
+      unit: "settings.unitSpaces",
     },
     {
       key: "recentChangesCount",
@@ -180,6 +184,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       max: 9999,
       groupWith: "recentChangesCount",
       tooltip: "settings.recentChangesTimespanTooltip",
+      unit: "settings.unitSecs",
     },
     {
       key: "autoSaveInterval",
@@ -190,6 +195,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: -1,
       max: 3600,
       tooltip: "settings.autoSaveIntervalTooltip",
+      unit: "settings.unitSecs",
     },
     {
       key: "lineEndingPreference",
@@ -218,6 +224,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 80,
       max: 300,
       tooltip: "settings.tabWidthMinTooltip",
+      unit: "settings.unitPx",
     },
     {
       key: "tabWidthMax",
@@ -228,6 +235,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 100,
       max: 400,
       tooltip: "settings.tabWidthMaxTooltip",
+      unit: "settings.unitPx",
     },
     {
       key: "collapsePinnedTabs",
@@ -315,6 +323,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 0,
       max: 5000,
       tooltip: "settings.tooltipDelayTooltip",
+      unit: "settings.unitMs",
     },
     {
       key: "findPanelOpacity",
@@ -372,6 +381,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 10,
       max: 32,
       tooltip: "settings.previewFontSizeTooltip",
+      unit: "settings.unitPx",
     },
     {
       key: "markdownFlavor",

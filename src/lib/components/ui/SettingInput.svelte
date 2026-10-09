@@ -92,14 +92,22 @@ $effect(() => {
       oninput={(e) => onChange(e.currentTarget.value)}
     />
   {:else if setting.type === "number"}
-    <Input
-      id={setting.key}
-      type="number"
-      value={Number(value ?? setting.defaultValue)}
-      min={setting.min}
-      max={setting.max}
-      oninput={(e) => onChange(Number(e.currentTarget.value))}
-    />
+    <div class={setting.unit ? "flex items-center gap-2" : "w-full"}>
+      <Input
+        id={setting.key}
+        type="number"
+        value={Number(value ?? setting.defaultValue)}
+        min={setting.min}
+        max={setting.max}
+        oninput={(e) => onChange(Number(e.currentTarget.value))}
+        class={setting.unit ? "min-w-0 flex-1" : ""}
+      />
+      {#if setting.unit}
+        <span class="text-ui-sm text-fg-muted shrink-0 font-mono opacity-80">
+          {translate(setting.unit)}
+        </span>
+      {/if}
+    </div>
   {:else if setting.type === "range"}
     <div class="flex items-center gap-3">
       <input
