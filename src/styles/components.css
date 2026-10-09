@@ -215,6 +215,18 @@ select {
   color: var(--text-primary);
 }
 
+/* Selectable list rows: single source of truth for hover + selected state.
+   Pair with .bg-row-even for the alternating tint. */
+.list-row:hover:not([data-selected="true"]) {
+  background-color: var(--surface-hover);
+  cursor: pointer;
+}
+
+.list-row[data-selected="true"] {
+  background-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
 /* MRU List Items */
 .mru-item {
   display: flex;
@@ -228,7 +240,6 @@ select {
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 100ms;
-  background-color: transparent;
   color: var(--text-primary);
 }
 
@@ -267,11 +278,6 @@ select {
   color: var(--icon-color, var(--text-secondary));
 }
 
-.mru-item[data-selected="true"] {
-  background-color: var(--accent-primary);
-  color: var(--text-inverse);
-}
-
 .mru-item[data-selected="true"] .mru-badge {
   background-color: var(--text-inverse);
   color: var(--accent-primary);
@@ -286,33 +292,6 @@ select {
 }
 
 .mru-item[data-selected="true"] .mru-icon {
-  color: var(--text-inverse);
-}
-
-.mru-item:hover:not([data-selected="true"]) {
-  background-color: var(--surface-hover);
-  cursor: pointer;
-}
-
-.mru-item-even {
-  background-color: var(--surface-row);
-}
-
-/* Component Specific Classes */
-.command-item {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.8125rem;
-  border-radius: 0.25rem;
-  color: var(--text-primary);
-  background-color: transparent;
-  contain: layout style paint;
-}
-
-.command-item[data-selected="true"] {
-  background-color: var(--accent-primary);
   color: var(--text-inverse);
 }
 
@@ -344,53 +323,6 @@ select {
   background-color: var(--border-secondary);
 }
 
-/* Context Menu Styling */
-.context-menu {
-  position: fixed;
-  min-width: 12rem;
-  background-color: var(--surface-2);
-  border: 1px solid var(--border-primary);
-  border-radius: 0.375rem;
-  box-shadow:
-    0 10px 15px -3px oklch(0 0 0 / 0.1),
-    0 4px 6px -2px oklch(0 0 0 / 0.05);
-  padding: 0.25rem;
-  z-index: 9999;
-  contain: layout style paint;
-}
-
-.context-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  border-radius: 0.25rem;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background-color 150ms;
-  font-size: 0.8125rem;
-  white-space: nowrap;
-}
-
-.context-menu-item:hover {
-  background-color: var(--surface-hover);
-}
-
-.context-menu-item.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.context-menu-item.disabled:hover {
-  background-color: transparent;
-}
-
-.context-menu-divider {
-  height: 1px;
-  background-color: var(--border-primary);
-  margin: 0.25rem 0;
-}
-
 .tab-scroll-container {
   display: flex;
   align-items: center;
@@ -405,7 +337,7 @@ select {
 
 .bg-editor-active {
   background-color: var(--editor-bg);
-  border-top: 2px solid hsl(from var(--editor-bg) h s calc(l + 30));
+  border-top: 2px solid var(--accent-primary);
   border-bottom: 1px solid transparent;
 }
 

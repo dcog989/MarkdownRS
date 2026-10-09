@@ -160,13 +160,6 @@ textarea:focus-visible {
   color: inherit;
 }
 
-/* Hover: accent color - must override both hover-surface and focus-visible styles */
-.bg-bg-panel button:hover,
-.bg-bg-panel button:hover:focus-visible {
-  background-color: var(--accent-primary);
-  color: var(--text-inverse);
-}
-
 /* Hover works the same in both modes */
 .bg-bg-panel button:hover {
   background-color: var(--surface-hover);

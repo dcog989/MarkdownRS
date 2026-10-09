@@ -6,13 +6,11 @@ import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { saveSettings } from "$lib/utils/settings";
 
-let isResizing = $state(false);
 let didDrag = false;
 let hovered = $state(false);
 
 function startResize(e: MouseEvent) {
   e.preventDefault();
-  isResizing = true;
   didDrag = false;
   const startX = e.clientX;
   const startWidth = appContext.settings.fileTreeWidth;
@@ -28,7 +26,6 @@ function startResize(e: MouseEvent) {
     );
   };
   const onUp = () => {
-    isResizing = false;
     window.removeEventListener("mousemove", onMove);
     window.removeEventListener("mouseup", onUp);
     document.body.style.cursor = "";
@@ -50,7 +47,6 @@ function handleResizeClick() {
   tabindex="0"
   aria-label={$_("fileTree.resizeAria")}
   class="ft-resize-handle"
-  class:cursor-col-resize={isResizing}
   class:ft-resize-hover={hovered}
   onmouseenter={() => (hovered = true)}
   onmouseleave={() => (hovered = false)}
@@ -104,9 +100,5 @@ function handleResizeClick() {
 .ft-resize-handle.ft-resize-hover .ft-collapse-icon {
   opacity: 1;
   transition-delay: 250ms;
-}
-
-.cursor-col-resize {
-  cursor: col-resize;
 }
 </style>

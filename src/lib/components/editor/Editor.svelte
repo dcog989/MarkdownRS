@@ -313,6 +313,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
                 type="button"
                 onclick={() => reopenClosedTab(i)}
                 use:tooltip={entry.tab.path || entry.tab.customTitle || entry.tab.title}
+                class:bg-row-even={i % 2 === 1}
                 class="hover:bg-bg-hover flex w-full items-center gap-3 border-b border-transparent px-4 py-2.5 text-left text-ui last:border-b-0 transition-colors"
               >
                 <span class="text-fg-muted">•</span>
@@ -329,12 +330,6 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 </div>
 
 <style>
-.closed-tabs-list > button:nth-child(even) {
-  background: var(--surface-row);
-}
-.closed-tabs-list > button:nth-child(even):hover {
-  background: var(--surface-hover);
-}
 .closed-tabs-text {
   color: var(--accent-link);
 }

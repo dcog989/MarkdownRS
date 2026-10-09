@@ -312,7 +312,7 @@ function handleKeydown(e: KeyboardEvent) {
           {@const isSelected = index === nav.selectedIndex}
           <div
             out:slide={{ duration: 200 }}
-            class="bookmark-row px-4 py-2.5 transition-colors overflow-hidden"
+            class="list-row bookmark-row px-4 py-2.5 transition-colors overflow-hidden"
             class:bg-row-even={index % 2 === 1 && !isSelected}
             data-selected={isSelected}
             use:scrollIntoView={isSelected}
@@ -409,12 +409,14 @@ function handleKeydown(e: KeyboardEvent) {
 </Modal>
 
 <style>
-.bookmark-row:hover:not([data-selected="true"]) {
-  background-color: var(--surface-hover);
+.bookmark-row .path {
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
-.bookmark-row[data-selected="true"] {
-  background-color: var(--accent-primary);
+.bookmark-row .date {
+  color: var(--text-secondary);
+  opacity: 0.5;
 }
 
 .bookmark-row[data-selected="true"] .title,
@@ -427,16 +429,6 @@ function handleKeydown(e: KeyboardEvent) {
 .bookmark-row[data-selected="true"] .path,
 .bookmark-row[data-selected="true"] .date {
   opacity: 0.8;
-}
-
-.bookmark-row[data-selected="false"] .path {
-  color: var(--text-secondary);
-  opacity: 0.6;
-}
-
-.bookmark-row[data-selected="false"] .date {
-  color: var(--text-secondary);
-  opacity: 0.5;
 }
 
 .bookmark-row .tag {

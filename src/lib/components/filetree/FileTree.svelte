@@ -284,7 +284,7 @@ let contextMenuY = $state(0);
       <div
         bind:this={scrollEl}
         role="list"
-        class="ft-scroll h-full overflow-y-auto"
+        class="custom-scrollbar h-full overflow-y-auto"
         onscroll={(e) => {
           scrollTop = e.currentTarget.scrollTop;
         }}
@@ -382,11 +382,6 @@ let contextMenuY = $state(0);
 </div>
 
 <style>
-.ft-scroll {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-primary) transparent;
-}
-
 .ft-spacer {
   width: 100%;
 }

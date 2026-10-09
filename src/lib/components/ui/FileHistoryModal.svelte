@@ -122,7 +122,7 @@ function toggleSortDirection() {
         {#each sortedFiles as path, index (path)}
           {@const isSelected = index === nav.selectedIndex}
           <div
-            class="file-history-row group px-4 py-2.5 transition-colors"
+            class="list-row file-history-row group px-4 py-2.5 transition-colors"
             class:bg-row-even={index % 2 === 1 && !isSelected}
             data-selected={isSelected}
             use:scrollIntoView={isSelected}
@@ -169,30 +169,22 @@ function toggleSortDirection() {
 </Modal>
 
 <style>
-.file-history-row:hover:not([data-selected="true"]) {
-  background-color: var(--surface-hover);
+.file-history-title {
+  color: var(--text-primary);
 }
 
-.file-history-row[data-selected="true"] {
-  background-color: var(--accent-primary);
+.file-history-path {
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
-.file-history-row[data-selected="true"] .file-history-title {
+.file-history-row[data-selected="true"] .file-history-title,
+.file-history-row[data-selected="true"] .file-history-path {
   color: var(--text-inverse);
 }
 
 .file-history-row[data-selected="true"] .file-history-path {
-  color: var(--text-inverse);
   opacity: 0.8;
-}
-
-.file-history-row[data-selected="false"] .file-history-title {
-  color: var(--text-primary);
-}
-
-.file-history-row[data-selected="false"] .file-history-path {
-  color: var(--text-secondary);
-  opacity: 0.6;
 }
 
 .file-history-remove {

@@ -198,17 +198,14 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 {@const currentIndex = ++globalIndex.value}
                 {@const isSelected = currentIndex === nav.selectedIndex}
                 <div
-                  class="group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors {isSelected
-                    ? "bg-accent-primary"
-                    : currentIndex % 2 === 1
-                      ? "bg-row-even hover:bg-bg-hover"
-                      : "hover:bg-bg-hover"}"
+                  class="list-row group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
+                  class:bg-row-even={!isSelected && currentIndex % 2 === 1}
+                  data-selected={isSelected}
                   use:scrollIntoView={isSelected}
                 >
                   <button
                     type="button"
                     class="flex-1 cursor-pointer text-left transition-colors outline-none"
-                    style:color={isSelected ? "var(--text-inverse)" : "var(--text-primary)"}
                     onclick={() => startRecording(def.id)}
                   >
                     {translate(commandLabel(def))}
