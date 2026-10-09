@@ -76,7 +76,7 @@
 .preview-root s,
 .preview-root strike {
   text-decoration: line-through;
-  color: var(--editor-fg-secondary);
+  color: var(--editor-preview-fg-body);
 }
 
 /* Code */
