@@ -240,7 +240,7 @@ async function copyAllStats() {
   <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={copyAllStats}
     >
       <ClipboardCopy size={14} class="opacity-70" />

@@ -3,6 +3,7 @@ import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { appContext } from "$lib/stores/state.svelte";
 
 interface Props {
@@ -51,9 +52,14 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
       if (e.key === "Escape") onClose();
     }}
   >
-    <div class="ui-panel">
+    <div
+      class="ui-panel"
+      style:min-width={MODAL_CONSTRAINTS.MIN_WIDTH}
+      style:max-width={MODAL_CONSTRAINTS.MAX_WIDTH}
+      style:width={MODAL_CONSTRAINTS.SEARCH_WIDTH}
+    >
       <div class="ui-header">
-        <h3 class="text-fg-default text-sm font-semibold">{$_("mruTabs.title")}</h3>
+        <h3 class="text-fg-default text-lg font-semibold">{$_("mruTabs.title")}</h3>
         <p class="text-ui-sm text-fg-muted mt-1">{$_("mruTabs.hint")}</p>
       </div>
 

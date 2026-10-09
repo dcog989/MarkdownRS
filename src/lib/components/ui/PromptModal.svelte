@@ -31,13 +31,13 @@ function handleKeydown(e: KeyboardEvent) {
 
 <Modal isOpen={dialogStore.promptIsOpen} onClose={() => resolvePrompt(null)} zIndex={100} position="center">
   {#snippet header()}
-    <span class="text-fg-default text-sm font-semibold">{dialogStore.promptOptions.title}</span>
+    <span class="text-fg-default text-lg font-semibold">{dialogStore.promptOptions.title}</span>
   {/snippet}
 
   <div class="flex flex-col gap-3 px-4 py-4">
     <div class="flex flex-col gap-1">
       {#if dialogStore.promptOptions.message}
-        <label for="prompt-input" class="text-fg-default text-sm leading-relaxed"
+        <label for="prompt-input" class="text-fg-default text-ui leading-relaxed"
           >{dialogStore.promptOptions.message}</label
         >
       {/if}
@@ -48,7 +48,7 @@ function handleKeydown(e: KeyboardEvent) {
         bind:value={inputValue}
         onkeydown={handleKeydown}
         aria-label={dialogStore.promptOptions.message || $_("modal.promptInput")}
-        class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2"
+        class="border-border-input bg-bg-card text-fg-default focus:ring-accent rounded-lg border px-3 py-2 text-ui outline-none focus:ring-2"
       >
     </div>
   </div>

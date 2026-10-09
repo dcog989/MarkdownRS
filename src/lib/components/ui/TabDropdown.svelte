@@ -139,7 +139,7 @@ function handleKeydown(e: KeyboardEvent) {
         bind:value={searchQuery}
         type="text"
         placeholder={$_("tabDropdown.filterPlaceholder")}
-        class="text-fg-default w-full bg-transparent px-2 py-1 text-sm outline-none"
+        class="text-fg-default w-full bg-transparent px-2 py-1 text-ui outline-none"
         onkeydown={handleKeydown}
       >
     </div>
@@ -161,7 +161,7 @@ function handleKeydown(e: KeyboardEvent) {
           >
             <button
               type="button"
-              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-sm outline-none transition-opacity {isSelected
+              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-ui outline-none transition-opacity {isSelected
                 ? "text-fg-inverse opacity-100"
                 : isActive
                   ? "text-accent-secondary opacity-60 hover:opacity-100"

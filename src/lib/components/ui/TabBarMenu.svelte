@@ -72,7 +72,7 @@ function closeMenu() {
   >
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleCommandPalette();
         closeMenu();
@@ -80,11 +80,11 @@ function closeMenu() {
     >
       <Zap size={14} class="opacity-70" />
       <span class="flex-1">{$_("tabBarMenu.commandPalette")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.commands}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.commands}</span>
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleBookmarks();
         closeMenu();
@@ -92,11 +92,11 @@ function closeMenu() {
     >
       <Bookmark size={14} class="opacity-70" />
       <span class="flex-1">{$_("tabBarMenu.bookmarks")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.bookmarks}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.bookmarks}</span>
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleFileHistory();
         closeMenu();
@@ -104,14 +104,14 @@ function closeMenu() {
     >
       <History size={14} class="opacity-70" />
       <span class="flex-1">{$_("tabBarMenu.fileHistory")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.fileHistory}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.fileHistory}</span>
     </button>
 
     <div class="bg-border-main my-1 h-px"></div>
 
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       class:opacity-50={!isPreviewAvailable}
       class:cursor-not-allowed={!isPreviewAvailable}
       onclick={() => {
@@ -127,11 +127,11 @@ function closeMenu() {
         <EyeOff size={14} class="opacity-50" />
       {/if}
       <span class="flex-1">{$_("tabBarMenu.toggleSplitPreview")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.splitView}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.splitView}</span>
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleFileTree();
         saveSettings();
@@ -140,11 +140,11 @@ function closeMenu() {
     >
       <FolderTree size={14} class="opacity-70" />
       <span class="flex-1">{$_("tabBarMenu.toggleFileTree")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.fileTree}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.fileTree}</span>
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         handleWriterMode();
         closeMenu();
@@ -152,25 +152,25 @@ function closeMenu() {
     >
       <Feather size={14} class="opacity-70" />
       <span class="flex-1">{$_("tabBarMenu.writerMode")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.writerMode}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.writerMode}</span>
     </button>
 
     <div class="bg-border-main my-1 h-px"></div>
 
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleSettings();
         closeMenu();
       }}
     >
       <Settings size={14} class="opacity-70" /><span class="flex-1">{$_("tabBarMenu.settings")}</span
-      ><span class="ml-auto text-xs opacity-40">{shortcuts.settings}</span>
+      ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.settings}</span>
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => {
         toggleAbout();
         closeMenu();

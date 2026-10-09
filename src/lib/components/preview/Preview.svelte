@@ -166,17 +166,17 @@ function injectHtml(node: HTMLElement, content: string) {
       <div class="absolute inset-0 flex items-center justify-center opacity-50">
         <div class="flex flex-col items-center gap-2">
           <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-blue-500"></div>
-          <div class="text-sm">{$_("preview.rendering")}</div>
+          <div class="text-ui">{$_("preview.rendering")}</div>
         </div>
       </div>
     {:else if renderer.renderError}
       <div class="absolute inset-0 flex flex-col items-center justify-center px-8 opacity-60">
-        <div class="text-danger-text text-center text-sm">{renderer.renderError}</div>
+        <div class="text-danger-text text-center text-ui">{renderer.renderError}</div>
       </div>
     {:else if !renderer.htmlContent}
       <div class="absolute inset-0 flex flex-col items-center justify-center opacity-20">
         <Logo class="mb-4 h-24 w-24 grayscale" />
-        <h1 class="text-3xl font-bold">{$_("app.name")}</h1>
+        <h1 class="text-ui-xlg font-bold">{$_("app.name")}</h1>
       </div>
     {:else}
       <div class="display-contents" use:injectHtml={renderer.htmlContent}></div>

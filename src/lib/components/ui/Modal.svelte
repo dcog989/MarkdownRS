@@ -186,7 +186,7 @@ $effect(() => {
         </div>
       {:else if title}
         <div class="ui-header flex items-center justify-between">
-          <span class="text-fg-default text-sm font-semibold">{title}</span>
+          <span class="text-fg-default text-lg font-semibold">{title}</span>
           <button
             type="button"
             class="text-fg-muted hover-surface rounded p-1"

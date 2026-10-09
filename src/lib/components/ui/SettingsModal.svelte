@@ -185,7 +185,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
           {@const rowClass = index % 2 === 1 ? "bg-row-even" : ""}
 
           <div class="settings-row {rowClass}">
-            <div class="settings-category text-ui-sm py-2.5 pl-3">
+            <div class="settings-category text-ui py-2.5 pl-3">
               {translate(setting.category)}
             </div>
             <label for={setting.key} class="text-ui text-fg-default font-medium py-2.5 pl-8">

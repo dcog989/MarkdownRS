@@ -208,7 +208,7 @@ $effect(() => {
     <button
       type="button"
       use:tooltip={$_("tabBar.switchTab")}
-      class="text-fg-muted hover-surface flex h-full items-center gap-1 text-xs"
+      class="text-fg-muted hover-surface flex h-full items-center gap-1 text-ui"
       onclick={() => (showDropdown = !showDropdown)}
     >
       <span>{appContext.editor.tabs.length}</span>

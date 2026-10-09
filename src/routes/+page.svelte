@@ -182,7 +182,7 @@ function onResizeMouseDown(e: MouseEvent) {
         {:else}
           <div class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
             <Logo class="mb-4 h-16 w-16 opacity-50 grayscale" />
-            <p class="text-sm">{$_("app.newFileHint")}</p>
+            <p class="text-ui">{$_("app.newFileHint")}</p>
           </div>
         {/if}
       </div>

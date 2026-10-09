@@ -30,7 +30,7 @@ let {
 <div class="flex w-full items-center gap-4">
   <div class="flex shrink-0 items-center gap-2">
     <Icon size={16} class="text-accent-secondary" />
-    <h2 class="text-ui text-fg-default font-semibold">{title}</h2>
+    <h2 class="text-lg text-fg-default font-semibold">{title}</h2>
   </div>
 
   <div class="relative flex-1 min-w-0">
@@ -46,7 +46,7 @@ let {
     {#if !searchValue}
       <div class="pointer-events-none absolute inset-0 flex items-center px-2 text-fg-muted opacity-50">
         <Search size={16} class="mx-2 shrink-0" />
-        <span class="truncate text-sm">{searchPlaceholder}</span>
+        <span class="truncate text-ui">{searchPlaceholder}</span>
       </div>
     {/if}
   </div>

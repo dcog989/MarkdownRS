@@ -47,7 +47,7 @@ let tooltipContent = $derived.by(() => {
   tabindex="0"
   data-active={isActive}
   data-tab-id={tab.id}
-  class="group text-ui-sm relative flex h-8 min-w-0 cursor-default items-center gap-2 text-left outline-none select-none"
+  class="group text-ui relative flex h-8 min-w-0 cursor-default items-center gap-2 text-left outline-none select-none"
   class:bg-editor-active={isActive}
   class:bg-bg-panel={!isActive}
   class:hover:bg-bg-hover={!isActive}

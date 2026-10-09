@@ -23,7 +23,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
   })}
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={ctx.handleNewFile}
     >
       <FilePlus size={14} class="opacity-70" />
@@ -31,7 +31,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
     </button>
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={ctx.handleNewFolder}
     >
       <FolderPlus size={14} class="opacity-70" />
@@ -43,7 +43,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
       {#if !entry.is_dir}
         <button
           type="button"
-          class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+          class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={ctx.handleOpen}
         >
           <FolderOpen size={14} class="opacity-70" />
@@ -52,7 +52,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
       {/if}
       <button
         type="button"
-        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleRename}
       >
         <FilePen size={14} class="opacity-70" />
@@ -60,7 +60,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
       </button>
       <button
         type="button"
-        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleCopyPath}
       >
         <Copy size={14} class="opacity-70" />
@@ -68,7 +68,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
       </button>
       <button
         type="button"
-        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleRevealInFileManager}
       >
         <FolderSearch size={14} class="opacity-70" />
@@ -79,7 +79,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
 
       <button
         type="button"
-        class="text-ui-sm text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui text-danger-text hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={ctx.handleDelete}
       >
         <Trash2 size={14} class="opacity-70" />

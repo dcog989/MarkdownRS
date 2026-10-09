@@ -65,7 +65,7 @@ function insertEmoji(char: string) {
       {#each results as entry (entry.char)}
         <button
           type="button"
-          class="hover:bg-bg-hover flex h-9 w-9 items-center justify-center rounded-md text-2xl transition-colors"
+          class="hover:bg-bg-hover flex h-9 w-9 items-center justify-center rounded-md text-lg transition-colors"
           use:tooltip={`:${entry.shortcode}:`}
           onclick={() => insertEmoji(entry.char)}
         >

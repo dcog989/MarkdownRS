@@ -90,7 +90,7 @@ async function checkForUpdates() {
 <Modal bind:isOpen {onClose} {position} title={$_("about.title")}>
   <div class="text-ui flex flex-col items-center gap-4 p-6">
     <img src="/logo.svg" alt={$_("app.logoAlt")} class="h-20 w-20">
-    <h1 class="text-fg-default text-2xl font-bold">{appInfo.name}</h1>
+    <h1 class="text-fg-default text-ui-xlg font-bold">{appInfo.name}</h1>
     <p class="text-fg-muted">{$_("app.tagline")}</p>
     <p class="text-accent-secondary text-center italic">"{$_("app.quote")}"</p>
 
@@ -100,7 +100,7 @@ async function checkForUpdates() {
         <span class="text-fg-default flex-1 text-left font-mono font-bold">{appInfo.version}</span>
         <button
           type="button"
-          class="text-ui-sm bg-bg-input text-fg-default border-border-light flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
+          class="text-ui bg-bg-input text-fg-default border-border-light flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
           onclick={checkForUpdates}
           disabled={isChecking}
         >
@@ -115,12 +115,12 @@ async function checkForUpdates() {
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
         <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("common.install")}</span>
-        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.install_path}
+        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.install_path}
           >{appInfo.install_path}</span
         >
         <button
           type="button"
-          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.install_path)}
         >
           {$_("common.copy")}
@@ -129,12 +129,12 @@ async function checkForUpdates() {
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
         <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.data")}</span>
-        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.data_path}
+        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.data_path}
           >{appInfo.data_path}</span
         >
         <button
           type="button"
-          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.data_path)}
         >
           {$_("common.copy")}
@@ -143,12 +143,12 @@ async function checkForUpdates() {
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
         <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.config")}</span>
-        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.config_path}
+        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.config_path}
           >{appInfo.config_path}</span
         >
         <button
           type="button"
-          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.config_path)}
         >
           {$_("common.copy")}
@@ -157,12 +157,12 @@ async function checkForUpdates() {
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
         <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.cache")}</span>
-        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.cache_path}
+        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.cache_path}
           >{appInfo.cache_path}</span
         >
         <button
           type="button"
-          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.cache_path)}
         >
           {$_("common.copy")}
@@ -171,12 +171,12 @@ async function checkForUpdates() {
 
       <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
         <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.logs")}</span>
-        <span class="text-ui-sm text-fg-default flex-1 truncate text-left font-mono" title={appInfo.logs_path}
+        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.logs_path}
           >{appInfo.logs_path}</span
         >
         <button
           type="button"
-          class="text-ui-sm text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="text-ui text-accent-primary hover-surface shrink-0 rounded px-2 py-0.5"
           onclick={() => copyToClipboard(appInfo.logs_path)}
         >
           {$_("common.copy")}
@@ -186,7 +186,7 @@ async function checkForUpdates() {
 
     <button
       type="button"
-      class="text-ui-sm text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
+      class="text-ui text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
       onclick={openLogFile}
     >
       <span>{$_("about.openLogFile")}</span>
@@ -194,12 +194,12 @@ async function checkForUpdates() {
     </button>
 
     {#if updateStatus}
-      <div class="text-ui-sm text-accent-primary py-1 text-center">
+      <div class="text-ui text-accent-primary py-1 text-center">
         {updateStatus}
       </div>
     {/if}
 
-    <div class="mt-4 text-center text-xs">
+    <div class="mt-4 text-center text-ui-sm">
       <p class="text-fg-muted">{$_("app.giants")}</p>
       <p class="text-fg-muted mt-1">{$_("app.rights")}</p>
     </div>

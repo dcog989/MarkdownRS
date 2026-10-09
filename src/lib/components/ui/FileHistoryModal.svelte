@@ -141,7 +141,7 @@ function toggleSortDirection() {
                 <div class="file-history-title truncate font-medium">
                   {getFilename(path)}
                 </div>
-                <div class="file-history-path text-ui-sm truncate">
+                <div class="file-history-path text-ui truncate">
                   {path}
                 </div>
               </div>

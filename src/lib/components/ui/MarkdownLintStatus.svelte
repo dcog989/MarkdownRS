@@ -67,7 +67,7 @@ async function copyConfigPath() {
     <CircleCheck size={14} />
   {/if}
   {#if displayCount}
-    <span class="font-mono text-xs">{displayCount}</span>
+    <span class="font-mono text-ui-sm">{displayCount}</span>
   {/if}
 </button>
 
@@ -75,7 +75,7 @@ async function copyConfigPath() {
   title: string,
   diags: LintDiagnostic[],
 )}
-  <div class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted">
+  <div class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-wider text-fg-muted">
     {title}
     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal"> ({diags.length}) </span>
   </div>
@@ -84,11 +84,11 @@ async function copyConfigPath() {
     {@const Icon = entry.icon}
     <button
       type="button"
-      class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-sm transition-colors"
+      class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-ui transition-colors"
     >
       <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
       <div class="min-w-0 flex-1">
-        <span class="font-mono text-xs text-fg-muted"> {translate("statusBar.ln")} {diag.line} </span>
+        <span class="font-mono text-ui-sm text-fg-muted"> {translate("statusBar.ln")} {diag.line} </span>
         <p class="truncate text-fg-default">
           {diag.message}
         </p>
@@ -108,7 +108,7 @@ async function copyConfigPath() {
     })}
       <div class="min-w-72">
         <div
-          class="border-border-light border-b px-3 py-2 text-xs font-semibold uppercase tracking-wider text-fg-muted"
+          class="border-border-light border-b px-3 py-2 text-ui-sm font-semibold uppercase tracking-wider text-fg-muted"
         >
           {translate("lint.title")}
           <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
@@ -116,7 +116,7 @@ async function copyConfigPath() {
           </span>
         </div>
         {#if markdownLintState.diagnostics.length === 0}
-          <div class="px-3 py-4 text-center text-sm text-fg-muted">
+          <div class="px-3 py-4 text-center text-ui text-fg-muted">
             {translate("lint.noIssues")}
           </div>
         {:else}

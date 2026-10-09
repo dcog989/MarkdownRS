@@ -3,6 +3,7 @@ import { Settings2, X } from "lucide-svelte";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
+import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -95,11 +96,11 @@ async function saveConfig() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} position="top" width="min(680px, 90vw)">
+<Modal bind:isOpen {onClose} position="top" width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <div class="flex items-center gap-2">
       <Settings2 size={16} class="text-accent-secondary" />
-      <h2 class="text-fg-default text-sm font-semibold">{$_("rumdlConfig.title")}</h2>
+      <h2 class="text-fg-default text-lg font-semibold">{$_("rumdlConfig.title")}</h2>
     </div>
     <button
       type="button"
@@ -115,7 +116,7 @@ async function saveConfig() {
     <div class="bg-bg-input border-border-light flex w-max items-center gap-1 rounded border p-1">
       <button
         type="button"
-        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === "project"
+        class="text-ui rounded px-3 py-1 transition-colors {scope === "project"
           ? "bg-accent-primary text-fg-inverse"
           : "text-fg-muted hover:text-fg-default"}"
         onclick={() => setScope("project")}
@@ -125,7 +126,7 @@ async function saveConfig() {
       </button>
       <button
         type="button"
-        class="text-ui-sm rounded px-3 py-1 transition-colors {scope === "user"
+        class="text-ui rounded px-3 py-1 transition-colors {scope === "user"
           ? "bg-accent-primary text-fg-inverse"
           : "text-fg-muted hover:text-fg-default"}"
         onclick={() => setScope("user")}
@@ -136,7 +137,7 @@ async function saveConfig() {
     </div>
 
     <div class="flex items-center gap-2">
-      <span class="text-ui-sm text-fg-muted shrink-0">{translate("rumdlConfig.targetLabel")}</span>
+      <span class="text-ui text-fg-muted shrink-0">{translate("rumdlConfig.targetLabel")}</span>
       <span
         class="bg-bg-panel border-border-light text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono"
       >

@@ -151,9 +151,7 @@ function handleKeydown(e: KeyboardEvent) {
         <span class="text-ui-sm opacity-50">{$_("dictionary.placeholder")}</span>
       {:else}
         {#each selected as code (code)}
-          <span
-            class="bg-accent-primary/20 text-ui-sm inline-flex items-center gap-1 rounded px-2 py-1 whitespace-nowrap"
-          >
+          <span class="bg-accent-primary/20 text-ui inline-flex items-center gap-1 rounded px-2 py-1 whitespace-nowrap">
             {availableDictionaries.find((d) => d.code === code)?.name || code}
             <button
               type="button"

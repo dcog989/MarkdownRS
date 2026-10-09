@@ -277,7 +277,7 @@ let contextMenuY = $state(0);
 
   <div class="min-h-0 flex-1">
     {#if !fileTreeStore.root}
-      <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-xs">
+      <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-ui-sm">
         {$_("fileTree.emptyState")}
       </div>
     {:else}
@@ -358,7 +358,7 @@ let contextMenuY = $state(0);
         </div>
       </div>
       {#if filterActive && !treeViewStore.filterLoading && allRows.length <= 1}
-        <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-xs">
+        <div class="text-fg-muted flex h-12 items-center justify-center px-4 text-center text-ui-sm">
           {$_("fileTree.noFilterMatch")}
         </div>
       {/if}

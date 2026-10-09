@@ -151,7 +151,7 @@ function toggleSortDirection() {
           {#if group.category}
             <div class="mb-3 flex items-center gap-2">
               <Zap size={16} class="text-accent-primary" />
-              <h3 class="text-fg-default text-sm font-semibold tracking-wide uppercase">
+              <h3 class="text-fg-default text-ui font-semibold tracking-wide uppercase">
                 {categoryLabel(group.category)}
               </h3>
             </div>
@@ -171,10 +171,10 @@ function toggleSortDirection() {
                 onclick={() => execute(command)}
               >
                 <div class="min-w-0 flex-1">
-                  <div class="text-sm font-medium whitespace-nowrap">{translate(commandLabel(command))}</div>
+                  <div class="text-ui font-medium whitespace-nowrap">{translate(commandLabel(command))}</div>
                   {#if shortcut}
                     <div
-                      class="mt-0.5 truncate text-xs"
+                      class="mt-0.5 truncate text-ui-sm"
                       style:color={isSelected ? "var(--text-inverse)" : "var(--text-secondary)"}
                     >
                       <span class="opacity-60">{shortcut}</span>

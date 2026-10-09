@@ -1,6 +1,6 @@
 import { EditorView } from "@codemirror/view";
 
-// The app's base UI font stack (mirrors app.css) and the .text-ui-sm size, used
+// The app's base UI font stack (mirrors app.css) and the .text-ui size, used
 // for in-editor tooltips so they don't render in the editor's monospace font.
 const UI_FONT_FAMILY =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Droid Sans", sans-serif';

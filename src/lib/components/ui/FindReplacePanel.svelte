@@ -269,7 +269,7 @@ onMount(() => {
         >
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
           class:bg-bg-active={isReplaceMode}
           class:text-accent-secondary={isReplaceMode}
           onclick={() => (isReplaceMode = !isReplaceMode)}
@@ -280,7 +280,7 @@ onMount(() => {
       </div>
       <button
         type="button"
-        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all"
+        class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
         onclick={close}
         title={$_("findReplace.closeEsc")}
       >
@@ -295,7 +295,7 @@ onMount(() => {
           type="text"
           bind:value={searchState.findText}
           placeholder={$_("findReplace.find")}
-          class="flex-1 text-ui-sm leading-6 {searchState.regexError ? "border-danger" : ""}"
+          class="flex-1 text-ui leading-6 {searchState.regexError ? "border-danger" : ""}"
           oninput={onInput}
           spellcheck="false"
         />
@@ -318,7 +318,7 @@ onMount(() => {
       </div>
 
       {#if searchState.regexError}
-        <div class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-2xs">
+        <div class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-ui-sm">
           {searchState.regexError}
         </div>
       {/if}
@@ -329,7 +329,7 @@ onMount(() => {
             type="text"
             bind:value={searchState.replaceText}
             placeholder={$_("findReplace.replace")}
-            class="flex-1 text-ui-sm leading-6"
+            class="flex-1 text-ui leading-6"
             oninput={onReplaceInput}
             spellcheck="false"
           />
@@ -337,7 +337,7 @@ onMount(() => {
       {/if}
 
       <div class="flex flex-wrap gap-4">
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
           <input
             type="checkbox"
             bind:checked={searchState.matchCase}
@@ -346,7 +346,7 @@ onMount(() => {
           >
           <span>{$_("findReplace.matchCase")}</span>
         </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
           <input
             type="checkbox"
             bind:checked={searchState.matchWholeWord}
@@ -355,7 +355,7 @@ onMount(() => {
           >
           <span>{$_("findReplace.wholeWord")}</span>
         </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
           <input
             type="checkbox"
             bind:checked={searchState.useRegex}
@@ -367,7 +367,7 @@ onMount(() => {
       </div>
 
       <div class="flex flex-wrap gap-4">
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
           <input
             type="radio"
             bind:group={searchScope}
@@ -377,7 +377,7 @@ onMount(() => {
           >
           <span>{$_("findReplace.currentDocument")}</span>
         </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui-sm">
+        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
           <input
             type="radio"
             bind:group={searchScope}
@@ -392,7 +392,7 @@ onMount(() => {
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindPrevious}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -401,7 +401,7 @@ onMount(() => {
         </button>
         <button
           type="button"
-          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
           onclick={onFindNext}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -413,7 +413,7 @@ onMount(() => {
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
             onclick={onReplace}
             disabled={searchScope === "all" || !!searchState.regexError}
           >
@@ -422,7 +422,7 @@ onMount(() => {
           </button>
           <button
             type="button"
-            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui-sm transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="bg-bg-hover border-border-light text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
             onclick={onReplaceAll}
             disabled={!!searchState.regexError}
           >
@@ -434,7 +434,7 @@ onMount(() => {
 
       {#if searchScope === "all" && searchState.allTabsResults.size > 0}
         <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-          <div class="text-fg-muted mb-1 text-ui-sm font-semibold">{$_("findReplace.results")}</div>
+          <div class="text-fg-muted mb-1 text-ui font-semibold">{$_("findReplace.results")}</div>
           {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
             {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
             {#if tab}
@@ -443,9 +443,7 @@ onMount(() => {
                 class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
                 onclick={() => navigateToTab(tabId)}
               >
-                <span class="text-fg-default overflow-hidden text-ui-sm text-ellipsis whitespace-nowrap"
-                  >{tab.title}</span
-                >
+                <span class="text-fg-default overflow-hidden text-ui text-ellipsis whitespace-nowrap">{tab.title}</span>
                 <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-ui-sm">{count}</span>
               </button>
             {/if}

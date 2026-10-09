@@ -13,7 +13,7 @@ button {
   border-radius: 0.25rem;
   border: 1px solid;
   padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
@@ -50,7 +50,7 @@ button {
 /* Form Labels */
 label {
   color: var(--text-primary);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
 }
 
@@ -65,7 +65,7 @@ select {
   border: 1px solid var(--border-primary);
   border-radius: 0.25rem;
   padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   transition: border-color 150ms;
 }
 
@@ -195,7 +195,6 @@ select {
 .ui-panel {
   display: flex;
   max-height: 25rem;
-  width: 31.25rem;
   flex-direction: column;
   overflow: hidden;
   border-radius: 0.5rem;
@@ -225,7 +224,7 @@ select {
   gap: 0.75rem;
   padding: 0.625rem 1rem;
   text-align: left;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 100ms;
@@ -305,7 +304,7 @@ select {
   width: 100%;
   align-items: center;
   padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   border-radius: 0.25rem;
   color: var(--text-primary);
   background-color: transparent;
@@ -369,7 +368,7 @@ select {
   color: var(--text-primary);
   cursor: pointer;
   transition: background-color 150ms;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
 }
 

@@ -183,7 +183,7 @@ const actions = $derived<Action[]>([
   {#snippet header()}
     <div class="flex items-center gap-2">
       <Database size={16} class="text-accent-secondary" />
-      <h2 class="text-fg-default text-sm font-semibold">{$_("data.title")}</h2>
+      <h2 class="text-fg-default text-lg font-semibold">{$_("data.title")}</h2>
     </div>
     <button
       type="button"

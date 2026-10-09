@@ -15,10 +15,10 @@ const buttons = $derived.by(() => {
 
 <Modal isOpen={appContext.ui.dialog.isOpen} onClose={() => resolveDialog("cancel")} zIndex={100} position="center">
   {#snippet header()}
-    <span class="text-fg-default text-sm font-semibold">{appContext.ui.dialog.options.title}</span>
+    <span class="text-fg-default text-lg font-semibold">{appContext.ui.dialog.options.title}</span>
   {/snippet}
 
-  <div class="text-fg-default whitespace-pre-line p-4 text-sm leading-relaxed">
+  <div class="text-fg-default whitespace-pre-line p-4 text-ui leading-relaxed">
     {appContext.ui.dialog.options.message}
   </div>
 

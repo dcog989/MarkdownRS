@@ -1,45 +1,21 @@
 /* Typography Classes */
 
 .text-ui {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
 .text-ui-sm {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
-.text-2xs {
-  font-size: 0.6875rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-}
-
-.text-sm {
-  font-size: 0.875rem;
+.text-ui-xlg {
+  font-size: 1.25rem;
 }
 
 .text-lg {
-  font-size: 1.125rem;
-}
-
-.text-2xl {
-  font-size: 1.5rem;
-}
-
-.text-3xl {
-  font-size: 1.875rem;
-}
-
-.text-\[11px\] {
-  font-size: 11px;
-}
-
-.text-\[13px\] {
-  font-size: 13px;
+  font-size: 0.9375rem;
 }
 
 .text-left {

@@ -302,7 +302,9 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
         <div
           class="bg-bg-panel border-border-light pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"
         >
-          <div class="text-fg-muted border-border-light border-b px-4 py-3 text-xs font-medium uppercase tracking-wide">
+          <div
+            class="text-fg-muted border-border-light border-b px-4 py-3 text-ui-sm font-medium uppercase tracking-wide"
+          >
             {$_("editor.recentlyClosed")}
           </div>
           <div class="flex flex-col closed-tabs-list">
@@ -311,7 +313,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
                 type="button"
                 onclick={() => reopenClosedTab(i)}
                 use:tooltip={entry.tab.path || entry.tab.customTitle || entry.tab.title}
-                class="hover:bg-bg-hover flex w-full items-center gap-3 border-b border-transparent px-4 py-2.5 text-left text-sm last:border-b-0 transition-colors"
+                class="hover:bg-bg-hover flex w-full items-center gap-3 border-b border-transparent px-4 py-2.5 text-left text-ui last:border-b-0 transition-colors"
               >
                 <span class="text-fg-muted">•</span>
                 <span class="truncate closed-tabs-text"

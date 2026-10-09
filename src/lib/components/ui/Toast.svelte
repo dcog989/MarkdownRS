@@ -101,11 +101,11 @@ onMount(() => {
         )[1]}"
       >
         <Icon size={16} class="shrink-0 {iconColorClass}" />
-        <span class="flex-1 text-ui-sm leading-snug">{toast.message}</span>
+        <span class="flex-1 text-ui leading-snug">{toast.message}</span>
         {#if toast.action}
           <button
             type="button"
-            class="text-accent-link hover:text-accent-link-hover cursor-pointer rounded border-none bg-transparent px-2 py-1 text-ui-sm font-medium transition-colors"
+            class="text-accent-link hover:text-accent-link-hover cursor-pointer rounded border-none bg-transparent px-2 py-1 text-ui font-medium transition-colors"
             onclick={() => {
               toast.action?.onClick();
               dismissToast(toast.id);

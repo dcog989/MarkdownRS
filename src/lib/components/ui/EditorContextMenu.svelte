@@ -258,7 +258,7 @@ async function handleSendToBrowser() {
         }}
       >
         {#snippet trigger()}
-          <button type="button" class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
+          <button type="button" class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left">
             <IconCmp size={14} /><span>{label}</span><span class="ml-auto opacity-50">›</span>
           </button>
         {/snippet}
@@ -269,12 +269,12 @@ async function handleSendToBrowser() {
             {@const id = op.id}
             <button
               type="button"
-              class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+              class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
               onclick={() => handleOp(id)}
             >
               <span class="flex-1">{translate(op.label ?? "")}</span>
               {#if id && opShortcut(id)}
-                <span class="text-xs opacity-40">{opShortcut(id)}</span>
+                <span class="text-ui-sm opacity-40">{opShortcut(id)}</span>
               {/if}
             </button>
           {/if}
@@ -289,7 +289,7 @@ async function handleSendToBrowser() {
         </div>
       {/if}
       {#if isLoadingSuggestions}
-        <div class="text-ui-sm flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
+        <div class="text-ui flex w-full items-center gap-2 px-3 py-1.5 text-left opacity-70">
           <Sparkles size={14} class="text-accent-secondary animate-spin" />
           <span>{$_("editorContextMenu.loadingSuggestions")}</span>
         </div>
@@ -297,7 +297,7 @@ async function handleSendToBrowser() {
         {#each suggestions as s, i (i)}
           <button
             type="button"
-            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium"
+            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left font-medium"
             onclick={() => onReplaceWord?.(s)}
           >
             <Sparkles size={14} class="text-accent-secondary" /><span>{s}</span>
@@ -307,7 +307,7 @@ async function handleSendToBrowser() {
           <div class="bg-border-main my-1 h-px"></div>
           <button
             type="button"
-            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={async () => {
               const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
               spellcheckState.customDictionary = newDict;
@@ -327,7 +327,7 @@ async function handleSendToBrowser() {
         {#if canAddAll}
           <button
             type="button"
-            class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+            class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
             onclick={handleAddAll}
           >
             <BookText size={14} /><span>{$_("editorContextMenu.addAllInvalid")}</span>
@@ -341,7 +341,7 @@ async function handleSendToBrowser() {
       {#if selectedText}
         <button
           type="button"
-          class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+          class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
             onCut?.();
             closeMenuAndReset();
@@ -352,7 +352,7 @@ async function handleSendToBrowser() {
         </button>
         <button
           type="button"
-          class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+          class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
           onclick={() => {
             onCopy?.();
             closeMenuAndReset();
@@ -364,7 +364,7 @@ async function handleSendToBrowser() {
       {/if}
       <button
         type="button"
-        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={() => {
           onPaste?.();
           closeMenuAndReset();
@@ -379,7 +379,7 @@ async function handleSendToBrowser() {
 
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => handleOp("format-document")}
     >
       <WandSparkles size={14} />
@@ -387,7 +387,7 @@ async function handleSendToBrowser() {
         >{selectedText ? $_("editorContextMenu.formatSelection") : $_("editorContextMenu.formatDocument")}</span
       >
       {#if opShortcut("format-document")}
-        <span class="text-xs opacity-40">{opShortcut("format-document")}</span>
+        <span class="text-ui-sm opacity-40">{opShortcut("format-document")}</span>
       {/if}
     </button>
 
@@ -403,13 +403,13 @@ async function handleSendToBrowser() {
 
     <button
       type="button"
-      class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+      class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
       onclick={() => handleOp("generate-toc")}
     >
       <List size={14} />
       <span class="flex-1">{$_("editorContextMenu.generateToc")}</span>
       {#if opShortcut("generate-toc")}
-        <span class="text-xs opacity-40">{opShortcut("generate-toc")}</span>
+        <span class="text-ui-sm opacity-40">{opShortcut("generate-toc")}</span>
       {/if}
     </button>
 
@@ -417,7 +417,7 @@ async function handleSendToBrowser() {
       <div class="bg-border-main my-1 h-px"></div>
       <button
         type="button"
-        class="text-ui-sm hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
+        class="text-ui hover-surface flex w-full items-center gap-2 px-3 py-1.5 text-left"
         onclick={handleSendToBrowser}
       >
         <Search size={14} />

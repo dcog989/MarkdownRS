@@ -158,11 +158,11 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div class="bg-bg-panel border-border-main pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
             <h3 class="text-fg-default mb-4 text-base font-semibold">{$_("shortcuts.conflictTitle")}</h3>
-            <p class="text-fg-muted mb-3 text-sm leading-relaxed">
-              <span class="text-fg-default font-mono text-sm">{conflict.key}</span>
+            <p class="text-fg-muted mb-3 text-ui leading-relaxed">
+              <span class="text-fg-default font-mono text-ui">{conflict.key}</span>
               {$_("shortcuts.alreadyAssigned")} <strong>{translate(commandLabel(conflict.command))}</strong>.
             </p>
-            <p class="text-fg-muted mb-5 text-sm leading-relaxed">
+            <p class="text-fg-muted mb-5 text-ui leading-relaxed">
               {$_("shortcuts.reassignTo")}
               <strong
                 >{(() => {
@@ -220,7 +220,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                   <div class="flex items-center gap-2">
                     <button
                       type="button"
-                      class="min-w-25 rounded border px-3 py-1 text-center font-mono text-sm transition-all
+                      class="min-w-25 rounded border px-3 py-1 text-center font-mono text-ui transition-all
 												{recordingCommandId === def.id
                         ? "bg-accent-primary border-accent-primary text-fg-inverse animate-pulse"
                         : isSelected
