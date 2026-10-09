@@ -3,7 +3,6 @@ import { ArrowDown, ArrowUp, Clock, History, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
-import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { openFileByPath } from "$lib/utils/fileSystem";
@@ -82,7 +81,7 @@ function toggleSortDirection() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
+<Modal bind:isOpen {onClose}>
   {#snippet header()}
     <ModalSearchHeader
       title={$_("fileHistory.title")}

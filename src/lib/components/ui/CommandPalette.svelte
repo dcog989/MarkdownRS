@@ -6,7 +6,6 @@ import type { Command } from "$lib/commands/commands";
 import { commandCategoryKey, commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
-import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
 import { SORT_LABEL_KEYS, SORT_MODES, sortCommands } from "$lib/utils/commandPaletteSort";
@@ -110,7 +109,7 @@ function toggleSortDirection() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
+<Modal bind:isOpen {onClose}>
   {#snippet header()}
     <ModalSearchHeader
       title={$_("commandPalette.title")}
