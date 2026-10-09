@@ -127,7 +127,7 @@
   --editor-border-secondary: #4b4b4b;
   --editor-tooltip-accent: var(--accent-primary);
   --editor-tooltip-accent-fg: var(--text-inverse);
-  --editor-selection-bg: hsl(from var(--editor-bg) h s calc(l + 18));
+  --editor-selection-bg: var(--selection-bg);
   --editor-selection-match-bg: oklch(0.68 0.1 60 / 0.35);
   --editor-highlight-line: #e5c07b;
   --editor-danger: var(--danger);
@@ -250,7 +250,7 @@
   --editor-border-secondary: #a8a8a8;
   --editor-tooltip-accent: var(--accent-primary);
   --editor-tooltip-accent-fg: var(--text-inverse);
-  --editor-selection-bg: hsl(from var(--editor-bg) h s calc(l + 18));
+  --editor-selection-bg: var(--selection-bg);
   --editor-selection-match-bg: oklch(0.68 0.12 62 / 0.35);
   --editor-accent: var(--accent-secondary);
   --editor-link: var(--accent-link);

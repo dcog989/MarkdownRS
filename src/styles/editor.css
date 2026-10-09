@@ -67,6 +67,13 @@
   background-color: hsl(from var(--editor-bg) h s calc(l + 8));
 }
 
+/* Drop the current-line tint while text is selected so the selection
+   highlight is the only background. drawSelection only emits
+   .cm-selectionBackground for non-empty ranges. */
+.cm-editor:has(.cm-selectionBackground) .cm-activeLine::before {
+  background-color: transparent;
+}
+
 .cm-editor .cm-selectionLayer .cm-selectionBackground {
   background: var(--editor-selection-bg);
 }
