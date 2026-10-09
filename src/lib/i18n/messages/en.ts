@@ -453,9 +453,9 @@ export const en = {
   bookmarks: {
     title: "Bookmarks",
     placeholder: "Search bookmarks...",
-    sortMostRecent: "Most Recent",
+    sortDateAdded: "Added",
     sortAlphabetical: "Alphabetical",
-    sortLastUpdated: "Last Updated",
+    sortLastAccessed: "Accessed",
     addBookmark: "Add Bookmark",
     filePathPlaceholder: "File path...",
     bookmarkTitlePlaceholder: "Bookmark title...",

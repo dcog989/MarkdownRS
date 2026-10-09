@@ -32,7 +32,7 @@ interface Props {
 
 let { isOpen = $bindable(false), onClose, onOpenFile, position = "top" }: Props = $props();
 
-type SortOption = "most-recent" | "alphabetical" | "last-updated";
+type SortOption = "date-added" | "alphabetical" | "last-accessed";
 type SortDirection = "asc" | "desc";
 
 let searchQuery = $state("");
@@ -44,7 +44,7 @@ let addPath = $state("");
 let addTitle = $state("");
 let addTags = $state("");
 let browseError = $state("");
-let sortBy = $state<SortOption>("most-recent");
+let sortBy = $state<SortOption>("date-added");
 let sortDirection = $state<SortDirection>("desc");
 
 function sortByField<T>(items: T[], getField: (item: T) => string, direction: SortDirection): void {
@@ -100,13 +100,13 @@ let sortedBookmarks = $derived(
   (() => {
     const sorted = [...filteredBookmarks].filter((b) => !deletingIds.has(b.id));
     switch (sortBy) {
-      case "most-recent":
+      case "date-added":
         sortByField(sorted, (b) => b.created || "", sortDirection);
         break;
       case "alphabetical":
         sortByField(sorted, (b) => b.title.toLowerCase(), sortDirection);
         break;
-      case "last-updated":
+      case "last-accessed":
         sortByField(sorted, (b) => b.last_accessed || b.created || "", sortDirection);
         break;
     }
@@ -230,9 +230,9 @@ function handleKeydown(e: KeyboardEvent) {
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
           <select bind:value={sortBy} class="w-auto">
-            <option value="most-recent">{$_("bookmarks.sortMostRecent")}</option>
+            <option value="date-added">{$_("bookmarks.sortDateAdded")}</option>
             <option value="alphabetical">{$_("bookmarks.sortAlphabetical")}</option>
-            <option value="last-updated">{$_("bookmarks.sortLastUpdated")}</option>
+            <option value="last-accessed">{$_("bookmarks.sortLastAccessed")}</option>
           </select>
           <button
             type="button"
