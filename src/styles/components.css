@@ -243,6 +243,24 @@ select {
   color: var(--text-primary);
 }
 
+/* Single source of truth for native select styling across the app. */
+.ui-select {
+  cursor: pointer;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.25rem;
+  background-color: var(--surface-input);
+  color: var(--text-primary);
+  padding: 0.25rem 2rem 0.25rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 150ms;
+}
+
+.ui-select:focus {
+  border-color: var(--accent-primary);
+}
+
 /* MRU List Items */
 .mru-item {
   display: flex;

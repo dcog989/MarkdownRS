@@ -229,10 +229,7 @@ function handleKeydown(e: KeyboardEvent) {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
-          <select
-            bind:value={sortBy}
-            class="text-ui bg-bg-input text-fg-default bg-border-main cursor-pointer rounded border pl-1 pr-5 py-1 outline-none w-auto"
-          >
+          <select bind:value={sortBy} class="ui-select w-auto">
             <option value="most-recent">{$_("bookmarks.sortMostRecent")}</option>
             <option value="alphabetical">{$_("bookmarks.sortAlphabetical")}</option>
             <option value="last-updated">{$_("bookmarks.sortLastUpdated")}</option>

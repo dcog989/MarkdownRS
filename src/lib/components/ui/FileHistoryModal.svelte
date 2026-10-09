@@ -105,11 +105,7 @@ function toggleSortDirection() {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
-          <select
-            bind:value={sortBy}
-            class="text-ui bg-bg-input text-fg-default bg-border-main w-auto cursor-pointer rounded border py-1 pl-3 outline-none"
-            title={$_("fileHistory.sortBy")}
-          >
+          <select bind:value={sortBy} class="ui-select w-auto" title={$_("fileHistory.sortBy")}>
             <option value="recent">{$_("fileHistory.sortRecent")}</option>
             <option value="alphabetical">{$_("fileHistory.sortAlphabetical")}</option>
           </select>

@@ -155,7 +155,7 @@ $effect(() => {
         id={setting.key}
         value={String(value ?? setting.defaultValue)}
         onchange={(e) => onChange(e.currentTarget.value)}
-        class="text-ui bg-bg-input text-fg-default w-full cursor-pointer rounded border pl-2 py-1 outline-none"
+        class="ui-select w-full"
       >
         {#each setting.options || [] as option, idx (option)}
           <option value={option}>

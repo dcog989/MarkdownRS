@@ -121,7 +121,7 @@ function toggleSortDirection() {
         <div class="flex shrink-0 items-center gap-1">
           <select
             bind:value={settingsState.commandPaletteSort}
-            class="text-ui bg-bg-input text-fg-default bg-border-main w-auto cursor-pointer rounded border py-1 pl-3 outline-none"
+            class="ui-select w-auto"
             title={$_("commandPalette.sortBy")}
           >
             {#each SORT_MODES as mode (mode)}
