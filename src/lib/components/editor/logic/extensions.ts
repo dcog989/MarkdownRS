@@ -91,12 +91,11 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
   const extensions: Extension[] = [
     highlightActiveLineGutter(),
     highlightActiveLine(),
-    drawSelection(),
     // The caret blink is an infinite CSS animation on the cursor layer. WebKitGTK
     // 2.54.x keeps the UI-process compositor running for as long as the editor is
     // focused (~6% of a core, gone when unfocused). A blink rate of 0 sets
     // `animation-duration: 0ms` on that layer, which stops the animation.
-    EditorView.cursorBlinkRate.of(0),
+    drawSelection({ cursorBlinkRate: 0 }),
     c.historyComp.of(history({ minDepth: appContext.settings.undoDepth })),
     search({ top: true }),
     highlightSelectionMatches(),

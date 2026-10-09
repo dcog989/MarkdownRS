@@ -68,7 +68,7 @@ export const createSpellCheckLinter = () => {
       syntaxTree(state).iterate({
         from: view.viewport.from,
         to: view.viewport.to,
-        enter: (node: SyntaxNodeRef): boolean | undefined => {
+        enter: (node: SyntaxNodeRef): void => {
           if (safeNodeTypes.has(node.name)) {
             const nodeText = doc.sliceString(node.from, node.to);
             let match: RegExpExecArray | null;
