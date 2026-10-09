@@ -110,7 +110,7 @@ let tooltipContent = $derived.by(() => {
         <button
           type="button"
           aria-label={$_("tabButton.closeTab", { values: { title: tab.title } })}
-          class="text-fg-muted hover:text-danger flex cursor-pointer items-center justify-center rounded p-1"
+          class="btn-icon btn-icon--danger"
           onclick={(e) => {
             e.stopPropagation();
             onclose?.(e, tab.id);

@@ -140,7 +140,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
       {#snippet extraActions()}
         <button
           type="button"
-          class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+          class="btn-icon shrink-0 outline-none"
           onclick={() => {
             onClose();
             toggleShortcuts();
@@ -152,7 +152,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
         </button>
         <button
           type="button"
-          class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+          class="btn-icon shrink-0 outline-none"
           onclick={() => {
             onClose();
             toggleRumdlConfig();
@@ -164,7 +164,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
         </button>
         <button
           type="button"
-          class="text-fg-muted hover-surface shrink-0 rounded p-1 transition-colors outline-none"
+          class="btn-icon shrink-0 outline-none"
           onclick={() => {
             onClose();
             toggleData();

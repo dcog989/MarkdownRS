@@ -27,9 +27,8 @@ function handleLockToggle() {
   <div class="text-fg-muted flex shrink-0 items-center">
     <button
       type="button"
-      class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-      class:bg-bg-active={settingsState.fileTreeShowHidden}
-      class:text-accent-secondary={settingsState.fileTreeShowHidden}
+      class="btn-icon h-6 w-6"
+      aria-pressed={settingsState.fileTreeShowHidden}
       use:tooltip={$_("fileTree.showHidden")}
       onclick={() => {
         toggleHiddenFiles();
@@ -44,9 +43,8 @@ function handleLockToggle() {
     </button>
     <button
       type="button"
-      class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-      class:bg-bg-active={settingsState.fileTreeShowMarkdownOnly}
-      class:text-accent-secondary={settingsState.fileTreeShowMarkdownOnly}
+      class="btn-icon h-6 w-6"
+      aria-pressed={settingsState.fileTreeShowMarkdownOnly}
       use:tooltip={$_("fileTree.showMarkdownOnly")}
       onclick={() => {
         toggleMarkdownOnly();
@@ -57,9 +55,8 @@ function handleLockToggle() {
     </button>
     <button
       type="button"
-      class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-      class:bg-bg-active={settingsState.fileTreeLocked}
-      class:text-accent-secondary={settingsState.fileTreeLocked}
+      class="btn-icon h-6 w-6"
+      aria-pressed={settingsState.fileTreeLocked}
       aria-label={$_(settingsState.fileTreeLocked ? "fileTree.unlockTree" : "fileTree.lockTree")}
       use:tooltip={$_(settingsState.fileTreeLocked ? "fileTree.unlockTree" : "fileTree.lockTree")}
       onclick={handleLockToggle}
@@ -70,17 +67,12 @@ function handleLockToggle() {
         <Lock size={14} />
       {/if}
     </button>
-    <button
-      type="button"
-      class="hover-surface flex h-6 w-6 items-center justify-center rounded"
-      use:tooltip={$_("fileTree.collapseAll")}
-      onclick={collapseAll}
-    >
+    <button type="button" class="btn-icon h-6 w-6" use:tooltip={$_("fileTree.collapseAll")} onclick={collapseAll}>
       <FoldVertical size={14} />
     </button>
     <button
       type="button"
-      class="hover-surface flex h-6 w-6 items-center justify-center rounded"
+      class="btn-icon h-6 w-6"
       class:pointer-events-none={fileTreeStore.refreshing}
       use:tooltip={$_("fileTree.refresh")}
       onclick={() => void refreshTree()}
@@ -93,7 +85,8 @@ function handleLockToggle() {
   <div class="text-fg-muted ml-auto flex shrink-0 items-center">
     <button
       type="button"
-      class="bg-bg-active text-accent-secondary hover-surface flex h-6 w-6 items-center justify-center rounded"
+      class="btn-icon h-6 w-6"
+      aria-pressed={true}
       use:tooltip={$_("tabBar.hideFileTree")}
       onclick={() => {
         toggleFileTree();

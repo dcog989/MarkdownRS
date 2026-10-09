@@ -100,7 +100,7 @@ async function checkForUpdates() {
         <span class="text-fg-default flex-1 text-left font-mono font-bold">{appInfo.version}</span>
         <button
           type="button"
-          class="text-ui bg-bg-input text-fg-default border-border-secondary flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 transition-colors"
+          class="btn-base btn-sm btn-outline shrink-0"
           onclick={checkForUpdates}
           disabled={isChecking}
         >
@@ -120,7 +120,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
           onclick={() => copyToClipboard(appInfo.install_path)}
         >
           {$_("common.copy")}
@@ -134,7 +134,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
           onclick={() => copyToClipboard(appInfo.data_path)}
         >
           {$_("common.copy")}
@@ -148,7 +148,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
           onclick={() => copyToClipboard(appInfo.config_path)}
         >
           {$_("common.copy")}
@@ -162,7 +162,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
           onclick={() => copyToClipboard(appInfo.cache_path)}
         >
           {$_("common.copy")}
@@ -176,7 +176,7 @@ async function checkForUpdates() {
         >
         <button
           type="button"
-          class="text-ui text-accent-secondary hover-surface shrink-0 rounded px-2 py-0.5"
+          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
           onclick={() => copyToClipboard(appInfo.logs_path)}
         >
           {$_("common.copy")}
@@ -184,11 +184,7 @@ async function checkForUpdates() {
       </div>
     </div>
 
-    <button
-      type="button"
-      class="text-ui text-accent-link hover:text-accent-link-hover flex items-center gap-1.5 transition-colors hover:underline"
-      onclick={openLogFile}
-    >
+    <button type="button" class="btn-ghost btn-ghost--link btn-sm hover:underline" onclick={openLogFile}>
       <span>{$_("about.openLogFile")}</span>
       <ExternalLink size={12} />
     </button>

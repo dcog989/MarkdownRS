@@ -269,21 +269,15 @@ onMount(() => {
         >
         <button
           type="button"
-          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
-          class:bg-bg-active={isReplaceMode}
-          class:text-accent-secondary={isReplaceMode}
+          class="btn-base btn-sm btn-outline"
+          aria-pressed={isReplaceMode}
           onclick={() => (isReplaceMode = !isReplaceMode)}
           title={$_("findReplace.toggleReplaceMode")}
         >
           <Replace size={14} />
         </button>
       </div>
-      <button
-        type="button"
-        class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all"
-        onclick={close}
-        title={$_("findReplace.closeEsc")}
-      >
+      <button type="button" class="btn-base btn-sm btn-outline" onclick={close} title={$_("findReplace.closeEsc")}>
         <X size={14} />
       </button>
     </div>
@@ -392,7 +386,7 @@ onMount(() => {
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
-          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="btn-base btn-sm btn-outline"
           onclick={onFindPrevious}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -401,7 +395,7 @@ onMount(() => {
         </button>
         <button
           type="button"
-          class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+          class="btn-base btn-sm btn-outline"
           onclick={onFindNext}
           disabled={searchScope === "all" || !!searchState.regexError}
         >
@@ -413,7 +407,7 @@ onMount(() => {
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="btn-base btn-sm btn-outline"
             onclick={onReplace}
             disabled={searchScope === "all" || !!searchState.regexError}
           >
@@ -422,7 +416,7 @@ onMount(() => {
           </button>
           <button
             type="button"
-            class="bg-bg-hover border-border-secondary text-fg-default hover:bg-bg-active flex items-center gap-1.5 rounded border p-1 px-2.5 text-ui transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            class="btn-base btn-sm btn-outline"
             onclick={onReplaceAll}
             disabled={!!searchState.regexError}
           >

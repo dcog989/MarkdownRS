@@ -58,7 +58,7 @@ let {
 
     <button
       type="button"
-      class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
+      class="btn-icon btn-icon--danger outline-none"
       onclick={onClose}
       aria-label={$_("common.close")}
     >

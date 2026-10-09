@@ -110,7 +110,7 @@ function injectHtml(node: HTMLElement, content: string) {
   <div class="absolute top-2 right-2 z-10 flex gap-1">
     <button
       type="button"
-      class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
+      class="btn-base p-2 shadow-lg opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
       onclick={() => toggleOrientation()}
       use:tooltip={appContext.settings.splitOrientation === "vertical"
         ? $_("preview.switchHorizontal")
@@ -124,7 +124,7 @@ function injectHtml(node: HTMLElement, content: string) {
     </button>
     <button
       type="button"
-      class="bg-bg-panel text-fg-default hover-surface rounded border p-2 shadow-lg transition-all duration-200 opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
+      class="btn-base p-2 shadow-lg opacity-30 hover:opacity-100 group-hover/preview:opacity-100"
       onclick={() => toggleSplitView()}
       use:tooltip={$_("preview.closePreview")}
     >

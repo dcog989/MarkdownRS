@@ -115,7 +115,7 @@ function onResizeMouseDown(e: MouseEvent) {
           <div class="absolute top-2 left-0 pl-3 z-20">
             <button
               type="button"
-              class="bg-bg-panel border-border-secondary hover:bg-bg-hover text-fg-default group flex items-center rounded-lg border px-3 py-2 shadow-lg transition-colors"
+              class="btn-base btn-float group px-3 py-2"
               onclick={() => (showWriterTabDropdown = !showWriterTabDropdown)}
             >
               <ChevronDown size={16} class="opacity-30 transition-opacity group-hover:opacity-100" />
@@ -149,7 +149,7 @@ function onResizeMouseDown(e: MouseEvent) {
                     type="button"
                     aria-label={$_("tabBar.menu")}
                     use:tooltip={$_("tabBar.menu")}
-                    class="bg-bg-panel border-border-secondary hover:bg-bg-hover text-fg-default group flex items-center rounded-lg border px-3 py-2 shadow-lg transition-colors"
+                    class="btn-base btn-float group px-3 py-2"
                     onclick={() => (showWriterMenu = !showWriterMenu)}
                   >
                     <Menu size={16} class="opacity-30 transition-opacity group-hover:opacity-100" />

@@ -1,4 +1,6 @@
-/* Button Component Classes */
+/* Button Component Classes - single source of truth for button visuals.
+   Call sites add layout/spacing only (width, gap, whitespace), never colors,
+   borders, fonts or transitions. */
 button {
   cursor: pointer;
   background-color: transparent;
@@ -8,26 +10,32 @@ button {
   font-size: inherit;
 }
 
-.btn-base {
+.btn-base,
+.btn-secondary,
+.btn-primary,
+.btn-outline,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
   cursor: pointer;
   border-radius: 0.25rem;
-  border: 1px solid;
+  border: 1px solid var(--border-primary);
   padding: 0.375rem 0.75rem;
   font-size: 0.8125rem;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
+  font-weight: 500;
   background-color: var(--surface-2);
   color: var(--text-primary);
+  transition-property: color, background-color, border-color, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
 
-.btn-base:hover {
+.btn-base:hover,
+.btn-secondary:hover,
+.btn-ghost:hover {
   background-color: var(--surface-hover);
-}
-
-.btn-sm {
-  padding: 0.25rem 0.625rem;
-  font-size: 0.8125rem;
 }
 
 .btn-base:disabled,
@@ -37,14 +45,119 @@ button {
   pointer-events: none;
 }
 
+.btn-sm {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.8125rem;
+}
+
 .btn-secondary {
   background-color: transparent;
   border-color: var(--border-primary);
   color: var(--text-primary);
 }
 
-.btn-secondary:hover {
+.btn-primary {
+  background-color: var(--accent-primary);
+  border-color: transparent;
+  color: var(--text-inverse);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-secondary);
+}
+
+/* Elevated floating button (writer-mode overlays) */
+.btn-float {
+  background-color: var(--surface-2);
+  border-color: var(--border-secondary);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 10px 15px -3px oklch(0 0 0 / 0.1),
+    0 4px 6px -2px oklch(0 0 0 / 0.05);
+}
+
+.btn-float:hover {
   background-color: var(--surface-hover);
+}
+
+/* Destructive action text */
+.btn-base--danger {
+  color: var(--danger);
+}
+
+/* Boxed toggle (find/replace, scope tabs) */
+.btn-outline {
+  background-color: var(--surface-hover);
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  background-color: var(--surface-active);
+}
+
+.btn-outline[aria-pressed="true"] {
+  background-color: var(--surface-active);
+  color: var(--accent-secondary);
+}
+
+/* Transparent text button */
+.btn-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost[aria-pressed="true"] {
+  background-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+.btn-ghost--accent {
+  color: var(--accent-secondary);
+}
+
+.btn-ghost--link {
+  color: var(--accent-link);
+}
+
+.btn-ghost--link:hover {
+  color: var(--accent-link-hover);
+}
+
+/* Icon-only button; square size comes from the call site (h-*, w-*) */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+  background-color: transparent;
+  color: var(--text-secondary);
+  transition-property: color, background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.btn-icon:hover {
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.btn-icon[aria-pressed="true"] {
+  background-color: var(--surface-active);
+  color: var(--accent-secondary);
+}
+
+.btn-icon--danger:hover {
+  color: var(--danger);
+}
+
+.btn-icon--accent,
+.btn-icon--accent:hover {
+  color: var(--accent-secondary);
 }
 
 /* Form Labels */

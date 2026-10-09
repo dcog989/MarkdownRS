@@ -187,12 +187,7 @@ $effect(() => {
       {:else if title}
         <div class="ui-header flex items-center justify-between">
           <span class="text-fg-default text-lg font-semibold">{title}</span>
-          <button
-            type="button"
-            class="text-fg-muted hover-surface rounded p-1"
-            onclick={onClose}
-            aria-label={$_("common.close")}
-          >
+          <button type="button" class="btn-icon" onclick={onClose} aria-label={$_("common.close")}>
             <X size={18} />
           </button>
         </div>

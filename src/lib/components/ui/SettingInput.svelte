@@ -140,11 +140,7 @@ $effect(() => {
         <span class="block h-full w-full" style:background={displayColor}></span>
       </label>
       {#if value}
-        <button
-          type="button"
-          class="text-ui text-fg-muted hover-surface rounded px-2 py-0.5"
-          onclick={() => onChange("")}
-        >
+        <button type="button" class="btn-ghost btn-sm" onclick={() => onChange("")}>
           {$_("common.resetToDefault")}
         </button>
       {/if}
@@ -180,7 +176,7 @@ $effect(() => {
       <div class="flex items-center gap-2" use:tooltip={tooltipText}>
         <button
           type="button"
-          class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
+          class="btn-base btn-sm btn-primary whitespace-nowrap"
           onclick={async () => {
             const selected = await open({
               multiple: false,
@@ -194,7 +190,7 @@ $effect(() => {
           {$_("common.browse")}
         </button>
         {#if value}
-          <button type="button" class="btn-base btn-sm hover-surface whitespace-nowrap" onclick={() => onChange("")}>
+          <button type="button" class="btn-base btn-sm whitespace-nowrap" onclick={() => onChange("")}>
             {$_("common.clear")}
           </button>
         {/if}

@@ -101,7 +101,7 @@ function toggleSortDirection() {
           <button
             type="button"
             onclick={toggleSortDirection}
-            class="text-fg-muted hover-surface rounded p-1 transition-colors"
+            class="btn-icon"
             title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
             {#if sortDirection === "asc"}
@@ -146,7 +146,7 @@ function toggleSortDirection() {
               <button
                 type="button"
                 onclick={(e) => handleRemove(path, e)}
-                class="file-history-remove rounded p-1.5 opacity-0 group-hover:opacity-100"
+                class="btn-icon btn-icon--danger p-1.5 opacity-0 group-hover:opacity-100"
                 title={$_("fileHistory.removeFromHistory")}
               >
                 <X size={16} />
@@ -186,21 +186,12 @@ function toggleSortDirection() {
   opacity: 0.8;
 }
 
-.file-history-remove {
-  color: var(--text-secondary);
-  background-color: transparent;
-}
-
-.file-history-remove:hover {
-  background-color: var(--surface-hover);
-}
-
-.file-history-row[data-selected="true"] .file-history-remove {
+.file-history-row[data-selected="true"] .btn-icon {
   color: var(--text-inverse);
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-.file-history-row[data-selected="true"] .file-history-remove:hover {
+.file-history-row[data-selected="true"] .btn-icon:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 </style>

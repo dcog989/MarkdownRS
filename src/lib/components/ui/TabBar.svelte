@@ -283,7 +283,7 @@ $effect(() => {
       <button
         type="button"
         use:tooltip={`${$_("tabBar.newTab")}${shortcutManager.getShortcutDisplay("file.new") ? ` (${shortcutManager.getShortcutDisplay("file.new")})` : ""}`}
-        class="text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+        class="btn-icon h-8 w-8 shrink-0"
         onclick={async () => {
           const newTabId = await createNewFile();
           appContext.app.activeTabId = newTabId;
@@ -319,7 +319,7 @@ $effect(() => {
     <button
       type="button"
       use:tooltip={$_("tabBar.menu")}
-      class="relative text-fg-muted hover-surface flex h-8 w-8 shrink-0 items-center justify-center"
+      class="btn-icon relative h-8 w-8 shrink-0"
       onclick={() => (showMenu = !showMenu)}
     >
       <Menu size={16} />

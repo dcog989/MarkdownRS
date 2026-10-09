@@ -129,7 +129,7 @@ function toggleSortDirection() {
           <button
             type="button"
             onclick={toggleSortDirection}
-            class="text-fg-muted hover-surface rounded p-1 transition-colors outline-none"
+            class="btn-icon outline-none"
             title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
             {#if sortDirection === "asc"}

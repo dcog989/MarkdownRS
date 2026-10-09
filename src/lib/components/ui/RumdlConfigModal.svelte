@@ -104,7 +104,7 @@ async function saveConfig() {
     </div>
     <button
       type="button"
-      class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
+      class="btn-icon btn-icon--danger outline-none"
       onclick={onClose}
       aria-label={$_("common.close")}
     >
@@ -116,9 +116,8 @@ async function saveConfig() {
     <div class="bg-bg-input border-border-secondary flex w-max items-center gap-1 rounded border p-1">
       <button
         type="button"
-        class="text-ui rounded px-3 py-1 transition-colors {scope === "project"
-          ? "bg-accent-primary text-fg-inverse"
-          : "text-fg-muted hover:text-fg-default"}"
+        class="btn-ghost px-3 py-1"
+        aria-pressed={scope === "project"}
         onclick={() => setScope("project")}
         disabled={busy || !loaded}
       >
@@ -126,9 +125,8 @@ async function saveConfig() {
       </button>
       <button
         type="button"
-        class="text-ui rounded px-3 py-1 transition-colors {scope === "user"
-          ? "bg-accent-primary text-fg-inverse"
-          : "text-fg-muted hover:text-fg-default"}"
+        class="btn-ghost px-3 py-1"
+        aria-pressed={scope === "user"}
         onclick={() => setScope("user")}
         disabled={busy || !loaded}
       >
@@ -172,12 +170,12 @@ async function saveConfig() {
   </div>
 
   {#snippet footer()}
-    <button type="button" class="btn-base btn-sm hover-surface whitespace-nowrap" onclick={onClose} disabled={busy}>
+    <button type="button" class="btn-base btn-sm whitespace-nowrap" onclick={onClose} disabled={busy}>
       {$_("common.cancel")}
     </button>
     <button
       type="button"
-      class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium whitespace-nowrap"
+      class="btn-base btn-sm btn-primary whitespace-nowrap"
       onclick={saveConfig}
       disabled={busy || !loaded || !hasChanges}
     >

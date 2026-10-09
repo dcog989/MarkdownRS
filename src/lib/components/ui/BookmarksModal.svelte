@@ -236,7 +236,7 @@ function handleKeydown(e: KeyboardEvent) {
           <button
             type="button"
             onclick={toggleSortDirection}
-            class="text-fg-muted hover-surface rounded p-1 transition-colors"
+            class="btn-icon"
             title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
           >
             {#if sortDirection === "asc"}
@@ -249,7 +249,7 @@ function handleKeydown(e: KeyboardEvent) {
 
         <button
           type="button"
-          class="text-accent-secondary hover-surface ml-2 shrink-0 rounded p-1 transition-colors"
+          class="btn-icon btn-icon--accent ml-2 shrink-0"
           onclick={startAdd}
           title={$_("bookmarks.addBookmark")}
         >
@@ -269,11 +269,7 @@ function handleKeydown(e: KeyboardEvent) {
             placeholder={$_("bookmarks.filePathPlaceholder")}
             class="bg-bg-panel flex-1"
           />
-          <button
-            type="button"
-            onclick={handleBrowse}
-            class="btn-base btn-sm bg-bg-panel text-fg-default border-border-primary font-medium transition-colors"
-          >
+          <button type="button" onclick={handleBrowse} class="btn-base btn-sm">
             {$_("common.browse")}
           </button>
         </div>
@@ -295,7 +291,7 @@ function handleKeydown(e: KeyboardEvent) {
             type="button"
             onclick={handleAddBookmark}
             disabled={!addPath || !addTitle}
-            class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent font-medium disabled:opacity-50"
+            class="btn-base btn-sm btn-primary"
           >
             {$_("common.add")}
           </button>
@@ -324,11 +320,7 @@ function handleKeydown(e: KeyboardEvent) {
                   <button type="button" onclick={cancelEdit} class="btn-base btn-sm btn-secondary">
                     {$_("common.cancel")}
                   </button>
-                  <button
-                    type="button"
-                    onclick={() => saveEdit(bookmark.id)}
-                    class="btn-base btn-sm bg-accent-primary text-fg-inverse border-transparent"
-                  >
+                  <button type="button" onclick={() => saveEdit(bookmark.id)} class="btn-base btn-sm btn-primary">
                     {$_("common.save")}
                   </button>
                 </div>
@@ -376,14 +368,14 @@ function handleKeydown(e: KeyboardEvent) {
                       e.stopPropagation();
                       startEdit(bookmark);
                     }}
-                    class="icon-btn rounded p-1.5 transition-colors"
+                    class="btn-icon p-1.5"
                   >
                     <Pen size={14} />
                   </button>
                   <button
                     type="button"
                     onclick={(e) => handleDelete(bookmark.id, e)}
-                    class="icon-btn icon-btn--danger rounded p-1.5 transition-colors"
+                    class="btn-icon btn-icon--danger p-1.5"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -444,25 +436,12 @@ function handleKeydown(e: KeyboardEvent) {
   opacity: 0.7;
 }
 
-.icon-btn {
-  color: var(--text-secondary);
-  background-color: transparent;
-}
-
-.icon-btn:hover {
-  background-color: var(--surface-hover);
-}
-
-.icon-btn--danger {
-  color: var(--danger-text);
-}
-
-.bookmark-row[data-selected="true"] .icon-btn {
+.bookmark-row[data-selected="true"] .btn-icon {
   color: var(--text-inverse);
   background-color: rgba(255, 255, 255, 0.15);
 }
 
-.bookmark-row[data-selected="true"] .icon-btn:hover {
+.bookmark-row[data-selected="true"] .btn-icon:hover {
   background-color: rgba(255, 255, 255, 0.25);
 }
 </style>

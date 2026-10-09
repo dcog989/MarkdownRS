@@ -105,7 +105,7 @@ onMount(() => {
         {#if toast.action}
           <button
             type="button"
-            class="text-accent-link hover:text-accent-link-hover cursor-pointer rounded border-none bg-transparent px-2 py-1 text-ui font-medium transition-colors"
+            class="btn-ghost btn-ghost--link btn-sm"
             onclick={() => {
               toast.action?.onClick();
               dismissToast(toast.id);
@@ -116,7 +116,7 @@ onMount(() => {
         {/if}
         <button
           type="button"
-          class="text-fg-muted hover:bg-bg-hover hover:text-fg-default flex shrink-0 cursor-pointer items-center justify-center rounded border-none bg-transparent p-1 transition-all"
+          class="btn-icon shrink-0"
           onclick={() => dismissToast(toast.id)}
           aria-label={$_("common.dismiss")}
         >

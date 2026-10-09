@@ -187,7 +187,7 @@ const actions = $derived<Action[]>([
     </div>
     <button
       type="button"
-      class="text-fg-muted hover-surface hover:text-danger rounded p-1 transition-colors outline-none"
+      class="btn-icon btn-icon--danger outline-none"
       onclick={onClose}
       aria-label={$_("common.close")}
     >
@@ -200,8 +200,8 @@ const actions = $derived<Action[]>([
       <div class="flex flex-col gap-2 items-start">
         <button
           type="button"
-          class="text-ui bg-bg-input text-fg-default border border-border-primary rounded py-1.5 px-3 text-left outline-none transition-colors hover:bg-bg-hover disabled:cursor-not-allowed disabled:opacity-50 w-fit"
-          class:text-danger={action.danger}
+          class="btn-base w-fit"
+          class:btn-base--danger={action.danger}
           onclick={action.handler}
           disabled={busy}
           use:tooltip={action.danger ? action.description : ""}
