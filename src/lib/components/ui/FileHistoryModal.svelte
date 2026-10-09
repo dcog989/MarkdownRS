@@ -3,7 +3,6 @@ import { ArrowDown, ArrowUp, Clock, History, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
-import Select from "$lib/components/ui/Select.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -96,10 +95,10 @@ function toggleSortDirection() {
     >
       {#snippet extraActions()}
         <div class="flex shrink-0 items-center gap-1">
-          <Select bind:value={sortBy} title={$_("fileHistory.sortBy")}>
+          <select bind:value={sortBy} class="w-auto" title={$_("fileHistory.sortBy")}>
             <option value="recent">{$_("fileHistory.sortRecent")}</option>
             <option value="alphabetical">{$_("fileHistory.sortAlphabetical")}</option>
-          </Select>
+          </select>
           <button
             type="button"
             onclick={toggleSortDirection}
