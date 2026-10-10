@@ -3,6 +3,98 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.64.0 - 2026-10-10
+
+#### Features
+
+- (5851162) move whitespace toggle from settings to status bar - dcog989
+
+- (66a4ffd) show memory-warning tooltips instantly, ignoring tooltip delay - dcog989
+
+- (c0c6e21) rename recent changes timespan label to "Recent Changes Period (secs)." - dcog989
+
+- (87cd72d) add optional color swatches in rendered mode - dcog989
+
+- (8c50247) add hover background to settings rows - dcog989
+
+- (66e97b1) add sort dropdown with separate asc/desc toggle - dcog989
+
+- (3506a3b) replace sort cycling with sort dropdown and asc/desc toggle - dcog989
+
+#### Bug Fixes
+
+- (6c75811) set explicit slider/stepper increments for delay and opacity controls - dcog989
+
+- (129a089) use drawSelection cursorBlinkRate and correct linter enter return type - dcog989
+
+- (98121a2) add timestamps to log file and console output - dcog989
+
+- (8e3cf41) disable caret blink to stop WebKitGTK 2.54 idle CPU spin - dcog989
+
+- (e6612a7) reserve reset-shortcut slot so all key chips align - dcog989
+
+- (78e1ba0) align context menu scrollbars and widen the popup cap - dcog989
+
+- (2e0dd79) show scrollbar in overflowing context menus - dcog989
+
+- (cefa249) render strikethrough in body text color - dcog989
+
+- (2bfdefe) stop tinting strikethrough with the quote color - dcog989
+
+- (9761397) let command palette, file history and bookmarks shrink to min width - dcog989
+
+- (552e9ce) correct misleading sort labels and keys - dcog989
+
+- (2b4c305) define missing utilities referenced by markup - dcog989
+
+- (896ed18) correct sort order and labels - dcog989
+
+- (88feb10) stop flagging words inside URLs and inline code - dcog989
+
+#### Refactoring
+
+- (bbca46e) regroup settings categories - dcog989
+
+- (2ba99a7) add dedicated Tabs category - dcog989
+
+- (93abfd9) remove line ending setting, superseded by status bar toggle - dcog989
+
+- (2e7c37d) move numeric unit suffixes from labels into input field hints - dcog989
+
+- (a298dbc) drop editor view mode row, toggled from status bar - dcog989
+
+- (222713a) consolidate toast color classes and drop dead CSS - dcog989
+
+- (9b7fda1) drop redundant _editor.css mirror from custom-theme payload - dcog989
+
+- (d8f669e) drop input chrome restated from the global element rule - dcog989
+
+- (ea07713) unify selected-row styling into one shared contract - dcog989
+
+- (f4b757e) extract shared .menu-item class for context-menu rows - dcog989
+
+- (0737ea2) route all button styling through shared .btn-* variants - dcog989
+
+- (9ffa814) remove stale tokens and unify theme naming - dcog989
+
+- (0f1a474) remove duplicated element and alias utility classes - dcog989
+
+- (cf195d6) consolidate duplicated row, scrollbar, modal and menu styles - dcog989
+
+- (f739def) highlight bookmark, command, history and shortcut rows via CSS hover - dcog989
+
+- (10adb2b) collapse ad-hoc type scale into .text-ui/.text-ui-sm/.text-lg - dcog989
+
+- (ffc1650) style selects from the global element rule - dcog989
+
+- (280db6d) centralize select styling in a shared Select component - dcog989
+
+- (8f1d30a) move clear action into settings data modal - dcog989
+
+- (3bdfba9) tighten level parsing, dedupe IPC errors, quiet poisoned locks - dcog989
+
+- - -
+
 ## v1.63.0 - 2026-10-06
 
 #### Features
