@@ -4,6 +4,12 @@ import { getCursorPosition, hideTooltip, showTooltip } from "$lib/stores/tooltip
 export type TooltipContent = string | undefined | null;
 export type TooltipParam = TooltipContent | { content: TooltipContent; instant?: boolean };
 
+// The single node whose content owns the currently visible tooltip. `update`
+// only rewrites the shared tooltip content for this node, so a re-render of
+// other tooltipped elements (e.g. settings rows with inline object params that
+// change identity every render) can't clobber what is on screen.
+let activeNode: HTMLElement | null = null;
+
 export function tooltip(node: HTMLElement, param: TooltipParam) {
   let timer: number | null = null;
   let content: TooltipContent = null;
@@ -34,6 +40,7 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
 
     // Instant tooltips (e.g. memory warnings) ignore the configured delay.
     if (instant) {
+      activeNode = node;
       const { x, y } = getCursorPosition();
       showTooltip(content as string, x ?? e.clientX, y ?? e.clientY);
       return;
@@ -42,6 +49,7 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
     const delay = appContext.settings.tooltipDelay;
     timer = window.setTimeout(() => {
       timer = null;
+      activeNode = node;
       // Anchor to the cursor's current position: on window re-entry the
       // synthetic mouseenter carries the entry point, which is stale by the
       // time the delay elapses.
@@ -54,6 +62,9 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
     if (timer) {
       clearTimeout(timer);
       timer = null;
+    }
+    if (activeNode === node) {
+      activeNode = null;
     }
     hideTooltip();
   }
@@ -77,7 +88,7 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
         hideTooltip();
         return;
       }
-      if (appContext.ui.tooltip.visible) {
+      if (appContext.ui.tooltip.visible && activeNode === node) {
         appContext.ui.tooltip.content = content;
       }
     },
