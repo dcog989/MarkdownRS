@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.64.1 - 2026-10-10
+
+#### Bug Fixes
+
+- (326357a) stop unrelated re-renders clobbering the visible tooltip - dcog989
+
+- (bfb579d) align number input step grid for off-step minimum - dcog989
+
+- - -
+
 ## v1.64.0 - 2026-10-10
 
 #### Features
