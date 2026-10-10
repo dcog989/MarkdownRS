@@ -1,5 +1,6 @@
 <script lang="ts">
 import { open } from "@tauri-apps/plugin-dialog";
+import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import { translate } from "$lib/i18n";
@@ -32,6 +33,12 @@ let pathSpan = $state<HTMLSpanElement>();
 let displayPath = $state($_("settings.noTemplateSelected"));
 let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
 let resolvedDefaultAccent = $state("#000000");
+// The native spinner uses `min` as its step base, so an off-grid min (e.g. -1
+// with step 50) shifts the step grid and makes it jump by one. Align the input's
+// min down to a step multiple; `normalizeNumber` re-clamps to the true minimum.
+let numberInputMin = $derived(
+  setting.min === undefined ? undefined : Math.floor(setting.min / (setting.step ?? 1)) * (setting.step ?? 1),
+);
 
 $effect(() => {
   if (setting.type !== "color") return;
@@ -40,6 +47,28 @@ $effect(() => {
   const brand = getComputedStyle(document.documentElement).getPropertyValue("--color-brand-accent").trim();
   resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : "#7c5a73";
 });
+
+function normalizeNumber(raw: string, inputMin: number | undefined): number {
+  const parsed = Number(raw);
+  const min = setting.min;
+  if (min !== undefined && inputMin !== undefined && inputMin < min && parsed < min) {
+    return min;
+  }
+  return parsed;
+}
+
+async function handleNumberInput(e: Event) {
+  const el = e.currentTarget as HTMLInputElement;
+  const normalized = normalizeNumber(el.value, numberInputMin);
+  onChange(normalized);
+  await tick();
+  // When the spinner hits the aligned grid min (e.g. -50) it may clamp back to a
+  // value the model already holds, so Svelte won't push it down and the field
+  // would keep showing the out-of-range number.
+  if (el.value !== String(normalized)) {
+    el.value = String(normalized);
+  }
+}
 
 function measureCharWidth(el: HTMLElement): number {
   const canvas = document.createElement("canvas");
@@ -97,10 +126,10 @@ $effect(() => {
         id={setting.key}
         type="number"
         value={Number(value ?? setting.defaultValue)}
-        min={setting.min}
+        min={numberInputMin}
         max={setting.max}
         step={setting.step}
-        oninput={(e) => onChange(Number(e.currentTarget.value))}
+        oninput={handleNumberInput}
         class={setting.unit ? "min-w-0 flex-1" : ""}
       />
       {#if setting.unit}
