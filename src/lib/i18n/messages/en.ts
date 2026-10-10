@@ -315,6 +315,7 @@ export const en = {
       preview: "Preview",
       spellcheck: "Spellcheck",
       system: "System",
+      tabs: "Tabs",
     },
     unitPx: "px",
     unitMs: "ms",
