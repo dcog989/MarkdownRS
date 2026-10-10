@@ -99,14 +99,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       tooltip: "settings.wrapColumnTooltip",
     },
     {
-      key: "showWhitespace",
-      label: "settings.whitespaceDisplayed",
-      type: "boolean",
-      category: "settings.category.editor",
-      defaultValue: false,
-      tooltip: "settings.whitespaceTooltip",
-    },
-    {
       key: "autocompleteDelay",
       label: "settings.autocompleteDelayMs",
       type: "number",

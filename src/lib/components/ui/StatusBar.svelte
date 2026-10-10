@@ -1,5 +1,5 @@
 <script lang="ts">
-import { ClipboardCopy, Eye, EyeOff, TextWrap } from "lucide-svelte";
+import { ClipboardCopy, Eye, EyeOff, Space, TextWrap } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
@@ -56,6 +56,11 @@ function toggleLineEnding() {
     const next = lineEnding === "LF" ? "CRLF" : "LF";
     updateTabFields(tabId, { lineEnding: next });
   }
+}
+
+function toggleWhitespace() {
+  appContext.settings.showWhitespace = !appContext.settings.showWhitespace;
+  saveSettings();
 }
 
 function toggleWordWrap() {
@@ -185,6 +190,18 @@ async function copyAllStats() {
         {encoding}
       </span>
       <span class="opacity-40">|</span>
+
+      <button
+        type="button"
+        class="hover:text-fg-default hover-surface flex cursor-pointer items-center rounded px-1 transition-colors {appContext
+          .settings.showWhitespace
+          ? "text-accent-secondary"
+          : "text-inherit"}"
+        onclick={toggleWhitespace}
+        use:tooltip={$_("statusBar.toggleWhitespace")}
+      >
+        <Space size={14} />
+      </button>
 
       <button
         type="button"
