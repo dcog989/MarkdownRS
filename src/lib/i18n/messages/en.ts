@@ -309,11 +309,10 @@ export const en = {
     removedFromContextMenu: "Removed from context menu",
     category: {
       editor: "Editor",
-      formatting: "Formatting",
-      grammar: "Grammar",
+      files: "Files",
       interface: "Interface",
+      language: "Language",
       preview: "Preview",
-      spellcheck: "Spellcheck",
       system: "System",
       tabs: "Tabs",
     },
