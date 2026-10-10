@@ -99,6 +99,7 @@ $effect(() => {
         value={Number(value ?? setting.defaultValue)}
         min={setting.min}
         max={setting.max}
+        step={setting.step}
         oninput={(e) => onChange(Number(e.currentTarget.value))}
         class={setting.unit ? "min-w-0 flex-1" : ""}
       />
