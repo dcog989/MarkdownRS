@@ -29,9 +29,9 @@ strum = { version = "0.28.0", features = ["derive"] }
 tauri = { version = "2.12", features = ["devtools", "protocol-asset"] }
 tauri-plugin-clipboard-manager = "2.4"
 tauri-plugin-dialog = "2.8"
-tauri-plugin-fs = { version = "2.6", features = ["watch"] }
+tauri-plugin-fs = { version = "2.7", features = ["watch"] }
 tauri-plugin-opener = "2.7"
-tauri-plugin-shell = "2.4"
+tauri-plugin-shell = "2.5"
 tauri-plugin-single-instance = "2.5"
 tauri-plugin-store = "2.5"
 tauri-plugin-updater = "2.13"
