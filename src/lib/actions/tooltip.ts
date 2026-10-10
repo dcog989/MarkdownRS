@@ -1,8 +1,25 @@
 import { appContext } from "$lib/stores/state.svelte";
 import { getCursorPosition, hideTooltip, showTooltip } from "$lib/stores/tooltipStore.svelte";
 
-export function tooltip(node: HTMLElement, content: string | undefined | null) {
+export type TooltipContent = string | undefined | null;
+export type TooltipParam = TooltipContent | { content: TooltipContent; instant?: boolean };
+
+export function tooltip(node: HTMLElement, param: TooltipParam) {
   let timer: number | null = null;
+  let content: TooltipContent = null;
+  let instant = false;
+
+  function applyParam(p: TooltipParam) {
+    if (p && typeof p === "object") {
+      content = p.content;
+      instant = p.instant ?? false;
+    } else {
+      content = p;
+      instant = false;
+    }
+  }
+
+  applyParam(param);
 
   function handleMouseEnter(e: MouseEvent) {
     if (!content) return;
@@ -13,6 +30,13 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
     // cursor has already left, leaving it stuck open.
     if (timer) {
       clearTimeout(timer);
+    }
+
+    // Instant tooltips (e.g. memory warnings) ignore the configured delay.
+    if (instant) {
+      const { x, y } = getCursorPosition();
+      showTooltip(content as string, x ?? e.clientX, y ?? e.clientY);
+      return;
     }
 
     const delay = appContext.settings.tooltipDelay;
@@ -43,12 +67,12 @@ export function tooltip(node: HTMLElement, content: string | undefined | null) {
   node.addEventListener("mousedown", handleMouseDown);
 
   return {
-    update(newContent: string | undefined | null) {
+    update(newParam: TooltipParam) {
       if (timer) {
         clearTimeout(timer);
         timer = null;
       }
-      content = newContent;
+      applyParam(newParam);
       if (!content) {
         hideTooltip();
         return;

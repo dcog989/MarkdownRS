@@ -192,7 +192,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
               {translate(setting.label)}
               {#if setting.labelWarning}
                 <span
-                  use:tooltip={translate(setting.labelWarning)}
+                  use:tooltip={{ content: translate(setting.labelWarning), instant: true }}
                   class="text-warning ml-2 inline-flex cursor-help align-middle"
                 >
                   <TriangleAlert size={15} aria-label={translate(setting.labelWarning)} />
