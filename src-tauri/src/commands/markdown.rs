@@ -62,7 +62,7 @@ pub async fn format_markdown(
         project_root: pr,
     } = config::resolve_paths(file_path.as_deref(), &state);
 
-    crate::timed_info!(
+    crate::timed_debug!(
         "[Markdown]",
         "format_markdown",
         {
