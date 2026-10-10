@@ -192,16 +192,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       unit: "settings.unitSecs",
     },
     {
-      key: "lineEndingPreference",
-      label: "settings.lineEnding",
-      type: "select",
-      category: "settings.category.editor",
-      defaultValue: "system",
-      options: ["system", "LF", "CRLF"],
-      optionLabels: ["settings.lineEndingSystem", "settings.lineEndingLF", "settings.lineEndingCRLF"],
-      tooltip: "settings.lineEndingTooltip",
-    },
-    {
       key: "formatOnSave",
       label: "settings.formatOnSave",
       type: "boolean",
