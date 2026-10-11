@@ -7,10 +7,6 @@ const UI_FONT_FAMILY =
 const UI_FONT_SIZE = "0.8125rem";
 
 export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean) {
-  // Theme-driven: resolves against --editor-fg-tertiary (defined per theme), so it stays
-  // visible on both dark and light surfaces regardless of the app's dark/light mode.
-  const whitespaceColor = "var(--editor-fg-tertiary)";
-
   return EditorView.theme({
     "&": { height: "100%", fontSize: `${fontSize}px` },
     ".cm-cursor": {
@@ -76,42 +72,6 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
       fontSize: UI_FONT_SIZE,
       lineHeight: "1.4",
       overflowY: "auto",
-    },
-    ".cm-highlightSpace": {
-      backgroundImage: "none !important",
-      position: "relative",
-      "&:before": {
-        content: "'·'",
-        color: whitespaceColor,
-        pointerEvents: "none",
-        fontWeight: "bold",
-        position: "absolute",
-        left: "0",
-        top: "0",
-        width: "100%",
-        textAlign: "center",
-      },
-    },
-    ".cm-highlightTab": {
-      backgroundImage: "none !important",
-      position: "relative",
-      "&:before": {
-        content: "'→'",
-        color: whitespaceColor,
-        pointerEvents: "none",
-        fontWeight: "bold",
-        position: "absolute",
-        left: "0",
-        top: "0",
-        width: "100%",
-        textAlign: "center",
-      },
-    },
-    ".cm-newline": {
-      color: whitespaceColor,
-      userSelect: "none",
-      pointerEvents: "none",
-      display: "inline",
     },
   });
 }

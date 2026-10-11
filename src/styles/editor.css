@@ -95,9 +95,38 @@
 /* Prevent newline widget from causing layout shift */
 .cm-newline {
   pointer-events: none;
-  color: var(--editor-fg-tertiary);
-  opacity: 0.5;
-  font-size: 0.8em;
+  color: var(--editor-fg-secondary);
+  opacity: 1;
+  font-size: 1em;
+}
+
+/* Whitespace toggle glyphs. CodeMirror's defaults are a tiny radial-gradient
+   dot for spaces and a right-pinned background-image arrow for tabs. Draw both
+   with a tiled gradient / mask instead of positioned text: an absolutely
+   positioned `::before` inside the (inline) whitespace span centres against the
+   wrong containing block in WebKitGTK, which pushed the glyph to the right.
+   Tiling by `1ch` also gives every space cell its own dot.
+   The extra `.cm-content` class outranks CodeMirror's base theme (whose rules
+   compile to two-class selectors), so no `!important` is needed. */
+.cm-editor .cm-content .cm-highlightSpace {
+  background: none;
+  background-image: radial-gradient(circle at 50% 55%, var(--editor-fg-tertiary) 0.16em, transparent 0.16em);
+  background-size: 1ch 1em;
+  background-repeat: repeat-x;
+  background-position: left center;
+}
+
+.cm-editor .cm-content .cm-highlightTab {
+  background: none;
+  background-color: var(--editor-fg-tertiary);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 8h9m0 0-4-4m4 4-4 4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 8h9m0 0-4-4m4 4-4 4' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: auto 1em;
+  mask-size: auto 1em;
 }
 
 /* Syntax Highlighting - Structure & Variables */
