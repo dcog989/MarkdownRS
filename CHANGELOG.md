@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.64.2 - 2026-10-11
+
+#### Bug Fixes
+
+- (64a8aaf) render whitespace dots per cell, drop WebKit-mispositioned glyphs - dcog989
+
+- (a50f68d) keep rumdl issues popup visible at reduced status bar opacity - dcog989
+
+- - -
+
 ## v1.64.1 - 2026-10-10
 
 #### Bug Fixes
