@@ -84,7 +84,7 @@
 - Logic fully implemented.
 - Existing docs updated if public interfaces changed.
 - When required by the `Verification` rules, run the corresponding `Workflow` command.
-- On completion of an update or fix, print a concise conventional commit message in a fenced code block.
+- On completion of an update or fix, print a concise conventional commit message in a fenced code block. Do not line wrap.
 
 ### Communication Style
 
