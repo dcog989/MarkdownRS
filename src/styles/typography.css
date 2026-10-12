@@ -51,7 +51,7 @@
 }
 
 .font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family: ui-monospace, monospace;
 }
 
 .italic {
@@ -76,10 +76,6 @@
 
 .normal-case {
   text-transform: none;
-}
-
-.leading-6 {
-  line-height: 1.5rem;
 }
 
 .leading-snug {

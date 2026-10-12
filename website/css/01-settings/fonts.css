@@ -3,6 +3,6 @@
    -------------------------------------------------------------------------- */
 
 :root {
-  --font-display: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
-  --font-mono: ui-monospace, "Cascadia Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --font-display: ui-monospace, monospace;
+  --font-mono: ui-monospace, monospace;
 }

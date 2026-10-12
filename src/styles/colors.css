@@ -31,16 +31,8 @@
   background-color: var(--surface-hover);
 }
 
-.bg-bg-active {
-  background-color: var(--surface-active);
-}
-
 .bg-surface-backdrop {
   background-color: var(--surface-backdrop);
-}
-
-.bg-editor-bg {
-  background-color: var(--editor-bg);
 }
 
 .bg-transparent {
@@ -78,10 +70,6 @@
 
 .text-accent-link {
   color: var(--accent-link);
-}
-
-.text-accent-link-hover {
-  color: var(--accent-link-hover, var(--accent-link));
 }
 
 .text-accent-file {

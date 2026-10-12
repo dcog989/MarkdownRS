@@ -53,16 +53,6 @@
   -webkit-user-select: none;
 }
 
-.select-text {
-  user-select: text;
-  -webkit-user-select: text;
-}
-
-.select-all {
-  user-select: all;
-  -webkit-user-select: all;
-}
-
 /* Utility Classes - Pointer Events */
 .pointer-events-none {
   pointer-events: none;

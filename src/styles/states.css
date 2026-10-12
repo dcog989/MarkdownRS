@@ -1,11 +1,4 @@
 /* Hover States */
-.hover\:bg-accent-primary:hover {
-  background-color: var(--accent-primary);
-}
-
-.hover\:bg-danger:hover {
-  background-color: var(--danger);
-}
 
 .hover\:bg-bg-hover:hover {
   background-color: var(--surface-hover);
@@ -15,16 +8,8 @@
   background-color: var(--surface-active);
 }
 
-.hover\:bg-bg-panel:hover {
-  background-color: var(--surface-2);
-}
-
 .hover\:text-accent-secondary:hover {
   color: var(--accent-secondary);
-}
-
-.hover\:text-accent-link-hover:hover {
-  color: var(--accent-link-hover, var(--accent-link));
 }
 
 .hover\:text-danger:hover {
@@ -33,18 +18,6 @@
 
 .hover\:text-fg-default:hover {
   color: var(--text-primary);
-}
-
-.hover\:text-white:hover {
-  color: white;
-}
-
-.hover\:opacity-80:hover {
-  opacity: 0.8;
-}
-
-.hover\:opacity-70:hover {
-  opacity: 0.7;
 }
 
 .hover\:opacity-100:hover {
@@ -71,30 +44,13 @@
   opacity: 1;
 }
 
-.group:hover .group-hover\:w-3 {
-  width: 0.75rem;
-}
-
-.group:hover .group-hover\:bg-bg-hover {
-  background-color: var(--surface-hover);
-}
-
 .group\/preview:hover .group-hover\/preview\:opacity-100 {
   opacity: 1;
-}
-
-/* Active States */
-.active\:bg-accent-primary:active {
-  background-color: var(--accent-primary);
 }
 
 /* Disabled States */
 .disabled\:cursor-not-allowed:disabled {
   cursor: not-allowed;
-}
-
-.disabled\:opacity-30:disabled {
-  opacity: 0.3;
 }
 
 .disabled\:opacity-50:disabled {
@@ -104,16 +60,6 @@
 /* Focus States */
 .focus\:border-accent-primary:focus {
   border-color: var(--accent-primary);
-}
-
-.focus\:outline-none:focus {
-  outline: 2px solid transparent;
-  outline-offset: 2px;
-}
-
-/* Placeholder States */
-.placeholder\:text-fg-muted\/50::placeholder {
-  color: oklch(from var(--text-secondary) l c h / 0.5);
 }
 
 /* Focus Visible Styling */

@@ -38,8 +38,7 @@ button {
   background-color: var(--surface-hover);
 }
 
-.btn-base:disabled,
-.btn-disabled {
+.btn-base:disabled {
   opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;

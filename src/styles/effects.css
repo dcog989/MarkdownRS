@@ -1,7 +1,4 @@
 /* Effects Classes - Transform */
-.-translate-y-1\/2 {
-  transform: translateY(-50%);
-}
 
 .rotate-180 {
   transform: rotate(180deg);
@@ -111,14 +108,6 @@
   opacity: 0.08;
 }
 
-.opacity-\[0\.15\] {
-  opacity: 0.15;
-}
-
-.opacity-\[0\.05\] {
-  opacity: 0.05;
-}
-
 /* Animation keyframes */
 @keyframes pulse {
   0%,
@@ -148,11 +137,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* Backdrop Filter */
-.backdrop-blur-sm {
-  backdrop-filter: blur(0.125rem);
 }
 
 /* Scroll Behavior */
