@@ -376,7 +376,7 @@ onMount(() => {
             type="text"
             bind:value={searchState.findText}
             aria-label={$_("findReplace.find")}
-            class="{searchState.regexError ? "border-danger" : ""}"
+            class={searchState.regexError ? "border-danger" : ""}
             oninput={onInput}
             spellcheck="false"
           />
