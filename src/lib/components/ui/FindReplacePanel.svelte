@@ -1,9 +1,21 @@
 <script lang="ts">
 import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { Replace, Search, X } from "lucide-svelte";
+import {
+  CaseSensitive,
+  ChevronDown,
+  ChevronUp,
+  File,
+  Files,
+  Regex,
+  Replace,
+  Search,
+  WholeWord,
+  X,
+} from "lucide-svelte";
 import { onMount, tick, untrack } from "svelte";
 import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
 import Input from "$lib/components/ui/Input.svelte";
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
@@ -30,6 +42,9 @@ let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
 let panelOpacity = $derived(isMouseOver ? 1 : appContext.settings.findPanelOpacity / 100);
+let hasMatches = $derived(
+  searchScope === "current" ? searchState.currentMatches > 0 : searchState.allTabsResults.size > 0,
+);
 
 export function focusInput() {
   if (searchInputRef) {
@@ -135,6 +150,26 @@ function onInput() {
 
 function onScopeChange() {
   if (cmView) executeSearch(cmView, false);
+}
+
+function toggleMatchCase() {
+  searchState.matchCase = !searchState.matchCase;
+  if (cmView) executeSearch(cmView, false);
+}
+
+function toggleWholeWord() {
+  searchState.matchWholeWord = !searchState.matchWholeWord;
+  if (cmView) executeSearch(cmView, false);
+}
+
+function toggleRegex() {
+  searchState.useRegex = !searchState.useRegex;
+  if (cmView) executeSearch(cmView, false);
+}
+
+function toggleScope() {
+  searchScope = searchScope === "current" ? "all" : "current";
+  onScopeChange();
 }
 
 function onReplaceInput() {
@@ -252,7 +287,7 @@ onMount(() => {
 {#if isOpen}
   <div
     bind:this={panelRef}
-    class="find-panel bg-border-primary absolute top-0 z-50 flex max-h-150 w-80 flex-col border border-t-0 border-r-0 shadow-lg backdrop-blur-sm transition-opacity duration-200"
+    class="find-panel bg-bg-panel absolute z-50 flex max-h-150 w-90 flex-col overflow-hidden rounded-lg border shadow-lg transition-opacity duration-200"
     style:opacity={panelOpacity}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
@@ -262,52 +297,129 @@ onMount(() => {
     aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
-    <div class="bg-border-primary text-fg-default flex items-center border-b p-2">
-      <div class="flex flex-1 items-center gap-2">
-        <span class="text-ui font-semibold"
-          >{$_("findReplace.find")} {isReplaceMode ? $_("findReplace.andReplace") : ""}</span
-        >
-        <button
-          type="button"
-          class="btn-base btn-sm btn-outline"
-          aria-pressed={isReplaceMode}
-          onclick={() => (isReplaceMode = !isReplaceMode)}
-          title={$_("findReplace.toggleReplaceMode")}
-        >
-          <Replace size={14} />
-        </button>
-      </div>
-      <button type="button" class="btn-base btn-sm btn-outline" onclick={close} title={$_("findReplace.closeEsc")}>
-        <X size={14} />
+    <div class="bg-bg-header flex items-center gap-1 border-b px-2 py-1">
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={isReplaceMode}
+        aria-label={$_("findReplace.toggleReplaceMode")}
+        onclick={() => (isReplaceMode = !isReplaceMode)}
+        use:tooltip={$_("findReplace.toggleReplaceMode")}
+      >
+        <Replace size={16} />
+      </button>
+
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={searchState.matchCase}
+        aria-label={$_("findReplace.matchCase")}
+        onclick={toggleMatchCase}
+        use:tooltip={$_("findReplace.matchCase")}
+      >
+        <CaseSensitive size={16} />
+      </button>
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={searchState.matchWholeWord}
+        aria-label={$_("findReplace.wholeWord")}
+        onclick={toggleWholeWord}
+        use:tooltip={$_("findReplace.wholeWord")}
+      >
+        <WholeWord size={16} />
+      </button>
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={searchState.useRegex}
+        aria-label={$_("findReplace.regex")}
+        onclick={toggleRegex}
+        use:tooltip={$_("findReplace.regex")}
+      >
+        <Regex size={16} />
+      </button>
+
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={searchScope === "all"}
+        aria-label={$_("findReplace.allOpenDocuments")}
+        onclick={toggleScope}
+        use:tooltip={searchScope === "all" ? $_("findReplace.allOpenDocuments") : $_("findReplace.currentDocument")}
+      >
+        {#if searchScope === "all"}
+          <Files size={16} />
+        {:else}
+          <File size={16} />
+        {/if}
+      </button>
+
+      <div class="flex-1"></div>
+
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-label={$_("findReplace.closeEsc")}
+        onclick={close}
+        use:tooltip={$_("findReplace.closeEsc")}
+      >
+        <X size={16} />
       </button>
     </div>
 
     <div class="flex max-h-125 flex-col gap-3 overflow-y-auto p-3">
       <div class="flex items-center gap-2">
-        <Input
-          bind:ref={searchInputRef}
-          type="text"
-          bind:value={searchState.findText}
-          placeholder={$_("findReplace.find")}
-          class="flex-1 text-ui leading-6 {searchState.regexError ? "border-danger" : ""}"
-          oninput={onInput}
-          spellcheck="false"
-        />
-        <div class="text-fg-muted min-w-8 text-right text-ui-sm whitespace-nowrap">
-          {#if searchScope === "current"}
-            {#if searchState.currentMatches > 0}
-              {searchState.currentIndex + 1}
-              / {searchState.currentMatches}
-            {:else if searchState.findText}
-              0 / 0
-            {/if}
-          {:else if searchScope === "all"}
-            {#if searchState.allTabsResults.size > 0}
-              {$_("findReplace.tabs", { values: { count: searchState.allTabsResults.size } })}
-            {:else if searchState.findText}
-              {$_("findReplace.zeroTabs")}
-            {/if}
+        <div class="relative flex-1">
+          <Input
+            bind:ref={searchInputRef}
+            type="text"
+            bind:value={searchState.findText}
+            aria-label={$_("findReplace.find")}
+            class="{searchState.regexError ? "border-danger" : ""}"
+            oninput={onInput}
+            spellcheck="false"
+          />
+          {#if !searchState.findText}
+            <div
+              class="text-fg-muted pointer-events-none absolute inset-0 flex items-center gap-1.5 px-3 text-ui opacity-60"
+            >
+              <Search size={14} class="shrink-0" />
+              <span class="truncate">{$_("findReplace.find")}</span>
+            </div>
           {/if}
+        </div>
+        <div class="text-fg-muted min-w-8 text-center text-ui whitespace-nowrap {hasMatches ? "" : "opacity-50"}">
+          {#if searchScope === "current"}
+            {searchState.currentMatches > 0 ? searchState.currentIndex + 1 : 0}
+            / {searchState.currentMatches}
+          {:else if searchState.allTabsResults.size > 0}
+            {$_("findReplace.tabs", { values: { count: searchState.allTabsResults.size } })}
+          {:else}
+            {$_("findReplace.zeroTabs")}
+          {/if}
+        </div>
+        <div class="flex items-center">
+          <button
+            type="button"
+            class="btn-icon h-8 w-8"
+            onclick={onFindPrevious}
+            disabled={searchScope === "all" || !!searchState.regexError}
+            aria-label={$_("common.previous")}
+            use:tooltip={$_("common.previous")}
+          >
+            <ChevronUp size={24} />
+          </button>
+          <button
+            type="button"
+            class="btn-icon -ml-1 h-8 w-8"
+            onclick={onFindNext}
+            disabled={searchScope === "all" || !!searchState.regexError}
+            aria-label={$_("common.next")}
+            use:tooltip={$_("common.next")}
+          >
+            <ChevronDown size={24} />
+          </button>
         </div>
       </div>
 
@@ -323,87 +435,12 @@ onMount(() => {
             type="text"
             bind:value={searchState.replaceText}
             placeholder={$_("findReplace.replace")}
-            class="flex-1 text-ui leading-6"
+            class="flex-1"
             oninput={onReplaceInput}
             spellcheck="false"
           />
         </div>
-      {/if}
 
-      <div class="flex flex-wrap gap-4">
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
-          <input
-            type="checkbox"
-            bind:checked={searchState.matchCase}
-            onchange={() => cmView && executeSearch(cmView, false)}
-            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-          >
-          <span>{$_("findReplace.matchCase")}</span>
-        </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
-          <input
-            type="checkbox"
-            bind:checked={searchState.matchWholeWord}
-            onchange={() => cmView && executeSearch(cmView, false)}
-            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-          >
-          <span>{$_("findReplace.wholeWord")}</span>
-        </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
-          <input
-            type="checkbox"
-            bind:checked={searchState.useRegex}
-            onchange={() => cmView && executeSearch(cmView, false)}
-            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-          >
-          <span>{$_("findReplace.regex")}</span>
-        </label>
-      </div>
-
-      <div class="flex flex-wrap gap-4">
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
-          <input
-            type="radio"
-            bind:group={searchScope}
-            value="current"
-            onchange={onScopeChange}
-            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-          >
-          <span>{$_("findReplace.currentDocument")}</span>
-        </label>
-        <label class="text-fg-default flex cursor-pointer items-center gap-1.5 text-ui">
-          <input
-            type="radio"
-            bind:group={searchScope}
-            value="all"
-            onchange={onScopeChange}
-            class="accent-accent-primary h-3.5 w-3.5 cursor-pointer"
-          >
-          <span>{$_("findReplace.allOpenDocuments")}</span>
-        </label>
-      </div>
-
-      <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          class="btn-base btn-sm btn-outline"
-          onclick={onFindPrevious}
-          disabled={searchScope === "all" || !!searchState.regexError}
-        >
-          <Search size={12} />
-          {$_("common.previous")}
-        </button>
-        <button
-          type="button"
-          class="btn-base btn-sm btn-outline"
-          onclick={onFindNext}
-          disabled={searchScope === "all" || !!searchState.regexError}
-        >
-          <Search size={12} />
-          {$_("common.next")}
-        </button>
-      </div>
-      {#if isReplaceMode}
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
@@ -450,7 +487,7 @@ onMount(() => {
 
 <style>
 .find-panel {
-  right: var(--find-panel-right, 0px);
-  background-color: color-mix(in srgb, var(--surface-2) 82%, transparent);
+  top: 0.5rem;
+  right: calc(var(--find-panel-right, 0px) + 0.5rem);
 }
 </style>

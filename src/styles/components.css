@@ -160,6 +160,12 @@ button {
   color: var(--accent-secondary);
 }
 
+.btn-icon:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Form Labels */
 label {
   color: var(--text-primary);
