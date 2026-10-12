@@ -60,6 +60,13 @@ default = ["pdf-export", "spellcheck"]
 pdf-export = ["dep:office_oxide", "dep:pdf_oxide"]
 spellcheck = ["dep:reqwest"]
 
+[profile.dev]
+opt-level = 1
+debug = 1
+
+[profile.dev.package."*"]
+opt-level = 3
+
 [profile.release]
 strip = true
 lto = "thin"
