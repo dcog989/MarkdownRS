@@ -11,7 +11,7 @@
     "check:backend": "cd src-tauri && cargo check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "bunx biome check .",
     "check:types": "svelte-check --tsconfig ./tsconfig.json --config ./vite.config.ts --tsgo",
-    "clean": "rm -rf .svelte-kit build node_modules bun.lock src-tauri/gen src-tauri/target website/dist coverage .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
+    "clean": "rm -rf .svelte-kit build node_modules bun.lock src-tauri/gen src-tauri/target src-tauri/Cargo.lock website/dist coverage .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz",
     "coverage": "vitest run --coverage",
     "crates": "cd src-tauri && cargo upgrade --verbose",
     "dev": "tauri dev",
