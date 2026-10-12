@@ -6,7 +6,7 @@ const UI_FONT_FAMILY =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Droid Sans", sans-serif';
 const UI_FONT_SIZE = "0.8125rem";
 
-export function generateDynamicTheme(fontSize: number, fontFamily: string, isDark: boolean) {
+export function generateDynamicTheme(fontSize: number, fontFamily: string) {
   return EditorView.theme({
     "&": { height: "100%", fontSize: `${fontSize}px` },
     ".cm-cursor": {
@@ -32,17 +32,16 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string, isDar
     },
     ".cm-selectionMatch": { backgroundColor: "var(--editor-selection-match-bg)" },
     ".cm-searchMatch": {
-      backgroundColor: "#ff8c00",
-      color: "#000 !important",
+      backgroundColor: "oklch(0.59 0.14 336)",
+      color: "#fff !important",
       borderRadius: "2px",
     },
     ".cm-searchMatch *": {
-      color: "#000 !important",
+      color: "#fff !important",
     },
     ".cm-searchMatch.cm-searchMatch-selected": {
-      backgroundColor: "#ff8c00 !important",
-      color: "#000 !important",
-      boxShadow: isDark ? "0 0 0 2px #ffcc77 !important" : "0 0 0 2px #cc5500 !important",
+      backgroundColor: "oklch(0.68382 0.13417 149.00934) !important",
+      color: "#fff !important",
       zIndex: "10",
       position: "relative",
     },

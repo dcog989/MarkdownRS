@@ -86,7 +86,6 @@ export interface ExtensionsConfig {
 }
 
 export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
-  const isDark = appContext.settings.theme === "dark";
   const c = config.compartments;
   const extensions: Extension[] = [
     highlightActiveLineGutter(),
@@ -111,9 +110,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     // affordance must match: apply decorations unless simple mode for large files.
     c.filePathComp.of(!config.isLargeFile ? [linkPlugin] : []),
     c.keymapComp.of(getEditorKeymap([...config.customKeymap])),
-    c.themeComp.of(
-      generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily, isDark),
-    ),
+    c.themeComp.of(generateDynamicTheme(appContext.settings.editorFontSize, appContext.settings.editorFontFamily)),
     c.indentComp.of(indentUnit.of(" ".repeat(Math.max(1, appContext.settings.defaultIndent)))),
     c.whitespaceComp.of(
       appContext.settings.showWhitespace ? [highlightWhitespace(), newlinePlugin] : [selectionWhitespacePlugin],

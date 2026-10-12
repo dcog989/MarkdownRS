@@ -151,10 +151,9 @@ $effect(() => {
 
 $effect(() => {
   if (!view) return;
-  const theme = appContext.settings.theme;
   const fontSize = appContext.settings.editorFontSize;
   const fontFamily = appContext.settings.editorFontFamily;
-  view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily, theme === "dark")) });
+  view.dispatch({ effects: comps.themeComp.reconfigure(generateDynamicTheme(fontSize, fontFamily)) });
 });
 
 $effect(() => {

@@ -82,6 +82,22 @@
   background-color: var(--editor-selection-bg);
 }
 
+/* Rendered-mode headings have a taller line box than the inline match box, so
+   the match background leaves a gap above and below. An inline-block match box
+   grows to the line height and fills it. */
+.rendered-mode .cm-searchMatch:has(.cm-h1, .cm-h2, .cm-h3, .cm-h4, .cm-h5, .cm-h6) {
+  display: inline-block;
+}
+
+/* The current find match is the editor selection too, so the full-height
+   selection bar sits behind the text-box-height match highlight and shows
+   around it. The match colour is the affordance while searching, so drop the
+   selection background whenever a search match is selected. */
+.cm-editor:has(.cm-searchMatch-selected) .cm-selectionLayer .cm-selectionBackground,
+.cm-editor:has(.cm-searchMatch-selected) .cm-content ::selection {
+  background: transparent !important;
+}
+
 /* Prevent layout shift from special characters showing on selection */
 .cm-selectionMatch {
   background-color: var(--editor-selection-match-bg);
