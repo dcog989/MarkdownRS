@@ -61,5 +61,5 @@ export async function renderMarkdown(
     ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|cid|xmpp|asset):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
   });
 
-  return { ...result, html: renderMathInHtml(cleanHtml) };
+  return { ...result, html: await renderMathInHtml(cleanHtml) };
 }
