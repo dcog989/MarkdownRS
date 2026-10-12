@@ -1,9 +1,5 @@
 use std::path::Path;
-use tauri::Emitter;
-
-const WINDOW_SHOW_DELAY_MS: u64 = 150;
-const WINDOW_FOCUS_DELAY_MS: u64 = 50;
-const WINDOW_EMIT_DELAY_MS: u64 = 200;
+use tauri::{Emitter, Listener};
 
 const DARK_BACKGROUND: &str = "#1e1e1e";
 const LIGHT_BACKGROUND: &str = "#fcfcfc";
@@ -74,28 +70,20 @@ pub fn configure(window: &tauri::WebviewWindow) {
 pub fn configure(_window: &tauri::WebviewWindow) {}
 
 pub fn handle_cli_args(window: tauri::WebviewWindow) {
-    let args: Vec<String> = std::env::args_os()
+    let Some(file_path) = std::env::args_os()
         .skip(1)
         .filter(|a| !a.to_string_lossy().starts_with('-'))
         .map(|a| a.to_string_lossy().into_owned())
-        .collect();
-    if let Some(file_path) = args.into_iter().next() {
-        let window_clone = window.clone();
-        tauri::async_runtime::spawn(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(WINDOW_SHOW_DELAY_MS)).await;
-            let _ = window_clone.show();
-            tokio::time::sleep(std::time::Duration::from_millis(WINDOW_FOCUS_DELAY_MS)).await;
-            let _ = window_clone.set_focus();
-            tokio::time::sleep(std::time::Duration::from_millis(WINDOW_EMIT_DELAY_MS)).await;
-            log::info!("Opening file from initial launch: {}", file_path);
-            let _ = window_clone.emit("open-file-from-args", &file_path);
-        });
-    } else {
-        tauri::async_runtime::spawn(async move {
-            tokio::time::sleep(std::time::Duration::from_millis(WINDOW_SHOW_DELAY_MS)).await;
-            let _ = window.show();
-            tokio::time::sleep(std::time::Duration::from_millis(WINDOW_FOCUS_DELAY_MS)).await;
-            let _ = window.set_focus();
-        });
-    }
+        .next()
+    else {
+        return;
+    };
+
+    // The window is shown at creation. Wait for the frontend to report that its
+    // listeners exist and the session is restored, rather than guessing.
+    let emit_window = window.clone();
+    window.listen("frontend-ready", move |_| {
+        log::info!("Opening file from initial launch: {}", file_path);
+        let _ = emit_window.emit("open-file-from-args", &file_path);
+    });
 }

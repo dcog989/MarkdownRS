@@ -1,5 +1,6 @@
 <script lang="ts">
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 import { onDestroy, onMount } from "svelte";
 import { _ } from "svelte-i18n";
 import Logo from "$lib/components/ui/Logo.svelte";
@@ -63,14 +64,18 @@ $effect(() => {
 });
 
 onMount(() => {
-  appInit.initialize().then(() => {
-    appInit.startSessionPersistence();
-  });
-
   let unlistenEvents: (() => void) | null = null;
 
-  appInit.setupEventListeners().then((unlisten) => {
+  const listenersReady = appInit.setupEventListeners().then((unlisten) => {
     unlistenEvents = unlisten;
+  });
+
+  appInit.initialize().then(async () => {
+    appInit.startSessionPersistence();
+    // Tell the backend the session is restored and the listeners exist, so it
+    // can hand over a file passed on the command line without a timer.
+    await listenersReady;
+    await emit("frontend-ready");
   });
 
   const handleBlur = () => appInit.handleBlur();

@@ -16,6 +16,9 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     window::configure(&window);
 
     let paths = paths::resolve_app_paths(app_handle)?;
+    // Before anything slow: the window is already visible, so the theme colour
+    // should replace the static fallback as early as possible.
+    window::apply_saved_background(&window, &paths.config_path);
     fs::create_dir_all(&paths.log_dir)?;
     logging::init(&paths.config_path, &paths.log_dir)?;
     migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
@@ -31,7 +34,6 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let db = database::init(paths.db_dir.join("session.db"), &paths.db_dir)?;
     state::manage(app, db);
-    window::apply_saved_background(&window, &paths.config_path);
     window::handle_cli_args(window);
 
     Ok(())
