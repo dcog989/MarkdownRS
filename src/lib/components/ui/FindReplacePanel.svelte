@@ -41,7 +41,7 @@ let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
-let panelTransparency = $derived(`${isMouseOver ? 0 : 100 - appContext.settings.findPanelOpacity}%`);
+let panelOpacity = $derived(isMouseOver ? 1 : appContext.settings.findPanelOpacity / 100);
 let hasMatches = $derived(
   searchScope === "current" ? searchState.currentMatches > 0 : searchState.allTabsResults.size > 0,
 );
@@ -288,7 +288,7 @@ onMount(() => {
   <div
     bind:this={panelRef}
     class="find-panel bg-bg-panel absolute z-50 flex max-h-150 w-90 flex-col overflow-hidden rounded-lg border shadow-lg"
-    style:--find-panel-transparency={panelTransparency}
+    style:opacity={panelOpacity}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
     onmouseenter={() => (isMouseOver = true)}
@@ -297,7 +297,7 @@ onMount(() => {
     aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
-    <div class="find-panel-header bg-bg-header flex items-center gap-1 border-b px-2 py-1">
+    <div class="bg-bg-header flex items-center gap-1 border-b px-2 py-1">
       <button
         type="button"
         class="btn-icon h-7 w-7"
@@ -489,15 +489,5 @@ onMount(() => {
 .find-panel {
   top: 0.5rem;
   right: calc(var(--find-panel-right, 0px) + 0.5rem);
-  background-color: color-mix(in srgb, var(--surface-2), transparent var(--find-panel-transparency, 0%));
-}
-
-.find-panel-header {
-  background-color: color-mix(in srgb, var(--surface-3), transparent var(--find-panel-transparency, 0%));
-}
-
-.find-panel,
-.find-panel-header {
-  transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>
