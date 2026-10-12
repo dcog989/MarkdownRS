@@ -97,7 +97,7 @@ onDestroy(() => {
 </script>
 
 {#if !appInit.isInitialized}
-  <div class="bg-bg-main text-fg-default flex h-screen w-screen flex-col items-center justify-center">
+  <div class="text-fg-default flex h-screen w-screen flex-col items-center justify-center">
     <Logo class="mb-4 h-16 w-16 animate-pulse opacity-50" />
     <p class="text-fg-muted text-ui">{$_("app.loading")}</p>
     {#if appInit.initError}

@@ -31,6 +31,7 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     let db = database::init(paths.db_dir.join("session.db"), &paths.db_dir)?;
     state::manage(app, db);
+    window::apply_saved_background(&window, &paths.config_path);
     window::handle_cli_args(window);
 
     Ok(())

@@ -29,6 +29,7 @@
         "resizable": true,
         "decorations": true,
         "transparent": false,
+        "backgroundColor": "#1e1e1e",
         "visible": false
       }
     ]

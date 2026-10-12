@@ -1,8 +1,34 @@
+use std::path::Path;
 use tauri::Emitter;
 
 const WINDOW_SHOW_DELAY_MS: u64 = 150;
 const WINDOW_FOCUS_DELAY_MS: u64 = 50;
 const WINDOW_EMIT_DELAY_MS: u64 = 200;
+
+const DARK_BACKGROUND: &str = "#1e1e1e";
+const LIGHT_BACKGROUND: &str = "#fcfcfc";
+
+/// The page paints no background until the frontend has loaded the theme, so the
+/// window's own background is what fills the gap. Match it to the saved theme.
+pub fn apply_saved_background(window: &tauri::WebviewWindow, settings_path: &Path) {
+    let is_light = crate::utils::read_settings_toml(settings_path)
+        .ok()
+        .is_some_and(|settings| settings.get("theme").and_then(|v| v.as_str()) == Some("light"));
+    let color = if is_light {
+        LIGHT_BACKGROUND
+    } else {
+        DARK_BACKGROUND
+    };
+
+    match color.parse::<tauri::utils::config::Color>() {
+        Ok(color) => {
+            if let Err(e) = window.set_background_color(Some(color)) {
+                log::warn!("Failed to set window background color: {}", e);
+            }
+        },
+        Err(e) => log::warn!("Invalid window background color: {}", e),
+    }
+}
 
 #[cfg(target_os = "linux")]
 pub fn configure(window: &tauri::WebviewWindow) {

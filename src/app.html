@@ -6,18 +6,13 @@
 
     <!-- ! Critical CSS: Prevents FOUC -->
     <style>
+    /* No background: the window's own background shows through until the
+       frontend has loaded the theme, so there is no wrong-colour frame. */
     html,
     body {
       height: 100%;
       margin: 0;
       overflow: hidden;
-      background-color: #1e1e1e;
-    }
-    @media (prefers-color-scheme: light) {
-      html,
-      body {
-        background-color: #f9f9f9;
-      }
     }
     </style>
 
