@@ -36,7 +36,6 @@ export default defineConfig({
       pages: "build",
       assets: "build",
       fallback: "404.html",
-      precompress: true,
       strict: true,
     }),
   }),
