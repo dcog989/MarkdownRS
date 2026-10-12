@@ -2,7 +2,6 @@
 import { ClipboardCopy, Eye, EyeOff, Space, TextWrap } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
-import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import MarkdownLintStatus from "$lib/components/ui/MarkdownLintStatus.svelte";
 import { translate } from "$lib/i18n";
 import { togglePreferredExtension, updateTabFields } from "$lib/stores/editorStore.svelte";
@@ -42,11 +41,6 @@ let fileType = $derived.by(() => {
 // can only be text: only unsaved documents get the text/markdown toggle.
 let canToggleFileType = $derived(!!tabId && !path);
 
-// Context Menu State
-let showMenu = $state(false);
-let menuX = $state(0);
-let menuY = $state(0);
-
 function toggleFileType() {
   if (tabId) togglePreferredExtension(tabId);
 }
@@ -68,13 +62,6 @@ function toggleWordWrap() {
   saveSettings();
 }
 
-function handleContextMenu(e: MouseEvent) {
-  e.preventDefault();
-  menuX = e.clientX;
-  menuY = e.clientY;
-  showMenu = true;
-}
-
 async function copyAllStats() {
   if (!activeTab) return;
 
@@ -90,7 +77,6 @@ async function copyAllStats() {
   ].join("\n");
 
   await navigator.clipboard.writeText(stats);
-  showMenu = false;
 }
 </script>
 
@@ -99,12 +85,20 @@ async function copyAllStats() {
   style:background-color="color-mix(in srgb, var(--surface-2), transparent {100 -
     appContext.settings.statusBarOpacity}%)"
 >
+  <button
+    type="button"
+    class="text-fg-muted hover:text-fg-default hover-surface pointer-events-auto mr-2 flex shrink-0 cursor-pointer items-center border-r pr-2"
+    onclick={copyAllStats}
+    use:tooltip={$_("statusBar.copyAllStats")}
+  >
+    <ClipboardCopy size={14} />
+  </button>
+
   <div
     role="button"
     tabindex="0"
     aria-label={$_("statusBar.options")}
-    class="flex w-full items-center justify-between"
-    oncontextmenu={handleContextMenu}
+    class="flex w-full flex-1 items-center justify-between"
     onkeydown={(e) => {
       if (e.key === "Enter" || e.key === " ") e.preventDefault();
     }}
@@ -252,12 +246,3 @@ async function copyAllStats() {
     </div>
   </div>
 </footer>
-
-{#if showMenu}
-  <ContextMenu x={menuX} y={menuY} onClose={() => (showMenu = false)}>
-    <button type="button" class="text-ui menu-item" onclick={copyAllStats}>
-      <ClipboardCopy size={14} class="opacity-70" />
-      <span>{$_("statusBar.copyAllStats")}</span>
-    </button>
-  </ContextMenu>
-{/if}
