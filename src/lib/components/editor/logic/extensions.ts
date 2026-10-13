@@ -20,7 +20,7 @@ import { prefetchHoverHandler, smartBacktickHandler } from "$lib/components/edit
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
-import { newlinePlugin, rulerPlugin, selectionWhitespacePlugin } from "$lib/utils/editorPlugins";
+import { newlinePlugin, rulerPlugin, selectionStatePlugin, selectionWhitespacePlugin } from "$lib/utils/editorPlugins";
 import { generateDynamicTheme } from "$lib/utils/editorTheme";
 import { linkPlugin } from "$lib/utils/filePathExtension";
 import { createFoldExtensions } from "$lib/utils/foldExtension";
@@ -95,6 +95,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     // focused (~6% of a core, gone when unfocused). A blink rate of 0 sets
     // `animation-duration: 0ms` on that layer, which stops the animation.
     drawSelection({ cursorBlinkRate: 0 }),
+    selectionStatePlugin,
     c.historyComp.of(history({ minDepth: appContext.settings.undoDepth })),
     search({ top: true }),
     highlightSelectionMatches(),

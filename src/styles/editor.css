@@ -69,8 +69,12 @@
 
 /* Drop the current-line tint while text is selected so the selection
    highlight is the only background. drawSelection only emits
-   .cm-selectionBackground for non-empty ranges. */
-.cm-editor:has(.cm-selectionBackground) .cm-activeLine::before {
+   .cm-selectionBackground for non-empty ranges, and selectionStatePlugin
+   mirrors that onto this class. Do not use `:has(.cm-selectionBackground)`
+   here: WebKitGTK walks the subject's subtree to resolve it, and the content
+   DOM precedes the selection layer, so every drag frame re-walked the whole
+   editor and the selection paint trailed the pointer. */
+.cm-editor.cm-has-selection .cm-activeLine::before {
   background-color: transparent;
 }
 
@@ -92,9 +96,13 @@
 /* The current find match is the editor selection too, so the full-height
    selection bar sits behind the text-box-height match highlight and shows
    around it. The match colour is the affordance while searching, so drop the
-   selection background whenever a search match is selected. */
-.cm-editor:has(.cm-searchMatch-selected) .cm-selectionLayer .cm-selectionBackground,
-.cm-editor:has(.cm-searchMatch-selected) .cm-content ::selection {
+   selection background whenever a search match is selected. The class comes
+   from selectionStatePlugin for the same reason as above. */
+.cm-editor.cm-has-selected-match .cm-selectionLayer .cm-selectionBackground,
+.cm-editor.cm-has-selected-match .cm-content ::selection {
+  /* biome-ignore lint/complexity/noImportantStyles: must beat CodeMirror's own
+     `.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground`
+     theme rule, which out-specifies any class-only selector */
   background: transparent !important;
 }
 

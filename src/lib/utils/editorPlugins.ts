@@ -1,4 +1,5 @@
-import type { Range } from "@codemirror/state";
+import { getSearchQuery, searchPanelOpen } from "@codemirror/search";
+import type { EditorState, Range } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate, WidgetType } from "@codemirror/view";
 import { appContext } from "$lib/stores/state.svelte";
 
@@ -77,6 +78,53 @@ function getSelectionWhitespaceDecorations(view: EditorView): DecorationSet {
     }
   }
   return Decoration.set(rangesDeco, true);
+}
+
+/**
+ * Mirrors selection state onto the editor element as classes, so the stylesheet
+ * can react to it without `:has()`. A `:has(.cm-selectionBackground)` rule on
+ * `.cm-editor` made WebKitGTK re-walk the whole editor subtree on every drag
+ * frame — the content DOM precedes the selection layer, so the match is found
+ * only after traversing it — which left the selection paint trailing the
+ * pointer.
+ */
+export const selectionStatePlugin = ViewPlugin.fromClass(
+  class {
+    hasSelection: boolean;
+    hasSelectedMatch: boolean;
+    constructor(view: EditorView) {
+      this.hasSelection = hasNonEmptySelection(view);
+      this.hasSelectedMatch = hasSelectedSearchMatch(view.state);
+      this.sync(view);
+    }
+    update(update: ViewUpdate) {
+      const hasSelection = hasNonEmptySelection(update.view);
+      const hasSelectedMatch = hasSelectedSearchMatch(update.state);
+      if (hasSelection === this.hasSelection && hasSelectedMatch === this.hasSelectedMatch) return;
+      this.hasSelection = hasSelection;
+      this.hasSelectedMatch = hasSelectedMatch;
+      this.sync(update.view);
+    }
+    sync(view: EditorView) {
+      view.dom.classList.toggle("cm-has-selection", this.hasSelection);
+      view.dom.classList.toggle("cm-has-selected-match", this.hasSelectedMatch);
+    }
+  },
+);
+
+function hasNonEmptySelection(view: EditorView): boolean {
+  return view.state.selection.ranges.some((range) => !range.empty);
+}
+
+/** Same condition the search extension uses for `.cm-searchMatch-selected`:
+ *  the panel is open and the main selection is exactly a match. */
+function hasSelectedSearchMatch(state: EditorState): boolean {
+  const main = state.selection.main;
+  if (main.empty || !searchPanelOpen(state)) return false;
+  const query = getSearchQuery(state);
+  if (!query.valid) return false;
+  const match = query.getCursor(state, main.from, main.to).next();
+  return !match.done && match.value.from === main.from && match.value.to === main.to;
 }
 
 export const selectionWhitespacePlugin = ViewPlugin.fromClass(
