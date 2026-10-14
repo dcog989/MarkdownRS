@@ -103,7 +103,7 @@ let tooltipContent = $derived.by(() => {
       <Pin size={14} class="shrink-0 {isActive ? "text-accent-secondary" : "text-fg-muted"}" />
     {:else}
       <div
-        class="close-btn-wrapper absolute top-0 right-0 bottom-0 z-10 flex w-8 items-center justify-center opacity-0 transition-opacity group-hover:opacity-100"
+        class="close-btn-wrapper absolute top-0 right-0 bottom-0 z-10 flex w-8 items-center justify-center group-hover:opacity-100"
         style:top={isActive ? "2px" : "0"}
         style:background={`linear-gradient(to right, transparent 0%, ${isActive ? "var(--editor-bg)" : "var(--surface-hover)"} 40%, ${isActive ? "var(--editor-bg)" : "var(--surface-hover)"} 100%)`}
       >
@@ -126,10 +126,11 @@ let tooltipContent = $derived.by(() => {
 </div>
 
 <style>
-/* Keep the close button on a persistent compositing layer. WebKitGTK
-     otherwise builds and tears down the layer as an unpinned tab is hovered,
-     re-rasterizing the editor beneath and making the document flash. */
+/* No transition: a WebKitGTK opacity animation on this overlay flickers the
+     close icon and the text it covers, on entry and exit alike. The 1% floor
+     and pinned layer below predate that finding and did not fix it alone. */
 .close-btn-wrapper {
+  opacity: 0.01;
   will-change: opacity;
   transform: translateZ(0);
 }
