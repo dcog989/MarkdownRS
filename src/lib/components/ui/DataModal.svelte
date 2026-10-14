@@ -196,10 +196,10 @@ const actions = $derived<Action[]>([
 
   <div class="flex flex-col gap-6 p-6">
     {#each actions as action (action.label)}
-      <div class="flex flex-col gap-2 items-start">
+      <div class="flex items-center gap-3">
         <button
           type="button"
-          class="btn-base w-fit"
+          class="btn-base w-fit shrink-0"
           class:btn-base--danger={action.danger}
           onclick={action.handler}
           disabled={busy}
@@ -207,7 +207,7 @@ const actions = $derived<Action[]>([
         >
           {action.label}
         </button>
-        <p class="text-ui-sm text-fg-muted px-1 leading-relaxed">{action.description}</p>
+        <p class="text-ui-sm text-fg-muted leading-relaxed">{action.description}</p>
       </div>
     {/each}
   </div>
