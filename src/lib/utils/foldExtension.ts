@@ -45,19 +45,15 @@ const foldTheme = EditorView.theme({
     height: "0",
     borderLeft: "5px solid transparent",
     borderRight: "5px solid transparent",
+    // currentColor: the arrow inherits the gutter's color and alpha, so arrows
+    // and line numbers dim and brighten together.
     borderTop: "6px solid currentColor",
-    color: "var(--editor-fg-tertiary)",
-    opacity: "0.9",
     // The marker is 6px tall (border-top), so half of it is 3px. A default
     // line is 1.4em; offsetting by 0.7em - 3px centers the arrow on the line
     // number's vertical position regardless of how tall the rendered line is.
     marginTop: "calc(0.7em - 3px)",
   },
   ".cm-fold-marker-closed": { transform: "rotate(-90deg)" },
-  ".cm-foldGutter .cm-gutterElement:hover .cm-fold-marker": {
-    color: "var(--editor-fg)",
-    opacity: "1",
-  },
   // The default fold widget paints a white pill with an "unfold" tooltip at
   // the end of folded lines; hide it entirely. Fold state is shown by the
   // closed arrow in the gutter instead.
