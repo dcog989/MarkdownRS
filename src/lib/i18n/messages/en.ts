@@ -36,6 +36,7 @@ export const en = {
     resizeSplitView: "Resize split view",
     dismiss: "Dismiss",
     resetToDefault: "Reset to default",
+    back: "Back",
   },
   modal: {
     closeModal: "Close modal",

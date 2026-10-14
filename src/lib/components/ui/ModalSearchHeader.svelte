@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Search, X } from "lucide-svelte";
+import { ArrowLeft, Search, X } from "lucide-svelte";
 import type { Snippet } from "svelte";
 import { _ } from "svelte-i18n";
 import Input from "$lib/components/ui/Input.svelte";
@@ -13,6 +13,7 @@ let {
   focusDelay,
   onClose,
   onKeydown,
+  onBack,
   extraActions,
 } = $props<{
   title: string;
@@ -23,12 +24,18 @@ let {
   focusDelay?: number;
   onClose: () => void;
   onKeydown?: (e: KeyboardEvent) => void;
+  onBack?: () => void;
   extraActions?: Snippet;
 }>();
 </script>
 
 <div class="flex w-full items-center gap-4">
   <div class="flex shrink-0 items-center gap-2">
+    {#if onBack}
+      <button type="button" class="btn-icon outline-none" onclick={onBack} aria-label={$_("common.back")}>
+        <ArrowLeft size={16} />
+      </button>
+    {/if}
     <Icon size={16} class="text-accent-secondary" />
     <h2 class="text-lg text-fg-default font-semibold">{title}</h2>
   </div>

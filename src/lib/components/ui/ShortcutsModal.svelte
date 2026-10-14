@@ -9,6 +9,7 @@ import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
 import { saveSettings } from "$lib/utils/settings";
@@ -17,9 +18,10 @@ import { shortcutManager } from "$lib/utils/shortcuts";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onBack: () => void;
 }
 
-let { isOpen = $bindable(false), onClose }: Props = $props();
+let { isOpen = $bindable(false), onClose, onBack }: Props = $props();
 
 let searchQuery = $state("");
 let searchInputEl = $state<HTMLInputElement>();
@@ -136,8 +138,10 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
       icon={Keyboard}
       bind:searchValue={searchQuery}
       bind:inputRef={searchInputEl}
+      focusDelay={CONFIG.UI_TIMING.FOCUS_IMMEDIATE_MS}
       searchPlaceholder={$_("shortcuts.placeholder")}
       {onClose}
+      {onBack}
       onKeydown={nav.handleKeydown}
     />
   {/snippet}

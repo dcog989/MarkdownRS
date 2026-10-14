@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Settings2, X } from "lucide-svelte";
+import { ArrowLeft, Settings2, X } from "lucide-svelte";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
@@ -15,9 +15,10 @@ import { forceMarkdownRelint } from "$lib/utils/markdownLintExtension.svelte";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onBack: () => void;
 }
 
-let { isOpen = $bindable(false), onClose }: Props = $props();
+let { isOpen = $bindable(false), onClose, onBack }: Props = $props();
 
 let busy = $state(false);
 let loaded = $state(false);
@@ -99,6 +100,9 @@ async function saveConfig() {
 <Modal bind:isOpen {onClose} position="top" width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <div class="flex items-center gap-2">
+      <button type="button" class="btn-icon outline-none" onclick={onBack} aria-label={$_("common.back")}>
+        <ArrowLeft size={16} />
+      </button>
       <Settings2 size={16} class="text-accent-secondary" />
       <h2 class="text-fg-default text-lg font-semibold">{$_("rumdlConfig.title")}</h2>
     </div>

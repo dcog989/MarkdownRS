@@ -43,12 +43,27 @@ const paletteCommands: Command[] = commands.filter((c) => c.showInPalette !== fa
 <ShortcutsModal
   bind:isOpen={appContext.interface.showShortcuts}
   onClose={() => (appContext.interface.showShortcuts = false)}
+  onBack={() => {
+    appContext.interface.showShortcuts = false;
+    appContext.interface.showSettings = true;
+  }}
 />
 
-<DataModal bind:isOpen={appContext.interface.showData} onClose={() => (appContext.interface.showData = false)} />
+<DataModal
+  bind:isOpen={appContext.interface.showData}
+  onClose={() => (appContext.interface.showData = false)}
+  onBack={() => {
+    appContext.interface.showData = false;
+    appContext.interface.showSettings = true;
+  }}
+/>
 <RumdlConfigModal
   bind:isOpen={appContext.interface.showRumdlConfig}
   onClose={() => (appContext.interface.showRumdlConfig = false)}
+  onBack={() => {
+    appContext.interface.showRumdlConfig = false;
+    appContext.interface.showSettings = true;
+  }}
 />
 <EmojiPicker
   bind:isOpen={appContext.interface.showEmojiPicker}

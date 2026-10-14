@@ -1,6 +1,6 @@
 <script lang="ts">
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { Database, X } from "lucide-svelte";
+import { ArrowLeft, Database, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
@@ -14,9 +14,10 @@ import { AppError } from "$lib/utils/errorHandling";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  onBack: () => void;
 }
 
-let { isOpen = $bindable(false), onClose }: Props = $props();
+let { isOpen = $bindable(false), onClose, onBack }: Props = $props();
 
 let busy = $state(false);
 
@@ -182,6 +183,9 @@ const actions = $derived<Action[]>([
 <Modal bind:isOpen {onClose}>
   {#snippet header()}
     <div class="flex items-center gap-2">
+      <button type="button" class="btn-icon outline-none" onclick={onBack} aria-label={$_("common.back")}>
+        <ArrowLeft size={16} />
+      </button>
       <Database size={16} class="text-accent-secondary" />
       <h2 class="text-fg-default text-lg font-semibold">{$_("data.title")}</h2>
     </div>
