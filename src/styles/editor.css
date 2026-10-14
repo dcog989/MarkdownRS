@@ -18,6 +18,14 @@
   caret-color: currentColor;
 }
 
+/* Reserve space for the overlaid status bar so the last line clears it.
+   The extra `.cm-scroller` class outranks CodeMirror's base theme (whose rules
+   compile to two-class selectors) regardless of stylesheet order, so the
+   `padding: 4px 0` it injects at runtime cannot drop this. */
+.cm-editor .cm-scroller .cm-content {
+  padding-bottom: var(--status-bar-height);
+}
+
 .cm-scroller {
   color: var(--editor-fg);
 }

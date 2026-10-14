@@ -47,6 +47,9 @@
   --surface-preview: #1e1e1e;
   --surface-row: #141414;
 
+  /* Layout metrics */
+  --status-bar-height: 2rem;
+
   /* Text System */
   --text-inverse: #ffffff;
   --text-primary: #cecece;

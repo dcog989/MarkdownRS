@@ -285,6 +285,7 @@ let contextMenuY = $state(0);
         bind:this={scrollEl}
         role="list"
         class="custom-scrollbar h-full overflow-y-auto"
+        style:padding-bottom="var(--status-bar-height)"
         onscroll={(e) => {
           scrollTop = e.currentTarget.scrollTop;
         }}

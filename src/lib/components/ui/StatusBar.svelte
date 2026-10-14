@@ -28,6 +28,7 @@ let path = $derived(activeTab?.path);
 let tabId = $derived(activeTab?.id);
 
 let textOpacity = $derived(appContext.settings.statusBarOpacity / 100);
+let backgroundTransparency = $derived(`${100 - appContext.settings.statusBarOpacity}%`);
 let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
 let fileType = $derived.by(() => {
@@ -81,13 +82,13 @@ async function copyAllStats() {
 </script>
 
 <footer
-  class="text-ui group pointer-events-auto z-50 flex shrink-0 items-center justify-between overflow-hidden border-t px-3 py-1.5 whitespace-nowrap transition-colors duration-200 select-none"
-  style:background-color="color-mix(in srgb, var(--surface-2), transparent {100 -
-    appContext.settings.statusBarOpacity}%)"
+  class="text-ui group pointer-events-auto absolute bottom-0 left-0 right-0 z-50 flex h-8 items-center justify-between overflow-hidden border-t px-3 whitespace-nowrap select-none"
+  style:--status-bar-transparency={backgroundTransparency}
+  style:--status-text-opacity={textOpacity}
 >
   <button
     type="button"
-    class="text-fg-muted hover:text-fg-default hover-surface pointer-events-auto mr-2 flex shrink-0 cursor-pointer items-center border-r pr-2"
+    class="status-text text-fg-muted hover:text-fg-default hover-surface pointer-events-auto mr-2 flex shrink-0 cursor-pointer items-center border-r pr-2 group-hover:opacity-100"
     onclick={copyAllStats}
     use:tooltip={$_("statusBar.copyAllStats")}
   >
@@ -103,10 +104,7 @@ async function copyAllStats() {
       if (e.key === "Enter" || e.key === " ") e.preventDefault();
     }}
   >
-    <div
-      class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
-      style:opacity={textOpacity}
-    >
+    <div class="status-text text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 group-hover:opacity-100">
       <div class="flex items-center gap-1" use:tooltip={$_("statusBar.linePosition")}>
         <span class="font-mono opacity-70">{$_("statusBar.ln")}</span>
         <span class="inline-block min-w-[3ch] text-right font-mono">{formatNumber(appContext.metrics.cursorLine)}</span>
@@ -160,10 +158,7 @@ async function copyAllStats() {
       </div>
     </div>
 
-    <div
-      class="text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 transition-opacity duration-200 group-hover:opacity-100"
-      style:opacity={textOpacity}
-    >
+    <div class="status-text text-fg-muted pointer-events-auto flex shrink-0 items-center gap-2 group-hover:opacity-100">
       <span class="opacity-40">|</span>
 
       {#if fileType === "markdown"}
@@ -246,3 +241,23 @@ async function copyAllStats() {
     </div>
   </div>
 </footer>
+
+<style>
+/* Background fade reads the transparency from the footer's inline custom
+   property. Keeping the value in CSS rather than inline lets the hover rule win
+   on specificity, so no !important is needed.
+   No background transition: a WebKitGTK fade over the editor flickers on hover
+   entry/exit (same finding as the TabButton close button). */
+footer {
+  background-color: color-mix(in srgb, var(--surface-2), transparent var(--status-bar-transparency));
+}
+
+footer:hover {
+  background-color: var(--surface-2);
+}
+
+/* Fades the stats; `group-hover:opacity-100` (higher specificity) restores full alpha. */
+.status-text {
+  opacity: var(--status-text-opacity);
+}
+</style>
