@@ -72,7 +72,7 @@ $effect(() => {
 });
 
 // When the active document changes, refresh its directory so the tree
-// reflects saves/renames/new files next to the file you are editing.
+// reflects saves/renames/new files next to the file being edited.
 let lastActiveDir = "";
 $effect(() => {
   const dir = rootDir;

@@ -122,7 +122,7 @@ Download and run the NSIS `.exe` installer from the [latest release](https://git
 
 ### Build from Source
 
-See [Development](#development). You'll need [Rust](https://rustup.rs/), [bun](https://bun.com/), and the platform [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
+See [Development](#development). Required: [Rust](https://rustup.rs/), [bun](https://bun.com/), and the platform [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ---
 
