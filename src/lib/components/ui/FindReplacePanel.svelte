@@ -301,17 +301,6 @@ onMount(() => {
       <button
         type="button"
         class="btn-icon h-7 w-7"
-        aria-pressed={isReplaceMode}
-        aria-label={$_("findReplace.toggleReplaceMode")}
-        onclick={() => (isReplaceMode = !isReplaceMode)}
-        use:tooltip={$_("findReplace.toggleReplaceMode")}
-      >
-        <Replace size={16} />
-      </button>
-
-      <button
-        type="button"
-        class="btn-icon h-7 w-7"
         aria-pressed={searchState.matchCase}
         aria-label={$_("findReplace.matchCase")}
         onclick={toggleMatchCase}
@@ -354,6 +343,19 @@ onMount(() => {
           <File size={16} />
         {/if}
       </button>
+
+      <div class="ml-1 flex items-center self-stretch border-l pl-2">
+        <button
+          type="button"
+          class="btn-icon h-7 w-7"
+          aria-pressed={isReplaceMode}
+          aria-label={$_("findReplace.toggleReplaceMode")}
+          onclick={() => (isReplaceMode = !isReplaceMode)}
+          use:tooltip={$_("findReplace.toggleReplaceMode")}
+        >
+          <Replace size={16} />
+        </button>
+      </div>
 
       <div class="flex-1"></div>
 
