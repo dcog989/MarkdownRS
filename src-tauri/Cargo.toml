@@ -14,9 +14,9 @@ dirs = "7"
 dunce = "1"
 encoding_rs = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"] }
-harper-core = "2.11"
+harper-core = "2.13"
 log = "0.4"
-office_oxide = { version = "=0.1.11", default-features = false, optional = true }
+office_oxide = { version = "=0.1.15", default-features = false, optional = true }
 pdf_oxide = { version = "0.3", optional = true }
 regex = "1.13"
 reqwest = { version = "0.13", optional = true }
@@ -27,14 +27,14 @@ serde_json = "1.0"
 spellbook = "0.4"
 strum = { version = "0.28.0", features = ["derive"] }
 tauri = { version = "2.12", features = ["devtools", "protocol-asset"] }
-tauri-plugin-clipboard-manager = "2.4"
+tauri-plugin-clipboard-manager = "2.5"
 tauri-plugin-dialog = "2.8"
 tauri-plugin-fs = { version = "2.7", features = ["watch"] }
 tauri-plugin-opener = "2.7"
 tauri-plugin-shell = "2.5"
 tauri-plugin-single-instance = "2.5"
 tauri-plugin-store = "2.5"
-tauri-plugin-updater = "2.13"
+tauri-plugin-updater = "2.14"
 tauri-plugin-window-state = "2.5"
 tokio = { version = "1", features = ["fs", "io-util", "sync"] }
 toml = "1.1"
