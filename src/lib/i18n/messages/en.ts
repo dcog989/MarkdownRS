@@ -5,7 +5,7 @@ export const en = {
     titleWithPath: "{path} - MarkdownRS",
     tagline: "The only Markdown editor you need.",
     quote: "I didn't get where I am today... without knowing a damned fine editor when I see one.",
-    giants: "Giants' Shoulders = Node / Vite / Rust / Tauri / Svelte",
+    giants: "Giants' Shoulders = Node / Vite / Rust / Tauri / Svelte / rumdl",
     rights: "MarkdownRS © since 2025. All rights reserved.",
     logoAlt: "MarkdownRS Logo",
     newFileHint: "Ctrl+N to create a new file",
