@@ -39,6 +39,7 @@ export type ErrorContext =
   | "Data:ImportBookmarks"
   | "Data:ExportFileHistory"
   | "Data:ImportFileHistory"
+  | "Data:ClearFileHistory"
   | "Data:DeleteOrphans";
 
 export type ErrorSeverity = "info" | "warning" | "error" | "critical";
