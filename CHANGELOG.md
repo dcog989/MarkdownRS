@@ -3,6 +3,56 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.65.0 - 2026-10-17
+
+#### Features
+
+- (084c699) add back buttons to shortcuts, rumdl, and data panels - dcog989
+
+- (53631fa) replace copy-stats context menu with left copy button - dcog989
+
+#### Bug Fixes
+
+- (9a79607) run sync_version hook via bash - dcog989
+
+- (ae2f82e) pin svelte-check to 4.7.6 and override it against version bumps - dcog989
+
+- (b280c60) pin svelte-check to 4.7.6 and restore full type-check coverage - dcog989
+
+- (667b32b) place replace toggle after scope toggle with left divider - dcog989
+
+- (eef45e9) overlay editor behind status bar and fade copy button with opacity - dcog989
+
+- (f7d9569) show close button without an opacity transition to stop hover flicker - dcog989
+
+- (9436a87) mirror selection state onto classes instead of :has() to stop drag-select lag - dcog989
+
+- (e0976af) apply opacity to whole find panel again - dcog989
+
+- (c247976) fade panel background instead of element opacity to stop blur flicker - dcog989
+
+- (8930f7e) paint the window background from the saved theme and drop the startup delays - dcog989
+
+- (d1a0186) paint the window background from the saved theme - dcog989
+
+- (ca79d61) pass expression instead of quoted attribute in FindReplacePanel - dcog989
+
+#### Performance Improvements
+
+- (0cb2d2a) lazy-load katex javascript like mermaid and highlight.js - dcog989
+
+- (e2b678b) switch to fat lto for maximum optimization - dcog989
+
+- (a9d87a7) optimize dependencies and trim debug info for faster tauri dev - dcog989
+
+#### Refactoring
+
+- (f5381fe) rename binary and asset slug from markdown-rs to markdownrs - dcog989
+
+- (3487b7c) icon toolbar with match/scope toggles and arrow navigation - dcog989
+
+- - -
+
 ## v1.64.2 - 2026-10-11
 
 #### Bug Fixes
