@@ -8,7 +8,7 @@ use log::{LevelFilter, Record};
 use std::sync::OnceLock;
 
 const KEPT_LOG_FILES: usize = 9;
-const LOG_FILE_BASENAME: &str = "markdown-rs";
+const LOG_FILE_BASENAME: &str = "markdownrs";
 const LOG_FILE_SUFFIX: &str = "log";
 const LOG_DATE_FORMAT: &str = "%Y-%m-%d";
 const DEFAULT_LOG_LEVEL: &str = "info";

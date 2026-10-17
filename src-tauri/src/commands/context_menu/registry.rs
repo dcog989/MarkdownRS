@@ -10,7 +10,7 @@ fn get_exe_info() -> Result<(String, String), String> {
         .map(|s| s.to_string())
         .unwrap_or_else(|| {
             log::warn!("Could not determine exe filename from {:?}, using fallback", exe_path);
-            "markdown-rs.exe".to_string()
+            "markdownrs.exe".to_string()
         });
     Ok((exe_str, exe_name))
 }

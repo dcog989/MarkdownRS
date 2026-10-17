@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use tauri::Manager;
 
 const LOGS_DIR: &str = "Logs";
-const LOG_FILE_NAME: &str = "markdown-rs.log";
+const LOG_FILE_NAME: &str = "markdownrs.log";
 
 fn path_or_default(result: Result<PathBuf, impl std::fmt::Debug>, f: impl FnOnce(PathBuf) -> String) -> String {
     result.map(f).unwrap_or_default()

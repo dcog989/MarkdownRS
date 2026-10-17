@@ -1,5 +1,5 @@
 [package]
-name = "markdown-rs"
+name = "markdownrs"
 version = "1.64.2"
 edition = "2024"
 description = "The only Markdown editor you need."
