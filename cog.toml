@@ -13,7 +13,7 @@ pre_bump_hooks = [
   "cog check --from-latest-tag",
   "bun run check",
   "bun run test",
-  "./scripts/sync_version.sh {{version}}",
+  "bash scripts/sync_version.sh {{version}}",
 ]
 
 post_bump_hooks = [
