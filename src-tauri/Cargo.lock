@@ -7131,9 +7131,9 @@ dependencies = [
 
 [[package]]
 name = "rumdl"
-version = "0.2.79"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16327d5335d93032bfd5643d3ca5588719ac4e55682249b8d4b7d6b5343b2b08"
+checksum = "921d2d0698c506f7af875f89ce66d820314bcf5da79b35deba13d5a7b16e88e0"
 dependencies = [
  "blake3",
  "chrono",
@@ -7151,6 +7151,7 @@ dependencies = [
  "libc",
  "log",
  "markdown",
+ "memchr",
  "mimalloc",
  "notify",
  "oxc_allocator",
@@ -8929,7 +8930,6 @@ dependencies = [
  "mio",
  "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "windows-sys 0.61.2",
