@@ -141,15 +141,20 @@ describe("save overwrite guard", () => {
     await expect(resultPromise).resolves.toBe(true);
   });
 
-  it("does not warn for a clean re-save right after a successful save", async () => {
+  it("does not warn or write for a clean re-save right after a successful save", async () => {
     await openFile(SCRATCH);
     const tab = editorStore.tabs[0];
     appContext.app.activeTabId = tab.id;
 
-    expect(await saveCurrentFile()).toBe(true);
-    expect(dialogStore.isOpen).toBe(false);
+    const { updateContent } = await import("$lib/stores/editorUpdates");
+    updateContent(tab.id, "# Scratch\n\nMy edit\n", 3);
 
     expect(await saveCurrentFile()).toBe(true);
     expect(dialogStore.isOpen).toBe(false);
+    const mtimeAfterSave = fakeDisk.files.get(SCRATCH)?.mtime;
+
+    expect(await saveCurrentFile()).toBe(true);
+    expect(dialogStore.isOpen).toBe(false);
+    expect(fakeDisk.files.get(SCRATCH)?.mtime).toBe(mtimeAfterSave);
   });
 });
