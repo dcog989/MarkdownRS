@@ -27,7 +27,6 @@ import { notifyFileSaved } from "$lib/stores/fileTreeStore.svelte";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
-import { isTabDirty } from "$lib/utils/contentHash";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { AppError } from "$lib/utils/errorHandling";
 import { logger } from "$lib/utils/logger";
@@ -229,9 +228,11 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     }
 
     // An unchanged tab has nothing to write: rewriting the same bytes only
-    // bumps the file's mtime and re-arms the watcher. Save-As and path-less
+    // bumps the file's mtime and re-arms the watcher. isDirty is the flag the
+    // rest of the app (close prompt, autosave, save-all) already trusts, so a
+    // tab that reads as clean here truly has no changes. Save-As and path-less
     // tabs still go through (the user is picking a path).
-    if (!forceNewPath && tab.path && !isTabDirty(tab)) {
+    if (!forceNewPath && tab.path && !tab.isDirty) {
       if (pendingSavePath) activeSaves.delete(pendingSavePath);
       return true;
     }

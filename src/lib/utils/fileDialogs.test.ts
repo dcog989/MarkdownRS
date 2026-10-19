@@ -157,4 +157,16 @@ describe("save overwrite guard", () => {
     expect(dialogStore.isOpen).toBe(false);
     expect(fakeDisk.files.get(SCRATCH)?.mtime).toBe(mtimeAfterSave);
   });
+
+  it("does not write to disk when saving a freshly opened, unedited file", async () => {
+    await openFile(SCRATCH);
+    const tab = editorStore.tabs[0];
+    appContext.app.activeTabId = tab.id;
+    expect(tab.isDirty).toBe(false);
+
+    const mtimeBefore = fakeDisk.files.get(SCRATCH)?.mtime;
+    expect(await saveCurrentFile()).toBe(true);
+    expect(dialogStore.isOpen).toBe(false);
+    expect(fakeDisk.files.get(SCRATCH)?.mtime).toBe(mtimeBefore);
+  });
 });
