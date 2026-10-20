@@ -182,7 +182,7 @@ function handleKeydown(e: KeyboardEvent) {
                 ? "text-fg-muted cursor-not-allowed opacity-30"
                 : isSelected
                   ? "text-fg-inverse hover:text-danger hover:bg-bg-hover"
-                  : "text-fg-muted hover:text-danger hover:bg-bg-hover"}"
+                  : "text-fg-default hover:text-danger hover:bg-bg-hover"}"
               disabled={tab.isPinned}
               onclick={(e) => {
                 e.stopPropagation();
@@ -190,7 +190,7 @@ function handleKeydown(e: KeyboardEvent) {
               }}
               aria-label={$_("tabDropdown.closeTab")}
             >
-              <X size={14} />
+              <X size={18} />
             </button>
           </div>
         {/each}
