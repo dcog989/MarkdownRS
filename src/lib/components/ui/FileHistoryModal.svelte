@@ -1,6 +1,7 @@
 <script lang="ts">
 import { ArrowDown, ArrowUp, Clock, History, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
@@ -115,46 +116,41 @@ function toggleSortDirection() {
     </ModalSearchHeader>
   {/snippet}
 
-  <div class="text-ui">
+  <div class="text-ui flex flex-col gap-2 p-4">
     {#if sortedFiles.length > 0}
-      <div class="divide-border-primary divide-y">
-        {#each sortedFiles as path, index (path)}
-          {@const isSelected = index === nav.selectedIndex}
+      {#each sortedFiles as path, index (path)}
+        {@const isSelected = index === nav.selectedIndex}
+        {@const name = getFilename(path)}
+        {@const dir = path.slice(0, path.length - name.length)}
+        <div
+          class="list-row group flex items-center gap-3 rounded border p-3 transition-colors"
+          class:border-transparent={isSelected}
+          data-selected={isSelected}
+          use:scrollIntoView={isSelected}
+        >
           <div
-            class="list-row group px-4 py-2.5 transition-colors"
-            class:bg-row-even={index % 2 === 1 && !isSelected}
-            data-selected={isSelected}
-            use:scrollIntoView={isSelected}
+            role="button"
+            tabindex="0"
+            class="flex min-w-0 flex-1 cursor-pointer items-center"
+            use:tooltip={path}
+            onclick={() => handleOpenFile(path)}
+            onkeydown={(e) => {
+              if (e.key === "Enter") handleOpenFile(path);
+            }}
           >
-            <div
-              role="button"
-              tabindex="0"
-              class="flex cursor-pointer items-center justify-between gap-3"
-              onclick={() => handleOpenFile(path)}
-              onkeydown={(e) => {
-                if (e.key === "Enter") handleOpenFile(path);
-              }}
-            >
-              <div class="min-w-0 flex-1">
-                <div class="truncate font-medium">
-                  {getFilename(path)}
-                </div>
-                <div class="row-meta text-ui truncate">
-                  {path}
-                </div>
-              </div>
-              <button
-                type="button"
-                onclick={(e) => handleRemove(path, e)}
-                class="btn-icon btn-icon--danger p-1.5 opacity-0 group-hover:opacity-100"
-                title={$_("fileHistory.removeFromHistory")}
-              >
-                <X size={16} />
-              </button>
-            </div>
+            <span class="min-w-0 truncate opacity-60">{dir}</span>
+            <span class="max-w-full truncate font-medium">{name}</span>
           </div>
-        {/each}
-      </div>
+          <button
+            type="button"
+            onclick={(e) => handleRemove(path, e)}
+            class="btn-icon btn-icon--danger p-1.5 opacity-0 group-hover:opacity-100"
+            title={$_("fileHistory.removeFromHistory")}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      {/each}
     {:else if searchQuery.length > 0}
       <div class="text-fg-muted px-4 py-8 text-center">{$_("fileHistory.noMatch")}</div>
     {:else}
