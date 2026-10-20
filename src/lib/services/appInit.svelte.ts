@@ -1,4 +1,5 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { addTab, editorStore } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
@@ -24,7 +25,7 @@ export function createAppInit() {
       logger.editor.debug("SettingsInitialized", { duration: formatDuration(settingsStart) });
 
       const sessionStart = performance.now();
-      await loadSession();
+      await Promise.all([loadSession(), loadBookmarks()]);
       logger.session.info("SessionRestored", { duration: formatDuration(sessionStart) });
 
       if (editorStore.tabs.length === 0) {

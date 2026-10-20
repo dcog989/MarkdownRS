@@ -1,9 +1,10 @@
 <script lang="ts">
-import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import { Bookmark, CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
+import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -144,6 +145,8 @@ function handleKeydown(e: KeyboardEvent) {
                 {/if}
               {:else if tab.isDirty}
                 <SquarePen size={14} class="row-icon shrink-0" style="--icon-color: var(--dirty-indicator);" />
+              {:else if tab.path && isBookmarked(tab.path)}
+                <Bookmark size={14} class="row-icon shrink-0" />
               {:else}
                 <FileText size={14} class="row-icon shrink-0" />
               {/if}

@@ -1,7 +1,8 @@
 <script lang="ts">
-import { CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import { Bookmark, CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
+import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { formatFileSize } from "$lib/utils/fileValidation";
@@ -90,6 +91,8 @@ let tooltipContent = $derived.by(() => {
           ? "text-fg-inverse"
           : "text-accent-secondary"}"
     />
+  {:else if tab.path && isBookmarked(tab.path)}
+    <Bookmark size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
   {:else}
     <FileText size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
   {/if}

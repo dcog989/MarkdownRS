@@ -1,10 +1,11 @@
 <script lang="ts">
-import { CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
+import { Bookmark, CircleAlert, FileText, PencilLine, SquarePen } from "lucide-svelte";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 
 interface Props {
@@ -91,6 +92,10 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
         {:else if !tab.path}
           <div class="row-icon">
             <PencilLine size={14} class="shrink-0" />
+          </div>
+        {:else if isBookmarked(tab.path)}
+          <div class="row-icon">
+            <Bookmark size={14} class="shrink-0" />
           </div>
         {:else}
           <div class="row-icon">
