@@ -117,22 +117,20 @@ function handleKeydown(e: KeyboardEvent) {
     </div>
 
     <div class="relative min-h-0 flex-1">
-      <div bind:this={dropdownListRef} class="dropdown-list max-h-60vh overflow-y-auto py-1">
+      <div bind:this={dropdownListRef} class="dropdown-list flex max-h-60vh flex-col gap-2 overflow-y-auto p-2">
         {#each filteredTabs as tab, index (tab.id)}
           {@const isSelected = index === nav.selectedIndex}
           {@const isActive = appContext.app.activeTabId === tab.id}
           <div
             role="none"
-            class="group flex w-full items-stretch {isSelected
-              ? "bg-accent-primary"
-              : index % 2 === 1
-                ? "bg-row-even hover:bg-bg-hover"
-                : "bg-transparent hover:bg-bg-hover"}"
+            class="group flex w-full items-stretch rounded border transition-colors {isSelected
+              ? "bg-accent-primary border-transparent"
+              : "border-border-primary hover:bg-bg-hover"}"
             use:scrollIntoView={isSelected}
           >
             <button
               type="button"
-              class="flex flex-1 items-center gap-2 overflow-hidden px-3 py-2 text-left text-ui outline-none {isSelected
+              class="flex flex-1 items-center gap-2 overflow-hidden p-3 text-left text-ui outline-none {isSelected
                 ? "text-fg-inverse opacity-100"
                 : isActive
                   ? "text-accent-secondary opacity-60 hover:opacity-100"

@@ -197,13 +197,13 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             >
               {translate(commandCategoryKey(category))}
             </h3>
-            <div class="divide-border-primary/30 divide-y">
+            <div class="flex flex-col gap-2">
               {#each defs as def (def.id)}
                 {@const currentIndex = ++globalIndex.value}
                 {@const isSelected = currentIndex === nav.selectedIndex}
                 <div
-                  class="list-row group flex items-center justify-between py-2 px-2 -mx-2 rounded transition-colors"
-                  class:bg-row-even={!isSelected && currentIndex % 2 === 1}
+                  class="list-row group flex items-center justify-between gap-3 rounded border p-3 transition-colors"
+                  class:border-transparent={isSelected}
                   data-selected={isSelected}
                   use:scrollIntoView={isSelected}
                 >

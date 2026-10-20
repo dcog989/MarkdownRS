@@ -62,13 +62,13 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
     </div>
   {/snippet}
 
-  <div class="py-1">
+  <div class="flex flex-col gap-2 p-4">
     {#each mruTabs as tab, index (tab.id)}
       {@const isSelected = tab.id === selectedId}
       <button
         type="button"
-        class="list-row mru-item outline-none"
-        class:bg-row-even={index % 2 === 1 && !isSelected}
+        class="list-row mru-item rounded border outline-none"
+        class:border-transparent={isSelected}
         data-selected={isSelected}
         use:scrollIntoView={isSelected}
         onclick={() => {

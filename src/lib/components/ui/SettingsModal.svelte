@@ -181,10 +181,8 @@ function updateSetting(setting: SettingDef, value: unknown) {
   <div class="p-4">
     {#if sortedSettings.length > 0}
       <div class="settings-grid">
-        {#each sortedSettings as setting, index (setting.key)}
-          {@const rowClass = index % 2 === 1 ? "bg-row-even" : ""}
-
-          <div class="settings-row hover-surface {rowClass}">
+        {#each sortedSettings as setting (setting.key)}
+          <div class="settings-row hover-surface">
             <div class="settings-category text-ui py-2.5 pl-3">
               {translate(setting.category)}
             </div>
@@ -220,8 +218,12 @@ function updateSetting(setting: SettingDef, value: unknown) {
 
 <style>
 .settings-grid {
-  row-gap: 0;
+  row-gap: 0.5rem;
   column-gap: 0;
+}
+
+.settings-row {
+  border: 1px solid var(--border-primary);
 }
 
 .settings-category {

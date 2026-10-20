@@ -446,7 +446,7 @@ select {
   flex-shrink: 0;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.625rem 1rem;
+  padding: 0.75rem;
   text-align: left;
   font-size: 0.8125rem;
   transition-property: background-color;
