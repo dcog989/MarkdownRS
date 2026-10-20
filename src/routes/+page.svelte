@@ -40,17 +40,6 @@ let isMarkdown = $derived.by(() => {
 let showPreview = $derived(appContext.settings.splitView && isMarkdown);
 let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
-let peekHovered = $state(false);
-
-// `peekHovered` lives in this route component, not the conditionally-rendered
-// peek edge, so it survives the edge being unmounted while hovered (clicking the
-// edge to re-open the tree never fires mouseleave). Reset it once the tree is
-// visible so the edge starts fresh on the next collapse.
-$effect(() => {
-  if (appContext.settings.fileTreeVisible) {
-    peekHovered = false;
-  }
-});
 
 onDestroy(() => {
   splitResize.cleanup();
@@ -69,13 +58,7 @@ function onResizeMouseDown(e: MouseEvent) {
         {#if appContext.settings.fileTreeVisible}
           <FileTree />
         {:else}
-          <div
-            role="group"
-            class="ft-peek-edge shrink-0"
-            class:ft-peek-edge-hover={peekHovered}
-            onmouseenter={() => (peekHovered = true)}
-            onmouseleave={() => (peekHovered = false)}
-          >
+          <div role="group" class="ft-peek-edge shrink-0">
             <button
               type="button"
               aria-label={$_("fileTree.showFileTree")}
@@ -83,10 +66,7 @@ function onResizeMouseDown(e: MouseEvent) {
               use:tooltip={$_("fileTree.showFileTree")}
               onclick={handleToggleFileTree}
             >
-              <FolderTree
-                size={14}
-                class="shrink-0 transition-colors {peekHovered ? "text-fg-default" : "text-fg-muted"}"
-              />
+              <FolderTree size={14} class="shrink-0" />
             </button>
             <div class="flex min-h-0 flex-1 items-center justify-center">
               <button
@@ -96,10 +76,7 @@ function onResizeMouseDown(e: MouseEvent) {
                 use:tooltip={$_("fileTree.showFileTree")}
                 onclick={handleToggleFileTree}
               >
-                <ChevronRight
-                  size={44}
-                  class="text-fg-muted transition-opacity {peekHovered ? "opacity-100" : "opacity-0"}"
-                />
+                <ChevronRight size={44} />
               </button>
             </div>
           </div>
@@ -210,10 +187,11 @@ function onResizeMouseDown(e: MouseEvent) {
   background-color: var(--surface-2);
   border-right: 1px solid var(--border-primary);
   cursor: pointer;
+  overflow: hidden;
   transition: background-color 150ms ease-out;
 }
 
-.ft-peek-edge-hover {
+.ft-peek-edge:hover {
   background-color: var(--surface-hover);
 }
 
@@ -223,8 +201,14 @@ function onResizeMouseDown(e: MouseEvent) {
   justify-content: center;
   height: 2rem;
   width: 100%;
+  color: var(--text-secondary);
   border-bottom: 1px solid var(--border-primary);
   cursor: pointer;
+  transition: color 150ms ease-out;
+}
+
+.ft-peek-edge:hover .ft-peek-toolbar {
+  color: var(--text-primary);
 }
 
 .ft-peek {
@@ -233,6 +217,12 @@ function onResizeMouseDown(e: MouseEvent) {
   justify-content: center;
   height: 100%;
   flex: 1;
+  color: var(--text-tertiary);
   cursor: pointer;
+  transition: color 150ms ease-out;
+}
+
+.ft-peek-edge:hover .ft-peek {
+  color: var(--text-primary);
 }
 </style>
