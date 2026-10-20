@@ -162,20 +162,16 @@ function toggleSortDirection() {
               {@const shortcut = shortcutManager.getShortcutDisplay(command.id)}
               <button
                 type="button"
-                class="flex items-start gap-3 rounded border p-3 text-left transition-colors outline-none {isSelected
+                class="flex items-center gap-3 rounded border p-3 text-left transition-colors outline-none {isSelected
                   ? "bg-accent-primary border-transparent text-fg-inverse"
                   : "bg-bg-panel text-fg-default hover:bg-bg-hover"}"
                 use:scrollIntoView={isSelected}
                 onclick={() => execute(command)}
               >
-                <div class="min-w-0 flex-1">
-                  <div class="text-ui font-medium whitespace-nowrap">{translate(commandLabel(command))}</div>
-                  {#if shortcut}
-                    <div class="mt-0.5 truncate text-ui-sm {isSelected ? "text-fg-inverse" : "text-fg-muted"}">
-                      <span class="opacity-60">{shortcut}</span>
-                    </div>
-                  {/if}
-                </div>
+                <div class="text-ui min-w-0 flex-1 truncate font-medium">{translate(commandLabel(command))}</div>
+                {#if shortcut}
+                  <span class="text-ui-sm shrink-0 opacity-60">{shortcut}</span>
+                {/if}
               </button>
             {/each}
           </div>
