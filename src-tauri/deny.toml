@@ -5,11 +5,14 @@ ignore = [
   "RUSTSEC-2025-0141",
   "RUSTSEC-2026-0192",
   "RUSTSEC-2024-0436",
-  # No upstream fix: updater 2.14 pins zip 4 (Windows), harper-core 2.13 pins zip 8.6, rumdl 0.3 pulls serde_yaml -> unsafe-libyaml
+  # No upstream fix: updater 2.14 pins zip 4 (Windows), harper-core 2.13 pins zip 8.6, rumdl 0.3 pulls serde_yaml -> unsafe-libyaml, tauri-plugin-opener 2.7 / single-instance 2.5 (latest) pull zbus 5 -> zvariant 5
   "RUSTSEC-2024-0449",
   "RUSTSEC-2026-0367",
   "RUSTSEC-2026-0368",
   "RUSTSEC-2026-0369",
+  "RUSTSEC-2026-0370",
+  "RUSTSEC-2026-0371",
+  "RUSTSEC-2026-0372",
 ]
 
 [licenses]
