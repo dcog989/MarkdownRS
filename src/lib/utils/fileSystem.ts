@@ -20,6 +20,7 @@ import {
   updateTabTitle,
 } from "$lib/stores/editorStore.svelte";
 import { addToFileHistory } from "$lib/stores/fileHistoryStore.svelte";
+import { suspendTreeFollow } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
@@ -94,26 +95,34 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
   if (prevActive === tabId) {
     return operation();
   }
-  appContext.app.activeTabId = tabId;
-  try {
-    return await operation();
-  } finally {
-    appContext.app.activeTabId = prevActive;
-  }
+  // Swapping the active tab makes the file tree follow the saved document;
+  // suppress that so saving a background tab cannot re-root and collapse it.
+  return suspendTreeFollow(async () => {
+    appContext.app.activeTabId = tabId;
+    try {
+      return await operation();
+    } finally {
+      appContext.app.activeTabId = prevActive;
+    }
+  });
 }
 
 export async function saveAllFiles(): Promise<void> {
   const previousActiveId = appContext.app.activeTabId;
   const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
 
-  for (const tab of dirtyTabs) {
-    appContext.app.activeTabId = tab.id;
-    await saveCurrentFile();
-  }
+  // Restore the active tab inside the suspended window: letting the tree
+  // follow back after the loop would re-root it once more.
+  await suspendTreeFollow(async () => {
+    for (const tab of dirtyTabs) {
+      appContext.app.activeTabId = tab.id;
+      await saveCurrentFile();
+    }
 
-  if (previousActiveId) {
-    appContext.app.activeTabId = previousActiveId;
-  }
+    if (previousActiveId) {
+      appContext.app.activeTabId = previousActiveId;
+    }
+  });
 }
 
 export async function requestCloseTab(id: string, force = false): Promise<void> {

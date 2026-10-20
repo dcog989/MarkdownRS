@@ -55,6 +55,21 @@ export function setRoot(path: string): void {
   void loadChildren(path);
 }
 
+// While suspended, the tree ignores changes of the active document. Batch
+// saves flip the active tab once per file (saveCurrentFile works on the active
+// tab), which would otherwise re-root the tree and wipe its expanded folders
+// on every save.
+export const treeFollowState = $state({ suspended: false });
+
+export async function suspendTreeFollow<T>(operation: () => Promise<T>): Promise<T> {
+  treeFollowState.suspended = true;
+  try {
+    return await operation();
+  } finally {
+    treeFollowState.suspended = false;
+  }
+}
+
 export function loadChildren(path: string): Promise<void> {
   if (fileTreeStore.loading.get(path)) {
     return inFlightLoads.get(path) ?? Promise.resolve();

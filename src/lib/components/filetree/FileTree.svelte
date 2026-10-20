@@ -24,6 +24,7 @@ import {
   revealPath,
   setRoot,
   toggle,
+  treeFollowState,
 } from "$lib/stores/fileTreeStore.svelte";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -52,6 +53,7 @@ let rootDir = $derived(activeTab?.path ? dirname(activeTab.path) : "");
 // the root is pinned in place, so the active file is never followed.
 let lastFollowedDir = "";
 $effect(() => {
+  if (treeFollowState.suspended) return;
   if (settingsState.fileTreeLocked) return;
   if (!rootDir || rootDir === lastFollowedDir) return;
   lastFollowedDir = rootDir;
