@@ -15,9 +15,9 @@ function startResize(e: MouseEvent) {
   const startWidth = appContext.settings.fileTreeWidth;
 
   const onMove = (ev: MouseEvent) => {
-    if (Math.abs(ev.clientX - startX) > 3) {
-      didDrag = true;
-    }
+    // Any movement is a resize, even a 1px one: a "click" is only a press and
+    // release without motion. Otherwise a tiny drag collapses the panel.
+    if (ev.clientX !== startX) didDrag = true;
     const newWidth = startWidth + (ev.clientX - startX);
     appContext.settings.fileTreeWidth = Math.max(
       CONFIG.FILETREE.MIN_WIDTH,
@@ -53,29 +53,26 @@ function handleResizeClick() {
   onmousedown={startResize}
   onkeydown={() => {}}
   onclick={handleResizeClick}
-  ondblclick={() => {
-    appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
-    saveSettings();
-  }}
 ></div>
 
 <style>
 .ft-resize-handle {
   position: absolute;
   top: 0;
-  right: -4px;
+  right: -7px;
   bottom: 0;
   width: 14px;
   cursor: col-resize;
   z-index: 30;
 }
 
-/* The visual line stays 6px on the panel edge; the rest is hit area. */
+/* The visual line stays 6px on the panel edge; the 14px hit area is centered
+   on the border (7px each side) so it grabs equally from either side. */
 .ft-resize-handle::after {
   content: "";
   position: absolute;
   top: 0;
-  right: 4px;
+  right: 7px;
   bottom: 0;
   width: 6px;
   transition: background-color 150ms ease-out;
