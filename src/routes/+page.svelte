@@ -40,6 +40,17 @@ let isMarkdown = $derived.by(() => {
 let showPreview = $derived(appContext.settings.splitView && isMarkdown);
 let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
+let peekHovered = $state(false);
+
+// JS-driven so the native cursor-left cleanup can clear it; CSS-only :hover
+// sticks when WebKitGTK skips mouseleave on a fast window exit. Lives here, not
+// in the conditionally-rendered edge, so it survives the edge unmounting while
+// hovered (clicking the edge to re-open the tree never fires mouseleave).
+$effect(() => {
+  if (appContext.settings.fileTreeVisible) {
+    peekHovered = false;
+  }
+});
 
 onDestroy(() => {
   splitResize.cleanup();
@@ -58,7 +69,13 @@ function onResizeMouseDown(e: MouseEvent) {
         {#if appContext.settings.fileTreeVisible}
           <FileTree />
         {:else}
-          <div role="group" class="ft-peek-edge shrink-0">
+          <div
+            role="group"
+            class="ft-peek-edge shrink-0"
+            class:ft-peek-edge-hover={peekHovered}
+            onmouseenter={() => (peekHovered = true)}
+            onmouseleave={() => (peekHovered = false)}
+          >
             <button
               type="button"
               aria-label={$_("fileTree.showFileTree")}
@@ -191,7 +208,7 @@ function onResizeMouseDown(e: MouseEvent) {
   transition: background-color 150ms ease-out;
 }
 
-.ft-peek-edge:hover {
+.ft-peek-edge-hover {
   background-color: var(--surface-hover);
 }
 
@@ -207,7 +224,7 @@ function onResizeMouseDown(e: MouseEvent) {
   transition: color 150ms ease-out;
 }
 
-.ft-peek-edge:hover .ft-peek-toolbar {
+.ft-peek-edge-hover .ft-peek-toolbar {
   color: var(--text-primary);
 }
 
@@ -225,7 +242,7 @@ function onResizeMouseDown(e: MouseEvent) {
     opacity 150ms ease-out;
 }
 
-.ft-peek-edge:hover .ft-peek {
+.ft-peek-edge-hover .ft-peek {
   color: var(--text-primary);
   opacity: 1;
 }
