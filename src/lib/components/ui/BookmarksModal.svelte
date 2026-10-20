@@ -305,7 +305,6 @@ function handleKeydown(e: KeyboardEvent) {
     {#if sortedBookmarks.length > 0}
       {#each sortedBookmarks as bookmark, index (bookmark.id)}
         {@const isSelected = index === nav.selectedIndex}
-        {@const name = getFilename(bookmark.path)}
         <div
           out:slide={{ duration: 200 }}
           class="list-row overflow-hidden rounded border p-3 transition-colors"
@@ -337,14 +336,8 @@ function handleKeydown(e: KeyboardEvent) {
               }}
             >
               <div class="min-w-0 flex-1">
-                <div class="flex min-w-0 items-center" use:tooltip={bookmark.path}>
-                  <span class="min-w-0 truncate opacity-60"
-                    >{bookmark.path.slice(0, bookmark.path.length - name.length)}</span
-                  >
-                  <span class="max-w-full truncate font-medium">{name}</span>
-                </div>
-                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span class="max-w-full truncate font-medium">{bookmark.title}</span>
+                <div class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                  <span class="min-w-0 truncate font-medium">{bookmark.title}</span>
                   <span class="opacity-40">|</span>
                   <span class="row-meta text-ui-sm">{formatDate(bookmark.created)}</span>
                   {#if bookmark.tags.length > 0}
@@ -355,6 +348,9 @@ function handleKeydown(e: KeyboardEvent) {
                       {tag}
                     </span>
                   {/each}
+                </div>
+                <div class="text-ui-sm mt-1 min-w-0 truncate opacity-60" use:tooltip={bookmark.path}>
+                  {bookmark.path}
                 </div>
               </div>
               <div class="flex shrink-0 gap-1">
