@@ -1,5 +1,4 @@
 <script lang="ts">
-import { ChevronLeft } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 import { toggleFileTree } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -39,6 +38,7 @@ function startResize(e: MouseEvent) {
 function handleResizeClick() {
   if (didDrag) return;
   toggleFileTree();
+  saveSettings();
 }
 </script>
 
@@ -57,48 +57,32 @@ function handleResizeClick() {
     appContext.settings.fileTreeWidth = CONFIG.FILETREE.DEFAULT_WIDTH;
     saveSettings();
   }}
->
-  <span class="ft-collapse-icon">
-    <ChevronLeft size={44} />
-  </span>
-</div>
+></div>
 
 <style>
 .ft-resize-handle {
   position: absolute;
   top: 2rem;
-  right: 0;
+  right: -4px;
   bottom: 0;
-  width: 6px;
+  width: 14px;
   cursor: col-resize;
   z-index: 30;
+}
+
+/* The visual line stays 6px on the panel edge; the rest is hit area. */
+.ft-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 4px;
+  bottom: 0;
+  width: 6px;
   transition: background-color 150ms ease-out;
 }
 
-.ft-resize-handle.ft-resize-hover {
+.ft-resize-handle.ft-resize-hover::after {
   background-color: var(--accent-primary);
-  transition-delay: 250ms;
-}
-
-.ft-collapse-icon {
-  position: absolute;
-  top: 0;
-  right: 6px;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-  background-color: var(--surface-hover);
-  opacity: 0;
-  cursor: pointer;
-  transition: opacity 150ms ease-out;
-}
-
-.ft-resize-handle.ft-resize-hover .ft-collapse-icon {
-  opacity: 1;
   transition-delay: 250ms;
 }
 </style>
