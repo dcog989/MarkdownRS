@@ -52,6 +52,8 @@ const DEFAULT_CONFIG = {
     INDENT_STEP: 14,
     // Wait for typing to settle before walking the tree for the filter.
     FILTER_DEBOUNCE_MS: 200,
+    // Arrow-key step for resizing the panel from the splitter.
+    RESIZE_STEP_PX: 16,
   },
 
   // Session & Auto-save

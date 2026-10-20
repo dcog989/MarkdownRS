@@ -40,18 +40,36 @@ function handleResizeClick() {
   toggleFileTree();
   saveSettings();
 }
+
+// The divider is a splitter: arrows resize it, and Enter is deliberately not
+// bound. Enter belongs to the focused tree row (open/expand), and collapsing
+// the panel from the splitter would unmount the focused element.
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  e.preventDefault();
+  const delta = e.key === "ArrowLeft" ? -CONFIG.FILETREE.RESIZE_STEP_PX : CONFIG.FILETREE.RESIZE_STEP_PX;
+  appContext.settings.fileTreeWidth = Math.max(
+    CONFIG.FILETREE.MIN_WIDTH,
+    Math.min(CONFIG.FILETREE.MAX_WIDTH, appContext.settings.fileTreeWidth + delta),
+  );
+  saveSettings();
+}
 </script>
 
 <div
-  role="button"
-  tabindex="0"
+  role="separator"
+  aria-orientation="vertical"
   aria-label={$_("fileTree.resizeAria")}
+  aria-valuenow={appContext.settings.fileTreeWidth}
+  aria-valuemin={CONFIG.FILETREE.MIN_WIDTH}
+  aria-valuemax={CONFIG.FILETREE.MAX_WIDTH}
+  tabindex="0"
   class="ft-resize-handle"
   class:ft-resize-hover={hovered}
   onmouseenter={() => (hovered = true)}
   onmouseleave={() => (hovered = false)}
   onmousedown={startResize}
-  onkeydown={() => {}}
+  onkeydown={handleKeydown}
   onclick={handleResizeClick}
 ></div>
 
@@ -81,5 +99,9 @@ function handleResizeClick() {
 .ft-resize-handle.ft-resize-hover::after {
   background-color: var(--accent-primary);
   transition-delay: 250ms;
+}
+
+.ft-resize-handle:focus-visible::after {
+  background-color: var(--accent-primary);
 }
 </style>
