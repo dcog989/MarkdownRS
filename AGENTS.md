@@ -44,10 +44,14 @@
 ### File System Access
 
 - Allowed: `/home/bubba/Projects/MarkdownRS` and all contained directories + files; `/tmp/*`
-- Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`
+- Read-Only: `.env*`, `.git/`, `node_modules/`, `.assets/`, `.docs`
 - Disallowed: everything not listed in 'Allowed' unless user grants permission.
 - Require confirmation: adding/removing dependencies, any operation outside project root
 - Do not delete files or make destructive changes without confirmation.
+
+### Verification
+
+- Do not run test, lint, format, or type-check commands unless the user explicitly asks.
 
 ---
 
