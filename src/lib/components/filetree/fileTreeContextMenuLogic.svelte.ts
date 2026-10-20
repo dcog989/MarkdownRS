@@ -86,14 +86,17 @@ export class FileTreeContextMenuLogic {
     if (!raw?.trim()) return;
 
     const clean = raw.trim();
+    // `directory` is the folder itself for a folder row, so renaming must
+    // target its parent (the same place the refresh below has to look).
+    const parent = dirname(this.path);
     const tab = appContext.editor.tabs.find((t) => t.path === this.path);
     try {
       if (tab) {
         await renameFile(tab.id, clean);
       } else {
-        await callBackend("rename_file", { oldPath: this.path, newPath: `${this.directory}/${clean}` }, "File:Write");
+        await callBackend("rename_file", { oldPath: this.path, newPath: `${parent}/${clean}` }, "File:Write");
       }
-      refreshDirectoryIfInTree(this.directory);
+      refreshDirectoryIfInTree(parent);
     } catch {
       // rename failed; the error has already been reported
     } finally {
