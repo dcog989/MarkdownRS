@@ -184,8 +184,16 @@ $effect(() => {
 });
 
 async function revealActiveFile(path: string) {
-  const found = await revealPath(path);
-  if (!found) return;
+  if (!(await revealPath(path))) {
+    // A same-folder tab switch does not move the root (the follow effect only
+    // reacts to a folder change), so the tree can be left inside a subfolder
+    // that does not contain the newly active file. Re-root once to the file's
+    // folder and retry; a locked tree keeps its pinned root.
+    const dir = dirname(path);
+    if (settingsState.fileTreeLocked || dir === fileTreeStore.root) return;
+    setRoot(dir);
+    if (!(await revealPath(path))) return;
+  }
   await tick();
   const rowIndex = allRows.findIndex((r) => r.entry.path === path);
   if (rowIndex === -1 || !scrollEl) return;

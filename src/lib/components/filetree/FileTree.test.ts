@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { listDirectory } from "$lib/commands/directory";
 import type { EditorTab } from "$lib/stores/editorTypes";
-import { fileTreeStore, navigateToParent } from "$lib/stores/fileTreeStore.svelte";
+import { fileTreeStore, navigateInto, navigateToParent } from "$lib/stores/fileTreeStore.svelte";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { treeViewStore } from "$lib/stores/treeViewStore.svelte";
@@ -186,6 +186,31 @@ describe("FileTree", () => {
       // No tab switch happened, so the tree must stay where the user navigated.
       await waitFor(() => expect(fileTreeStore.root).toBe("/home/user"));
       expect(fileTreeStore.root).toBe("/home/user");
+    } finally {
+      appContext.editor.tabs = originalTabs;
+      appContext.app.activeTabId = originalActiveTabId;
+    }
+  });
+
+  it("returns to the active file folder when a same-folder tab switch lands outside the tree", async () => {
+    mockedListDirectory.mockResolvedValue([entry("a.md"), entry("b.md")]);
+    const originalTabs = appContext.editor.tabs;
+    const originalActiveTabId = appContext.app.activeTabId;
+
+    appContext.editor.tabs = [makeTab("t1", "/root/a.md"), makeTab("t2", "/root/b.md")];
+    appContext.app.activeTabId = "t1";
+
+    try {
+      render(FileTree);
+      await waitFor(() => expect(fileTreeStore.root).toBe("/root"));
+
+      // The user navigated into a subfolder; no tab switch yet.
+      navigateInto("/root/sub");
+      expect(fileTreeStore.root).toBe("/root/sub");
+
+      // Switching to another tab in the same folder must bring the tree back.
+      appContext.app.activeTabId = "t2";
+      await waitFor(() => expect(fileTreeStore.root).toBe("/root"));
     } finally {
       appContext.editor.tabs = originalTabs;
       appContext.app.activeTabId = originalActiveTabId;
