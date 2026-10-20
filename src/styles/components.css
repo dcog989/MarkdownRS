@@ -426,7 +426,7 @@ select {
 }
 
 /* Context-menu rows: layout + hover fade. The hover background itself comes
-   from `.bg-bg-panel button:hover` (states.css) for every menu button. */
+   from `.menu-item:hover` (states.css) for every menu button. */
 .menu-item {
   display: flex;
   width: 100%;

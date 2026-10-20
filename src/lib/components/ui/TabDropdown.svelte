@@ -120,78 +120,54 @@ function handleKeydown(e: KeyboardEvent) {
       <div bind:this={dropdownListRef} class="dropdown-list flex max-h-60vh flex-col gap-2 overflow-y-auto p-2">
         {#each filteredTabs as tab, index (tab.id)}
           {@const isSelected = index === nav.selectedIndex}
-          {@const isActive = appContext.app.activeTabId === tab.id}
           <div
             role="none"
-            class="group flex w-full items-stretch rounded border transition-colors {isSelected
-              ? "bg-accent-primary border-transparent"
-              : "border-border-primary hover:bg-bg-hover"}"
+            class="list-row group flex w-full items-center gap-3 rounded border p-3 transition-colors"
+            data-selected={isSelected}
+            class:border-transparent={isSelected}
             use:scrollIntoView={isSelected}
           >
             <button
               type="button"
-              class="flex flex-1 items-center gap-2 overflow-hidden p-3 text-left text-ui outline-none {isSelected
-                ? "text-fg-inverse opacity-100"
-                : isActive
-                  ? "text-accent-secondary opacity-60 hover:opacity-100"
-                  : "text-fg-default opacity-50 hover:opacity-100"}"
+              class="text-ui flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left outline-none"
               onclick={() => handleSelect(tab.id)}
               role="menuitem"
               use:tooltip={getTooltipContent(tab)}
             >
               {#if tab.fileCheckFailed}
-                <CircleAlert size={14} class="text-danger shrink-0" />
+                <CircleAlert size={14} class="row-icon shrink-0" style="--icon-color: var(--danger);" />
               {:else if !tab.path}
                 {#if tab.content.length > 0}
-                  <PencilLine
-                    size={14}
-                    class="shrink-0"
-                    style="color: {isActive && tab.isDirty
-                      ? "var(--dirty-indicator)"
-                      : isSelected
-                        ? "var(--text-inverse)"
-                        : "var(--text-secondary)"};"
-                  />
+                  <PencilLine size={14} class="row-icon shrink-0" />
                 {:else}
-                  <Pencil size={14} class="shrink-0 {isSelected ? "text-fg-inverse" : "text-fg-muted"}" />
+                  <Pencil size={14} class="row-icon shrink-0" />
                 {/if}
               {:else if tab.isDirty}
-                <SquarePen
-                  size={14}
-                  class="shrink-0"
-                  style="color: {isActive && tab.isDirty
-                    ? "var(--dirty-indicator)"
-                    : isSelected
-                      ? "var(--text-inverse)"
-                      : "var(--accent-secondary)"}"
-                />
+                <SquarePen size={14} class="row-icon shrink-0" style="--icon-color: var(--dirty-indicator);" />
               {:else}
-                <FileText size={14} class="shrink-0 {isSelected ? "text-fg-inverse" : "text-fg-muted"}" />
+                <FileText size={14} class="row-icon shrink-0" />
               {/if}
 
               <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
-
-              {#if tab.isPinned}
-                <Pin size={12} class="ml-1 shrink-0 {isSelected ? "text-fg-inverse" : "text-accent-secondary"}" />
-              {/if}
             </button>
 
-            <button
-              type="button"
-              class="flex shrink-0 items-center justify-center px-3 transition-colors outline-none {tab.isPinned
-                ? "text-fg-muted cursor-not-allowed opacity-30"
-                : isSelected
-                  ? "text-fg-inverse hover:text-danger hover:bg-bg-hover"
-                  : "text-fg-default hover:text-danger hover:bg-bg-hover"}"
-              disabled={tab.isPinned}
-              onclick={(e) => {
-                e.stopPropagation();
-                requestCloseTab(tab.id);
-              }}
-              aria-label={$_("tabDropdown.closeTab")}
-            >
-              <X size={18} />
-            </button>
+            {#if tab.isPinned}
+              <span class="flex shrink-0 items-center px-1">
+                <Pin size={16} class="row-icon" style="--icon-color: var(--accent-secondary);" />
+              </span>
+            {:else}
+              <button
+                type="button"
+                class="btn-icon btn-icon--danger shrink-0 p-1.5 opacity-0 group-hover:opacity-100"
+                onclick={(e) => {
+                  e.stopPropagation();
+                  requestCloseTab(tab.id);
+                }}
+                aria-label={$_("tabDropdown.closeTab")}
+              >
+                <X size={16} />
+              </button>
+            {/if}
           </div>
         {/each}
       </div>

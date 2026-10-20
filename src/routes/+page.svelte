@@ -219,10 +219,14 @@ function onResizeMouseDown(e: MouseEvent) {
   flex: 1;
   color: var(--text-tertiary);
   cursor: pointer;
-  transition: color 150ms ease-out;
+  opacity: 0.5;
+  transition:
+    color 150ms ease-out,
+    opacity 150ms ease-out;
 }
 
 .ft-peek-edge:hover .ft-peek {
   color: var(--text-primary);
+  opacity: 1;
 }
 </style>
