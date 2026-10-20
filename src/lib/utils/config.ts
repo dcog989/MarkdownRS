@@ -50,6 +50,8 @@ const DEFAULT_CONFIG = {
     ROW_HEIGHT: 26,
     OVERSCAN: 10,
     INDENT_STEP: 14,
+    // Wait for typing to settle before walking the tree for the filter.
+    FILTER_DEBOUNCE_MS: 200,
   },
 
   // Session & Auto-save

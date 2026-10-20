@@ -164,6 +164,19 @@ describe("treeViewStore", () => {
     expect(treeViewStore.filterRows.map((r) => r.entry.path)).toContain("/root/a/alpha.md");
   });
 
+  it("applyFilter does not descend into heavy folders like node_modules", async () => {
+    mockedListDirectory.mockImplementation(async (path: string) =>
+      path === "/root/node_modules" ? [{ ...entry("deep.md"), path: "/root/node_modules/deep.md" }] : [],
+    );
+    fileTreeStore.root = "/root";
+    fileTreeStore.children.set("/root", [entry("node_modules", true)]);
+
+    await applyFilter("deep", false);
+
+    expect(mockedListDirectory).not.toHaveBeenCalledWith("/root/node_modules", false);
+    expect(treeViewStore.filterRows).toEqual([]);
+  });
+
   it("applyFilter respects markdown-only mode", async () => {
     fileTreeStore.root = "/root";
     fileTreeStore.children.set("/root", [entry("note.md"), entry("note.txt")]);

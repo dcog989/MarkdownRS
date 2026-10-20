@@ -377,6 +377,8 @@ describe("FileTree", () => {
     render(FileTree);
     const input = screen.getByPlaceholderText("Filter files...");
     await fireEvent.input(input, { target: { value: "match" } });
+    // Wait for the debounced search before clicking a filter row.
+    await waitFor(() => expect(treeViewStore.filterRows.length).toBeGreaterThan(0));
 
     await fireEvent.click(await screen.findByText("sub"));
 

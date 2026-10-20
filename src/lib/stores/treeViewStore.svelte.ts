@@ -121,6 +121,20 @@ export async function applyFilter(query: string, markdownOnly: boolean): Promise
 
 type WalkNode = { entry: FileEntry; depth: number };
 
+// Folders that are typically huge and are never the target of a name filter.
+// Hidden ones are already dropped by the listing unless hidden files are shown.
+const SEARCH_SKIP_DIRS = new Set([
+  "node_modules",
+  ".git",
+  "target",
+  "dist",
+  "build",
+  ".next",
+  "vendor",
+  ".venv",
+  "__pycache__",
+]);
+
 async function searchTree(root: string, query: string, markdownOnly: boolean, generation: number): Promise<TreeRow[]> {
   const visited = new Set<string>([root]);
   const ordered: WalkNode[] = [];
@@ -142,6 +156,7 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
     for (let i = kids.length - 1; i >= 0; i--) {
       const child = kids[i];
       if (visited.has(child.path)) continue;
+      if (child.is_dir && SEARCH_SKIP_DIRS.has(child.name)) continue;
       visited.add(child.path);
       if (child.is_dir) {
         // Kick off listings for newly discovered folders immediately so pending

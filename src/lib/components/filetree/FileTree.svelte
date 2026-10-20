@@ -34,6 +34,7 @@ import type { FileEntry } from "$lib/types/api";
 import { CONFIG } from "$lib/utils/config";
 import { openFile } from "$lib/utils/fileSystem";
 import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from "$lib/utils/fileValidation";
+import { debounce } from "$lib/utils/timing";
 import FileTreeContextMenu from "./FileTreeContextMenu.svelte";
 import FileTreeFilter from "./FileTreeFilter.svelte";
 import FileTreeResizeHandle from "./FileTreeResizeHandle.svelte";
@@ -126,11 +127,28 @@ let allRows = $derived.by(() => {
 // query cannot leave the panel showing pruned results for the wrong folder.
 let filterQuery = $state("");
 let filterRoot = $state("");
+
+// Debounced copy of the query. Walking the whole tree on every keystroke is
+// what makes typing stall in a large folder, so the filter engages only once
+// the user pauses. It drives both the active state and the search itself.
+let appliedQuery = $state("");
+const setAppliedQuery = debounce((query: string) => {
+  appliedQuery = query;
+}, CONFIG.FILETREE.FILTER_DEBOUNCE_MS);
+$effect(() => {
+  setAppliedQuery(filterQuery);
+  return () => setAppliedQuery.clear();
+});
+
 $effect(() => {
   const root = fileTreeStore.root;
   if (root === filterRoot) return;
   filterRoot = root;
   filterQuery = "";
+  // A keystroke still waiting in the debounce must not re-filter the newly
+  // positioned tree with the previous folder's query.
+  setAppliedQuery.clear();
+  appliedQuery = "";
 });
 
 // The query only applies to the root it was typed under. `filterRoot` is
@@ -138,13 +156,13 @@ $effect(() => {
 // re-positioned tree could otherwise be filtered with the previous folder's
 // query for one reactive flush. Guarding the derived value makes that single
 // frame render the unfiltered tree instead of a pruned or empty one.
-let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? filterQuery : "");
+let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? appliedQuery : "");
 
 let filterActive = $derived(effectiveFilterQuery.trim() !== "");
 
-// Run the whole-tree search as the user types; re-run when the root, the
-// markdown-only toggle, or the hidden-files toggle changes so stale results
-// are dropped and new matches appear.
+// Run the whole-tree search once the debounced query settles; re-run when the
+// root, the markdown-only toggle, or the hidden-files toggle changes so stale
+// results are dropped and new matches appear.
 $effect(() => {
   settingsState.fileTreeShowHidden;
   void applyFilter(effectiveFilterQuery, settingsState.fileTreeShowMarkdownOnly);
