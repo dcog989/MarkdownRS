@@ -153,6 +153,20 @@ describe("fileTreeStore", () => {
     await vi.waitFor(() => expect(fileTreeStore.children.get("/root")?.length).toBe(2));
   });
 
+  it("toggleHiddenFiles reloads every expanded directory, not only the root", async () => {
+    mockedListDirectory.mockResolvedValue([entry("sub", true)]);
+    setRoot("/root");
+    await vi.waitFor(() => expect(fileTreeStore.children.has("/root")).toBe(true));
+    await toggle("/root/sub");
+    await vi.waitFor(() => expect(fileTreeStore.children.has("/root/sub")).toBe(true));
+
+    toggleHiddenFiles();
+
+    await vi.waitFor(() => expect(fileTreeStore.children.has("/root/sub")).toBe(true));
+    expect(isExpanded("/root/sub")).toBe(true);
+    expect(mockedListDirectory).toHaveBeenCalledWith("/root/sub", true);
+  });
+
   it("discards a stale in-flight listing when hidden files are toggled", async () => {
     let resolveOld: (value: FileEntry[]) => void = () => {};
     mockedListDirectory.mockImplementation(
