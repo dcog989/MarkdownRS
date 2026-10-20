@@ -388,6 +388,19 @@ describe("fileTreeStore", () => {
     expect(isExpanded("/root")).toBe(true);
   });
 
+  it("revealPath works when the tree root is the filesystem root", async () => {
+    mockedListDirectory.mockImplementation(async (path: string) =>
+      path === "/" ? [{ ...entry("sub", true), path: "/sub" }] : [{ ...entry("deep.md"), path: "/sub/deep.md" }],
+    );
+    setRoot("/");
+    await vi.waitFor(() => expect(fileTreeStore.children.has("/")).toBe(true));
+
+    const found = await revealPath("/sub/deep.md");
+
+    expect(found).toBe(true);
+    expect(isExpanded("/sub")).toBe(true);
+  });
+
   it("revealPath returns false for paths outside the root without expanding", async () => {
     setRoot("/root");
     const found = await revealPath("/other/file.md");

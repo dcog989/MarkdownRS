@@ -167,12 +167,19 @@ async function directoryNeedsRefresh(path: string): Promise<boolean> {
   return cached !== current;
 }
 
+// Prefix that a path must share to be inside `root`. The filesystem root
+// already ends with "/", so appending another one ("//") would make every
+// child path fail the startsWith check.
+function childPrefix(root: string): string {
+  return root.endsWith("/") ? root : `${root}/`;
+}
+
 // Refresh a directory only when it belongs to the visible tree; no-ops for
 // paths outside the root or when the panel is hidden.
 export function refreshDirectoryIfInTree(dir: string): void {
   if (!fileTreeStore.root) return;
   if (!settingsState.fileTreeVisible) return;
-  if (dir !== fileTreeStore.root && !dir.startsWith(`${fileTreeStore.root}/`)) return;
+  if (dir !== fileTreeStore.root && !dir.startsWith(childPrefix(fileTreeStore.root))) return;
   void refreshPath(dir);
 }
 
@@ -267,7 +274,9 @@ export function navigateInto(path: string): void {
  */
 export async function revealPath(target: string): Promise<boolean> {
   const root = fileTreeStore.root;
-  if (!root || !target.startsWith(`${root}/`)) return false;
+  if (!root) return false;
+  const prefix = childPrefix(root);
+  if (!target.startsWith(prefix)) return false;
 
   fileTreeStore.expanded.set(root, true);
   if (!fileTreeStore.children.has(root)) {
@@ -276,7 +285,7 @@ export async function revealPath(target: string): Promise<boolean> {
 
   const chain: string[] = [];
   let current = dirname(target);
-  while (current !== root && current.startsWith(`${root}/`)) {
+  while (current !== root && current.startsWith(prefix)) {
     chain.unshift(current);
     current = dirname(current);
   }
