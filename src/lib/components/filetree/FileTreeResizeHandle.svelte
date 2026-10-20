@@ -56,6 +56,8 @@ function handleKeydown(e: KeyboardEvent) {
 }
 </script>
 
+<!-- A focusable separator is the ARIA window-splitter pattern; the a11y rule can't tell. -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 <div
   role="separator"
   aria-orientation="vertical"

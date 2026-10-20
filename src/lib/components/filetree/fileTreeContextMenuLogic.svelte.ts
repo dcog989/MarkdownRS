@@ -16,8 +16,9 @@ import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
 // along with them (they are keyed by path and would otherwise leak).
 async function retargetTabs(oldPath: string, newPath: string): Promise<void> {
   const oldPrefix = `${oldPath}/`;
-  const affected = appContext.editor.tabs.filter((t) => t.path.startsWith(oldPrefix));
+  const affected = appContext.editor.tabs.filter((t) => t.path?.startsWith(oldPrefix));
   for (const tab of affected) {
+    if (!tab.path) continue;
     const nextPath = `${newPath}/${tab.path.slice(oldPrefix.length)}`;
     fileWatcher.unwatch(tab.path);
     updateTabFields(tab.id, { path: nextPath });
@@ -158,11 +159,13 @@ export class FileTreeContextMenuLogic {
       if (result !== "discard") return;
     }
 
-    const affected = appContext.editor.tabs.filter((t) => t.path === targetPath || t.path.startsWith(`${targetPath}/`));
+    const affected = appContext.editor.tabs.filter(
+      (t) => t.path === targetPath || t.path?.startsWith(`${targetPath}/`),
+    );
 
     try {
       for (const t of affected) {
-        fileWatcher.unwatch(t.path);
+        if (t.path) fileWatcher.unwatch(t.path);
       }
 
       await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
@@ -179,7 +182,7 @@ export class FileTreeContextMenuLogic {
       refreshDirectoryIfInTree(dirname(targetPath));
     } catch (_err) {
       for (const t of affected) {
-        await fileWatcher.watch(t.path);
+        if (t.path) await fileWatcher.watch(t.path);
       }
     } finally {
       this.onClose();
