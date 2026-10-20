@@ -1,8 +1,9 @@
 <script lang="ts">
 import { open } from "@tauri-apps/plugin-dialog";
-import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Tag, Trash2 } from "lucide-svelte";
+import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Trash2 } from "lucide-svelte";
 import { slide } from "svelte/transition";
 import { _ } from "svelte-i18n";
+import { tooltip } from "$lib/actions/tooltip";
 import Input from "$lib/components/ui/Input.svelte";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
@@ -300,91 +301,85 @@ function handleKeydown(e: KeyboardEvent) {
     </div>
   {/if}
 
-  <div class="text-ui">
+  <div class="text-ui flex flex-col gap-2 p-4">
     {#if sortedBookmarks.length > 0}
-      <div class="divide-border-primary divide-y">
-        {#each sortedBookmarks as bookmark, index (bookmark.id)}
-          {@const isSelected = index === nav.selectedIndex}
-          <div
-            out:slide={{ duration: 200 }}
-            class="list-row px-4 py-2.5 transition-colors overflow-hidden"
-            class:bg-row-even={index % 2 === 1 && !isSelected}
-            data-selected={isSelected}
-            use:scrollIntoView={isSelected}
-          >
-            {#if editingId === bookmark.id}
-              <div class="space-y-2">
-                <Input bind:value={editTitle} type="text" />
-                <Input bind:value={editTags} type="text" placeholder={$_("bookmarks.tagsPlaceholder")} />
-                <div class="flex justify-end gap-2">
-                  <button type="button" onclick={cancelEdit} class="btn-base btn-sm btn-secondary">
-                    {$_("common.cancel")}
-                  </button>
-                  <button type="button" onclick={() => saveEdit(bookmark.id)} class="btn-base btn-sm btn-primary">
-                    {$_("common.save")}
-                  </button>
-                </div>
+      {#each sortedBookmarks as bookmark, index (bookmark.id)}
+        {@const isSelected = index === nav.selectedIndex}
+        {@const name = getFilename(bookmark.path)}
+        <div
+          out:slide={{ duration: 200 }}
+          class="list-row overflow-hidden rounded border p-3 transition-colors"
+          class:border-transparent={isSelected}
+          data-selected={isSelected}
+          use:scrollIntoView={isSelected}
+        >
+          {#if editingId === bookmark.id}
+            <div class="space-y-2">
+              <Input bind:value={editTitle} type="text" />
+              <Input bind:value={editTags} type="text" placeholder={$_("bookmarks.tagsPlaceholder")} />
+              <div class="flex justify-end gap-2">
+                <button type="button" onclick={cancelEdit} class="btn-base btn-sm btn-secondary">
+                  {$_("common.cancel")}
+                </button>
+                <button type="button" onclick={() => saveEdit(bookmark.id)} class="btn-base btn-sm btn-primary">
+                  {$_("common.save")}
+                </button>
               </div>
-            {:else}
-              <div
-                role="button"
-                tabindex="0"
-                class="flex cursor-pointer items-start gap-3"
-                onclick={() => handleOpenBookmark(bookmark)}
-                onkeydown={(e) => {
-                  if (e.key === "Enter") handleOpenBookmark(bookmark);
-                }}
-              >
-                <div class="min-w-0 flex-1">
-                  <div class="truncate font-medium">
-                    {bookmark.title}
-                  </div>
-                  <div class="row-meta text-ui-sm truncate">
-                    {bookmark.path}
-                  </div>
+            </div>
+          {:else}
+            <div
+              role="button"
+              tabindex="0"
+              class="flex cursor-pointer items-start gap-3"
+              onclick={() => handleOpenBookmark(bookmark)}
+              onkeydown={(e) => {
+                if (e.key === "Enter") handleOpenBookmark(bookmark);
+              }}
+            >
+              <div class="min-w-0 flex-1">
+                <div class="flex min-w-0 items-center" use:tooltip={bookmark.path}>
+                  <span class="min-w-0 truncate opacity-60"
+                    >{bookmark.path.slice(0, bookmark.path.length - name.length)}</span
+                  >
+                  <span class="max-w-full truncate font-medium">{name}</span>
+                </div>
+                <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span class="max-w-full truncate font-medium">{bookmark.title}</span>
+                  <span class="opacity-40">|</span>
+                  <span class="row-meta text-ui-sm">{formatDate(bookmark.created)}</span>
                   {#if bookmark.tags.length > 0}
-                    <div class="mt-1 flex flex-wrap items-center gap-1">
-                      <span class="row-icon">
-                        <Tag size={12} class="opacity-50" />
-                      </span>
-                      {#each bookmark.tags as tag (tag)}
-                        <span class="row-tag text-ui-sm rounded px-1.5 py-0.5">
-                          {tag}
-                        </span>
-                      {/each}
-                    </div>
+                    <span class="opacity-40">|</span>
                   {/if}
-                  <div class="row-meta text-ui-sm mt-1">
-                    {$_("bookmarks.added")} {formatDate(bookmark.created)}
-                    {#if bookmark.last_accessed}
-                      • {$_("bookmarks.accessed")} {formatDate(bookmark.last_accessed)}
-                    {/if}
-                  </div>
-                </div>
-                <div class="flex shrink-0 gap-1">
-                  <button
-                    type="button"
-                    onclick={(e) => {
-                      e.stopPropagation();
-                      startEdit(bookmark);
-                    }}
-                    class="btn-icon p-1.5"
-                  >
-                    <Pen size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    onclick={(e) => handleDelete(bookmark.id, e)}
-                    class="btn-icon btn-icon--danger p-1.5"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {#each bookmark.tags as tag (tag)}
+                    <span class="row-tag text-ui-sm rounded px-1.5 py-0.5">
+                      {tag}
+                    </span>
+                  {/each}
                 </div>
               </div>
-            {/if}
-          </div>
-        {/each}
-      </div>
+              <div class="flex shrink-0 gap-1">
+                <button
+                  type="button"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    startEdit(bookmark);
+                  }}
+                  class="btn-icon p-1.5"
+                >
+                  <Pen size={14} />
+                </button>
+                <button
+                  type="button"
+                  onclick={(e) => handleDelete(bookmark.id, e)}
+                  class="btn-icon btn-icon--danger p-1.5"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          {/if}
+        </div>
+      {/each}
     {:else if searchQuery.length >= 2}
       <div class="text-fg-muted px-4 py-8 text-center">{$_("bookmarks.noMatch")}</div>
     {:else if appContext.bookmarks.bookmarks.length === 0}
