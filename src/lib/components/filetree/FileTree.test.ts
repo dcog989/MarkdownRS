@@ -367,6 +367,24 @@ describe("FileTree", () => {
     expect(screen.queryByText("..")).toBeFalsy();
   });
 
+  it("opens a folder on click while filtering instead of toggling hidden expansion", async () => {
+    mockedListDirectory.mockResolvedValue([]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
+    fileTreeStore.children.set("/root/sub", [{ ...entry("match.md"), path: "/root/sub/match.md" }]);
+
+    render(FileTree);
+    const input = screen.getByPlaceholderText("Filter files...");
+    await fireEvent.input(input, { target: { value: "match" } });
+
+    await fireEvent.click(await screen.findByText("sub"));
+
+    await waitFor(() => expect(fileTreeStore.root).toBe("/root/sub"));
+    // The filter only applies to the folder it was typed under, so it resets.
+    await waitFor(() => expect((input as HTMLInputElement).value).toBe(""));
+  });
+
   it("searches folders that were never expanded while filtering", async () => {
     mockedListDirectory.mockResolvedValue([{ ...entry("hidden.md"), path: "/root/deep/hidden.md" }]);
     fileTreeStore.root = "/root";

@@ -221,6 +221,12 @@ function handleRowClick(e: MouseEvent, row: TreeRow) {
   // The second click of a double-click has detail === 2; the dblclick
   // handler navigates into the folder, so don't toggle on it.
   if (e.detail > 1) return;
+  // Filter rows carry no real expansion state (the filtered view ignores it),
+  // so a click opens the folder instead of silently toggling hidden state.
+  if (filterActive) {
+    if (!settingsState.fileTreeLocked) navigateInto(row.entry.path);
+    return;
+  }
   void toggle(row.entry.path);
 }
 
@@ -332,7 +338,7 @@ let contextMenuY = $state(0);
               }}
             >
               <span class="ft-chevron flex w-4 shrink-0 items-center justify-center">
-                {#if row.entry.is_dir && !row.isParent}
+                {#if row.entry.is_dir && !row.isParent && !filterActive}
                   {#if row.loading}
                     <LoaderCircle size={12} class="text-fg-muted animate-spin" />
                   {:else}
