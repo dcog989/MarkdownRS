@@ -275,7 +275,7 @@ let contextMenuY = $state(0);
     <FileTreeFilter bind:value={filterQuery} loading={treeViewStore.filterLoading} />
   {/if}
 
-  <div class="min-h-0 flex-1">
+  <div class="relative min-h-0 flex-1">
     {#if !fileTreeStore.root}
       <div class="text-fg-muted flex h-full items-center justify-center px-4 text-center text-ui-sm">
         {$_("fileTree.emptyState")}
@@ -364,9 +364,8 @@ let contextMenuY = $state(0);
         </div>
       {/if}
     {/if}
+    <FileTreeResizeHandle />
   </div>
-
-  <FileTreeResizeHandle />
 
   {#if contextMenuDir}
     <FileTreeContextMenu

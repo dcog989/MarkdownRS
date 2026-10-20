@@ -62,7 +62,7 @@ function handleResizeClick() {
 <style>
 .ft-resize-handle {
   position: absolute;
-  top: 2rem;
+  top: 0;
   right: -4px;
   bottom: 0;
   width: 14px;
