@@ -4965,7 +4965,7 @@ dependencies = [
 
 [[package]]
 name = "markdownrs"
-version = "1.65.0"
+version = "1.65.1"
 dependencies = [
  "anyhow",
  "chardetng",

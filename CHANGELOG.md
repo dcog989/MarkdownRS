@@ -3,6 +3,60 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.65.1 - 2026-10-20
+
+#### Bug Fixes
+
+- (7e98fac) keep the collapsed peek chevron visible instead of fading it - dcog989
+
+- (0412da3) separate ignored a11y codes with a comma - dcog989
+
+- (fa5ca31) make the resize bar a keyboard-operable splitter - dcog989
+
+- (7ddbfd2) open folders on click while filtering instead of toggling expansion - dcog989
+
+- (16027c5) distinguish resize from click and keep the handle inside the panel - dcog989
+
+- (c5b8af8) re-root the tree when a tab switch lands outside it - dcog989
+
+- (e641933) stop batch saves from re-rooting and collapsing the tree - dcog989
+
+- (b9d98d7) handle a filesystem-root tree in prefix checks - dcog989
+
+- (e30c9e9) reload all expanded folders when hidden files are toggled - dcog989
+
+- (35ebe9a) keep tabs and tree caches valid across folder rename/delete - dcog989
+
+- (9350a60) rename folders against their parent directory - dcog989
+
+- (c58451f) start resize handle below the filter input - dcog989
+
+- (cacf3f7) drop oversized collapse overlay and collapse on resize bar click - dcog989
+
+- (8f1dc52) make tab dropdown close icon fully opaque - dcog989
+
+- (ef9ce75) put command shortcut on same row, right aligned - dcog989
+
+- (7ccd6f9) skip disk write when the tab has no unsaved changes - dcog989
+
+- (462642c) skip disk write when saving an unchanged document - dcog989
+
+#### Performance Improvements
+
+- (46e9a44) debounce the filter and skip heavy folders when searching - dcog989
+
+#### Refactoring
+
+- (8dc0df2) show title/date/tags on the first row and the path below - dcog989
+
+- (7206faf) unify modal list rows on card styling - dcog989
+
+- (504fbbe) match bookmark rows to command palette style - dcog989
+
+- (b3a611f) match file history rows to command palette style - dcog989
+
+- - -
+
 ## v1.65.0 - 2026-10-17
 
 #### Features
