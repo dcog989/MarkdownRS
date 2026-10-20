@@ -119,11 +119,15 @@ export async function toggle(path: string): Promise<void> {
 
 export function toggleHiddenFiles(): void {
   toggleFileTreeShowHidden();
+  // Re-list every expanded folder, not just the root: the cache keys survive
+  // the clear, so an expanded subfolder would otherwise render empty until it
+  // is collapsed and reopened.
+  const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
-  if (fileTreeStore.root) {
-    void loadChildren(fileTreeStore.root);
+  for (const path of expandedPaths) {
+    void loadChildren(path);
   }
 }
 
@@ -182,6 +186,24 @@ export function collapseAll(): void {
   fileTreeStore.expanded.clear();
   if (fileTreeStore.root) {
     fileTreeStore.expanded.set(fileTreeStore.root, true);
+  }
+}
+
+/**
+ * Drop a directory subtree from the cached tree after it was renamed or
+ * deleted, and move a root that lived inside it up to its surviving parent.
+ * Without this the tree keeps expansion state for paths that no longer exist.
+ */
+export function forgetSubtree(path: string): void {
+  const prefix = `${path}/`;
+  for (const key of [...fileTreeStore.expanded.keys()]) {
+    if (key === path || key.startsWith(prefix)) fileTreeStore.expanded.delete(key);
+  }
+  for (const key of [...fileTreeStore.children.keys()]) {
+    if (key === path || key.startsWith(prefix)) fileTreeStore.children.delete(key);
+  }
+  if (fileTreeStore.root === path || fileTreeStore.root.startsWith(prefix)) {
+    setRoot(dirname(path));
   }
 }
 

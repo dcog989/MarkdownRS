@@ -3,12 +3,27 @@ import { translate } from "$lib/i18n";
 import { invalidateMetadataCache } from "$lib/services/fileMetadata";
 import { fileWatcher } from "$lib/services/fileWatcher";
 import { confirmDialog, promptDialog } from "$lib/stores/dialogStore.svelte";
-import { dirname, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
+import { updateTabFields } from "$lib/stores/editorStore.svelte";
+import { dirname, forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { createDirOnDisk, createFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
+
+// Open tabs inside a renamed folder keep the old path; rewrite the prefix so
+// the next save lands in the folder's new location, and move the watchers
+// along with them (they are keyed by path and would otherwise leak).
+async function retargetTabs(oldPath: string, newPath: string): Promise<void> {
+  const oldPrefix = `${oldPath}/`;
+  const affected = appContext.editor.tabs.filter((t) => t.path.startsWith(oldPrefix));
+  for (const tab of affected) {
+    const nextPath = `${newPath}/${tab.path.slice(oldPrefix.length)}`;
+    fileWatcher.unwatch(tab.path);
+    updateTabFields(tab.id, { path: nextPath });
+    await fileWatcher.watch(nextPath);
+  }
+}
 
 export class FileTreeContextMenuLogic {
   // Where "New File"/"New Folder" entries are created (a directory row itself,
@@ -91,7 +106,12 @@ export class FileTreeContextMenuLogic {
     const parent = dirname(this.path);
     const tab = appContext.editor.tabs.find((t) => t.path === this.path);
     try {
-      if (tab) {
+      if (this.isDir) {
+        const newPath = `${parent}/${clean}`;
+        await callBackend("rename_file", { oldPath: this.path, newPath }, "File:Write");
+        await retargetTabs(this.path, newPath);
+        forgetSubtree(this.path);
+      } else if (tab) {
         await renameFile(tab.id, clean);
       } else {
         await callBackend("rename_file", { oldPath: this.path, newPath: `${parent}/${clean}` }, "File:Write");
@@ -138,22 +158,29 @@ export class FileTreeContextMenuLogic {
       if (result !== "discard") return;
     }
 
+    const affected = appContext.editor.tabs.filter((t) => t.path === targetPath || t.path.startsWith(`${targetPath}/`));
+
     try {
-      const tab = appContext.editor.tabs.find((t) => t.path === targetPath);
-      if (tab) {
-        fileWatcher.unwatch(targetPath);
+      for (const t of affected) {
+        fileWatcher.unwatch(t.path);
       }
 
       await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
       invalidateMetadataCache(targetPath);
 
-      if (tab) {
-        await requestCloseTab(tab.id, true);
+      for (const t of affected) {
+        // Closing prompts for unsaved changes and can be cancelled, so check
+        // the tab is still open before closing it.
+        if (appContext.editor.tabs.some((tab) => tab.id === t.id)) {
+          await requestCloseTab(t.id, true);
+        }
       }
+      forgetSubtree(targetPath);
       refreshDirectoryIfInTree(dirname(targetPath));
     } catch (_err) {
-      const tab = appContext.editor.tabs.find((t) => t.path === targetPath);
-      if (tab) await fileWatcher.watch(targetPath);
+      for (const t of affected) {
+        await fileWatcher.watch(t.path);
+      }
     } finally {
       this.onClose();
     }
