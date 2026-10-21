@@ -5,6 +5,7 @@ export interface MinimapColors {
   code: string;
   list: string;
   link: string;
+  url: string;
   quote: string;
   strong: string;
   emphasis: string;
@@ -19,12 +20,13 @@ export function getColors(): MinimapColors {
     text: style.getPropertyValue("--editor-fg").trim(),
     heading: style.getPropertyValue("--editor-syntax-heading").trim(),
     code: style.getPropertyValue("--editor-code-fg").trim(),
-    list: style.getPropertyValue("--editor-fg-secondary").trim(),
+    list: style.getPropertyValue("--editor-fg").trim(),
     link: style.getPropertyValue("--editor-link").trim(),
-    quote: style.getPropertyValue("--editor-syntax-keyword").trim(),
+    url: style.getPropertyValue("--editor-url").trim(),
+    quote: style.getPropertyValue("--editor-quote-fg").trim(),
     strong: style.getPropertyValue("--editor-syntax-strong").trim(),
     emphasis: style.getPropertyValue("--editor-syntax-emphasis").trim(),
-    strike: style.getPropertyValue("--editor-fg-tertiary").trim(),
+    strike: style.getPropertyValue("--editor-fg-secondary").trim(),
     callout: {
       note: style.getPropertyValue("--editor-callout-note-accent").trim(),
       tip: style.getPropertyValue("--editor-callout-tip-accent").trim(),

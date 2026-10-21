@@ -1,7 +1,8 @@
 import type { Text } from "@codemirror/state";
 import { type Highlighter, type Tag, tags as t } from "@lezer/highlight";
 
-const LINK_RE = /\[.*?\]\(.*?\)|\[.*?\]\[.*?\]|\[.*?\]\[\s*\]|^\s*\[[^\]]+\]:\s*\S|https?:\/\/\S+/;
+const LINK_RE = /\[.*?\]\(.*?\)|\[.*?\]\[.*?\]|\[.*?\]\[\s*\]|^\s*\[[^\]]+\]:\s*\S/;
+const URL_RE = /https?:\/\/\S+/;
 
 const calloutMarkerRe = /^\s*>\s*\[!(note|tip|important|warning|caution)\]/i;
 const quoteLineRe = /^\s*>/;
@@ -36,7 +37,8 @@ export const minimapHighlighter: Highlighter = {
     const has = (target: Tag) => tags.some((tag) => tag.set.includes(target));
     if (has(t.heading)) return "heading";
     if (has(t.monospace)) return "code";
-    if (has(t.link) || has(t.url)) return "link";
+    if (has(t.url)) return "url";
+    if (has(t.link)) return "link";
     if (has(t.strong)) return "strong";
     if (has(t.emphasis)) return "emphasis";
     if (has(t.strikethrough)) return "strike";
@@ -69,6 +71,7 @@ export const codeBlockHighlighter: Highlighter = {
 
 const KIND_PRIORITY: Record<string, number> = {
   link: 6,
+  url: 6,
   strong: 5,
   emphasis: 4,
   code: 3,
@@ -95,7 +98,7 @@ export function classesToKind(classes: string): string {
 export function getLineKind(
   line: string,
   inCodeBlock: boolean,
-): { kind: "heading" | "code" | "list" | "link" | "quote" | "empty" | "text"; inCodeBlock: boolean } {
+): { kind: "heading" | "code" | "list" | "link" | "url" | "quote" | "empty" | "text"; inCodeBlock: boolean } {
   if (line.trim() === "") return { kind: "empty", inCodeBlock };
 
   if (/^```/.test(line)) {
@@ -107,6 +110,7 @@ export function getLineKind(
 
   if (/^#{1,6}\s/.test(line)) return { kind: "heading", inCodeBlock: false };
   if (LINK_RE.test(line)) return { kind: "link", inCodeBlock: false };
+  if (URL_RE.test(line)) return { kind: "url", inCodeBlock: false };
   if (/^[\s]*[-*+]\s/.test(line)) return { kind: "list", inCodeBlock: false };
   if (/^[\s]*\d+[.)]\s/.test(line)) return { kind: "list", inCodeBlock: false };
   if (/^\s*>\s/.test(line)) return { kind: "quote", inCodeBlock: false };
@@ -116,6 +120,7 @@ export function getLineKind(
 const KIND_WEIGHT: Record<string, number> = {
   heading: 6,
   link: 4,
+  url: 4,
   code: 3,
   list: 2,
   quote: 2,

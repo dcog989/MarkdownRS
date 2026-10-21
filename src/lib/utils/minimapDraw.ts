@@ -33,6 +33,10 @@ export function drawSpan(
       ctx.fillStyle = colors.link;
       ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
       break;
+    case "url":
+      ctx.fillStyle = colors.url;
+      ctx.globalAlpha = inViewport ? 0.9 : 0.3 * fade;
+      break;
     case "quote":
       ctx.fillStyle = colors.quote;
       ctx.globalAlpha = inViewport ? 0.85 : 0.25 * fade;
