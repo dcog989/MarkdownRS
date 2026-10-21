@@ -1,5 +1,6 @@
 import { translate } from "$lib/i18n";
 import { toggleWriterMode } from "$lib/stores/appState.svelte";
+import { togglePreferredExtension } from "$lib/stores/editorStore.svelte";
 import { refreshTree } from "$lib/stores/fileTreeStore.svelte";
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -97,6 +98,17 @@ export const viewCommands: Command[] = [
     defaultKey: "ctrl+shift+r",
     handler: () => {
       toggleViewMode();
+    },
+  },
+  {
+    id: "view.toggleFileType",
+    label: "Toggle File Type (Markdown/Text)",
+    labelKey: "command.toggleFileType",
+    category: "commandCategory.view",
+    handler: () => {
+      const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+      // Saved files keep the type their extension implies, as in the status bar.
+      if (activeTab && !activeTab.path) togglePreferredExtension(activeTab.id);
     },
   },
   {

@@ -148,6 +148,7 @@ export const en = {
     toggleFileTree: "Toggle File Tree",
     refreshFileTree: "Refresh File Tree",
     toggleViewMode: "Toggle Raw/Rendered Mode",
+    toggleFileType: "Toggle File Type (Markdown/Text)",
     toggleWhitespace: "Toggle Whitespace",
     zoomIn: "Zoom In",
     zoomOut: "Zoom Out",
