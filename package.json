@@ -19,7 +19,9 @@
     "fix:backend": "cd src-tauri && cargo clippy --fix --allow-dirty --all-targets --all-features && cargo fmt",
     "fix:frontend": "bunx biome check --write .",
     "gen-icons": "tauri icon src-tauri/icons/icon.png",
-    "package": "bun run build && mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -si --noconfirm --force",
+    "pack": "mkdir -p .pkg && cp PKGBUILD .pkg/ && cd .pkg && makepkg -f --noconfirm",
+    "package": "bun run build && bun run pack && bun run pkg-install",
+    "pkg-install": "sudo pacman -U --noconfirm \".pkg/MarkdownRS-$(sed -n 's/^pkgver=//p' PKGBUILD)-1-x86_64.pkg.tar.zst\"",
     "test": "echo \"Running Tests...\" && vitest run && cd src-tauri && cargo test",
     "update": "bun update --latest && cd src-tauri && cargo upgrade && cargo update --verbose",
     "website": "bunx --bun vite build --config website/vite.config.js && bun x serve website/dist"
@@ -52,11 +54,11 @@
     "text-case": "^1.2.11"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
+    "@biomejs/biome": "^2.6.2",
     "@sveltejs/adapter-static": "^4.0.0",
     "@sveltejs/kit": "^3.1.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
-    "@tauri-apps/cli": "^2.12.3",
+    "@tauri-apps/cli": "^2.12.4",
     "@testing-library/svelte": "^5.4.2",
     "@types/node": "^26.6.5",
     "@typescript/native-preview": "^7.0.0-dev.20260707.2",
@@ -66,7 +68,7 @@
     "svelte": "^5.57.2",
     "svelte-check": "4.7.6",
     "typescript": "6.0.3",
-    "vite": "^8.3.4",
+    "vite": "^8.3.5",
     "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^5.0.5"
   },

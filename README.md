@@ -154,7 +154,7 @@ bun run dev          # Start dev server / HMR
 bun run preview      # Preview the production build
 bunx tauri build     # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 bun run clean        # Remove build artifacts, target, and node_modules
-bun run package      # build and install
+bun run package      # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
 ```
 
 ---
