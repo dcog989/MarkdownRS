@@ -101,7 +101,7 @@ export function getLineKind(
 ): { kind: "heading" | "code" | "list" | "link" | "url" | "quote" | "empty" | "text"; inCodeBlock: boolean } {
   if (line.trim() === "") return { kind: "empty", inCodeBlock };
 
-  if (/^```/.test(line)) {
+  if (fenceRe.test(line)) {
     const newState = !inCodeBlock;
     return { kind: "code", inCodeBlock: newState };
   }

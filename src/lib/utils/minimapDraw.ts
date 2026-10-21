@@ -23,7 +23,7 @@ export function drawSpan(
       break;
     case "code":
       ctx.fillStyle = colors.code;
-      ctx.globalAlpha = inViewport ? 0.45 : 0.18 * fade;
+      ctx.globalAlpha = inViewport ? 0.9 : 0.35 * fade;
       break;
     case "list":
       ctx.fillStyle = colors.list;

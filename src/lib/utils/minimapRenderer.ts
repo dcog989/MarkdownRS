@@ -142,13 +142,14 @@ export function renderMinimap(
       const kind = classesToKind(classes);
       if (!kind) return;
       while (cur < totalLines && from >= lineEnd[cur]) cur++;
-      if (cur >= totalLines) return;
-      const ls = lineStart[cur];
-      const le = lineEnd[cur];
-      const s = Math.max(from, ls);
-      const e = Math.min(to, le);
-      if (e <= s) return;
-      tokenSpans[cur].push({ from: s - ls, to: e - ls, kind });
+      // A span can cover several lines (a fenced code block highlights as one
+      // range), so split it across every line it touches.
+      for (let i = cur; i < totalLines && lineStart[i] < to; i++) {
+        const s = Math.max(from, lineStart[i]);
+        const e = Math.min(to, lineEnd[i]);
+        if (e <= s) continue;
+        tokenSpans[i].push({ from: s - lineStart[i], to: e - lineStart[i], kind });
+      }
     });
 
     ctx.save();
@@ -156,6 +157,7 @@ export function renderMinimap(
     ctx.rect(paddingX, 0, barWidth, contentH);
     ctx.clip();
 
+    let inCodeBlock = false;
     for (let i = 0; i < totalLines; i++) {
       const y = i * (lineH + gap);
       if (y > contentH) break;
@@ -163,12 +165,22 @@ export function renderMinimap(
       const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
 
       const line = doc.line(i + 1).text;
+      const lineKind = getLineKind(line, inCodeBlock);
+      inCodeBlock = lineKind.inCodeBlock;
       if (line.length === 0) continue;
 
       const lineWidth = Math.max(1, Math.min(barWidth, line.length * CHARS_TO_PX));
       const calloutType = calloutTypes[i];
       if (calloutType) {
         drawSpan(ctx, `callout-${calloutType}`, paddingX, y, lineWidth, lineH, colors, inViewport, hovered);
+        continue;
+      }
+
+      // Fenced code mounts its language parser, whose tokens match neither
+      // highlighter, so token spans alone leave the block unpainted; the fence
+      // state is the reliable signal.
+      if (lineKind.kind === "code") {
+        drawSpan(ctx, "code", paddingX, y, lineWidth, lineH, colors, inViewport, hovered);
         continue;
       }
 
