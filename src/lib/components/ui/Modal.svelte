@@ -146,9 +146,9 @@ $effect(() => {
     modalPanel?.removeEventListener("focusout", handleFocusOut);
     mutationObserver.disconnect();
 
-    // Blur the previously focused element to remove focus outline
+    // Restore focus (e.g. the editor) so keyboard input keeps working after closing
     if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
-      previouslyFocusedElement.blur();
+      previouslyFocusedElement.focus();
     }
   };
 });
