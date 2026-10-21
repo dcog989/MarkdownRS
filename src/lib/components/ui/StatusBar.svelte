@@ -118,14 +118,7 @@ async function copyAllStats() {
         <span class="inline-block min-w-[3ch] text-right font-mono">{formatNumber(appContext.metrics.cursorCol)}</span>
         <span class="opacity-30">/</span>
         <span class="inline-block min-w-[3ch] text-left font-mono">
-          {formatNumber(
-            Math.max(
-              appContext.metrics.currentLineLength,
-              appContext.metrics.cursorCol > appContext.metrics.currentLineLength
-                ? appContext.metrics.cursorCol
-                : appContext.metrics.currentLineLength,
-            ),
-          )}
+          {formatNumber(Math.max(appContext.metrics.currentLineLength, appContext.metrics.cursorCol))}
         </span>
       </div>
       <span class="opacity-40">|</span>

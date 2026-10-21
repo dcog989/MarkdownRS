@@ -41,9 +41,7 @@ async function handleNewTab() {
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  {#snippet children({
-    submenuSide: _submenuSide,
-  })}
+  {#snippet children({ submenuSide: _submenuSide })}
     <div onmouseenter={() => (activeSubmenu = null)} role="none">
       <button type="button" class="text-ui menu-item" onclick={handleNewTab}>
         <FilePlus size={14} class="opacity-70" /><span class="flex-1">{$_("tabBarContextMenu.newTab")}</span>

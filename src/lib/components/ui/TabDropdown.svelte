@@ -71,7 +71,7 @@ $effect(() => {
   if (isOpen) {
     searchQuery = "";
     const activeIndex = untrack(() => appContext.editor.tabs.findIndex((tab) => tab.id === appContext.app.activeTabId));
-    nav.select(activeIndex >= 0 ? activeIndex : 0);
+    nav.select(Math.max(activeIndex, 0));
   }
 });
 

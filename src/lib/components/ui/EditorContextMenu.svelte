@@ -240,9 +240,7 @@ async function handleSendToBrowser() {
 </script>
 
 <ContextMenu {x} {y} onClose={closeMenuAndReset}>
-  {#snippet children({
-    submenuSide: _submenuSide,
-  })}
+  {#snippet children({ submenuSide: _submenuSide })}
     {#snippet opSubmenu(
       IconCmp: typeof ArrowUpDown,
       label: string,

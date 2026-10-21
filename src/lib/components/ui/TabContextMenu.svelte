@@ -36,9 +36,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  {#snippet children({
-    submenuSide: _submenuSide,
-  })}
+  {#snippet children({ submenuSide: _submenuSide })}
     <div onmouseenter={() => (ctx.activeSubmenu = null)} role="none">
       <button type="button" class="text-ui menu-item" onclick={ctx.handleSave}>
         <Save size={14} class="opacity-70" />

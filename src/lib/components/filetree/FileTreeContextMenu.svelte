@@ -18,9 +18,7 @@ const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);
 </script>
 
 <ContextMenu {x} {y} {onClose}>
-  {#snippet children({
-    submenuSide: _submenuSide,
-  })}
+  {#snippet children({ submenuSide: _submenuSide })}
     <button type="button" class="text-ui menu-item" onclick={ctx.handleNewFile}>
       <FilePlus size={14} class="opacity-70" />
       <span class="flex-1">{$_("fileTree.newFile")}</span>

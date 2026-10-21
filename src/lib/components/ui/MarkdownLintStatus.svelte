@@ -72,10 +72,7 @@ async function copyConfigPath() {
   {/if}
 </button>
 
-{#snippet issueSection(
-  title: string,
-  diags: LintDiagnostic[],
-)}
+{#snippet issueSection(title: string, diags: LintDiagnostic[])}
   <div class="border-border-secondary border-b px-3 py-2 text-ui font-semibold uppercase tracking-widest text-fg-muted">
     {title}
     <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal"> ({diags.length}) </span>
@@ -105,9 +102,7 @@ async function copyConfigPath() {
   {@const rect = buttonEl.getBoundingClientRect()}
   <div use:portal>
     <ContextMenu x={rect.left} y={rect.bottom + 2} onClose={() => (showPopup = false)}>
-      {#snippet children(_: {
-        submenuSide: "left" | "right";
-      })}
+      {#snippet children(_: { submenuSide: "left" | "right" })}
         <div class="text-ui min-w-72">
           <div
             class="border-border-secondary border-b px-3 py-2 text-ui font-semibold uppercase tracking-widest text-fg-muted"
