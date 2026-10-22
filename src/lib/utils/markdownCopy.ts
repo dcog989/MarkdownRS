@@ -1,4 +1,3 @@
-import { syntaxTree } from "@codemirror/language";
 import type { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
@@ -6,47 +5,6 @@ export interface CodeBlockCopyDeps {
   translate: (key: string) => string;
   showToast: (type: "info" | "success" | "warning" | "error", message: string) => void;
 }
-
-const COPY_SNAP_NODES = new Set(["Emphasis", "StrongEmphasis", "Link", "Image", "InlineCode"]);
-
-/**
- * Expands a selection to cover any inline Markdown construct it partially
- * touches, so copying always yields the full raw source (e.g. `**bold**`
- * instead of `bold` or a half-marker fragment) regardless of how the painted
- * selection edges align with the underlying document.
- */
-export function snapToMarkdownConstruct(view: EditorView, from: number, to: number): { from: number; to: number } {
-  let snapFrom = from;
-  let snapTo = to;
-  syntaxTree(view.state).iterate({
-    from,
-    to,
-    enter: (node) => {
-      if (!COPY_SNAP_NODES.has(node.name)) return;
-      // Selecting text fully inside a construct that renders as literal content
-      // copies only that fragment. The markers are visible while the selection
-      // exists, so snapping would drag unseen delimiters (inline-code ticks) or
-      // the whole `![alt](url)` into the clipboard.
-      if ((node.name === "InlineCode" || node.name === "Image") && node.from < from && to < node.to) return;
-      if (node.from < from || node.to > to) {
-        snapFrom = Math.min(snapFrom, node.from);
-        snapTo = Math.max(snapTo, node.to);
-      }
-    },
-  });
-  return { from: snapFrom, to: snapTo };
-}
-
-export const renderedCopyHandler = EditorView.domEventHandlers({
-  copy: (event, view) => {
-    const selection = view.state.selection.main;
-    if (selection.empty) return false;
-    const { from, to } = snapToMarkdownConstruct(view, selection.from, selection.to);
-    event.preventDefault();
-    navigator.clipboard.writeText(view.state.sliceDoc(from, to));
-    return true;
-  },
-});
 
 export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
   return EditorView.domEventHandlers({

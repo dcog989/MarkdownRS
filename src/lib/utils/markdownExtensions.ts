@@ -9,7 +9,6 @@ import {
   collectRawCalloutDecorations,
 } from "./markdownCallout";
 import { collectColorSwatches } from "./markdownColorSwatch";
-import { renderedCopyHandler } from "./markdownCopy";
 import {
   type CalloutInfo,
   type DecorationWalk,
@@ -532,7 +531,6 @@ export function createMarkdownDecorationsPlugin(
       ? [
           createTableWidgetField(),
           renderedPointerHandler([tableWidgetPointer, imageWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
-          renderedCopyHandler,
           renderedModeKeymap,
         ]
       : []),
@@ -541,6 +539,5 @@ export function createMarkdownDecorationsPlugin(
 
 export { matchCalloutLine } from "./markdownCallout";
 export type { CodeBlockCopyDeps } from "./markdownCopy";
-export { createCodeBlockCopyHandler, snapToMarkdownConstruct } from "./markdownCopy";
+export { createCodeBlockCopyHandler } from "./markdownCopy";
 export type { GetTabDirectory };
-export { renderedCopyHandler };

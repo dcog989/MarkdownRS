@@ -37,7 +37,6 @@ import {
 } from "$lib/utils/editorCommands";
 import { isMarkdownFile } from "$lib/utils/fileValidation";
 import { pasteFromClipboard } from "$lib/utils/imagePaste";
-import { snapToMarkdownConstruct } from "$lib/utils/markdownExtensions";
 import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import {
@@ -191,15 +190,6 @@ function onContextMenu(event: MouseEvent, view: CM6EditorView) {
   });
 }
 
-// Mirrors the rendered-mode Ctrl+C behavior (renderedCopyHandler) so context-menu
-// copy/cut yield the same full raw construct (e.g. **bold**) instead of the bare
-// visible text between hidden markers. Only applied when rendered decorations are active.
-function getCopyRange(view: CM6EditorView, snap: boolean): { from: number; to: number } {
-  const sel = view.state.selection.main;
-  if (!snap) return { from: sel.from, to: sel.to };
-  return snapToMarkdownConstruct(view, sel.from, sel.to);
-}
-
 function handleContentChange(c: string, lineCount: number) {
   updateContent(tabId, c, lineCount);
 }
@@ -247,10 +237,6 @@ $effect(() => {
 let isLargeFile = $derived(
   !!activeTab && activeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES && !forceFullFeatures,
 );
-// Mirrors EditorView's `effectiveMarkdown && rendered` gating of the rendered
-// copy handler: snap to the full markdown construct only when the rendered
-// decoration plugin is actually active.
-let snapRenderedCopy = $derived(isMarkdown && !isLargeFile && appContext.settings.viewMode === "rendered");
 let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.trim() === "");
 </script>
 
@@ -348,13 +334,13 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     onDictionaryUpdate={handleDictionaryUpdate}
     onCut={() => {
       if (!cmView) return;
-      const { from, to } = getCopyRange(cmView, snapRenderedCopy);
+      const { from, to } = cmView.state.selection.main;
       navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
       cmView.dispatch({ changes: { from, to, insert: "" } });
     }}
     onCopy={() => {
       if (!cmView) return;
-      const { from, to } = getCopyRange(cmView, snapRenderedCopy);
+      const { from, to } = cmView.state.selection.main;
       navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
     }}
     onPaste={async () => {
