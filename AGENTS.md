@@ -34,6 +34,10 @@
 - Release: `cog bump --auto` (Cocogitto, external Rust binary — `cargo install cocogitto` / `pacman -S cocogitto`; config in `cog.toml`, `tag_prefix = "v"`). Bumps the version from conventional commits, syncs manifests via `bash scripts/sync_version.sh`, writes `CHANGELOG.md` (template `changelog.tpl`), commits and tags, then pushes. Manual version: `cog bump --version 1.2.3`.
 - Update crates: `bun run crates` (requires `cargo-edit`, external Rust binary — `cargo install cargo-edit` / `pacman -S cargo-edit`).
 
+### Tools
+
+- File tools (glob, grep, read, write, edit, shell) are called directly, never as `tools.*` inside execute. execute exposes only `browser.*`, `opencode.*`, and search() results.
+
 ### Common Patterns
 
 - Add feature: Update store in `src/lib/stores/`, add UI in `src/lib/components/`, wire with events
