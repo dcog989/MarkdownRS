@@ -146,9 +146,11 @@ $effect(() => {
     modalPanel?.removeEventListener("focusout", handleFocusOut);
     mutationObserver.disconnect();
 
-    // Restore focus (e.g. the editor) so keyboard input keeps working after closing
+    // Restore focus (e.g. the editor) so keyboard input keeps working after closing.
+    // preventScroll keeps CodeMirror from scrolling its contentDOM (anchored at the
+    // document top) back to the top.
     if (previouslyFocusedElement && document.body.contains(previouslyFocusedElement)) {
-      previouslyFocusedElement.focus();
+      previouslyFocusedElement.focus({ preventScroll: true });
     }
   };
 });
