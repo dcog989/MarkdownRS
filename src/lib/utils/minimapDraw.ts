@@ -1,6 +1,6 @@
 import type { MinimapColors } from "./minimapColors";
 
-const VIEWPORT_UNHOVERED_DIM = 0.75;
+const VIEWPORT_UNHOVERED_DIM = 0.7;
 
 export function drawSpan(
   ctx: CanvasRenderingContext2D,

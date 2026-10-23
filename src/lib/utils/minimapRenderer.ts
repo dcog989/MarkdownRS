@@ -68,23 +68,10 @@ export function renderMinimap(
   ctx.fillRect(0, 0, MINIMAP_WIDTH, contentH);
 
   const scrollDOM = view.scrollDOM;
-  const scrollTop = scrollDOM.scrollTop;
-  const clientHeight = scrollDOM.clientHeight;
-  const canScroll = scrollDOM.scrollHeight > clientHeight;
-
-  const topLine = doc.lineAt(view.lineBlockAtHeight(scrollTop).from).number - 1;
-  const bottomLine = doc.lineAt(view.lineBlockAtHeight(scrollTop + clientHeight).from).number - 1;
+  const topLine = doc.lineAt(view.lineBlockAtHeight(scrollDOM.scrollTop).from).number - 1;
+  const bottomLine = doc.lineAt(view.lineBlockAtHeight(scrollDOM.scrollTop + scrollDOM.clientHeight).from).number - 1;
   const viewportTop = lineToY(layout, topLine);
   const viewportBottom = lineToY(layout, bottomLine) + minimapLineHeight(layout);
-
-  if (canScroll) {
-    ctx.fillStyle = hovered ? "rgba(128, 128, 128, 0.35)" : "rgba(80, 80, 80, 0.35)";
-    ctx.fillRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
-
-    ctx.strokeStyle = hovered ? "rgba(128, 128, 128, 0.7)" : "rgba(80, 80, 80, 0.7)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(0, viewportTop, MINIMAP_WIDTH, viewportBottom - viewportTop);
-  }
 
   const paddingX = 2;
   const barWidth = MINIMAP_WIDTH - paddingX * 2;
