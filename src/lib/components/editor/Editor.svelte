@@ -46,7 +46,7 @@ import {
   triggerImmediateLint,
 } from "$lib/utils/spellcheckExtension.svelte";
 
-let { tabId } = $props<{ tabId: string }>();
+let { tabId }: { tabId: string } = $props();
 
 let cmView = $state<CM6EditorView & { getHistoryState?: () => unknown; flushPendingContent?: () => void }>();
 let findReplacePanel = $state<{

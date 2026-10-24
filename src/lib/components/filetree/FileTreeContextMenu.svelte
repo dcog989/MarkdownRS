@@ -5,13 +5,19 @@ import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { FileTreeContextMenuLogic } from "./fileTreeContextMenuLogic.svelte";
 
-let { entry, directory, x, y, onClose } = $props<{
+let {
+  entry,
+  directory,
+  x,
+  y,
+  onClose,
+}: {
   entry: FileEntry | null;
   directory: string;
   x: number;
   y: number;
   onClose: () => void;
-}>();
+} = $props();
 
 // svelte-ignore state_referenced_locally
 const ctx = new FileTreeContextMenuLogic(directory, entry, onClose);

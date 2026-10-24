@@ -8,14 +8,14 @@ let {
   children,
   onOpen,
   onClose,
-} = $props<{
+}: {
   show?: boolean;
   side?: "left" | "right";
   trigger: Snippet;
   children: Snippet;
   onOpen?: () => void;
   onClose?: () => void;
-}>();
+} = $props();
 
 let hoverTimer: number | null = null;
 let submenuEl = $state<HTMLDivElement>();

@@ -47,7 +47,7 @@ let {
   onCopy,
   onPaste,
   onReplaceWord,
-} = $props<{
+}: {
   x: number;
   y: number;
   selectedText?: string;
@@ -58,7 +58,7 @@ let {
   onCopy?: () => void;
   onPaste?: () => void;
   onReplaceWord?: (newWord: string) => void;
-}>();
+} = $props();
 
 let activeSubmenu = $state<"sort" | "case" | "format" | "transform" | null>(null);
 let suggestions = $state<string[]>([]);

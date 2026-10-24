@@ -24,12 +24,17 @@ import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import { TabContextMenuLogic } from "./tabContextMenuLogic.svelte";
 
-let { tabId, x, y, onClose } = $props<{
+let {
+  tabId,
+  x,
+  y,
+  onClose,
+}: {
   tabId: string;
   x: number;
   y: number;
   onClose: () => void;
-}>();
+} = $props();
 
 // svelte-ignore state_referenced_locally
 const ctx = new TabContextMenuLogic(tabId, onClose);

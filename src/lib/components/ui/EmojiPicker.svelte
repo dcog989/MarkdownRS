@@ -10,10 +10,13 @@ import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
 import { getActiveEditorView } from "$lib/utils/editorCommands";
 
-let { isOpen = $bindable(false), onClose = () => {} } = $props<{
+let {
+  isOpen = $bindable(false),
+  onClose = () => {},
+}: {
   isOpen: boolean;
   onClose: () => void;
-}>();
+} = $props();
 
 let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();

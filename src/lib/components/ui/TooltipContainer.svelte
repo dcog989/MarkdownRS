@@ -9,13 +9,13 @@ let {
   isVisible,
   children,
   className = "break-words w-max",
-} = $props<{
+}: {
   x: number;
   y: number;
   isVisible: boolean;
   children: Snippet;
   className?: string;
-}>();
+} = $props();
 
 let tooltipEl = $state<HTMLDivElement>();
 let adjustedX = $state(0);

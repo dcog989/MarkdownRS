@@ -15,7 +15,7 @@ let {
   onKeydown,
   onBack,
   extraActions,
-} = $props<{
+}: {
   title: string;
   icon: typeof import("lucide-svelte").X;
   searchValue: string;
@@ -26,7 +26,7 @@ let {
   onKeydown?: (e: KeyboardEvent) => void;
   onBack?: () => void;
   extraActions?: Snippet;
-}>();
+} = $props();
 </script>
 
 <div class="flex w-full items-center gap-4">

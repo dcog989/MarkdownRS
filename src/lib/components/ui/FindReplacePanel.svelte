@@ -30,10 +30,13 @@ import {
 } from "$lib/utils/searchManager.svelte";
 import { debounce } from "$lib/utils/timing";
 
-let { isOpen = $bindable(false), cmView } = $props<{
+let {
+  isOpen = $bindable(false),
+  cmView,
+}: {
   isOpen?: boolean;
   cmView: EditorView | undefined;
-}>();
+} = $props();
 
 let searchScope = $state<"current" | "all">("current");
 let isReplaceMode = $state(false);

@@ -3,12 +3,17 @@ import { onMount, type Snippet } from "svelte";
 import { _ } from "svelte-i18n";
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from "$lib/utils/dom";
 
-let { x, y, onClose, children } = $props<{
+let {
+  x,
+  y,
+  onClose,
+  children,
+}: {
   x: number;
   y: number;
   onClose: () => void;
   children: Snippet<[{ submenuSide: "left" | "right" }]>;
-}>();
+} = $props();
 
 let menuEl = $state<HTMLDivElement>();
 let adjustedX = $state(0);

@@ -2,10 +2,13 @@
 import { LoaderCircle, Search, X } from "lucide-svelte";
 import { _ } from "svelte-i18n";
 
-let { value = $bindable(""), loading = false } = $props<{
+let {
+  value = $bindable(""),
+  loading = false,
+}: {
   value?: string;
   loading?: boolean;
-}>();
+} = $props();
 </script>
 
 <div class="ft-filter border-border-secondary shrink-0 border-b">

@@ -60,7 +60,7 @@ let {
   eventHandlers,
   onContextMenu,
   cmView = $bindable(),
-} = $props<{
+}: {
   tabId: string;
   initialContent?: string;
   isMarkdown?: boolean;
@@ -81,7 +81,7 @@ let {
   eventHandlers: Extension;
   onContextMenu?: ContextMenuCallback;
   cmView?: AppEditorView;
-}>();
+} = $props();
 
 let editorContainer = $state<HTMLDivElement>();
 let view = $state<AppEditorView>();

@@ -18,11 +18,11 @@ let {
   isOpen = false,
   onSelect,
   onClose,
-} = $props<{
+}: {
   isOpen: boolean;
   onSelect: (id: string) => void;
   onClose: () => void;
-}>();
+} = $props();
 
 let searchQuery = $state("");
 // @ts-expect-error: used by bind:this in template

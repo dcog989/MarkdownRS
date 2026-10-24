@@ -8,11 +8,15 @@ import { appContext } from "$lib/stores/state.svelte";
 import { closeManyTabs, saveAllFiles } from "$lib/utils/fileSystem";
 import { shortcutManager } from "$lib/utils/shortcuts";
 
-let { x, y, onClose } = $props<{
+let {
+  x,
+  y,
+  onClose,
+}: {
   x: number;
   y: number;
   onClose: () => void;
-}>();
+} = $props();
 
 let activeSubmenu = $state<"close" | null>(null);
 let newTabShortcut = $derived(shortcutManager.getShortcutDisplay("file.new"));

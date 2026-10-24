@@ -16,12 +16,12 @@ import { shortcutManager } from "$lib/utils/shortcuts";
 let {
   isOpen = $bindable(false),
   commands = [],
-  onClose,
-} = $props<{
+  onClose = () => {},
+}: {
   isOpen: boolean;
   commands: Command[];
   onClose?: () => void;
-}>();
+} = $props();
 
 let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();

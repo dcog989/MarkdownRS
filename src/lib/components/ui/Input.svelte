@@ -9,7 +9,7 @@ let {
   type = "text",
   focusDelay,
   ...rest
-} = $props<HTMLInputAttributes & { ref?: HTMLInputElement; focusDelay?: number }>();
+}: HTMLInputAttributes & { ref?: HTMLInputElement; focusDelay?: number } = $props();
 </script>
 
 <input

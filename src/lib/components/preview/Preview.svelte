@@ -16,7 +16,7 @@ import { PreviewRenderer } from "$lib/utils/previewRenderer.svelte";
 import { scrollSync } from "$lib/utils/scrollSync.svelte";
 import { highlightCodeBlocks } from "$lib/utils/syntaxHighlightRenderer";
 
-let { tabId } = $props<{ tabId: string }>();
+let { tabId }: { tabId: string } = $props();
 let container = $state<HTMLDivElement>();
 let previewHtmlWasEmpty = true;
 

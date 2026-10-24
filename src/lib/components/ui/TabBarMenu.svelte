@@ -17,9 +17,11 @@ import { isMarkdownFile } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 import { shortcutManager } from "$lib/utils/shortcuts";
 
-let { showMenu = $bindable(false) } = $props<{
+let {
+  showMenu = $bindable(false),
+}: {
   showMenu?: boolean;
-}>();
+} = $props();
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
 let isPreviewAvailable = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);

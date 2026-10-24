@@ -16,7 +16,7 @@ let {
   header,
   footer,
   children,
-} = $props<{
+}: {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
@@ -26,7 +26,7 @@ let {
   header?: Snippet;
   footer?: Snippet;
   children: Snippet;
-}>();
+} = $props();
 
 let viewport = $state<HTMLDivElement>();
 let modalPanel = $state<HTMLDivElement>();
