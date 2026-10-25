@@ -76,7 +76,6 @@ fn main() {
             commands::session::save_session,
             commands::session::restore_session,
             commands::session::load_tab_content,
-            commands::session::vacuum_database,
             commands::files::read_text_file,
             commands::files::write_text_file,
             commands::files::write_binary_file,

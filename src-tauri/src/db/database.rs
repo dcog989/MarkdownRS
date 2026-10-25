@@ -63,18 +63,55 @@ impl Database {
         FileHistoryStore::new(Arc::clone(&self.conn))
     }
 
-    pub fn incremental_vacuum(&self, max_pages: i32) -> Result<()> {
-        if max_pages <= 0 {
+    /// Reclaims every page on the freelist. `auto_vacuum=INCREMENTAL` only moves
+    /// freed pages to the freelist; without this the file never shrinks below
+    /// its historical high-water mark.
+    pub fn incremental_vacuum(&self) -> Result<()> {
+        let conn = lock_conn!(self);
+        let free_pages: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
+        if free_pages == 0 {
             return Ok(());
         }
-        let conn = lock_conn!(self);
-        conn.execute(&format!("PRAGMA incremental_vacuum({})", max_pages), [])?;
+        log::info!("Reclaiming {} free pages from the session database", free_pages);
+        // The pragma yields one row per reclaimed page; `execute`/`execute_batch`
+        // step only once, so they would free a single page and stop.
+        let mut stmt = conn.prepare("PRAGMA incremental_vacuum")?;
+        let mut rows = stmt.query([])?;
+        while rows.next()?.is_some() {}
         Ok(())
     }
+}
 
-    pub fn get_freelist_count(&self) -> Result<i32> {
-        let conn = lock_conn!(self);
-        let count: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
-        Ok(count)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Bookmark;
+    use crate::utils::test_util::make_temp_dir;
+
+    fn freelist_count(db: &Database) -> i32 {
+        let conn = lock_conn!(db);
+        conn.query_row("PRAGMA freelist_count", [], |row| row.get(0)).unwrap()
+    }
+
+    #[test]
+    fn incremental_vacuum_reclaims_pages_freed_by_deletes() {
+        let dir = make_temp_dir("vacuum");
+        let db = Database::new(dir.join("vacuum.db")).unwrap();
+        let bookmark = Bookmark {
+            id: "b1".to_string(),
+            path: "/b.md".to_string(),
+            title: "x".repeat(1 << 20),
+            tags: Vec::new(),
+            created: "2026-01-01".to_string(),
+            last_accessed: None,
+        };
+
+        db.bookmarks().add_bookmark(&bookmark).unwrap();
+        db.bookmarks().delete_bookmark("b1").unwrap();
+        assert!(freelist_count(&db) > 0, "deleting a large row should leave free pages");
+
+        db.incremental_vacuum().unwrap();
+
+        assert_eq!(freelist_count(&db), 0);
     }
 }

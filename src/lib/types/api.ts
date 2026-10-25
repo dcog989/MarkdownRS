@@ -81,10 +81,6 @@ export interface BackendCommands {
     args: { tabId: string };
     return: TabData;
   };
-  vacuum_database: {
-    args: Record<string, never>;
-    return: undefined;
-  };
 
   // File System
   read_text_file: {

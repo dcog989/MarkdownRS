@@ -84,6 +84,17 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
         );
     }
 
+    // Reclaim pages left free by deleted or rewritten tabs. Detached and started
+    // only after the session is loaded so the vacuum never delays startup I/O.
+    // shortcut: once per restore, so a long session keeps its freed pages until
+    // the next launch.
+    let vacuum_db = state.db.clone();
+    tokio::task::spawn_blocking(move || {
+        if let Err(e) = vacuum_db.incremental_vacuum() {
+            log::warn!("Failed to reclaim freed database pages: {}", e);
+        }
+    });
+
     result
 }
 
@@ -110,28 +121,4 @@ pub async fn load_tab_content(state: State<'_, AppState>, tab_id: String) -> Res
     }
 
     result
-}
-
-#[tauri::command]
-pub async fn vacuum_database(state: State<'_, AppState>) -> Result<(), String> {
-    let db = state.db.clone();
-    let freelist_count = run_blocking("check freelist count", move || {
-        db.get_freelist_count()
-            .map_err(|e| handle_error(Some("freelist count"), "check database", e))
-    })
-    .await?;
-
-    if freelist_count > 0 {
-        log::info!("Vacuuming database: {} free pages to reclaim", freelist_count);
-        let db2 = state.db.clone();
-        run_blocking("vacuum database", move || {
-            db2.incremental_vacuum(100)
-                .map_err(|e| handle_error(Some("database"), "vacuum database", e))
-        })
-        .await?;
-    } else {
-        log::debug!("No free pages to reclaim in database");
-    }
-
-    Ok(())
 }
