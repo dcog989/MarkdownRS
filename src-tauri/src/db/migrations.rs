@@ -9,10 +9,10 @@ use crate::db::schema;
 fn base_schema_ddl() -> String {
     format!(
         "CREATE TABLE IF NOT EXISTS tabs (
-        {}
+        {tabs}
     );
     CREATE TABLE IF NOT EXISTS closed_tabs (
-        {}
+        {tabs}
     );
     CREATE TABLE IF NOT EXISTS bookmarks (
         id TEXT PRIMARY KEY,
@@ -30,16 +30,9 @@ fn base_schema_ddl() -> String {
     CREATE INDEX IF NOT EXISTS idx_closed_tabs_sort_index ON closed_tabs(sort_index);
     CREATE INDEX IF NOT EXISTS idx_bookmarks_created ON bookmarks(created DESC);
     CREATE INDEX IF NOT EXISTS idx_file_history_last_opened ON file_history(last_opened DESC);
-    CREATE TRIGGER IF NOT EXISTS prune_file_history
-    AFTER INSERT ON file_history
-    WHEN (SELECT COUNT(*) FROM file_history) > 999
-    BEGIN
-        DELETE FROM file_history WHERE path NOT IN (
-            SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
-        );
-    END;",
-        schema::tab_columns_ddl(),
-        schema::tab_columns_ddl(),
+    {prune_trigger}",
+        tabs = schema::tab_columns_ddl(),
+        prune_trigger = schema::prune_file_history_trigger_ddl(),
     )
 }
 

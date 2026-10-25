@@ -2,6 +2,8 @@ use anyhow::Result;
 use chrono::Local;
 use std::sync::{Arc, Mutex};
 
+use crate::db::schema;
+
 pub struct FileHistoryStore {
     conn: Arc<Mutex<rusqlite::Connection>>,
 }
@@ -94,21 +96,8 @@ impl FileHistoryStore {
                 stmt.execute(rusqlite::params![path, &now])?;
             }
         }
-        tx.execute_batch(
-            "DELETE FROM file_history WHERE path NOT IN (
-                SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
-            );",
-        )?;
-        tx.execute_batch(
-            "CREATE TRIGGER IF NOT EXISTS prune_file_history
-            AFTER INSERT ON file_history
-            WHEN (SELECT COUNT(*) FROM file_history) > 999
-            BEGIN
-                DELETE FROM file_history WHERE path NOT IN (
-                    SELECT path FROM file_history ORDER BY last_opened DESC LIMIT 999
-                );
-            END;",
-        )?;
+        tx.execute_batch(&schema::prune_file_history_ddl())?;
+        tx.execute_batch(&schema::prune_file_history_trigger_ddl())?;
         tx.commit()?;
         Ok(())
     }

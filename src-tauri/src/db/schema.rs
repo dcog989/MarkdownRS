@@ -149,3 +149,34 @@ pub(super) fn tab_column_name(name: &str) -> &'static str {
         .map(|c| c.name)
         .unwrap_or_else(|| panic!("unknown tab column: {name}"))
 }
+
+/// Rows kept in `file_history`; older entries are pruned after every insert.
+pub(super) const FILE_HISTORY_LIMIT: i32 = 999;
+
+/// `CREATE TRIGGER` that trims `file_history` to the newest `FILE_HISTORY_LIMIT`
+/// rows. Shared with `import_file_history`, which drops the trigger for the
+/// duration of a bulk insert and installs it again afterwards.
+///
+/// Installed with `IF NOT EXISTS`, so editing `FILE_HISTORY_LIMIT` only reaches
+/// new databases and databases that run an import.
+pub(super) fn prune_file_history_trigger_ddl() -> String {
+    format!(
+        "CREATE TRIGGER IF NOT EXISTS prune_file_history
+        AFTER INSERT ON file_history
+        WHEN (SELECT COUNT(*) FROM file_history) > {FILE_HISTORY_LIMIT}
+        BEGIN
+            DELETE FROM file_history WHERE path NOT IN (
+                SELECT path FROM file_history ORDER BY last_opened DESC LIMIT {FILE_HISTORY_LIMIT}
+            );
+        END;"
+    )
+}
+
+/// One-off prune for callers that bypass the trigger (bulk import).
+pub(super) fn prune_file_history_ddl() -> String {
+    format!(
+        "DELETE FROM file_history WHERE path NOT IN (
+            SELECT path FROM file_history ORDER BY last_opened DESC LIMIT {FILE_HISTORY_LIMIT}
+        );"
+    )
+}
