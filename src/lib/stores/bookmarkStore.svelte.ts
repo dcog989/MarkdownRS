@@ -61,20 +61,22 @@ export function pruneBookmarks(paths: string[]) {
 }
 
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {
-  const index = bookmarkStore.bookmarks.findIndex((b) => b.id === id);
-  if (index === -1) return;
+  const existing = bookmarkStore.bookmarks.find((b) => b.id === id);
+  if (!existing) return;
 
-  const updated: Bookmark = {
-    ...bookmarkStore.bookmarks[index],
-    title,
-    tags,
-    path: path ?? bookmarkStore.bookmarks[index].path,
-  };
+  const updated: Bookmark = { ...existing, title, tags, path: path ?? existing.path };
+
+  // Only one row can exist per path. A rename can land on a path another
+  // bookmark still holds; that stale entry would keep an id the DB no longer
+  // has, so every action on it would silently do nothing.
+  const stale = bookmarkStore.bookmarks.find((b) => b.id !== id && b.path === updated.path);
+  if (stale) await deleteBookmark(stale.id);
 
   await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, {
     report: true,
   });
-  bookmarkStore.bookmarks[index] = updated;
+  const index = bookmarkStore.bookmarks.findIndex((b) => b.id === id);
+  if (index !== -1) bookmarkStore.bookmarks[index] = updated;
 }
 
 export async function updateAccessTime(id: string) {
