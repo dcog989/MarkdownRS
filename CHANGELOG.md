@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.66.2 - 2026-10-25
+
+#### Bug Fixes
+
+- (068425f) always checkpoint after the startup vacuum - dcog989
+
+- (64d1f2e) checkpoint after the startup vacuum - dcog989
+
+- - -
+
 ## v1.66.1 - 2026-10-25
 
 #### Bug Fixes
