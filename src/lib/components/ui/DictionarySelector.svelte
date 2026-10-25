@@ -1,5 +1,7 @@
 <script lang="ts">
-import { Check, ChevronDown, X } from "lucide-svelte";
+import Check from "lucide-svelte/icons/check";
+import ChevronDown from "lucide-svelte/icons/chevron-down";
+import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 
 interface Props {

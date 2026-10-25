@@ -1,5 +1,5 @@
 <script lang="ts">
-import { X } from "lucide-svelte";
+import X from "lucide-svelte/icons/x";
 import type { Snippet } from "svelte";
 import { _ } from "svelte-i18n";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";

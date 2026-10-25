@@ -1,4 +1,6 @@
-import { CircleMinus, Eraser, FunnelX } from "lucide-svelte";
+import CircleMinus from "lucide-svelte/icons/circle-minus";
+import Eraser from "lucide-svelte/icons/eraser";
+import FunnelX from "lucide-svelte/icons/funnel-x";
 import type { TextOperation } from "./types";
 
 /**

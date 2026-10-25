@@ -1,23 +1,21 @@
 <script lang="ts">
-import {
-  ArrowLeft,
-  ArrowRight,
-  Bookmark,
-  BookmarkX,
-  Copy,
-  Download,
-  FileDown,
-  FilePen,
-  Files,
-  FolderSearch,
-  History,
-  Pin,
-  PinOff,
-  Save,
-  Trash2,
-  Undo2,
-  X,
-} from "lucide-svelte";
+import ArrowLeft from "lucide-svelte/icons/arrow-left";
+import ArrowRight from "lucide-svelte/icons/arrow-right";
+import Bookmark from "lucide-svelte/icons/bookmark";
+import BookmarkX from "lucide-svelte/icons/bookmark-x";
+import Copy from "lucide-svelte/icons/copy";
+import Download from "lucide-svelte/icons/download";
+import FileDown from "lucide-svelte/icons/file-down";
+import FilePen from "lucide-svelte/icons/file-pen";
+import Files from "lucide-svelte/icons/files";
+import FolderSearch from "lucide-svelte/icons/folder-search";
+import History from "lucide-svelte/icons/history";
+import Pin from "lucide-svelte/icons/pin";
+import PinOff from "lucide-svelte/icons/pin-off";
+import Save from "lucide-svelte/icons/save";
+import Trash2 from "lucide-svelte/icons/trash-2";
+import Undo2 from "lucide-svelte/icons/undo-2";
+import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";

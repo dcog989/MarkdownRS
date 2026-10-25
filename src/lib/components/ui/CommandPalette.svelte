@@ -1,5 +1,7 @@
 <script lang="ts">
-import { ArrowDown, ArrowUp, Zap } from "lucide-svelte";
+import ArrowDown from "lucide-svelte/icons/arrow-down";
+import ArrowUp from "lucide-svelte/icons/arrow-up";
+import Zap from "lucide-svelte/icons/zap";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import type { Command } from "$lib/commands/commands";

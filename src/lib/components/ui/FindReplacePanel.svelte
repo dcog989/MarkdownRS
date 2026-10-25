@@ -1,18 +1,16 @@
 <script lang="ts">
 import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import {
-  CaseSensitive,
-  ChevronDown,
-  ChevronUp,
-  File,
-  Files,
-  Regex,
-  Replace,
-  Search,
-  WholeWord,
-  X,
-} from "lucide-svelte";
+import CaseSensitive from "lucide-svelte/icons/case-sensitive";
+import ChevronDown from "lucide-svelte/icons/chevron-down";
+import ChevronUp from "lucide-svelte/icons/chevron-up";
+import File from "lucide-svelte/icons/file";
+import Files from "lucide-svelte/icons/files";
+import Regex from "lucide-svelte/icons/regex";
+import Replace from "lucide-svelte/icons/replace";
+import Search from "lucide-svelte/icons/search";
+import WholeWord from "lucide-svelte/icons/whole-word";
+import X from "lucide-svelte/icons/x";
 import { onMount, tick, untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

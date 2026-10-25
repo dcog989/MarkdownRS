@@ -1,5 +1,12 @@
 <script lang="ts">
-import { Bookmark, CircleAlert, FileText, Pencil, PencilLine, Pin, SquarePen, X } from "lucide-svelte";
+import Bookmark from "lucide-svelte/icons/bookmark";
+import CircleAlert from "lucide-svelte/icons/circle-alert";
+import FileText from "lucide-svelte/icons/file-text";
+import Pencil from "lucide-svelte/icons/pencil";
+import PencilLine from "lucide-svelte/icons/pencil-line";
+import Pin from "lucide-svelte/icons/pin";
+import SquarePen from "lucide-svelte/icons/square-pen";
+import X from "lucide-svelte/icons/x";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

@@ -1,5 +1,7 @@
 <script lang="ts">
-import { FilePlus, Files, Save } from "lucide-svelte";
+import FilePlus from "lucide-svelte/icons/file-plus";
+import Files from "lucide-svelte/icons/files";
+import Save from "lucide-svelte/icons/save";
 import { _ } from "svelte-i18n";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";

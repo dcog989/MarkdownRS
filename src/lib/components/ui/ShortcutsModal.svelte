@@ -1,5 +1,6 @@
 <script lang="ts">
-import { Keyboard, RotateCcw } from "lucide-svelte";
+import Keyboard from "lucide-svelte/icons/keyboard";
+import RotateCcw from "lucide-svelte/icons/rotate-ccw";
 import { _ } from "svelte-i18n";
 
 import type { Command } from "$lib/commands/commands";

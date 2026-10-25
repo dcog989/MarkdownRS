@@ -1,5 +1,9 @@
 <script lang="ts">
-import { Database, Keyboard, Settings, Settings2, TriangleAlert } from "lucide-svelte";
+import Database from "lucide-svelte/icons/database";
+import Keyboard from "lucide-svelte/icons/keyboard";
+import Settings from "lucide-svelte/icons/settings";
+import Settings2 from "lucide-svelte/icons/settings-2";
+import TriangleAlert from "lucide-svelte/icons/triangle-alert";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";

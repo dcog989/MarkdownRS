@@ -61,7 +61,6 @@ export default defineConfig({
     include: [
       "dompurify",
       "katex",
-      "lucide-svelte",
       "svelte/animate",
       "svelte/transition",
       "@tauri-apps/api/core",

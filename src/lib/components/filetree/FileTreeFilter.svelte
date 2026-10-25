@@ -1,5 +1,7 @@
 <script lang="ts">
-import { LoaderCircle, Search, X } from "lucide-svelte";
+import LoaderCircle from "lucide-svelte/icons/loader-circle";
+import Search from "lucide-svelte/icons/search";
+import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 
 let {

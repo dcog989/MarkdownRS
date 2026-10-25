@@ -1,5 +1,11 @@
 <script lang="ts">
-import { Copy, FilePen, FilePlus, FolderOpen, FolderPlus, FolderSearch, Trash2 } from "lucide-svelte";
+import Copy from "lucide-svelte/icons/copy";
+import FilePen from "lucide-svelte/icons/file-pen";
+import FilePlus from "lucide-svelte/icons/file-plus";
+import FolderOpen from "lucide-svelte/icons/folder-open";
+import FolderPlus from "lucide-svelte/icons/folder-plus";
+import FolderSearch from "lucide-svelte/icons/folder-search";
+import Trash2 from "lucide-svelte/icons/trash-2";
 import { _ } from "svelte-i18n";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import type { FileEntry } from "$lib/types/api";

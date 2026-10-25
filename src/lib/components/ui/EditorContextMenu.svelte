@@ -1,20 +1,18 @@
 <script lang="ts">
 import { openUrl } from "@tauri-apps/plugin-opener";
-import {
-  ArrowUpDown,
-  BookPlus,
-  BookText,
-  CaseSensitive,
-  ClipboardCopy,
-  ClipboardPaste,
-  List,
-  Rotate3d,
-  Scissors,
-  Search,
-  Sparkles,
-  TextAlignStart,
-  WandSparkles,
-} from "lucide-svelte";
+import ArrowUpDown from "lucide-svelte/icons/arrow-up-down";
+import BookPlus from "lucide-svelte/icons/book-plus";
+import BookText from "lucide-svelte/icons/book-text";
+import CaseSensitive from "lucide-svelte/icons/case-sensitive";
+import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
+import ClipboardPaste from "lucide-svelte/icons/clipboard-paste";
+import List from "lucide-svelte/icons/list";
+import Rotate3d from "lucide-svelte/icons/rotate-3d";
+import Scissors from "lucide-svelte/icons/scissors";
+import Search from "lucide-svelte/icons/search";
+import Sparkles from "lucide-svelte/icons/sparkles";
+import TextAlignStart from "lucide-svelte/icons/text-align-start";
+import WandSparkles from "lucide-svelte/icons/wand-sparkles";
 import { untrack } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 import { _ } from "svelte-i18n";

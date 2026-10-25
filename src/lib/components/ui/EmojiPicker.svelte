@@ -1,5 +1,5 @@
 <script lang="ts">
-import { SmilePlus } from "lucide-svelte";
+import SmilePlus from "lucide-svelte/icons/smile-plus";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

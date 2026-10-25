@@ -1,5 +1,7 @@
 <script lang="ts">
-import { ArrowLeft, Search, X } from "lucide-svelte";
+import ArrowLeft from "lucide-svelte/icons/arrow-left";
+import Search from "lucide-svelte/icons/search";
+import X from "lucide-svelte/icons/x";
 import type { Snippet } from "svelte";
 import { _ } from "svelte-i18n";
 import Input from "$lib/components/ui/Input.svelte";
@@ -17,7 +19,7 @@ let {
   extraActions,
 }: {
   title: string;
-  icon: typeof import("lucide-svelte").X;
+  icon: typeof import("lucide-svelte/icons/x").default;
   searchValue: string;
   searchPlaceholder?: string;
   inputRef?: HTMLInputElement;

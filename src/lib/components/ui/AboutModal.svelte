@@ -2,7 +2,9 @@
 import { openPath } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
-import { ExternalLink, LoaderCircle, RefreshCw } from "lucide-svelte";
+import ExternalLink from "lucide-svelte/icons/external-link";
+import LoaderCircle from "lucide-svelte/icons/loader-circle";
+import RefreshCw from "lucide-svelte/icons/refresh-cw";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";

@@ -1,4 +1,8 @@
-import { Eraser, List, TextAlignStart, Type, WrapText } from "lucide-svelte";
+import Eraser from "lucide-svelte/icons/eraser";
+import List from "lucide-svelte/icons/list";
+import TextAlignStart from "lucide-svelte/icons/text-align-start";
+import Type from "lucide-svelte/icons/type";
+import WrapText from "lucide-svelte/icons/wrap-text";
 import type { TextOperation } from "./types";
 
 /**

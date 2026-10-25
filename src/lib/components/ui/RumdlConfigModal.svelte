@@ -1,5 +1,7 @@
 <script lang="ts">
-import { ArrowLeft, Settings2, X } from "lucide-svelte";
+import ArrowLeft from "lucide-svelte/icons/arrow-left";
+import Settings2 from "lucide-svelte/icons/settings-2";
+import X from "lucide-svelte/icons/x";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";

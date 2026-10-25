@@ -1,5 +1,7 @@
 <script lang="ts">
-import { ChevronDown, Menu, Plus } from "lucide-svelte";
+import ChevronDown from "lucide-svelte/icons/chevron-down";
+import Menu from "lucide-svelte/icons/menu";
+import Plus from "lucide-svelte/icons/plus";
 import { onDestroy, onMount, tick } from "svelte";
 import { flip } from "svelte/animate";
 import { fade } from "svelte/transition";

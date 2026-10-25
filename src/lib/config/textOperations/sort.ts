@@ -1,4 +1,8 @@
-import { ArrowDown01, ArrowDown10, ArrowDownAZ, ArrowDownZA, FunnelX } from "lucide-svelte";
+import ArrowDown01 from "lucide-svelte/icons/arrow-down-0-1";
+import ArrowDown10 from "lucide-svelte/icons/arrow-down-1-0";
+import ArrowDownAZ from "lucide-svelte/icons/arrow-down-a-z";
+import ArrowDownZA from "lucide-svelte/icons/arrow-down-z-a";
+import FunnelX from "lucide-svelte/icons/funnel-x";
 import type { TextOperation } from "./types";
 
 /**

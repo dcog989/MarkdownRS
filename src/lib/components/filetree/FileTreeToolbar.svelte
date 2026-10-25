@@ -1,5 +1,12 @@
 <script lang="ts">
-import { Eye, EyeOff, FileText, FolderTree, FoldVertical, Lock, LockOpen, RefreshCw } from "lucide-svelte";
+import Eye from "lucide-svelte/icons/eye";
+import EyeOff from "lucide-svelte/icons/eye-off";
+import FileText from "lucide-svelte/icons/file-text";
+import FoldVertical from "lucide-svelte/icons/fold-vertical";
+import FolderTree from "lucide-svelte/icons/folder-tree";
+import Lock from "lucide-svelte/icons/lock";
+import LockOpen from "lucide-svelte/icons/lock-open";
+import RefreshCw from "lucide-svelte/icons/refresh-cw";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import {

@@ -1,5 +1,8 @@
 <script lang="ts">
-import { ChevronDown, ChevronRight, FolderTree, Menu } from "lucide-svelte";
+import ChevronDown from "lucide-svelte/icons/chevron-down";
+import ChevronRight from "lucide-svelte/icons/chevron-right";
+import FolderTree from "lucide-svelte/icons/folder-tree";
+import Menu from "lucide-svelte/icons/menu";
 import { onDestroy } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

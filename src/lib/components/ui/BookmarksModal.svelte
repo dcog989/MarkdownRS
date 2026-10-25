@@ -1,6 +1,11 @@
 <script lang="ts">
 import { open } from "@tauri-apps/plugin-dialog";
-import { ArrowDown, ArrowUp, Bookmark, Pen, Plus, Trash2 } from "lucide-svelte";
+import ArrowDown from "lucide-svelte/icons/arrow-down";
+import ArrowUp from "lucide-svelte/icons/arrow-up";
+import Bookmark from "lucide-svelte/icons/bookmark";
+import Pen from "lucide-svelte/icons/pen";
+import Plus from "lucide-svelte/icons/plus";
+import Trash2 from "lucide-svelte/icons/trash-2";
 import { slide } from "svelte/transition";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

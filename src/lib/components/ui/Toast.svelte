@@ -1,5 +1,9 @@
 <script lang="ts">
-import { CircleAlert, CircleCheckBig, CircleX, Info, X } from "lucide-svelte";
+import CircleAlert from "lucide-svelte/icons/circle-alert";
+import CircleCheckBig from "lucide-svelte/icons/circle-check-big";
+import CircleX from "lucide-svelte/icons/circle-x";
+import Info from "lucide-svelte/icons/info";
+import X from "lucide-svelte/icons/x";
 import { onMount } from "svelte";
 import { SvelteSet } from "svelte/reactivity";
 import { fly } from "svelte/transition";

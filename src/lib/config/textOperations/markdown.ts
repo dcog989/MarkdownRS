@@ -1,4 +1,12 @@
-import { Bold, Code, Hash, Italic, Link, List, Strikethrough, TextAlignStart, Type } from "lucide-svelte";
+import Bold from "lucide-svelte/icons/bold";
+import Code from "lucide-svelte/icons/code";
+import Hash from "lucide-svelte/icons/hash";
+import Italic from "lucide-svelte/icons/italic";
+import Link from "lucide-svelte/icons/link";
+import List from "lucide-svelte/icons/list";
+import Strikethrough from "lucide-svelte/icons/strikethrough";
+import TextAlignStart from "lucide-svelte/icons/text-align-start";
+import Type from "lucide-svelte/icons/type";
 import type { TextOperation } from "./types";
 
 /**

@@ -1,16 +1,14 @@
 <script lang="ts">
-import {
-  ArrowUpToLine,
-  ChevronRight,
-  File,
-  FileCode,
-  FileImage,
-  FileJson,
-  FileText,
-  Folder,
-  FolderOpen,
-  LoaderCircle,
-} from "lucide-svelte";
+import ArrowUpToLine from "lucide-svelte/icons/arrow-up-to-line";
+import ChevronRight from "lucide-svelte/icons/chevron-right";
+import File from "lucide-svelte/icons/file";
+import FileCode from "lucide-svelte/icons/file-code";
+import FileImage from "lucide-svelte/icons/file-image";
+import FileJson from "lucide-svelte/icons/file-json";
+import FileText from "lucide-svelte/icons/file-text";
+import Folder from "lucide-svelte/icons/folder";
+import FolderOpen from "lucide-svelte/icons/folder-open";
+import LoaderCircle from "lucide-svelte/icons/loader-circle";
 import { onMount, tick } from "svelte";
 import { _ } from "svelte-i18n";
 import {

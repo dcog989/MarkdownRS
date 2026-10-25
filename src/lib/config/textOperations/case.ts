@@ -1,4 +1,4 @@
-import { Type } from "lucide-svelte";
+import Type from "lucide-svelte/icons/type";
 import type { TextOperation } from "./types";
 
 /**

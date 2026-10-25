@@ -1,4 +1,8 @@
-import { ArrowDownAZ, CaseSensitive, Hash, Trash2, Type } from "lucide-svelte";
+import ArrowDownAZ from "lucide-svelte/icons/arrow-down-a-z";
+import CaseSensitive from "lucide-svelte/icons/case-sensitive";
+import Hash from "lucide-svelte/icons/hash";
+import Trash2 from "lucide-svelte/icons/trash-2";
+import Type from "lucide-svelte/icons/type";
 import type { OperationCategory } from "./types";
 
 /**

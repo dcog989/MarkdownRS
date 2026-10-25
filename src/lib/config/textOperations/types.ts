@@ -1,4 +1,4 @@
-import type { ArrowDownAZ } from "lucide-svelte";
+import type ArrowDownAZ from "lucide-svelte/icons/arrow-down-a-z";
 
 /**
  * Lucide icon component type used across operation and category definitions.

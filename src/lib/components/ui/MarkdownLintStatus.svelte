@@ -1,5 +1,9 @@
 <script lang="ts">
-import { CircleAlert, CircleCheck, ClipboardCopy, Info, TriangleAlert } from "lucide-svelte";
+import CircleAlert from "lucide-svelte/icons/circle-alert";
+import CircleCheck from "lucide-svelte/icons/circle-check";
+import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
+import Info from "lucide-svelte/icons/info";
+import TriangleAlert from "lucide-svelte/icons/triangle-alert";
 import { _ } from "svelte-i18n";
 import { portal } from "$lib/actions/portal";
 import { tooltip } from "$lib/actions/tooltip";

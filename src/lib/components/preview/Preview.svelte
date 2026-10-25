@@ -1,5 +1,8 @@
 <script lang="ts">
-import { FileText, FlipHorizontal, FlipVertical, X } from "lucide-svelte";
+import FileText from "lucide-svelte/icons/file-text";
+import FlipHorizontal from "lucide-svelte/icons/flip-horizontal";
+import FlipVertical from "lucide-svelte/icons/flip-vertical";
+import X from "lucide-svelte/icons/x";
 import { onDestroy, tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";

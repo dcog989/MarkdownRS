@@ -1,6 +1,8 @@
 <script lang="ts">
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { ArrowLeft, Database, X } from "lucide-svelte";
+import ArrowLeft from "lucide-svelte/icons/arrow-left";
+import Database from "lucide-svelte/icons/database";
+import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";

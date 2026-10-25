@@ -1,5 +1,9 @@
 <script lang="ts">
-import { ClipboardCopy, Eye, EyeOff, Space, TextWrap } from "lucide-svelte";
+import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
+import Eye from "lucide-svelte/icons/eye";
+import EyeOff from "lucide-svelte/icons/eye-off";
+import Space from "lucide-svelte/icons/space";
+import TextWrap from "lucide-svelte/icons/text-wrap";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import MarkdownLintStatus from "$lib/components/ui/MarkdownLintStatus.svelte";

@@ -1,5 +1,9 @@
 <script lang="ts">
-import { ArrowDown, ArrowUp, Clock, History, X } from "lucide-svelte";
+import ArrowDown from "lucide-svelte/icons/arrow-down";
+import ArrowUp from "lucide-svelte/icons/arrow-up";
+import Clock from "lucide-svelte/icons/clock";
+import History from "lucide-svelte/icons/history";
+import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";

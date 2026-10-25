@@ -1,5 +1,12 @@
 <script lang="ts">
-import { Bookmark, Eye, EyeOff, Feather, FolderTree, History, Settings, Zap } from "lucide-svelte";
+import Bookmark from "lucide-svelte/icons/bookmark";
+import Eye from "lucide-svelte/icons/eye";
+import EyeOff from "lucide-svelte/icons/eye-off";
+import Feather from "lucide-svelte/icons/feather";
+import FolderTree from "lucide-svelte/icons/folder-tree";
+import History from "lucide-svelte/icons/history";
+import Settings from "lucide-svelte/icons/settings";
+import Zap from "lucide-svelte/icons/zap";
 import { _ } from "svelte-i18n";
 import { translate } from "$lib/i18n";
 import { toggleWriterMode } from "$lib/stores/appState.svelte";
