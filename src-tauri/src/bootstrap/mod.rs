@@ -1,4 +1,5 @@
 pub mod database;
+pub mod desktop;
 pub mod logging;
 pub mod paths;
 pub mod state;
@@ -29,6 +30,7 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         paths.cache_dir.clone(),
     ]);
     logging::log_runtime_info(&paths);
+    desktop::install_appimage_integration();
     themes::seed_default_themes(paths.themes_dir);
     paths::ensure_dictionary_file(&paths.dict_path);
 
