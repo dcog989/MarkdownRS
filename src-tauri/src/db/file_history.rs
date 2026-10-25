@@ -22,6 +22,15 @@ impl FileHistoryStore {
 
     pub fn seed_file_history_from_session(&self) -> Result<()> {
         let conn = lock_conn!(self);
+
+        // One-time backfill for databases that predate file history. Once any
+        // entry exists the live app owns the list, and re-seeding would also
+        // resurrect paths the user cleared.
+        let has_history: bool = conn.query_row("SELECT EXISTS(SELECT 1 FROM file_history)", [], |row| row.get(0))?;
+        if has_history {
+            return Ok(());
+        }
+
         let now = now_timestamp();
 
         conn.execute(
