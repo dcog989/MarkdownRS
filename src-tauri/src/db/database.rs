@@ -6,6 +6,11 @@ use std::sync::{Arc, Mutex};
 use super::migrations;
 use super::{BookmarkStore, FileHistoryStore, SessionStore};
 
+/// Cap on the space the WAL keeps on disk. The default (no limit) reuses the
+/// file at whatever size it last grew to, so one big save leaves the -wal that
+/// large for the rest of the session.
+const WAL_SIZE_LIMIT_BYTES: i64 = 16 * 1024 * 1024;
+
 #[derive(Clone)]
 pub struct Database {
     conn: Arc<Mutex<Connection>>,
@@ -16,11 +21,12 @@ impl Database {
         log::info!("Initializing database at {:?}", db_path);
 
         let mut conn = Connection::open(&db_path)?;
-        conn.execute_batch(
+        conn.execute_batch(&format!(
             "PRAGMA journal_mode = WAL;
              PRAGMA synchronous = NORMAL;
-             PRAGMA busy_timeout = 5000;",
-        )?;
+             PRAGMA busy_timeout = 5000;
+             PRAGMA journal_size_limit = {WAL_SIZE_LIMIT_BYTES};"
+        ))?;
 
         // auto_vacuum only changes the on-disk layout when the database is
         // vacuumed; a database created before the pragma was enabled silently
