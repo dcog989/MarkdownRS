@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.66.1 - 2026-10-25
+
+#### Bug Fixes
+
+- (be144f7) set auto_vacuum before enabling WAL - dcog989
+
+- (b4885a2) install mold on ubuntu runners - dcog989
+
+- (6a95569) drop the stale bookmark when a rename reuses its path - dcog989
+
+- (e831d2b) cap the WAL file at 16 MiB - dcog989
+
+- (4194b68) reclaim freelist pages at startup instead of never - dcog989
+
+#### Performance Improvements
+
+- (679c2a1) skip the file history backfill once history is non-empty - dcog989
+
+#### Refactoring
+
+- (e598849) define the file history prune SQL once - dcog989
+
+- - -
+
 ## v1.66.0 - 2026-10-25
 
 #### Features
