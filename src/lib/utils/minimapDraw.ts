@@ -1,6 +1,6 @@
 import type { MinimapColors } from "./minimapColors";
 
-const VIEWPORT_UNHOVERED_DIM = 0.7;
+const VIEWPORT_UNHOVERED_DIM = 0.8;
 /** Bar alphas are too low for thin glyphs: outside-viewport text needs to stay
  *  readable, it is only a hint of context, not a dimmed bar. */
 const TEXT_OUTSIDE_VIEWPORT_ALPHA = 0.7;
@@ -117,6 +117,7 @@ export function drawTextRun(
   // Sub-pixel glyph coverage eats most of a low alpha; the viewport is full
   // strength and everything else still needs enough to read.
   ctx.fillStyle = color;
-  ctx.globalAlpha = inViewport ? 1 : TEXT_OUTSIDE_VIEWPORT_ALPHA;
+  const viewportAlpha = inViewport ? 1 : TEXT_OUTSIDE_VIEWPORT_ALPHA;
+  ctx.globalAlpha = hovered ? viewportAlpha : viewportAlpha * VIEWPORT_UNHOVERED_DIM;
   ctx.fillText(text, x, baselineY);
 }
