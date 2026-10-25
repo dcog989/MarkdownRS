@@ -62,26 +62,25 @@ impl Database {
         FileHistoryStore::new(Arc::clone(&self.conn))
     }
 
-    /// Reclaims every page on the freelist. `auto_vacuum=INCREMENTAL` only moves
-    /// freed pages to the freelist; without this the file never shrinks below
-    /// its historical high-water mark.
+    /// Reclaims every page on the freelist, then folds the result into the main
+    /// file.
+    ///
+    /// `auto_vacuum=INCREMENTAL` only moves freed pages to the freelist, and the
+    /// resulting truncation lives in the WAL until a checkpoint copies it over.
+    /// Nothing checkpoints on quit (Tauri exits via `process::exit`), so a
+    /// previous run can leave a pending truncation behind even with no free
+    /// pages left.
     pub fn incremental_vacuum(&self) -> Result<()> {
         let conn = lock_conn!(self);
         let free_pages: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
-        if free_pages == 0 {
-            return Ok(());
-        }
-        log::info!("Reclaiming {} free pages from the session database", free_pages);
-        {
+        if free_pages > 0 {
+            log::info!("Reclaiming {} free pages from the session database", free_pages);
             // The pragma yields one row per reclaimed page; `execute`/`execute_batch`
             // step only once, so they would free a single page and stop.
             let mut stmt = conn.prepare("PRAGMA incremental_vacuum")?;
             let mut rows = stmt.query([])?;
             while rows.next()?.is_some() {}
         }
-        // The truncation lives in the WAL until a checkpoint copies it into the
-        // main file. Nothing checkpoints on quit (Tauri exits via process::exit),
-        // so fold it in now or the file keeps its old size indefinitely.
         conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
         Ok(())
     }
@@ -118,5 +117,12 @@ mod tests {
         db.incremental_vacuum().unwrap();
 
         assert_eq!(freelist_count(&db), 0);
+        // Without the trailing checkpoint the truncation would sit in the WAL
+        // and the file would keep its pre-delete size.
+        let file_len = std::fs::metadata(dir.join("vacuum.db")).unwrap().len();
+        assert!(
+            file_len < 1 << 20,
+            "truncation still pending in the WAL: {file_len} bytes"
+        );
     }
 }
