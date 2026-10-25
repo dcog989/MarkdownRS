@@ -1,6 +1,6 @@
 # MarkdownRS
 
-A Markdown editor that focuses performance and a clean, minimal UI while still being fully featured for technical and general users.
+A Markdown editor that focuses performance and a clean, minimal UI that still provides a full feature set for technical and general users.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
@@ -10,7 +10,7 @@ The only Markdown editor you need? Many people are saying so.
 
 ## Features
 
-### Editing & Authoring
+### Editing
 
 - Markdown Flavors: GFM (GitHub Flavored Markdown) and CommonMark.
 - Smart Formatting: Auto-Markdown formatting for standards-compliant, consistent output.
@@ -19,12 +19,12 @@ The only Markdown editor you need? Many people are saying so.
 - Optional color swatches prefixed to HEX, RGB, HSL, etc.
 - Find & Replace: Across all open documents.
 
-### Performance & Reliability
+### Performance
 
-- Fast, Low Resource Use: Tauri / Rust backend and Svelte / TypeScript frontend.
+- Fast, Low Resource Use: Tauri / Rust / SQLite backend; Svelte / CodeMirror / TypeScript frontend.
 - Auto-Save: Session persistence with hot-exit support.
 
-### Preview & Rendering
+### Preview
 
 - Live Preview: Split view with smooth, bi-directional synchronized scrolling.
 - Diagrams (Mermaid): Render flowcharts, sequence diagrams, and more with Mermaid.js.
@@ -37,9 +37,9 @@ The only Markdown editor you need? Many people are saying so.
 
 Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
 
-### Diagrams (Mermaid)
+### Diagrams
 
-Flowcharts, sequence diagrams, and other diagrams render in the preview from ```` ```mermaid ```` fenced blocks. Mermaid is lazy-loaded only when a diagram is present and rendered diagrams are cached by content hash, so unchanged diagrams are never re-rendered.
+Flowcharts, sequence diagrams, and other diagrams render in the preview from ```` ```mermaid ```` fenced blocks.
 
 ### Documents & Organisation
 
@@ -58,7 +58,7 @@ Flowcharts, sequence diagrams, and other diagrams render in the preview from ```
 
 - Export documents to PDF, PNG, WebP, or HTML.
 
-### Markdown Linting / Formatting
+### Markdown Formatting
 
 The embedded [rumdl](https://github.com/rvben/rumdl/) lints and formats Markdown content; rules can be configured with the built-in editor.
 
@@ -74,55 +74,26 @@ OxfordComma = false      # disable a rule
 LongSentences = true     # force a rule on
 ```
 
+---
+
 ## Installation
 
-Prebuilt Linux and Windows binaries are available on the [GitHub Releases](https://github.com/dcog989/MarkdownRS/releases/latest) page.
+Download relevant package from [GitHub Releases](https://github.com/dcog989/MarkdownRS/releases/latest).
 
-### Linux
+| Platform | Format | Install |
+|----------|--------|---------|
+| Linux | AppImage | `chmod +x MarkdownRS_*.AppImage && ./MarkdownRS_*.AppImage` |
+| Debian / Ubuntu | `.deb` | `sudo apt install ./MarkdownRS_*.deb` |
+| Fedora / RHEL | `.rpm` | `sudo dnf install ./MarkdownRS-*.rpm` |
+| Arch / CachyOS | `.pkg.tar.zst` | `sudo pacman -U MarkdownRS-*.pkg.tar.zst` |
+| Arch / CachyOS | `PKGBUILD` (local build) | `bun install && bun run package` |
+| Windows | NSIS `.exe` | Download and run the installer from the [latest release](https://github.com/dcog989/MarkdownRS/releases/latest) |
 
-#### AppImage
-
-```sh
-chmod +x MarkdownRS_*.AppImage
-./MarkdownRS_*.AppImage
-```
-
-To add it to application menu and file associations, use [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher) or [GearLever](https://github.com/mijorus/gearlever).
-
-#### Debian / Ubuntu
+The AppImage installs nothing: the first run adds itself to the application menu, with a Markdown/`.txt` handler. Move the file anywhere persistent before the first run; later runs repoint the menu entry if it moves. To make it the default Markdown handler:
 
 ```sh
-sudo apt install ./MarkdownRS_*.deb
+xdg-mime default markdownrs.desktop text/markdown
 ```
-
-#### Fedora / RHEL
-
-```sh
-sudo dnf install ./MarkdownRS-*.rpm
-```
-
-#### Arch / CachyOS
-
-Install the prebuilt package from the latest release:
-
-```sh
-sudo pacman -U MarkdownRS-*.pkg.tar.zst
-```
-
-Or build and install locally from the included `PKGBUILD`:
-
-```sh
-bun install
-bun run package
-```
-
-### Windows
-
-Download and run the NSIS `.exe` installer from the [latest release](https://github.com/dcog989/MarkdownRS/releases/latest).
-
-### Build from Source
-
-See [Development](#development). Required: [Rust](https://rustup.rs/), [bun](https://bun.com/), and the platform [Tauri prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ---
 
@@ -144,6 +115,8 @@ See [Development](#development). Required: [Rust](https://rustup.rs/), [bun](htt
 - [Vitest](https://vitest.dev/)
 
 ### Development
+
+Requires: [Rust](https://rustup.rs/), [bun](https://bun.com/), [Tauri](https://v2.tauri.app/start/prerequisites/).
 
 ```sh
 bun install          # Install dependencies
