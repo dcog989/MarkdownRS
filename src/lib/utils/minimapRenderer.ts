@@ -23,6 +23,8 @@ import {
   minimapLineHeight,
 } from "./minimapLayout";
 
+const VIEWPORT_BAND_ALPHA = 0.15;
+
 export function renderMinimap(
   view: EditorView | null,
   canvas: HTMLCanvasElement | null | undefined,
@@ -182,6 +184,17 @@ export function renderMinimap(
     }
 
     ctx.restore();
+  }
+
+  // Tint the viewport so it reads apart from the dimmed lines outside it; uses
+  // the fg color, so dark themes lighten and light themes darken the band.
+  const bandTop = Math.max(0, viewportTop);
+  const bandBottom = Math.min(contentH, viewportBottom);
+  if (bandBottom > bandTop) {
+    ctx.globalAlpha = VIEWPORT_BAND_ALPHA;
+    ctx.fillStyle = colors.text;
+    ctx.fillRect(0, bandTop, MINIMAP_WIDTH, bandBottom - bandTop);
+    ctx.globalAlpha = 1;
   }
 
   return layout;
