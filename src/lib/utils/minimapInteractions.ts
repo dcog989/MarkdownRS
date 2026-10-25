@@ -6,14 +6,14 @@ export function handleTrackMouseDown(
   view: EditorView,
   canvas: HTMLCanvasElement,
   layout: MinimapLayout,
-): void {
+): (() => void) | null {
   e.preventDefault();
 
   const sd = view.scrollDOM;
   const doc = view.state.doc;
   const editorView = view;
   const canvasRect = canvas.getBoundingClientRect();
-  if (canvasRect.height === 0) return;
+  if (canvasRect.height === 0) return null;
 
   // Keep the grabbed point of the viewport rect under the cursor: record where
   // the pointer sits inside the rect (in minimap coordinates) and preserve it
@@ -63,22 +63,12 @@ export function handleTrackMouseDown(
   document.addEventListener("mousemove", onMouseMove);
   document.addEventListener("mouseup", onMouseUp);
   document.body.style.userSelect = "none";
-}
 
-export function handleWheel(e: WheelEvent, view: EditorView): void {
-  e.preventDefault();
-
-  let { deltaY, deltaX } = e;
-
-  if (e.deltaMode === WheelEvent.DOM_DELTA_LINE) {
-    const lineH = view.defaultLineHeight;
-    deltaY *= lineH;
-    deltaX *= lineH;
-  } else if (e.deltaMode === WheelEvent.DOM_DELTA_PAGE) {
-    const pageH = view.scrollDOM.clientHeight;
-    deltaY *= pageH;
-    deltaX *= pageH;
-  }
-
-  view.scrollDOM.scrollBy({ top: deltaY, left: deltaX });
+  // Returned so the caller can release the drag on unmount; mouseup only covers
+  // the normal path.
+  return () => {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+    document.body.style.userSelect = "";
+  };
 }

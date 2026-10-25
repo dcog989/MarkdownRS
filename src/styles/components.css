@@ -493,13 +493,11 @@ select {
 }
 
 /* Scrollbar Styling */
+
+/* Native scrollbars: panels that keep them (file tree, menus, popovers). */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: var(--border-primary) transparent;
-}
-
-.scrollbar-track {
-  /* Positioning anchor for CustomScrollbar.svelte's overlay track+thumb. */
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -512,12 +510,54 @@ select {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: var(--border-primary);
+  background-color: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--border-secondary);
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+/* Overlay scrollbar (CustomScrollbar.svelte) */
+.scrollbar-track {
+  position: absolute;
+  top: 0.125rem;
+  right: 0;
+  bottom: 0.125rem;
+  z-index: 60;
+  display: flex;
+  width: var(--scrollbar-track-width);
+  justify-content: center;
+  background: transparent;
+  transition: opacity var(--transition-normal) ease;
+}
+
+.scrollbar-track[data-visible="false"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scrollbar-thumb {
+  position: absolute;
+  top: 0;
+  width: var(--scrollbar-thumb-width);
+  cursor: pointer;
+  border-radius: 9999px;
+  background-color: var(--scrollbar-thumb);
+  transition:
+    width var(--transition-normal) ease-in-out,
+    background-color var(--transition-normal) ease;
+}
+
+.scrollbar-track:hover .scrollbar-thumb,
+.scrollbar-thumb:hover {
+  width: var(--scrollbar-thumb-hover-width);
+  background-color: var(--scrollbar-thumb-hover);
+}
+
+.scrollbar-thumb[data-dragging="true"] {
+  width: var(--scrollbar-thumb-hover-width);
+  background-color: var(--accent-primary);
 }
 
 .tab-scroll-container {

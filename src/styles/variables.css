@@ -4,6 +4,13 @@
   /* Editor layout */
   --minimap-width: 112px;
 
+  /* Scrollbars (native and overlay share these) */
+  --scrollbar-track-width: 1rem;
+  --scrollbar-thumb-width: 0.25rem;
+  --scrollbar-thumb-hover-width: 0.75rem;
+  --scrollbar-thumb: var(--border-primary);
+  --scrollbar-thumb-hover: var(--border-secondary);
+
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
   --color-brand-file: #ecbe65;

@@ -1,9 +1,10 @@
 <script lang="ts">
 import type { EditorView } from "@codemirror/view";
-import { handleTrackMouseDown, handleWheel } from "$lib/utils/minimapInteractions";
+import { handleTrackMouseDown } from "$lib/utils/minimapInteractions";
 import type { MinimapLayout } from "$lib/utils/minimapLayout";
 import { renderMinimap as renderMinimapCanvas } from "$lib/utils/minimapRenderer";
 import { debounce } from "$lib/utils/timing";
+import { scrollByWheel } from "$lib/utils/wheelScroll";
 
 interface Props {
   view: EditorView | null;
@@ -35,14 +36,17 @@ function scheduleRender() {
   scheduleRafId = requestAnimationFrame(renderMinimap);
 }
 
+let cancelDrag: (() => void) | null = null;
+
 function onTrackMouseDown(e: MouseEvent) {
   if (!view || !canvasRef || !minimapLayout) return;
-  handleTrackMouseDown(e, view, canvasRef, minimapLayout);
+  cancelDrag?.();
+  cancelDrag = handleTrackMouseDown(e, view, canvasRef, minimapLayout);
 }
 
 function onWheel(e: WheelEvent) {
   if (!view) return;
-  handleWheel(e, view);
+  scrollByWheel(e, view.scrollDOM, view.defaultLineHeight);
 }
 
 function onScroll() {
@@ -102,6 +106,8 @@ $effect(() => {
     scrollDOM.removeEventListener("scroll", onScroll);
     cancelAnimationFrame(themeRafId);
     cancelAnimationFrame(scheduleRafId);
+    cancelDrag?.();
+    cancelDrag = null;
     debouncedContentRender.clear();
   };
 });
@@ -140,7 +146,7 @@ $effect(() => {
   transition: background 150ms ease;
 }
 .minimap-track-hover::after {
-  background: rgba(255, 255, 255, 0.03);
+  background: color-mix(in srgb, var(--editor-fg) 3%, transparent);
 }
 .minimap-canvas {
   display: block;

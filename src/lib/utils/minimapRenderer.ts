@@ -57,15 +57,21 @@ export function renderMinimap(
     linesPerBar: compressed ? totalLines / totalBars : totalLines,
   };
 
-  canvas.width = width * dpr;
-  canvas.height = contentH * dpr;
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${contentH}px`;
+  // Reassigning the backing store reallocates it, so only resize when the box
+  // actually changed: scroll frames redraw at the same size.
+  const pixelWidth = Math.round(width * dpr);
+  const pixelHeight = Math.round(contentH * dpr);
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${contentH}px`;
+  }
 
   const ctx = canvas.getContext("2d");
   if (!ctx) return layout;
 
-  ctx.scale(dpr, dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, contentH);
 
   ctx.fillStyle = colors.bg;

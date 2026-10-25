@@ -140,7 +140,9 @@ function onResizeMouseDown(e: MouseEvent) {
               {#if appContext.app.writerMode}
                 <div
                   class="absolute top-2 pr-3 z-20"
-                  style:right={appContext.settings.showMinimap ? "var(--minimap-width)" : "16px"}
+                  style:right={appContext.settings.showMinimap
+                    ? "var(--minimap-width)"
+                    : "var(--scrollbar-track-width)"}
                 >
                   <button
                     type="button"

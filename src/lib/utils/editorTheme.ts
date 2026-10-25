@@ -17,8 +17,8 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string) {
     ".cm-content": { fontFamily },
     ".cm-scroller::-webkit-scrollbar": { width: "0", height: "8px" },
     ".cm-scroller::-webkit-scrollbar-track": { background: "transparent" },
-    ".cm-scroller::-webkit-scrollbar-thumb": { background: "var(--editor-fg-secondary)", borderRadius: "4px" },
-    ".cm-scroller::-webkit-scrollbar-thumb:hover": { background: "var(--editor-fg)" },
+    ".cm-scroller::-webkit-scrollbar-thumb": { background: "var(--scrollbar-thumb)", borderRadius: "4px" },
+    ".cm-scroller::-webkit-scrollbar-thumb:hover": { background: "var(--scrollbar-thumb-hover)" },
     // position:relative overrides CM6's inline position:sticky on .cm-gutters.
     // Sticky creates a compositor layer that freezes during heavy main-thread frames.
     // Relative keeps the gutter in the normal flow so it repaints every frame.
