@@ -3,6 +3,52 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.66.0 - 2026-10-25
+
+#### Features
+
+- (21191dc) render text glyphs instead of bars - dcog989
+
+- (b6dda6f) add Toggle File Type command for shortcut assignment - dcog989
+
+- (94f2e25) show the bookmark icon on bookmarked document tabs - dcog989
+
+#### Bug Fixes
+
+- (051d63c) dim glyph text when the minimap is not hovered - dcog989
+
+- (7ac972c) reserve the scrollbar strip instead of overlaying text - dcog989
+
+- (82cbc50) keep minimap and scrollbar state in sync and share scrollbar styling - dcog989
+
+- (6c56742) tint the viewport band so it separates from the rest of the track - dcog989
+
+- (5710c60) dim viewport line band, remove ineffective overlay - dcog989
+
+- (1bd0f3d) import syntaxTree in markdownCopy - dcog989
+
+- (018ea4e) keep editor scroll position when restoring focus on close - dcog989
+
+- (1e2175b) copy only the selected text in rendered mode - dcog989
+
+- (195dbb3) paint fenced code from fence state instead of token spans - dcog989
+
+- (9f5aba6) draw URL spans with --editor-url instead of link color - dcog989
+
+- (ada773d) remove redundant ternary in status bar and tab dropdown - dcog989
+
+- (6b2d5a0) restore previous focus on close instead of blurring - dcog989
+
+- (b3223bd) clear peek strip hover state when the cursor leaves the window - dcog989
+
+- (94aaa05) tab dropdown consistent styling, dim tree expand chevron - dcog989
+
+#### Performance Improvements
+
+- (d94e1c0) cut dev startup cost - dcog989
+
+- - -
+
 ## v1.65.1 - 2026-10-20
 
 #### Bug Fixes
