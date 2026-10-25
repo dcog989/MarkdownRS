@@ -46,7 +46,7 @@
     "dompurify": "^3.4.17",
     "emojilib": "^4.0.3",
     "highlight.js": "^11.12.0",
-    "katex": "^0.19.0",
+    "katex": "^0.19.1",
     "lucide-svelte": "^1.0.1",
     "mermaid": "^12.2.0",
     "modern-screenshot": "^4.7.0",
@@ -54,7 +54,7 @@
     "text-case": "^1.2.11"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.2",
+    "@biomejs/biome": "^2.6.3",
     "@sveltejs/adapter-static": "^4.0.0",
     "@sveltejs/kit": "^3.1.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
@@ -66,14 +66,13 @@
     "jsdom": "^30.1.3",
     "lefthook": "^2.2.2",
     "svelte": "^5.57.2",
-    "svelte-check": "4.7.6",
+    "svelte-check": "4.7.7",
     "typescript": "6.0.3",
     "vite": "^8.3.5",
     "vite-plugin-singlefile": "^2.3.4",
     "vitest": "^5.0.5"
   },
   "overrides": {
-    "svelte-check": "4.7.6",
     "typescript": "6.0.3"
   }
 }
