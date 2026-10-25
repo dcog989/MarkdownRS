@@ -72,11 +72,17 @@ impl Database {
             return Ok(());
         }
         log::info!("Reclaiming {} free pages from the session database", free_pages);
-        // The pragma yields one row per reclaimed page; `execute`/`execute_batch`
-        // step only once, so they would free a single page and stop.
-        let mut stmt = conn.prepare("PRAGMA incremental_vacuum")?;
-        let mut rows = stmt.query([])?;
-        while rows.next()?.is_some() {}
+        {
+            // The pragma yields one row per reclaimed page; `execute`/`execute_batch`
+            // step only once, so they would free a single page and stop.
+            let mut stmt = conn.prepare("PRAGMA incremental_vacuum")?;
+            let mut rows = stmt.query([])?;
+            while rows.next()?.is_some() {}
+        }
+        // The truncation lives in the WAL until a checkpoint copies it into the
+        // main file. Nothing checkpoints on quit (Tauri exits via process::exit),
+        // so fold it in now or the file keeps its old size indefinitely.
+        conn.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
         Ok(())
     }
 }
