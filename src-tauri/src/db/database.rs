@@ -21,34 +21,27 @@ impl Database {
         log::info!("Initializing database at {:?}", db_path);
 
         let mut conn = Connection::open(&db_path)?;
-        conn.execute_batch(&format!(
-            "PRAGMA journal_mode = WAL;
-             PRAGMA synchronous = NORMAL;
-             PRAGMA busy_timeout = 5000;
-             PRAGMA journal_size_limit = {WAL_SIZE_LIMIT_BYTES};"
-        ))?;
+        conn.execute_batch(
+            "PRAGMA synchronous = NORMAL;
+             PRAGMA busy_timeout = 5000;",
+        )?;
 
         // auto_vacuum only changes the on-disk layout when the database is
-        // vacuumed; a database created before the pragma was enabled silently
-        // keeps auto_vacuum=NONE and incremental_vacuum would reclaim nothing.
-        // Convert pre-existing databases once (fresh ones are created in
-        // INCREMENTAL mode before any tables, so they need no VACUUM).
+        // vacuumed, and the pragma is ignored once the database is in WAL mode.
+        // Set it first so a fresh file is created in INCREMENTAL mode; a
+        // pre-existing database only adopts it after one VACUUM.
         let auto_vacuum: i32 = conn.query_row("PRAGMA auto_vacuum", [], |row| row.get(0))?;
+        let page_count: i32 = conn.query_row("PRAGMA page_count", [], |row| row.get(0))?;
         conn.execute_batch("PRAGMA auto_vacuum = INCREMENTAL;")?;
-        if auto_vacuum == 0 {
-            let has_tables: bool = conn.query_row(
-                "SELECT EXISTS(
-                    SELECT 1 FROM sqlite_master
-                    WHERE type IN ('table','index','trigger') AND name NOT LIKE 'sqlite_%'
-                 )",
-                [],
-                |row| row.get(0),
-            )?;
-            if has_tables {
-                log::info!("Converting existing database to auto_vacuum=INCREMENTAL");
-                conn.execute_batch("VACUUM;")?;
-            }
+        if auto_vacuum == 0 && page_count > 0 {
+            log::info!("Converting existing database to auto_vacuum=INCREMENTAL");
+            conn.execute_batch("VACUUM;")?;
         }
+
+        conn.execute_batch(&format!(
+            "PRAGMA journal_mode = WAL;
+             PRAGMA journal_size_limit = {WAL_SIZE_LIMIT_BYTES};"
+        ))?;
 
         migrations::setup_schema(&mut conn)?;
 
