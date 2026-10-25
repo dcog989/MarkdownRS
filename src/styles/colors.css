@@ -23,6 +23,10 @@
   background-color: var(--surface-preview);
 }
 
+.bg-bg-editor {
+  background-color: var(--editor-bg);
+}
+
 .bg-bg-header {
   background-color: var(--surface-3);
 }
