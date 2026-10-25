@@ -68,6 +68,10 @@ $effect(() => {
   if (scrollDOM.firstElementChild) {
     resizeObserver.observe(scrollDOM.firstElementChild);
   }
+  // The track resizes with the editor pane and independently of its content.
+  if (trackRef) {
+    resizeObserver.observe(trackRef);
+  }
 
   scrollDOM.addEventListener("scroll", onScroll, { passive: true });
 
@@ -123,7 +127,7 @@ $effect(() => {
   right: 0;
   bottom: 0;
   z-index: 60;
-  width: 64px;
+  width: var(--minimap-width);
   overflow: hidden;
   background: var(--editor-bg);
 }
@@ -132,7 +136,7 @@ $effect(() => {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
   transition: background 150ms ease;
 }
 .minimap-track-hover::after {

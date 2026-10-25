@@ -1,6 +1,9 @@
 /* Global Color Palette & Variables - Three-Layer Architecture */
 
 :root {
+  /* Editor layout */
+  --minimap-width: 112px;
+
   /* Brand Bases */
   --color-brand-accent: #7c5a73;
   --color-brand-file: #ecbe65;

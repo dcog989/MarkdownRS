@@ -138,7 +138,10 @@ function onResizeMouseDown(e: MouseEvent) {
               style:flex={showPreview ? `0 0 ${appContext.settings.splitPercentage * 100}%` : "1 1 100%"}
             >
               {#if appContext.app.writerMode}
-                <div class="absolute top-2 pr-3 z-20" style:right={appContext.settings.showMinimap ? "64px" : "16px"}>
+                <div
+                  class="absolute top-2 pr-3 z-20"
+                  style:right={appContext.settings.showMinimap ? "var(--minimap-width)" : "16px"}
+                >
                   <button
                     type="button"
                     aria-label={$_("tabBar.menu")}

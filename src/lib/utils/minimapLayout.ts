@@ -1,9 +1,10 @@
-export const MINIMAP_WIDTH = 64;
 export const LINE_HEIGHT = 2;
 export const LINE_GAP = 1;
 export const MIN_LINE_HEIGHT = 1;
 export const CHARS_TO_PX = 0.75;
 export const COMPRESS_SPACING = 1;
+/** Rows shrink to fit the document, so glyphs keep a legible floor size. */
+export const TEXT_MIN_FONT_PX = 5;
 
 export interface MinimapLayout {
   totalLines: number;

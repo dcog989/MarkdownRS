@@ -242,8 +242,8 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 
 <div
   class="bg-bg-main relative h-full w-full overflow-hidden"
-  style:padding-right={appContext.settings.showMinimap ? "64px" : "0"}
-  style:--find-panel-right={appContext.settings.showMinimap ? "64px" : "16px"}
+  style:padding-right={appContext.settings.showMinimap ? "var(--minimap-width)" : "0"}
+  style:--find-panel-right={appContext.settings.showMinimap ? "var(--minimap-width)" : "16px"}
 >
   <EditorViewComponent
     bind:cmView

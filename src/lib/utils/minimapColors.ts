@@ -3,6 +3,7 @@ export interface MinimapColors {
   text: string;
   heading: string;
   code: string;
+  comment: string;
   list: string;
   link: string;
   url: string;
@@ -20,6 +21,7 @@ export function getColors(): MinimapColors {
     text: style.getPropertyValue("--editor-fg").trim(),
     heading: style.getPropertyValue("--editor-syntax-heading").trim(),
     code: style.getPropertyValue("--editor-code-fg").trim(),
+    comment: style.getPropertyValue("--editor-syntax-comment").trim(),
     list: style.getPropertyValue("--editor-fg").trim(),
     link: style.getPropertyValue("--editor-link").trim(),
     url: style.getPropertyValue("--editor-url").trim(),

@@ -8,6 +8,25 @@ const calloutMarkerRe = /^\s*>\s*\[!(note|tip|important|warning|caution)\]/i;
 const quoteLineRe = /^\s*>/;
 const fenceRe = /^\s*(?:```|~~~)/;
 
+// Code inside a fence is only syntax-parsed near the viewport, so the minimap
+// cannot rely on tokens for the rest of the document.
+const COMMENT_LINE_RE = /^\s*(\/\/|#(?=\s|$)|--|;|\/\*|\*|<!--)/;
+const INLINE_SLASH_RE = /(^|[^:\w])\/\//;
+const INLINE_HASH_RE = /\s#(?=\s|$)/;
+
+export function findCommentStart(line: string): number {
+  const lineMatch = COMMENT_LINE_RE.exec(line);
+  if (lineMatch) return lineMatch.index + lineMatch[0].length - lineMatch[1].length;
+
+  const slashMatch = INLINE_SLASH_RE.exec(line);
+  const hashMatch = INLINE_HASH_RE.exec(line);
+  const slashAt = slashMatch ? slashMatch.index + slashMatch[1].length : -1;
+  const hashAt = hashMatch ? hashMatch.index + hashMatch[0].indexOf("#") : -1;
+  if (slashAt < 0) return hashAt;
+  if (hashAt < 0) return slashAt;
+  return Math.min(slashAt, hashAt);
+}
+
 export function computeCalloutTypes(doc: Text): (string | null)[] {
   const types: (string | null)[] = new Array(doc.lines).fill(null);
   let current: string | null = null;
@@ -122,6 +141,7 @@ const KIND_WEIGHT: Record<string, number> = {
   link: 4,
   url: 4,
   code: 3,
+  comment: 2,
   list: 2,
   quote: 2,
   text: 0.3,
