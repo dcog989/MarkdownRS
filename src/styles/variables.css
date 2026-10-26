@@ -2,7 +2,7 @@
 
 :root {
   /* Editor layout */
-  --minimap-width: 112px;
+  --minimap-width: 108px;
 
   /* Scrollbars (native and overlay share these) */
   --scrollbar-track-width: 1rem;
