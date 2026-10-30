@@ -57,11 +57,11 @@ export class ScrollSyncManager {
     }, delayMs);
   }
 
-  private boundOnEditorScroll: () => void;
   private boundOnPreviewScroll: () => void;
+  private editorListeners = new Map<EditorView, () => void>();
+  private editorPersistFns = new Map<EditorView, () => void>();
 
   constructor() {
-    this.boundOnEditorScroll = this.onEditorScroll.bind(this);
     this.boundOnPreviewScroll = this.onPreviewScroll.bind(this);
   }
 
@@ -69,11 +69,11 @@ export class ScrollSyncManager {
     this.lineMapTracker.markDirty();
   }
 
-  private persistEditorScroll: (() => void) | null = null;
-
   /**
    * Single editor scroll listener: fans out to (a) recording the editor's
    * position into the store (throttled) and (b) driving the preview sync.
+   * Scroll persistence is tracked per view, so a second pane's editor keeps
+   * saving its own position.
    */
   registerEditor(
     view: EditorView,
@@ -83,16 +83,29 @@ export class ScrollSyncManager {
       onScrollChange: (percentage: number, scrollTop: number, topLine: number) => void;
     },
   ) {
-    this.persistEditorScroll = persistOptions ? this.createScrollPersistence(view, persistOptions) : null;
+    this.unregisterEditor(view);
+    if (persistOptions) this.editorPersistFns.set(view, this.createScrollPersistence(view, persistOptions));
 
-    if (this.editor === view) return;
+    const listener = () => {
+      this.editorPersistFns.get(view)?.();
+      if (this.editor !== view || this.suppressSync || this.activeSource === "preview") return;
+      this.setActiveSource("editor");
+      this.syncPreviewOnFrame();
+    };
 
-    if (this.editor) {
-      this.editor.scrollDOM.removeEventListener("scroll", this.boundOnEditorScroll);
-    }
-
+    this.editorListeners.set(view, listener);
+    view.scrollDOM.addEventListener("scroll", listener, { passive: true });
     this.editor = view;
-    view.scrollDOM.addEventListener("scroll", this.boundOnEditorScroll, { passive: true });
+  }
+
+  unregisterEditor(view: EditorView) {
+    const listener = this.editorListeners.get(view);
+    if (listener) {
+      view.scrollDOM.removeEventListener("scroll", listener);
+      this.editorListeners.delete(view);
+    }
+    this.editorPersistFns.delete(view);
+    if (this.editor === view) this.editor = null;
   }
 
   private createScrollPersistence(
@@ -127,6 +140,14 @@ export class ScrollSyncManager {
     this.lineMapTracker.setTarget(el);
   }
 
+  unregisterPreview(el: HTMLElement) {
+    if (this.preview !== el) return;
+    el.removeEventListener("scroll", this.boundOnPreviewScroll);
+    this.preview = null;
+    this.lineMap = [];
+    this.lineMapTracker.setTarget(null);
+  }
+
   updateMap() {
     if (!this.preview || !this.editor) return;
     this.lineMap = buildLineMap(this.preview, this.editor.state.doc.lines);
@@ -144,14 +165,6 @@ export class ScrollSyncManager {
         cb();
       });
     };
-  }
-
-  private onEditorScroll() {
-    if (this.persistEditorScroll) this.persistEditorScroll();
-    if (this.suppressSync) return;
-    if (this.activeSource === "preview") return;
-    this.setActiveSource("editor");
-    this.syncPreviewOnFrame();
   }
 
   private onPreviewScroll() {

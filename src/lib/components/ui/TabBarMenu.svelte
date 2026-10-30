@@ -1,5 +1,6 @@
 <script lang="ts">
 import Bookmark from "lucide-svelte/icons/bookmark";
+import Columns2 from "lucide-svelte/icons/columns-2";
 import Eye from "lucide-svelte/icons/eye";
 import EyeOff from "lucide-svelte/icons/eye-off";
 import Feather from "lucide-svelte/icons/feather";
@@ -17,6 +18,7 @@ import {
   toggleFileHistory,
   toggleSettings,
 } from "$lib/stores/interfaceStore.svelte";
+import { toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -137,6 +139,17 @@ function closeMenu() {
       {/if}
       <span class="flex-1">{$_("tabBarMenu.toggleSplitPreview")}</span
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.splitView}</span>
+    </button>
+    <button
+      type="button"
+      class="text-ui menu-item"
+      onclick={() => {
+        void toggleSplitPane();
+        closeMenu();
+      }}
+    >
+      <Columns2 size={14} class="opacity-70" />
+      <span class="flex-1">{$_("tabBarMenu.toggleSplitPane")}</span>
     </button>
     <button
       type="button"

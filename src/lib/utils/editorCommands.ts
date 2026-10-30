@@ -1,6 +1,7 @@
 import { redo, undo } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
 import { translate } from "$lib/i18n";
+import { appState } from "$lib/stores/appState.svelte";
 import { promptDialog } from "$lib/stores/dialogStore.svelte";
 
 const editorInstances = new Map<string, EditorView>();
@@ -9,7 +10,10 @@ export function registerEditorInstance(tabId: string, view: EditorView): void {
   editorInstances.set(tabId, view);
 }
 
-export function unregisterEditorInstance(tabId: string): void {
+export function unregisterEditorInstance(tabId: string, view?: EditorView): void {
+  // A pane can be re-created with the same tab id while the old instance's
+  // cleanup is still running; never delete the newer registration.
+  if (view && editorInstances.get(tabId) !== view) return;
   editorInstances.delete(tabId);
 }
 
@@ -80,5 +84,12 @@ export function setActiveEditorView(view: EditorView | undefined): void {
 }
 
 export function getActiveEditorView(): EditorView | undefined {
-  return activeEditorView;
+  if (activeEditorView?.dom.isConnected) return activeEditorView;
+
+  // A pane can be unmounted while the other keeps editing; fall back to the
+  // view registered for the focused tab instead of losing the command target.
+  activeEditorView = undefined;
+  if (!appState.activeTabId) return undefined;
+  const mapped = editorInstances.get(appState.activeTabId);
+  return mapped?.dom.isConnected ? mapped : undefined;
 }

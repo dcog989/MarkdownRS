@@ -3,6 +3,7 @@ import ChevronDown from "lucide-svelte/icons/chevron-down";
 import ChevronRight from "lucide-svelte/icons/chevron-right";
 import FolderTree from "lucide-svelte/icons/folder-tree";
 import Menu from "lucide-svelte/icons/menu";
+import X from "lucide-svelte/icons/x";
 import { onDestroy } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
@@ -17,13 +18,22 @@ import TabBar from "$lib/components/ui/TabBar.svelte";
 import TabBarMenu from "$lib/components/ui/TabBarMenu.svelte";
 import TabDropdown from "$lib/components/ui/TabDropdown.svelte";
 import Toast from "$lib/components/ui/Toast.svelte";
+import { initializeTabFileState } from "$lib/services/tabFileStateInit";
+import { loadTabContentLazy } from "$lib/services/tabLoadStateMachine";
 import { pushToMru, tabsById } from "$lib/stores/editorStore.svelte";
+import { focusPane, isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import { getEditorInstance } from "$lib/utils/editorCommands";
 import { isMarkdownFile } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 
 const splitResize = createSplitResize();
+const PANE_MIN_RATIO = 0.2;
+const PANE_MAX_RATIO = 0.8;
+
+let paneSplitPercentage = $state(0.5);
+let stopPaneResize: (() => void) | null = null;
 
 let mainContainer = $state<HTMLDivElement>();
 
@@ -34,16 +44,67 @@ function handleToggleFileTree() {
 
 let activeTab = $derived(tabsById().get(appContext.app.activeTabId ?? ""));
 
+let primaryTabId = $derived(appContext.app.paneTabs[0] ?? appContext.app.activeTabId ?? "");
+let secondaryTabId = $derived(appContext.app.paneTabs[1] ?? "");
+let splitPaneActive = $derived(
+  isSplitPaneActive() && !appContext.app.writerMode && primaryTabId !== "" && secondaryTabId !== "",
+);
+
 let isMarkdown = $derived.by(() => {
   if (!activeTab) return true;
   if (activeTab.path) return isMarkdownFile(activeTab.path);
   return activeTab.preferredExtension !== "txt";
 });
 
-let showPreview = $derived(appContext.settings.splitView && isMarkdown);
+let showPreview = $derived(appContext.settings.splitView && isMarkdown && !splitPaneActive);
 let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
 let peekHovered = $state(false);
+
+// activeTabId is the focused document for every command and status read, so
+// keep the focused pane's slot in step with it. Pointing activeTabId at the
+// other pane's tab focuses that pane instead of showing a file twice.
+$effect(() => {
+  const app = appContext.app;
+  if (app.paneSyncSuspended) return;
+
+  if (app.paneTabs[1] === null) {
+    if (app.activePane !== 0) app.activePane = 0;
+    if (app.paneTabs[0] !== app.activeTabId) app.paneTabs[0] = app.activeTabId;
+    return;
+  }
+
+  const id = app.activeTabId;
+  const other = app.activePane === 0 ? 1 : 0;
+  if (id && app.paneTabs[other] === id) {
+    app.activePane = other;
+  } else if (app.paneTabs[app.activePane] !== id) {
+    app.paneTabs[app.activePane] = id;
+  }
+});
+
+// A background pane never becomes the active tab, so its lazy session content
+// would otherwise stay unloaded.
+$effect(() => {
+  for (const id of appContext.app.paneTabs) {
+    const tab = id ? tabsById().get(id) : undefined;
+    if (tab && !tab.contentLoaded) {
+      void loadTabContentLazy(tab.id).then((fromDisk) => initializeTabFileState(tab, fromDisk));
+    }
+  }
+});
+
+function paneTitle(id: string | null): string {
+  if (!id) return "";
+  const tab = tabsById().get(id);
+  return tab?.title || tab?.path || "";
+}
+
+function activatePane(index: 0 | 1) {
+  focusPane(index);
+  const id = appContext.app.paneTabs[index];
+  if (id) getEditorInstance(id)?.focus();
+}
 
 // JS-driven so the native cursor-left cleanup can clear it; CSS-only :hover
 // sticks when WebKitGTK skips mouseleave on a fast window exit. Lives here, not
@@ -56,12 +117,38 @@ $effect(() => {
 });
 
 onDestroy(() => {
+  stopPaneResize?.();
   splitResize.cleanup();
 });
 
 function onResizeMouseDown(e: MouseEvent) {
   if (mainContainer) splitResize.registerContainer(mainContainer);
   splitResize.startResize(e);
+}
+
+function onPaneResizeMouseDown(e: MouseEvent) {
+  if (!mainContainer) return;
+  e.preventDefault();
+
+  const onMove = (ev: MouseEvent) => {
+    if (!mainContainer) return;
+    const rect = mainContainer.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const ratio = (ev.clientX - rect.left) / rect.width;
+    paneSplitPercentage = Math.min(PANE_MAX_RATIO, Math.max(PANE_MIN_RATIO, ratio));
+  };
+
+  const onUp = () => {
+    window.removeEventListener("mousemove", onMove);
+    window.removeEventListener("mouseup", onUp);
+    document.body.style.cursor = "default";
+    stopPaneResize = null;
+  };
+
+  stopPaneResize = onUp;
+  window.addEventListener("mousemove", onMove);
+  window.addEventListener("mouseup", onUp);
+  document.body.style.cursor = "col-resize";
 }
 </script>
 
@@ -130,57 +217,124 @@ function onResizeMouseDown(e: MouseEvent) {
         {/if}
 
         {#if appContext.app.activeTabId}
-          <div
-            class="flex w-full min-h-0 flex-1"
-            class:flex-row={splitResize.isVertical}
-            class:flex-col={!splitResize.isVertical}
-          >
-            <div
-              class="writer-content relative h-full overflow-hidden"
-              style:--writer-wrap={appContext.settings.writerWrapLength}
-              style:flex={showPreview ? `0 0 ${appContext.settings.splitPercentage * 100}%` : "1 1 100%"}
-            >
-              {#if appContext.app.writerMode}
+          {#if splitPaneActive && primaryTabId && secondaryTabId}
+            <div class="flex w-full min-h-0 flex-1 flex-row">
+              <div
+                role="group"
+                class="flex min-h-0 min-w-0 flex-col"
+                style:flex={`0 0 ${paneSplitPercentage * 100}%`}
+                onfocusin={() => focusPane(0)}
+              >
                 <div
-                  class="absolute top-2 pr-3 z-20"
-                  style:right={appContext.settings.showMinimap
-                    ? "var(--minimap-width)"
-                    : "var(--scrollbar-track-width)"}
+                  class="bg-bg-panel border-border-primary text-ui-sm flex h-8 shrink-0 items-center gap-2 border-b px-3"
                 >
                   <button
                     type="button"
-                    aria-label={$_("tabBar.menu")}
-                    use:tooltip={$_("tabBar.menu")}
-                    class="btn-base btn-float group px-3 py-2"
-                    onclick={() => (showWriterMenu = !showWriterMenu)}
+                    class="min-w-0 flex-1 truncate text-left"
+                    class:text-fg-default={appContext.app.activePane === 0}
+                    class:text-fg-muted={appContext.app.activePane !== 0}
+                    onclick={() => activatePane(0)}
                   >
-                    <Menu size={16} class="opacity-30 transition-opacity group-hover:opacity-100" />
+                    {paneTitle(primaryTabId)}
                   </button>
-                  <TabBarMenu bind:showMenu={showWriterMenu} />
                 </div>
-              {/if}
-              <Editor tabId={appContext.app.activeTabId} />
-            </div>
+                <div class="min-h-0 min-w-0 flex-1">
+                  <Editor tabId={primaryTabId} />
+                </div>
+              </div>
 
-            {#if showPreview}
               <div
                 role="button"
                 tabindex="0"
                 aria-label={$_("common.resizeSplitView")}
                 class="resize-handle"
-                style:cursor={splitResize.resizeCursor}
-                onmousedown={onResizeMouseDown}
-                ondblclick={splitResize.resetSplit}
+                style:cursor="col-resize"
+                onmousedown={onPaneResizeMouseDown}
+                ondblclick={() => (paneSplitPercentage = 0.5)}
                 onkeydown={() => {}}
               ></div>
-            {/if}
 
-            {#if showPreview}
-              <div class="flex-1-height-100 min-w-0 min-h-0">
-                <Preview tabId={appContext.app.activeTabId} />
+              <div role="group" class="flex min-h-0 min-w-0 flex-1 flex-col" onfocusin={() => focusPane(1)}>
+                <div
+                  class="bg-bg-panel border-border-primary text-ui-sm flex h-8 shrink-0 items-center gap-2 border-b px-3"
+                >
+                  <button
+                    type="button"
+                    class="min-w-0 flex-1 truncate text-left"
+                    class:text-fg-default={appContext.app.activePane === 1}
+                    class:text-fg-muted={appContext.app.activePane !== 1}
+                    onclick={() => activatePane(1)}
+                  >
+                    {paneTitle(secondaryTabId)}
+                  </button>
+                  <button
+                    type="button"
+                    class="ml-auto shrink-0 p-0.5 opacity-50 transition-opacity hover:opacity-100"
+                    aria-label={$_("common.closeSplitPane")}
+                    use:tooltip={$_("common.closeSplitPane")}
+                    onclick={() => void toggleSplitPane()}
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div class="min-h-0 min-w-0 flex-1">
+                  <Editor tabId={secondaryTabId} />
+                </div>
               </div>
-            {/if}
-          </div>
+            </div>
+          {:else}
+            <div
+              class="flex w-full min-h-0 flex-1"
+              class:flex-row={splitResize.isVertical}
+              class:flex-col={!splitResize.isVertical}
+            >
+              <div
+                class="writer-content relative h-full overflow-hidden"
+                style:--writer-wrap={appContext.settings.writerWrapLength}
+                style:flex={showPreview ? `0 0 ${appContext.settings.splitPercentage * 100}%` : "1 1 100%"}
+              >
+                {#if appContext.app.writerMode}
+                  <div
+                    class="absolute top-2 pr-3 z-20"
+                    style:right={appContext.settings.showMinimap
+                      ? "var(--minimap-width)"
+                      : "var(--scrollbar-track-width)"}
+                  >
+                    <button
+                      type="button"
+                      aria-label={$_("tabBar.menu")}
+                      use:tooltip={$_("tabBar.menu")}
+                      class="btn-base btn-float group px-3 py-2"
+                      onclick={() => (showWriterMenu = !showWriterMenu)}
+                    >
+                      <Menu size={16} class="opacity-30 transition-opacity group-hover:opacity-100" />
+                    </button>
+                    <TabBarMenu bind:showMenu={showWriterMenu} />
+                  </div>
+                {/if}
+                <Editor tabId={appContext.app.activeTabId} />
+              </div>
+
+              {#if showPreview}
+                <div
+                  role="button"
+                  tabindex="0"
+                  aria-label={$_("common.resizeSplitView")}
+                  class="resize-handle"
+                  style:cursor={splitResize.resizeCursor}
+                  onmousedown={onResizeMouseDown}
+                  ondblclick={splitResize.resetSplit}
+                  onkeydown={() => {}}
+                ></div>
+              {/if}
+
+              {#if showPreview}
+                <div class="flex-1-height-100 min-w-0 min-h-0">
+                  <Preview tabId={appContext.app.activeTabId} />
+                </div>
+              {/if}
+            </div>
+          {/if}
         {:else}
           <div class="text-fg-muted flex flex-1 flex-col items-center justify-center select-none">
             <Logo class="mb-4 h-16 w-16 opacity-50 grayscale" />

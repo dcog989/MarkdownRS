@@ -131,7 +131,8 @@ async function loadTabContentInternal(tabId: string): Promise<boolean> {
     }
 
     const currentActiveId = appState.activeTabId;
-    if (currentActiveId !== tabId) {
+    const isVisibleInPane = appState.paneTabs[0] === tabId || appState.paneTabs[1] === tabId;
+    if (currentActiveId !== tabId && !isVisibleInPane) {
       logger.session.debug("TabSwitchedDuringLoad", { tabId, currentActiveId });
       resetTabLoadState(tabId);
       return false;

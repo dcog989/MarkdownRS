@@ -21,6 +21,7 @@ import {
 } from "$lib/stores/editorStore.svelte";
 import { addToFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { suspendTreeFollow } from "$lib/stores/fileTreeStore.svelte";
+import { clearPaneTab, settlePanesAfterClose } from "$lib/stores/paneStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
@@ -97,12 +98,16 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
   }
   // Swapping the active tab makes the file tree follow the saved document;
   // suppress that so saving a background tab cannot re-root and collapse it.
+  // Pane layout is suspended too: activeTabId points at the saved tab only to
+  // select it, and the visible panes must not re-key around it.
   return suspendTreeFollow(async () => {
+    appContext.app.paneSyncSuspended = true;
     appContext.app.activeTabId = tabId;
     try {
       return await operation();
     } finally {
       appContext.app.activeTabId = prevActive;
+      appContext.app.paneSyncSuspended = false;
     }
   });
 }
@@ -114,13 +119,17 @@ export async function saveAllFiles(): Promise<void> {
   // Restore the active tab inside the suspended window: letting the tree
   // follow back after the loop would re-root it once more.
   await suspendTreeFollow(async () => {
-    for (const tab of dirtyTabs) {
-      appContext.app.activeTabId = tab.id;
-      await saveCurrentFile();
-    }
-
-    if (previousActiveId) {
-      appContext.app.activeTabId = previousActiveId;
+    appContext.app.paneSyncSuspended = true;
+    try {
+      for (const tab of dirtyTabs) {
+        appContext.app.activeTabId = tab.id;
+        await saveCurrentFile();
+      }
+    } finally {
+      if (previousActiveId) {
+        appContext.app.activeTabId = previousActiveId;
+      }
+      appContext.app.paneSyncSuspended = false;
     }
   });
 }
@@ -162,6 +171,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   }
 
   closeTab(id);
+  clearPaneTab(id);
 
   if (appContext.app.activeTabId === id) {
     appContext.app.activeTabId = appContext.editor.mruStack[0] || null;
@@ -172,6 +182,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
     appContext.app.activeTabId = newId;
   }
 
+  settlePanesAfterClose();
   persistSessionDebounced();
 }
 

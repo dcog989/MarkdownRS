@@ -141,7 +141,9 @@ $effect(() => {
   void (storeTab?.contentLoaded ?? false);
   untrack(() => {
     if (!view) return;
-    tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange);
+    tabSync.process(view, tId, forceSyncCounter, createExtensions, onMetricsChange, () => {
+      return appContext.app.activeTabId === tId;
+    });
     view.requestMeasure({
       read: () => undefined,
       write: () => setupGutterObserver(),
@@ -345,19 +347,25 @@ onMount(() => {
 
   if (searchState.findText) updateSearchEditor(viewInstance);
 
-  viewInstance.focus();
+  // A second pane's editor mounts while the first one keeps focus; it must not
+  // steal focus (and the commands routed to the active document).
+  if (appContext.app.activeTabId === tabId) viewInstance.focus();
 
   const onWindowFocus = () => {
-    viewInstance.focus();
+    if (appContext.app.activeTabId === tabId) viewInstance.focus();
     window.removeEventListener("focus", onWindowFocus);
   };
   window.addEventListener("focus", onWindowFocus);
 
   return () => {
     window.removeEventListener("focus", onWindowFocus);
+    // Unmounting (e.g. closing a split pane) must not drop edits still inside
+    // the content debounce window.
+    tabSync.flushPending(viewInstance, onContentChange, onHistoryUpdate);
     tabSync.cleanup();
     gutterObserver?.disconnect();
     cleanupModifier();
+    scrollSync.unregisterEditor(viewInstance);
     if (getActiveEditorView() === view) setActiveEditorView(undefined);
     const v = view;
     if (onHistoryUpdate && v?.getHistoryState) onHistoryUpdate(v.getHistoryState());

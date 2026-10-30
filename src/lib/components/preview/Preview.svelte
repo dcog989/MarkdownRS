@@ -91,6 +91,7 @@ $effect(() => {
 });
 
 onDestroy(() => {
+  if (container) scrollSync.unregisterPreview(container);
   renderer.cleanup();
 });
 

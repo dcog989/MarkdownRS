@@ -48,12 +48,13 @@ export class TabSyncManager {
     forceSyncCounter: number,
     createExtensions: (s: unknown) => Extension[],
     onMetricsChange: (m: Partial<EditorMetrics>) => void,
+    shouldFocus: () => boolean,
   ) {
     const storeTab = appContext.editor.tabs.find((t) => t.id === tabId);
     if (!storeTab) return;
 
     if (view._currentTabId !== tabId) {
-      this.handleTabSwitch(view, tabId, storeTab, forceSyncCounter, createExtensions, onMetricsChange);
+      this.handleTabSwitch(view, tabId, storeTab, forceSyncCounter, createExtensions, onMetricsChange, shouldFocus);
       return;
     }
 
@@ -67,6 +68,7 @@ export class TabSyncManager {
     forceSyncCounter: number,
     createExtensions: (s: unknown) => Extension[],
     onMetricsChange: (m: Partial<EditorMetrics>) => void,
+    shouldFocus: () => boolean,
   ) {
     const totalStart = performance.now();
     const oldTabId = view._currentTabId;
@@ -134,8 +136,10 @@ export class TabSyncManager {
       restoreScrollByTopLine(view, tabTs?.topLine ?? 0, tabTs?.scrollTop ?? 0, tabTs?.scrollPercentage ?? 0);
     }
 
-    view.focus();
-    setActiveEditorView(view);
+    if (shouldFocus()) {
+      view.focus();
+      setActiveEditorView(view);
+    }
 
     const largeFileMode = storeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
 

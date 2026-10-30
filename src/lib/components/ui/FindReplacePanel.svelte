@@ -41,7 +41,7 @@ let {
 } = $props();
 
 let searchScope = $state<"current" | "all">("current");
-let isReplaceMode = $state(false);
+let isReplaceMode = $state(appContext.interface.isReplaceMode);
 let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;

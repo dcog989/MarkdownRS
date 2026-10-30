@@ -32,6 +32,7 @@ import { CONFIG } from "$lib/utils/config";
 import {
   registerEditorInstance,
   registerFlushFn,
+  setActiveEditorView,
   unregisterEditorInstance,
   unregisterFlushFn,
 } from "$lib/utils/editorCommands";
@@ -45,6 +46,7 @@ import {
   spellCheckKeymap,
   triggerImmediateLint,
 } from "$lib/utils/spellcheckExtension.svelte";
+import { calculateCursorMetrics } from "$lib/utils/textMetrics";
 
 let { tabId }: { tabId: string } = $props();
 
@@ -64,6 +66,7 @@ let contextWordTo = $state(0);
 
 let activeTab = $derived(tabsById().get(tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
+let isActiveEditor = $derived(appContext.app.activeTabId === tabId);
 
 // Logic State
 let previousTabId: string = "";
@@ -83,7 +86,7 @@ onMount(() => {
   registerFlushFn(flushFn);
 
   return () => {
-    unregisterEditorInstance(tabId);
+    unregisterEditorInstance(tabId, cmView);
     unregisterFlushFn(flushFn);
   };
 });
@@ -95,6 +98,22 @@ $effect(() => {
   } else {
     unregisterEditorInstance(tabId);
   }
+});
+
+// Two panes can each host an editor; only the focused pane's view receives
+// commands. Pane focus changes activeTabId, which flips isActiveEditor.
+$effect(() => {
+  if (!cmView || !isActiveEditor) return;
+  setActiveEditorView(cmView);
+  const head = cmView.state.selection.main.head;
+  const line = cmView.state.doc.lineAt(head);
+  updateMetrics(
+    calculateCursorMetrics(cmView.state.doc, head, {
+      number: line.number,
+      from: line.from,
+      text: line.text,
+    }),
+  );
 });
 
 $effect(() => {
@@ -195,7 +214,7 @@ function handleContentChange(c: string, lineCount: number) {
   updateContent(tabId, c, lineCount);
 }
 function handleMetricsChange(m: Partial<EditorMetrics>) {
-  updateMetrics(m);
+  if (isActiveEditor) updateMetrics(m);
 }
 function handleScrollChange(p: number, s: number, t: number) {
   updateScroll(tabId, p, s, t);
@@ -244,7 +263,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 <div
   class="bg-bg-editor relative h-full w-full overflow-hidden"
   style:padding-right={appContext.settings.showMinimap ? "var(--minimap-width)" : "var(--scrollbar-track-width)"}
-  style:--find-bar-height={`${findBarHeight}px`}
+  style:--find-bar-height={`${isActiveEditor ? findBarHeight : 0}px`}
 >
   <EditorViewComponent
     bind:cmView
@@ -276,12 +295,14 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     {/if}
   {/if}
 
-  <FindReplacePanel
-    bind:this={findReplacePanel}
-    bind:isOpen={appContext.interface.showFind}
-    bind:barHeight={findBarHeight}
-    {cmView}
-  />
+  {#if isActiveEditor}
+    <FindReplacePanel
+      bind:this={findReplacePanel}
+      bind:isOpen={appContext.interface.showFind}
+      bind:barHeight={findBarHeight}
+      {cmView}
+    />
+  {/if}
 
   {#if showEmptyState}
     <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">

@@ -3,6 +3,7 @@ import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import { togglePreferredExtension } from "$lib/stores/editorStore.svelte";
 import { refreshTree } from "$lib/stores/fileTreeStore.svelte";
 import { toggleOutline } from "$lib/stores/interfaceStore.svelte";
+import { toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -47,6 +48,16 @@ export const viewCommands: Command[] = [
       }
       toggleSplitView();
       saveSettings();
+    },
+  },
+  {
+    id: "view.toggleSplitPane",
+    label: "Toggle Split Editor",
+    labelKey: "command.toggleSplitPane",
+    category: "commandCategory.view",
+    global: true,
+    handler: async () => {
+      await toggleSplitPane();
     },
   },
   {
