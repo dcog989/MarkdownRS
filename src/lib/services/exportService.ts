@@ -1,3 +1,4 @@
+import { homeDir, join } from "@tauri-apps/api/path";
 import { save } from "@tauri-apps/plugin-dialog";
 import { domToPng, domToSvg, domToWebp } from "modern-screenshot";
 import { translate } from "$lib/i18n";
@@ -10,6 +11,15 @@ import { AppError } from "$lib/utils/errorHandling";
 import { logger } from "$lib/utils/logger";
 import { renderMarkdown } from "$lib/utils/markdownRust";
 import { buildExportHtml } from "./exportTemplates";
+
+/** Save dialogs start in the user's home directory, falling back to a bare file name. */
+async function exportDefaultPath(fileName: string): Promise<string> {
+  try {
+    return await join(await homeDir(), fileName);
+  } catch {
+    return fileName;
+  }
+}
 
 export class ExportService {
   private getActiveTab() {
@@ -73,7 +83,7 @@ export class ExportService {
 
     try {
       const path = await save({
-        defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.html`,
+        defaultPath: await exportDefaultPath(`${tab.title.replace(/\.[^/.]+$/, "")}.html`),
         filters: [{ name: translate("export.htmlFilter"), extensions: ["html"] }],
       });
 
@@ -109,7 +119,7 @@ export class ExportService {
 
     try {
       const path = await save({
-        defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.pdf`,
+        defaultPath: await exportDefaultPath(`${tab.title.replace(/\.[^/.]+$/, "")}.pdf`),
         filters: [{ name: translate("export.pdfFilter"), extensions: ["pdf"] }],
       });
 
@@ -135,7 +145,7 @@ export class ExportService {
 
   private async saveDocumentPath(tab: EditorTab, extension: "docx" | "epub" | "tex"): Promise<string | null> {
     return save({
-      defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.${extension}`,
+      defaultPath: await exportDefaultPath(`${tab.title.replace(/\.[^/.]+$/, "")}.${extension}`),
       filters: [{ name: translate(`export.${extension}Filter`), extensions: [extension] }],
     });
   }
@@ -227,7 +237,7 @@ export class ExportService {
 
     try {
       const path = await save({
-        defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.${format}`,
+        defaultPath: await exportDefaultPath(`${tab.title.replace(/\.[^/.]+$/, "")}.${format}`),
         filters: [{ name: format.toUpperCase(), extensions: [format] }],
       });
 
