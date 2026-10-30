@@ -28,14 +28,6 @@ pub fn configure(window: &tauri::WebviewWindow) {
     use gtk::gdk::EventMask;
     use gtk::prelude::{GtkWindowExt, WidgetExt, WidgetExtManual};
 
-    const ICON_BYTES: &[u8] = include_bytes!("../../icons/128x128@2x.png");
-    if let Ok(img) = image::load_from_memory(ICON_BYTES) {
-        let rgba = img.into_rgba8();
-        let (w, h) = rgba.dimensions();
-        let icon = tauri::image::Image::new_owned(rgba.into_raw(), w, h);
-        let _ = window.set_icon(icon);
-    }
-
     if let Ok(gtk_window) = window.gtk_window() {
         gtk_window.set_titlebar(None::<&gtk::Widget>);
     }
