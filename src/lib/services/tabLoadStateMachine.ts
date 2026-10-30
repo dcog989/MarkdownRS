@@ -58,33 +58,33 @@ function resetTabLoadState(tabId: string): void {
 }
 
 const loadingRequests = new Map<string, number>();
-const contentLoadPromises = new Map<string, Promise<void>>();
+const contentLoadPromises = new Map<string, Promise<boolean>>();
 
-export async function loadTabContentLazy(tabId: string): Promise<void> {
+/** Resolves true when the disk copy was read and reconciled with the tab. */
+export async function loadTabContentLazy(tabId: string): Promise<boolean> {
   const index = editorStore.tabs.findIndex((t) => t.id === tabId);
   if (index === -1) {
-    return;
+    return false;
   }
 
   const tab = editorStore.tabs[index];
   const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
 
   if (currentState === TabLoadState.LOADED || tab.contentLoaded) {
-    return;
+    return false;
   }
 
   // The AppLifecycle effect, saveFile, and tab reopen can all race to load the
   // same tab. Coalesce into a single in-flight load so awaiting callers wait
   // for the real result instead of returning early.
   if (currentState === TabLoadState.LOADING) {
-    await contentLoadPromises.get(tabId);
-    return;
+    return (await contentLoadPromises.get(tabId)) ?? false;
   }
 
   const loadPromise = loadTabContentInternal(tabId);
   contentLoadPromises.set(tabId, loadPromise);
   try {
-    await loadPromise;
+    return await loadPromise;
   } finally {
     if (contentLoadPromises.get(tabId) === loadPromise) {
       contentLoadPromises.delete(tabId);
@@ -109,13 +109,13 @@ export async function waitForTabContentLoad(tabId: string): Promise<boolean> {
   return editorStore.tabs.find((t) => t.id === tabId)?.contentLoaded ?? false;
 }
 
-async function loadTabContentInternal(tabId: string): Promise<void> {
+async function loadTabContentInternal(tabId: string): Promise<boolean> {
   const start = performance.now();
 
   const tab = editorStore.tabs.find((t) => t.id === tabId);
   if (!tab) {
     logger.session.debug("TabClosedDuringLoad", { tabId });
-    return;
+    return false;
   }
 
   setTabLoadState(tabId, TabLoadState.LOADING);
@@ -127,20 +127,21 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
     const data = await callBackend("load_tab_content", { tabId }, "Session:Load");
 
     if (loadingRequests.get(tabId) !== requestId) {
-      return;
+      return false;
     }
 
     const currentActiveId = appState.activeTabId;
     if (currentActiveId !== tabId) {
       logger.session.debug("TabSwitchedDuringLoad", { tabId, currentActiveId });
       resetTabLoadState(tabId);
-      return;
+      return false;
     }
 
     let normalizedContent = "";
     let lastSavedHash = "";
     let diskEncoding: string | null = null;
     let diskHasBom: boolean | null = null;
+    let diskContentVerified = false;
 
     if (data && data.content !== null && data.content !== undefined && data.content !== "") {
       normalizedContent = normalizeLineEndings(data.content);
@@ -160,6 +161,7 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
             diskHasBom = fileData.has_bom;
             const diskContent = normalizeLineEndings(fileData.content);
             lastSavedHash = hashContent(diskContent);
+            diskContentVerified = true;
             // A clean tab's truth is the file on disk. If the stored session
             // content no longer matches (e.g. the file changed externally
             // while the app was closed, or its content was skipped from the
@@ -251,6 +253,8 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
       tabId,
       size: sizeBytes,
     });
+
+    return diskContentVerified;
   } catch (err) {
     if (loadingRequests.get(tabId) === requestId) {
       setTabLoadState(tabId, TabLoadState.ERROR);
@@ -271,4 +275,6 @@ async function loadTabContentInternal(tabId: string): Promise<void> {
       loadingRequests.delete(tabId);
     }
   }
+
+  return false;
 }

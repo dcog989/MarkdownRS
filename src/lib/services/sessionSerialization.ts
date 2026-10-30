@@ -312,8 +312,8 @@ export async function loadSession(): Promise<void> {
 
       const activeTab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
       if (activeTab) {
-        await loadTabContentLazy(activeTab.id);
-        await initializeTabFileState(activeTab);
+        const diskContentVerified = await loadTabContentLazy(activeTab.id);
+        await initializeTabFileState(activeTab, diskContentVerified);
       }
     }
 

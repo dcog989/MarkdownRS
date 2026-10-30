@@ -51,12 +51,15 @@ export function sanitizePath(path: string): string {
   return path.replace(/\0/g, "").replace(/\\/g, "/");
 }
 
-export async function refreshMetadata(tabId: string, path: string): Promise<void> {
+/** Returns false when the file is gone or unreadable. */
+export async function refreshMetadata(tabId: string, path: string): Promise<boolean> {
   try {
     const meta = await getCachedFileMetadata(path);
     updateMetadata(tabId, meta.created, meta.modified);
+    return true;
   } catch {
     logger.file.warn("RefreshMetadataFailed", { path });
+    return false;
   }
 }
 
