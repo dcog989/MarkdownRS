@@ -16,7 +16,7 @@ encoding_rs = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"] }
 harper-core = "3.0"
 log = "0.4"
-office_oxide = { version = "=0.1.15", default-features = false, optional = true }
+office_oxide = { version = "0.1.16", default-features = false, optional = true }
 pdf_oxide = { version = "0.3", optional = true }
 regex = "1.13"
 reqwest = { version = "0.13", optional = true }
