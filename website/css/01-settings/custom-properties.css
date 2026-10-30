@@ -15,7 +15,7 @@
   --yellow: #ffc857;
   --blue: #1f4e9c;
 
-  /* Design element palette (12) */
+  /* Design element palette (16) */
   --el-01: #7c5a73;
   --el-02: #e4572e;
   --el-03: #1f4e9c;
@@ -28,6 +28,10 @@
   --el-10: #7a8c2e;
   --el-11: #2aa8c0;
   --el-12: #a83a54;
+  --el-13: #8a5a2b;
+  --el-14: #b5427a;
+  --el-15: #5a6b7a;
+  --el-16: #3f6b3a;
 
   --border: var(--ink);
 
