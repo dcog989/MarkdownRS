@@ -9,12 +9,12 @@ license = "GPL-3.0-only"
 anyhow = "1.0"
 chardetng = "1.0"
 chrono = "0.4"
-comrak = "0.57"
+comrak = "0.59"
 dirs = "7"
 dunce = "1"
 encoding_rs = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"] }
-harper-core = "2.13"
+harper-core = "3.0"
 log = "0.4"
 office_oxide = { version = "=0.1.15", default-features = false, optional = true }
 pdf_oxide = { version = "0.3", optional = true }
@@ -31,7 +31,7 @@ tauri-plugin-clipboard-manager = "2.5"
 tauri-plugin-dialog = "2.8"
 tauri-plugin-fs = { version = "2.7", features = ["watch"] }
 tauri-plugin-opener = "2.7"
-tauri-plugin-shell = "2.5"
+tauri-plugin-shell = "2.6"
 tauri-plugin-single-instance = "2.5"
 tauri-plugin-store = "2.5"
 tauri-plugin-updater = "2.14"
