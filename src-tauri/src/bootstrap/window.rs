@@ -1,4 +1,3 @@
-use std::path::Path;
 use tauri::{Emitter, Listener};
 
 const DARK_BACKGROUND: &str = "#1e1e1e";
@@ -6,10 +5,8 @@ const LIGHT_BACKGROUND: &str = "#fcfcfc";
 
 /// The page paints no background until the frontend has loaded the theme, so the
 /// window's own background is what fills the gap. Match it to the saved theme.
-pub fn apply_saved_background(window: &tauri::WebviewWindow, settings_path: &Path) {
-    let is_light = crate::utils::read_settings_toml(settings_path)
-        .ok()
-        .is_some_and(|settings| settings.get("theme").and_then(|v| v.as_str()) == Some("light"));
+pub fn apply_saved_background(window: &tauri::WebviewWindow, settings: Option<&toml::Value>) {
+    let is_light = settings.is_some_and(|s| s.get("theme").and_then(|v| v.as_str()) == Some("light"));
     let color = if is_light {
         LIGHT_BACKGROUND
     } else {

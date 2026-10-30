@@ -1,5 +1,4 @@
 use crate::bootstrap::paths::AppPaths;
-use crate::utils;
 use flexi_logger::{
     AdaptiveFormat, Age, Cleanup, Criterion, DeferredNow, Duplicate, FileSpec, LogSpecification, Logger, LoggerHandle,
     Naming, TS_DASHES_BLANK_COLONS_DOT_BLANK, style,
@@ -19,15 +18,12 @@ fn default_log_level() -> String {
     DEFAULT_LOG_LEVEL.to_string()
 }
 
-fn read_log_level_from_settings(config_path: &std::path::Path) -> String {
-    match utils::read_settings_toml(config_path) {
-        Ok(toml_val) => toml_val
-            .get("logLevel")
-            .and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(default_log_level),
-        Err(_) => default_log_level(),
-    }
+fn log_level_from_settings(settings: Option<&toml::Value>) -> String {
+    settings
+        .and_then(|s| s.get("logLevel"))
+        .and_then(|v| v.as_str())
+        .map(str::to_string)
+        .unwrap_or_else(default_log_level)
 }
 
 fn parse_log_level(level: &str) -> LevelFilter {
@@ -82,8 +78,8 @@ fn timestamped_colored_format(
     )
 }
 
-pub fn init(config_path: &std::path::Path, log_dir: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
-    let settings_level = read_log_level_from_settings(config_path);
+pub fn init(settings: Option<&toml::Value>, log_dir: &std::path::Path) -> Result<(), Box<dyn std::error::Error>> {
+    let settings_level = log_level_from_settings(settings);
 
     eprintln!(
         "[INFO] Initializing logger with level: {:?} (source: '{}')",
