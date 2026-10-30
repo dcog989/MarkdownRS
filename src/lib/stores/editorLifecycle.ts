@@ -3,7 +3,7 @@ import { reloadFileContent } from "$lib/services/fileMetadata";
 import { initializeTabLoadState } from "$lib/services/tabLoadStateMachine";
 import { CONFIG } from "$lib/utils/config";
 import { isTabDirty, updateSavedHash } from "$lib/utils/contentHash";
-import { formatTimestampForDisplay, getCurrentTimestamp } from "$lib/utils/date";
+import { formatTimestampForDisplay, getCurrentDate, getCurrentTime, getCurrentTimestamp } from "$lib/utils/date";
 import { readTextFile } from "$lib/utils/fileIO";
 import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
@@ -23,13 +23,22 @@ import type { ClosedTab, EditorTab } from "./editorTypes";
 import { settingsState } from "./settingsState.svelte";
 import { showToast } from "./toastStore.svelte";
 
+const TEMPLATE_DATE = "{{date}}";
+const TEMPLATE_TIME = "{{time}}";
+
+/** Expands the creation-time placeholders a new-file template may contain. */
+function applyTemplatePlaceholders(content: string): string {
+  if (!content.includes(TEMPLATE_DATE) && !content.includes(TEMPLATE_TIME)) return content;
+  return content.replaceAll(TEMPLATE_DATE, getCurrentDate()).replaceAll(TEMPLATE_TIME, getCurrentTime());
+}
+
 export async function createNewFile(): Promise<string> {
   let content = "";
   const templatePath = settingsState.newFileTemplatePath;
   if (templatePath) {
     try {
       const result = await readTextFile(templatePath);
-      content = result?.content ?? "";
+      content = applyTemplatePlaceholders(result?.content ?? "");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       showToast("error", translate("fileOps.failedReadTemplate", { values: { error: msg } }));

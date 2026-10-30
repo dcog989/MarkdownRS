@@ -43,6 +43,20 @@ describe("createNewFile", () => {
     expect(mockedReadTextFile).toHaveBeenCalledWith("/templates/base.md");
   });
 
+  it("expands {{date}} and {{time}} placeholders in a template", async () => {
+    settingsState.newFileTemplatePath = "/templates/base.md";
+    mockedReadTextFile.mockResolvedValue({
+      content: "---\ndate: {{date}}\ntime: {{time}}\n---\n",
+      encoding: "UTF-8",
+      has_bom: false,
+    });
+
+    const id = await createNewFile();
+
+    const tab = editorStore.tabs.find((t) => t.id === id);
+    expect(tab?.content).toMatch(/^---\ndate: \d{4}-\d{2}-\d{2}\ntime: \d{2}:\d{2}\n---\n$/);
+  });
+
   it("creates a blank tab if the template cannot be read", async () => {
     settingsState.newFileTemplatePath = "/templates/missing.md";
     mockedReadTextFile.mockRejectedValue(new Error("file not found"));

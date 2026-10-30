@@ -162,6 +162,7 @@ export const en = {
     lastTab: "Go to Last Tab",
     emoji: "Emoji",
     editRumdlConfig: "Edit rumdl Config",
+    insertFrontmatter: "Insert Frontmatter",
     exportHtml: "HTML",
     exportPdf: "PDF",
     exportDocx: "DOCX",
@@ -342,7 +343,8 @@ export const en = {
     logLevel: "Log Level",
     logLevelTooltip: "Controls the verbosity of application logs.",
     newFileTemplate: "New File Template",
-    newFileTemplateTooltip: "Specify a Markdown file as a template for new files. Leave empty to create blank files.",
+    newFileTemplateTooltip:
+      "Specify a Markdown file as a template for new files. Use {{date}} and {{time}} for creation-time placeholders. Leave empty to create blank files.",
     theme: "Theme",
     themeTooltip: "Select the application theme. Changes apply immediately.",
     customAccentColor: "Custom Accent Color",

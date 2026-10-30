@@ -13,11 +13,29 @@ export function getBaseTitle(tab: { path?: string | null; title: string; origina
   return tab.originalTitle || tab.title;
 }
 
+const FRONTMATTER_DELIMITERS = new Set(["---", "+++", ";;;"]);
+
+/**
+ * Drops a leading frontmatter block so its keys (`title: ...`) are not read as
+ * the document title.
+ *
+ * shortcut: `{...}`-delimited JSON is not skipped; brace matching is not worth
+ * it for a tab label, add it if JSON frontmatter ever matters here.
+ */
+function stripFrontmatter(content: string): string {
+  const lines = content.split("\n");
+  const opener = lines[0]?.trimEnd();
+  if (!opener || !FRONTMATTER_DELIMITERS.has(opener)) return content;
+  const closing = lines.findIndex((line, i) => i > 0 && line.trimEnd() === opener);
+  return closing === -1 ? content : lines.slice(closing + 1).join("\n");
+}
+
 export function extractSmartTitle(content: string): string | null {
-  const trimmed = content.trim();
+  const body = stripFrontmatter(content);
+  const trimmed = body.trim();
   if (trimmed.length === 0) return null;
 
-  const firstLine = content.split("\n").find((l) => {
+  const firstLine = body.split("\n").find((l) => {
     const t = l.trim();
     return t.length > 0 && /[a-zA-Z0-9]/.test(t.replace(/^#+\s*/, ""));
   });
