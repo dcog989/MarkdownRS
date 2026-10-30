@@ -38,8 +38,8 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     paths::ensure_dictionary_file(&paths.dict_path);
 
     let db = database::init(paths.db_dir.join("session.db"), &paths.db_dir)?;
-    state::manage(app, db);
     database::schedule_vacuum(app_handle);
+    state::manage(app, db);
     window::handle_cli_args(window);
 
     Ok(())
