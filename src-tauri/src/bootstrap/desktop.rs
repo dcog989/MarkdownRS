@@ -17,7 +17,14 @@ const EXEC_RESERVED: &[char] = &[
     '"', '\'', '\\', '>', '<', '~', '|', '&', ';', '$', '*', '?', '#', '(', ')', '`', ' ',
 ];
 
+/// Registers the AppImage off the startup path: the icon compare, desktop-file
+/// write and `update-desktop-database` spawn are filesystem/process work that
+/// nothing waits for.
 pub fn install_appimage_integration() {
+    tauri::async_runtime::spawn_blocking(register_appimage_integration);
+}
+
+fn register_appimage_integration() {
     if portable::is_portable_mode() {
         return;
     }
