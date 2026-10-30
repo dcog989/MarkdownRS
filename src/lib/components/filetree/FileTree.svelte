@@ -12,6 +12,7 @@ import LoaderCircle from "lucide-svelte/icons/loader-circle";
 import { onMount, tick } from "svelte";
 import { _ } from "svelte-i18n";
 import {
+  basename,
   canNavigateUp,
   dirname,
   fileTreeStore,
@@ -37,6 +38,7 @@ import FileTreeContextMenu from "./FileTreeContextMenu.svelte";
 import FileTreeFilter from "./FileTreeFilter.svelte";
 import FileTreeResizeHandle from "./FileTreeResizeHandle.svelte";
 import FileTreeToolbar from "./FileTreeToolbar.svelte";
+import { moveEntry } from "./fileTreeContextMenuLogic.svelte";
 
 const ROW_HEIGHT = CONFIG.FILETREE.ROW_HEIGHT;
 const OVERSCAN = CONFIG.FILETREE.OVERSCAN;
@@ -252,6 +254,65 @@ function handleRowDoubleClick(row: TreeRow) {
   navigateInto(row.entry.path);
 }
 
+// Drag and drop moves an entry into the folder under the cursor. Rows accept
+// drops even while the tree is locked: moving files is unrelated to navigation.
+let draggedPath = $state("");
+let dropDir = $state("");
+
+// A folder cannot be moved into itself or one of its own descendants, and a
+// drop into the entry's current folder would be a no-op.
+function canDropInto(source: string, dir: string): boolean {
+  if (!source || !dir) return false;
+  return dir !== source && dir !== dirname(source) && !dir.startsWith(`${source}/`);
+}
+
+// Files have no children, so dropping onto one targets its folder.
+function dropDirFor(row: TreeRow): string {
+  if (row.isParent) return "";
+  return row.entry.is_dir ? row.entry.path : dirname(row.entry.path);
+}
+
+function onDragStart(e: DragEvent, row: TreeRow) {
+  draggedPath = row.entry.path;
+  if (e.dataTransfer) {
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", row.entry.path);
+  }
+}
+
+function onDragOver(e: DragEvent, row: TreeRow) {
+  // Stop the scroll container from treating this as a drop on the tree root.
+  e.stopPropagation();
+  const dir = dropDirFor(row);
+  if (!canDropInto(draggedPath, dir)) {
+    dropDir = "";
+    return;
+  }
+  e.preventDefault();
+  if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+  dropDir = dir;
+}
+
+function onDrop(e: DragEvent, row: TreeRow) {
+  e.stopPropagation();
+  drop(e, dropDirFor(row));
+}
+
+function drop(e: DragEvent, dir: string): void {
+  e.preventDefault();
+  const source = draggedPath;
+  draggedPath = "";
+  dropDir = "";
+  if (!canDropInto(source, dir)) return;
+  void moveEntry(source, `${dir.replace(/\/$/, "")}/${basename(source)}`);
+}
+
+function onDragLeave(e: DragEvent) {
+  const next = e.relatedTarget;
+  if (next instanceof Node && scrollEl?.contains(next)) return;
+  dropDir = "";
+}
+
 function ext(name: string): string {
   const idx = name.lastIndexOf(".");
   return idx === -1 ? "" : name.slice(idx + 1).toLowerCase();
@@ -321,6 +382,17 @@ let contextMenuY = $state(0);
         onscroll={(e) => {
           scrollTop = e.currentTarget.scrollTop;
         }}
+        ondragover={(e) => {
+          if (!canDropInto(draggedPath, fileTreeStore.root)) {
+            dropDir = "";
+            return;
+          }
+          e.preventDefault();
+          if (e.dataTransfer) e.dataTransfer.dropEffect = "move";
+          dropDir = fileTreeStore.root;
+        }}
+        ondrop={(e) => drop(e, fileTreeStore.root)}
+        ondragleave={onDragLeave}
         oncontextmenu={(e) => {
           if ((e.target as HTMLElement).closest(".ft-row")) return;
           e.preventDefault();
@@ -339,10 +411,21 @@ let contextMenuY = $state(0);
               style:top={`${rowIndex * ROW_HEIGHT}px`}
               style:padding-left={`${8 + row.depth * INDENT_STEP}px`}
               class:ft-active={!row.isRoot && !row.isParent && row.entry.path === activeFilePath}
+              class:ft-drop-target={dropDir !== "" && !row.isParent && dropDirFor(row) === dropDir}
               class:opacity-70={!row.isRoot && !row.isParent && row.entry.name.startsWith(".")}
+              class:opacity-50={row.entry.path === draggedPath}
               title={row.entry.path}
+              draggable={!row.isRoot && !row.isParent}
               onclick={(e) => handleRowClick(e, row)}
               ondblclick={() => handleRowDoubleClick(row)}
+              ondragstart={(e) => onDragStart(e, row)}
+              ondragover={(e) => onDragOver(e, row)}
+              ondragleave={onDragLeave}
+              ondrop={(e) => onDrop(e, row)}
+              ondragend={() => {
+                draggedPath = "";
+                dropDir = "";
+              }}
               oncontextmenu={(e) => {
                 if (row.isRoot || row.isParent) return;
                 e.preventDefault();
@@ -445,5 +528,11 @@ let contextMenuY = $state(0);
   bottom: 0;
   width: 2px;
   background-color: var(--accent-secondary);
+}
+
+.ft-row.ft-drop-target {
+  background-color: var(--surface-active);
+  outline: 1px solid var(--accent-secondary);
+  outline-offset: -1px;
 }
 </style>

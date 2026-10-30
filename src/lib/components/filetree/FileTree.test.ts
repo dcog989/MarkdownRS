@@ -9,6 +9,12 @@ import { treeViewStore } from "$lib/stores/treeViewStore.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { openFile } from "$lib/utils/fileSystem";
 import FileTree from "./FileTree.svelte";
+import { moveEntry } from "./fileTreeContextMenuLogic.svelte";
+
+vi.mock("./fileTreeContextMenuLogic.svelte", () => ({
+  moveEntry: vi.fn(),
+  FileTreeContextMenuLogic: vi.fn(),
+}));
 
 vi.mock("$lib/commands/directory", () => ({
   listDirectory: vi.fn(),
@@ -25,6 +31,11 @@ vi.mock("$lib/utils/settings", () => ({
 
 const mockedListDirectory = vi.mocked(listDirectory);
 const mockedOpenFile = vi.mocked(openFile);
+const mockedMoveEntry = vi.mocked(moveEntry);
+
+function dataTransfer(): DataTransfer {
+  return { effectAllowed: "", dropEffect: "", setData: vi.fn(), getData: vi.fn() } as unknown as DataTransfer;
+}
 
 function entry(name: string, isDir = false): FileEntry {
   return {
@@ -401,5 +412,45 @@ describe("FileTree", () => {
     await waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith("/root/deep", false));
     expect(await screen.findByText("hidden.md")).toBeTruthy();
     expect(screen.queryByText("notes.md")).toBeFalsy();
+  });
+
+  it("moves a dragged file into a folder on drop", async () => {
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("a.md"), entry("sub", true)]);
+
+    render(FileTree);
+    const source = await screen.findByText("a.md");
+    const target = screen.getByText("sub");
+    const dt = dataTransfer();
+
+    await fireEvent.dragStart(source, { dataTransfer: dt });
+    await fireEvent.dragOver(target, { dataTransfer: dt });
+    await fireEvent.drop(target, { dataTransfer: dt });
+
+    expect(mockedMoveEntry).toHaveBeenCalledWith("/root/a.md", "/root/sub/a.md");
+  });
+
+  it("ignores drops that would not move the entry", async () => {
+    fileTreeStore.root = "/root";
+    fileTreeStore.expanded.set("/root", true);
+    fileTreeStore.children.set("/root", [entry("a.md"), entry("sub", true)]);
+    mockedListDirectory.mockResolvedValue([]);
+
+    render(FileTree);
+
+    // Onto the file itself: its folder is where it already is.
+    const file = await screen.findByText("a.md");
+    let dt = dataTransfer();
+    await fireEvent.dragStart(file, { dataTransfer: dt });
+    await fireEvent.drop(file, { dataTransfer: dt });
+
+    // A folder onto itself would nest it inside itself.
+    const folder = screen.getByText("sub");
+    dt = dataTransfer();
+    await fireEvent.dragStart(folder, { dataTransfer: dt });
+    await fireEvent.drop(folder, { dataTransfer: dt });
+
+    expect(mockedMoveEntry).not.toHaveBeenCalled();
   });
 });

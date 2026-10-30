@@ -8,22 +8,31 @@ import { dirname, forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fi
 import { appContext } from "$lib/stores/state.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
-import { createDirOnDisk, createFileOnDisk } from "$lib/utils/fileIO";
+import { createDirOnDisk, createFileOnDisk, renameFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
 
-// Open tabs inside a renamed folder keep the old path; rewrite the prefix so
-// the next save lands in the folder's new location, and move the watchers
-// along with them (they are keyed by path and would otherwise leak).
+// Open tabs at or inside a renamed path keep the old path; rewrite it so the
+// next save lands in the new location, and move the watchers along with them
+// (they are keyed by path and would otherwise leak).
 async function retargetTabs(oldPath: string, newPath: string): Promise<void> {
   const oldPrefix = `${oldPath}/`;
-  const affected = appContext.editor.tabs.filter((t) => t.path?.startsWith(oldPrefix));
+  const affected = appContext.editor.tabs.filter((t) => t.path === oldPath || t.path?.startsWith(oldPrefix));
   for (const tab of affected) {
     if (!tab.path) continue;
-    const nextPath = `${newPath}/${tab.path.slice(oldPrefix.length)}`;
+    const nextPath = tab.path === oldPath ? newPath : `${newPath}/${tab.path.slice(oldPrefix.length)}`;
     fileWatcher.unwatch(tab.path);
     updateTabFields(tab.id, { path: nextPath });
     await fileWatcher.watch(nextPath);
   }
+}
+
+// Move a file or folder to another directory (drag and drop in the tree).
+export async function moveEntry(oldPath: string, newPath: string): Promise<void> {
+  if (!(await renameFileOnDisk(oldPath, newPath))) return;
+  await retargetTabs(oldPath, newPath);
+  forgetSubtree(oldPath);
+  refreshDirectoryIfInTree(dirname(oldPath));
+  refreshDirectoryIfInTree(dirname(newPath));
 }
 
 export class FileTreeContextMenuLogic {

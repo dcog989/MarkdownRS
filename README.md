@@ -44,7 +44,7 @@ Flowcharts, sequence diagrams, and other diagrams render in the preview from ```
 ### Documents & Organisation
 
 - Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
-- File Tree: Sidebar file tree for browsing and opening files.
+- File Tree: Sidebar file tree for browsing and opening files, with drag / drop support.
 - Bookmark System: Bookmark and tag local documents with instant filter search.
 - New File Template: Create new files from a configurable template.
 
@@ -78,7 +78,7 @@ LongSentences = true     # force a rule on
 
 ## Installation
 
-Download relevant package from [GitHub Releases](https://github.com/dcog989/MarkdownRS/releases/latest).
+Download relevant package from [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/latest).
 
 | Platform | Format | Install |
 |----------|--------|---------|
