@@ -10,7 +10,14 @@ import { syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { logger } from "$lib/utils/logger";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { BUILTIN_THEME_NAME, buildCustomAccentCss, getThemeCss } from "$lib/utils/themes";
+import {
+  applyThemeCss,
+  BUILTIN_THEME_NAME,
+  buildCustomAccentCss,
+  clearThemeCss,
+  getThemeCss,
+  isThemeApplied,
+} from "$lib/utils/themes";
 import "../app.css";
 
 let { children } = $props();
@@ -32,25 +39,15 @@ $effect(() => {
 $effect(() => {
   const themeName = appContext.settings.activeTheme;
   if (!themeName || themeName === BUILTIN_THEME_NAME) {
-    const existing = document.getElementById("user-theme-styles");
-    if (existing) existing.remove();
+    clearThemeCss();
     return;
   }
 
-  async function loadTheme() {
-    const css = await getThemeCss(themeName);
-    if (!css) return;
+  if (isThemeApplied(themeName)) return;
 
-    let styleTag = document.getElementById("user-theme-styles") as HTMLStyleElement;
-    if (!styleTag) {
-      styleTag = document.createElement("style");
-      styleTag.id = "user-theme-styles";
-      document.head.appendChild(styleTag);
-    }
-    styleTag.textContent = css;
-  }
-
-  loadTheme();
+  getThemeCss(themeName).then((css) => {
+    if (css) applyThemeCss(themeName, css);
+  });
 });
 
 $effect(() => {

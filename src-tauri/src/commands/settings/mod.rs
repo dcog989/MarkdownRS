@@ -48,7 +48,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 
     let toml_val = parse_settings_toml(&content)?;
 
-    let json_val = serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))?;
+    let mut json_val = serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
     if let Some(state) = app_handle.try_state::<AppState>() {
         let mut pr = state.project_root.lock_or_recover();
@@ -56,6 +56,19 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
             .get("workspaceRoot")
             .and_then(|v| v.as_str())
             .map(PathBuf::from);
+    }
+
+    // The active theme's CSS rides along so the first frame is themed; a second
+    // request after paint would flash the built-in palette first.
+    let theme_name = json_val
+        .get("activeTheme")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    if !theme_name.is_empty()
+        && let Some(css) = themes::startup_css(&app_handle, &theme_name).await
+    {
+        json_val["themeCss"] = serde_json::Value::String(css);
     }
 
     Ok(json_val)

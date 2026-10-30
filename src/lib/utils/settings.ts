@@ -2,6 +2,7 @@ import { translate } from "$lib/i18n";
 import { appState } from "$lib/stores/appState.svelte";
 import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { callBackendSafe } from "./backend";
+import { applyThemeCss } from "./themes";
 import { debounce } from "./timing";
 
 const SETTINGS_EXCLUDED_KEYS = new Set([
@@ -108,6 +109,12 @@ export async function initSettings() {
     } else if (legacy.findPanelTransparent === true) {
       settingsState.findPanelOpacity = 15;
     }
+  }
+
+  // Delivered with the settings so the first frame is already themed.
+  const startupThemeCss = legacy?.themeCss;
+  if (typeof startupThemeCss === "string" && startupThemeCss) {
+    applyThemeCss(settingsState.activeTheme, startupThemeCss);
   }
 
   syncThemeFromSystem();

@@ -32,6 +32,32 @@ export async function getThemeCss(themeName: string): Promise<string> {
   return result ?? "";
 }
 
+const THEME_STYLE_ELEMENT_ID = "user-theme-styles";
+
+// Theme currently in the style element, so CSS delivered with the settings is
+// not fetched a second time after paint.
+let appliedTheme = "";
+
+export function applyThemeCss(themeName: string, css: string): void {
+  appliedTheme = themeName;
+  let styleTag = document.getElementById(THEME_STYLE_ELEMENT_ID) as HTMLStyleElement | null;
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = THEME_STYLE_ELEMENT_ID;
+    document.head.appendChild(styleTag);
+  }
+  styleTag.textContent = css;
+}
+
+export function clearThemeCss(): void {
+  appliedTheme = "";
+  document.getElementById(THEME_STYLE_ELEMENT_ID)?.remove();
+}
+
+export function isThemeApplied(themeName: string): boolean {
+  return appliedTheme === themeName;
+}
+
 const ACCENT_DARK_SECONDARY_MIX = 0.3;
 const ACCENT_LIGHT_PRIMARY_MIX = 0.25;
 const ACCENT_LIGHT_SECONDARY_MIX = 0.15;

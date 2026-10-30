@@ -1,5 +1,6 @@
 use crate::utils::handle_error;
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::LazyLock;
 use std::time::SystemTime;
 use tokio::fs;
@@ -53,23 +54,45 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
 }
 
 pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result<String, String> {
-    let themes_dir = crate::utils::themes_dir(&super::app_data_path(app_handle)?);
-
-    let theme_path = {
-        let exact = themes_dir.join(format!("{}.css", theme_name));
-        if fs::try_exists(&exact).await.unwrap_or(false) {
-            exact
-        } else {
-            let keyed_path = themes_dir.join(format!("{}.css", keyed(theme_name)));
-            if fs::try_exists(&keyed_path).await.unwrap_or(false) {
-                keyed_path
-            } else {
-                log::warn!("Theme '{}' not found", theme_name);
-                return Err(format!("Custom theme '{}' not found", theme_name));
-            }
-        }
+    let theme_path = match resolve_path(app_handle, theme_name).await {
+        Some(path) => path,
+        None => {
+            log::warn!("Theme '{}' not found", theme_name);
+            return Err(format!("Custom theme '{}' not found", theme_name));
+        },
     };
 
+    read_css_file(theme_path).await
+}
+
+/// CSS for the theme saved in settings, if it resolves to a bundled template or
+/// an existing file. Silent on a miss: the built-in theme has no CSS file.
+pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<String> {
+    if let Some(css) = default_css(theme_name) {
+        return Some(css.to_string());
+    }
+    read_css_file(resolve_path(app_handle, theme_name).await?).await.ok()
+}
+
+async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<PathBuf> {
+    let data_dir = match super::app_data_path(app_handle) {
+        Ok(dir) => dir,
+        Err(e) => {
+            log::warn!("Cannot resolve themes directory: {}", e);
+            return None;
+        },
+    };
+    let themes_dir = crate::utils::themes_dir(&data_dir);
+
+    let exact = themes_dir.join(format!("{}.css", theme_name));
+    if fs::try_exists(&exact).await.unwrap_or(false) {
+        return Some(exact);
+    }
+    let keyed_path = themes_dir.join(format!("{}.css", keyed(theme_name)));
+    fs::try_exists(&keyed_path).await.unwrap_or(false).then_some(keyed_path)
+}
+
+async fn read_css_file(theme_path: PathBuf) -> Result<String, String> {
     // Key the cache by the resolved file path, not the request's display name,
     // so different spellings of the same theme share a single entry.
     let cache_key = theme_path.to_string_lossy().into_owned();
