@@ -84,17 +84,6 @@ pub async fn restore_session(state: State<'_, AppState>) -> Result<SessionData, 
         );
     }
 
-    // Reclaim pages left free by deleted or rewritten tabs. Detached and started
-    // only after the session is loaded so the vacuum never delays startup I/O.
-    // shortcut: once per restore, so a long session keeps its freed pages until
-    // the next launch.
-    let vacuum_db = state.db.clone();
-    tokio::task::spawn_blocking(move || {
-        if let Err(e) = vacuum_db.incremental_vacuum() {
-            log::warn!("Failed to reclaim freed database pages: {}", e);
-        }
-    });
-
     result
 }
 

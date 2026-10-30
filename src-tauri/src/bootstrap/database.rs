@@ -1,7 +1,9 @@
 use crate::db::Database;
+use crate::state::AppState;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
+use tauri::{Listener, Manager};
 
 pub fn init(db_path: PathBuf, db_dir: &Path) -> Result<Database, String> {
     match Database::new(db_path.clone()) {
@@ -35,6 +37,23 @@ pub fn init(db_path: PathBuf, db_dir: &Path) -> Result<Database, String> {
             })
         },
     }
+}
+
+/// Reclaims pages freed by deleted or rewritten tabs once the frontend reports
+/// a finished restore, so the vacuum never holds the shared connection ahead of
+/// the first tab-content read.
+/// shortcut: once per launch, so a long session keeps its freed pages until the
+/// next start.
+pub fn schedule_vacuum(app_handle: &tauri::AppHandle) {
+    let handle = app_handle.clone();
+    app_handle.once("frontend-ready", move |_| {
+        let db = handle.state::<AppState>().db.clone();
+        tokio::task::spawn_blocking(move || {
+            if let Err(e) = db.incremental_vacuum() {
+                log::warn!("Failed to reclaim freed database pages: {}", e);
+            }
+        });
+    });
 }
 
 /// Remove SQLite WAL/SHM sidecar files for a database path.
