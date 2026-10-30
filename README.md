@@ -2,7 +2,7 @@
 
 A Markdown editor that focuses performance and a clean, minimal UI that still provides a full feature set for technical and general users.
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
 ![screenshot 1](assets/screen-1.webp)
 
@@ -10,69 +10,16 @@ The only Markdown editor you need? Many people are saying so.
 
 ## Features
 
-### Editing
-
-- Markdown Flavors: GFM (GitHub Flavored Markdown) and CommonMark.
-- Smart Formatting: Auto-Markdown formatting for standards-compliant, consistent output.
-- Text Operations: Sort lines, trim whitespace, change case, etc.
-- Rendered Mode: Edit in rendered or raw Markdown mode.
-- Optional color swatches prefixed to HEX, RGB, HSL, etc.
-- Find & Replace: Across all open documents.
-
-### Performance
-
-- Fast, Low Resource Use: Tauri / Rust / SQLite backend; Svelte / CodeMirror / TypeScript frontend.
-- Auto-Save: Session persistence with hot-exit support.
-
-### Preview
-
-- Live Preview: Split view with smooth, bi-directional synchronized scrolling.
-- Diagrams (Mermaid): Render flowcharts, sequence diagrams, and more with Mermaid.js.
-- Math (KaTeX): Render math in the preview with KaTeX delimiters:
-
-| Style   | Syntax |
-|---------|--------|
-| Inline  | `$...$`, `\(...\)` |
-| Display | `$$...$$`, `\[...\]`, ```` ```math ```` fence |
-
-Math is rendered to HTML via KaTeX `renderToString` and cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
-
-### Diagrams
-
-Flowcharts, sequence diagrams, and other diagrams render in the preview from ```` ```mermaid ```` fenced blocks.
-
-### Documents & Organisation
-
-- Multi-Tab: Work on multiple documents simultaneously, pin them, bookmark them.
-- File Tree: Sidebar file tree for browsing and opening files, with drag / drop support.
-- Bookmark System: Bookmark and tag local documents with instant filter search.
-- New File Template: Create new files from a configurable template.
-
-### Customisation
-
-- Command Palette: Efficient navigation with command palette (Ctrl+Shift+P).
-- Keyboard Shortcuts: Customise any command's shortcut as you want.
-- Themes: Multiple built-in light and dark themes, plus custom themes.
-
-### Export
-
-- Export documents to PDF, PNG, WebP, or HTML.
-
-### Markdown Formatting
-
-The embedded [rumdl](https://github.com/rvben/rumdl/) lints and formats Markdown content; rules can be configured with the built-in editor.
-
-*rumdl* config files - `.rumdl.toml` or `rumdl.toml` - can be placed at project or home folder levels. If neither exists, the built-in defaults are used.
-
-### Grammar Checking
-
-The [Harper](https://writewithharper.com/) Grammar Check is optional and its rules can be edited in `settings.toml`:
-
-```toml
-[harperLinters]
-OxfordComma = false      # disable a rule
-LongSentences = true     # force a rule on
-```
+- *Editing* — GFM and CommonMark, raw or rendered mode, find & replace across open documents, line sorting and case/whitespace tools, optional colour swatches.
+- *Live preview* — split view with bi-directional synchronized scrolling.
+- *Math and diagrams* — KaTeX math and Mermaid diagrams render in the preview, fully offline.
+- *Documents* — multi-tab with pinning, file tree with drag and drop, tagged bookmarks with filter search, new-file templates.
+- *Auto-save* — session persistence with hot-exit support.
+- *Formatting* — rumdl linting and auto-formatting ([usage](#usage)).
+- *Grammar* — optional Harper grammar check ([usage](#usage)).
+- *Customisation* — command palette, custom shortcuts, built-in and custom themes.
+- *Export* — PDF, PNG, WebP, HTML.
+- *Performance* — Tauri / Rust / SQLite backend; TypeScript / Svelte / CodeMirror frontend.
 
 ---
 
@@ -93,6 +40,33 @@ The AppImage installs nothing: the first run adds itself to the application menu
 
 ```sh
 xdg-mime default markdownrs.desktop text/markdown
+```
+
+---
+
+## Usage
+
+### Math
+
+| Style   | Syntax |
+|---------|--------|
+| Inline  | `$...$`, `\(...\)` |
+| Display | `$$...$$`, `\[...\]`, ```` ```math ```` fence |
+
+Math renders to HTML via KaTeX `renderToString` and is cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
+
+### Formatting
+
+The embedded [rumdl](https://github.com/rvben/rumdl/) lints and formats Markdown; rules can be configured with the built-in editor. Config files (`.rumdl.toml` or `rumdl.toml`) can sit at project or home level; without one, the built-in defaults apply.
+
+### Grammar
+
+The [Harper](https://writewithharper.com/) grammar check is optional. Rules can be edited in `settings.toml`:
+
+```toml
+[harperLinters]
+OxfordComma = false      # disable a rule
+LongSentences = true     # force a rule on
 ```
 
 ---
