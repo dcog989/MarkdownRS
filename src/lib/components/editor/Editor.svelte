@@ -53,6 +53,7 @@ let findReplacePanel = $state<{
   setReplaceMode: (enable: boolean) => void;
   focusInput: () => void;
 } | null>(null);
+let findBarHeight = $state(0);
 let showContextMenu = $state(false);
 let contextMenuX = $state(0);
 let contextMenuY = $state(0);
@@ -243,7 +244,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
 <div
   class="bg-bg-editor relative h-full w-full overflow-hidden"
   style:padding-right={appContext.settings.showMinimap ? "var(--minimap-width)" : "var(--scrollbar-track-width)"}
-  style:--find-panel-right={appContext.settings.showMinimap ? "var(--minimap-width)" : "var(--scrollbar-track-width)"}
+  style:--find-bar-height={`${findBarHeight}px`}
 >
   <EditorViewComponent
     bind:cmView
@@ -274,7 +275,13 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
       <CustomScrollbar viewport={cmView.scrollDOM} />
     {/if}
   {/if}
-  <FindReplacePanel bind:this={findReplacePanel} bind:isOpen={appContext.interface.showFind} {cmView} />
+
+  <FindReplacePanel
+    bind:this={findReplacePanel}
+    bind:isOpen={appContext.interface.showFind}
+    bind:barHeight={findBarHeight}
+    {cmView}
+  />
 
   {#if showEmptyState}
     <div class="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">

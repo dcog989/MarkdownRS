@@ -1,6 +1,7 @@
 <script lang="ts">
 import { closeSearchPanel, findNext, findPrevious, openSearchPanel, replaceAll, replaceNext } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
+import ArrowRightLeft from "lucide-svelte/icons/arrow-right-left";
 import CaseSensitive from "lucide-svelte/icons/case-sensitive";
 import ChevronDown from "lucide-svelte/icons/chevron-down";
 import ChevronUp from "lucide-svelte/icons/chevron-up";
@@ -8,6 +9,7 @@ import File from "lucide-svelte/icons/file";
 import Files from "lucide-svelte/icons/files";
 import Regex from "lucide-svelte/icons/regex";
 import Replace from "lucide-svelte/icons/replace";
+import ReplaceAll from "lucide-svelte/icons/replace-all";
 import Search from "lucide-svelte/icons/search";
 import WholeWord from "lucide-svelte/icons/whole-word";
 import X from "lucide-svelte/icons/x";
@@ -30,9 +32,11 @@ import { debounce } from "$lib/utils/timing";
 
 let {
   isOpen = $bindable(false),
+  barHeight = $bindable(0),
   cmView,
 }: {
   isOpen?: boolean;
+  barHeight?: number;
   cmView: EditorView | undefined;
 } = $props();
 
@@ -43,6 +47,7 @@ let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
 let panelOpacity = $derived(isMouseOver ? 1 : appContext.settings.findPanelOpacity / 100);
+let inputBackground = $derived(`color-mix(in srgb, var(--surface-input) ${panelOpacity * 100}%, transparent)`);
 let hasMatches = $derived(
   searchScope === "current" ? searchState.currentMatches > 0 : searchState.allTabsResults.size > 0,
 );
@@ -89,6 +94,20 @@ $effect(() => {
     // (e.g. ctrl+f toggling the panel shut).
     cmView?.focus();
   }
+});
+
+$effect(() => {
+  if (!isOpen || !panelRef) {
+    barHeight = 0;
+    return;
+  }
+  const el = panelRef;
+  const observer = new ResizeObserver(() => {
+    barHeight = el.offsetHeight;
+  });
+  observer.observe(el);
+  barHeight = el.offsetHeight;
+  return () => observer.disconnect();
 });
 
 $effect(() => {
@@ -217,7 +236,32 @@ function onReplaceAll() {
   }
 }
 
+function getFocusableItems(): HTMLElement[] {
+  if (!panelRef) return [];
+  return [...panelRef.querySelectorAll<HTMLElement>("button:not([disabled]), input:not([disabled])")].filter(
+    (el) => el.offsetParent !== null,
+  );
+}
+
 function handleKeydown(e: KeyboardEvent) {
+  if (e.key === "Tab" || e.key === "ISO_Left_Tab") {
+    const shiftTab = e.shiftKey || e.key === "ISO_Left_Tab";
+    const items = getFocusableItems();
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (first && last) {
+      if (shiftTab && e.target === first) {
+        e.preventDefault();
+        last.focus();
+        return;
+      }
+      if (!shiftTab && e.target === last) {
+        e.preventDefault();
+        first.focus();
+        return;
+      }
+    }
+  }
   if (e.key === "Escape") {
     e.stopPropagation();
     close();
@@ -288,8 +332,8 @@ onMount(() => {
 {#if isOpen}
   <div
     bind:this={panelRef}
-    class="find-panel bg-bg-panel absolute z-50 flex max-h-150 w-90 flex-col overflow-hidden rounded-lg border shadow-lg"
-    style:opacity={panelOpacity}
+    class="find-bar bg-bg-panel absolute top-0 right-0 left-0 z-50 flex flex-col border-b"
+    style:background-color={`color-mix(in srgb, var(--surface-2) ${panelOpacity * 100}%, transparent)`}
     onkeydown={handleKeydown}
     onfocusout={handleBlur}
     onmouseenter={() => (isMouseOver = true)}
@@ -298,71 +342,151 @@ onMount(() => {
     aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
-    <div class="bg-bg-header flex items-center gap-1 border-b px-2 py-1">
-      <button
-        type="button"
-        class="btn-icon h-7 w-7"
-        aria-pressed={searchState.matchCase}
-        aria-label={$_("findReplace.matchCase")}
-        onclick={toggleMatchCase}
-        use:tooltip={$_("findReplace.matchCase")}
-      >
-        <CaseSensitive size={16} />
-      </button>
-      <button
-        type="button"
-        class="btn-icon h-7 w-7"
-        aria-pressed={searchState.matchWholeWord}
-        aria-label={$_("findReplace.wholeWord")}
-        onclick={toggleWholeWord}
-        use:tooltip={$_("findReplace.wholeWord")}
-      >
-        <WholeWord size={16} />
-      </button>
-      <button
-        type="button"
-        class="btn-icon h-7 w-7"
-        aria-pressed={searchState.useRegex}
-        aria-label={$_("findReplace.regex")}
-        onclick={toggleRegex}
-        use:tooltip={$_("findReplace.regex")}
-      >
-        <Regex size={16} />
-      </button>
-
-      <button
-        type="button"
-        class="btn-icon h-7 w-7"
-        aria-pressed={searchScope === "all"}
-        aria-label={$_("findReplace.allOpenDocuments")}
-        onclick={toggleScope}
-        use:tooltip={searchScope === "all" ? $_("findReplace.allOpenDocuments") : $_("findReplace.currentDocument")}
-      >
-        {#if searchScope === "all"}
-          <Files size={16} />
-        {:else}
-          <File size={16} />
+    <div class="flex items-center gap-2 px-2 py-1">
+      <div class="find-field relative min-w-0 flex-1">
+        <Input
+          bind:ref={searchInputRef}
+          type="text"
+          bind:value={searchState.findText}
+          aria-label={$_("findReplace.find")}
+          class={searchState.regexError || (searchState.findText && !hasMatches) ? "border-danger" : ""}
+          style={`padding-right: 8rem; background-color: ${inputBackground}`}
+          oninput={onInput}
+          spellcheck="false"
+        />
+        {#if !searchState.findText}
+          <div
+            class="text-fg-muted pointer-events-none absolute inset-0 flex items-center gap-1.5 px-3 text-ui opacity-60"
+          >
+            <Search size={14} class="shrink-0" />
+            <span class="truncate">{$_("findReplace.find")}</span>
+          </div>
         {/if}
-      </button>
+        <div class="absolute top-0 right-0 bottom-0 flex items-center gap-0.5 pr-1">
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            aria-pressed={searchState.matchCase}
+            aria-label={$_("findReplace.matchCase")}
+            onclick={toggleMatchCase}
+            use:tooltip={$_("findReplace.matchCase")}
+          >
+            <CaseSensitive size={16} />
+          </button>
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            aria-pressed={searchState.matchWholeWord}
+            aria-label={$_("findReplace.wholeWord")}
+            onclick={toggleWholeWord}
+            use:tooltip={$_("findReplace.wholeWord")}
+          >
+            <WholeWord size={16} />
+          </button>
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            aria-pressed={searchState.useRegex}
+            aria-label={$_("findReplace.regex")}
+            onclick={toggleRegex}
+            use:tooltip={$_("findReplace.regex")}
+          >
+            <Regex size={16} />
+          </button>
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            aria-pressed={searchScope === "all"}
+            aria-label={$_("findReplace.allOpenDocuments")}
+            onclick={toggleScope}
+            use:tooltip={searchScope === "all" ? $_("findReplace.allOpenDocuments") : $_("findReplace.currentDocument")}
+          >
+            {#if searchScope === "all"}
+              <Files size={16} />
+            {:else}
+              <File size={16} />
+            {/if}
+          </button>
+        </div>
+      </div>
 
-      <div class="ml-1 flex items-center self-stretch border-l pl-2">
+      <div class="text-fg-muted min-w-8 text-center text-ui whitespace-nowrap {hasMatches ? "" : "opacity-50"}">
+        {#if searchScope === "current"}
+          {searchState.currentMatches > 0 ? searchState.currentIndex + 1 : 0}
+          / {searchState.currentMatches}
+        {:else if searchState.allTabsResults.size > 0}
+          {$_("findReplace.tabs", { values: { count: searchState.allTabsResults.size } })}
+        {:else}
+          {$_("findReplace.zeroTabs")}
+        {/if}
+      </div>
+
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        onclick={onFindPrevious}
+        disabled={searchScope === "all" || !!searchState.regexError}
+        aria-label={$_("common.previous")}
+        use:tooltip={$_("common.previous")}
+      >
+        <ChevronUp size={18} />
+      </button>
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        onclick={onFindNext}
+        disabled={searchScope === "all" || !!searchState.regexError}
+        aria-label={$_("common.next")}
+        use:tooltip={$_("common.next")}
+      >
+        <ChevronDown size={18} />
+      </button>
+      <div class="border-border-primary h-4 border-l"></div>
+      <button
+        type="button"
+        class="btn-icon h-7 w-7"
+        aria-pressed={isReplaceMode}
+        aria-label={$_("findReplace.toggleReplaceMode")}
+        onclick={() => (isReplaceMode = !isReplaceMode)}
+        use:tooltip={$_("findReplace.toggleReplaceMode")}
+      >
+        <ArrowRightLeft size={16} />
+      </button>
+      {#if isReplaceMode}
+        <div class="replace-field min-w-0 flex-1">
+          <Input
+            type="text"
+            bind:value={searchState.replaceText}
+            placeholder={$_("findReplace.replace")}
+            style={`background-color: ${inputBackground}`}
+            oninput={onReplaceInput}
+            spellcheck="false"
+          />
+        </div>
         <button
           type="button"
           class="btn-icon h-7 w-7"
-          aria-pressed={isReplaceMode}
-          aria-label={$_("findReplace.toggleReplaceMode")}
-          onclick={() => (isReplaceMode = !isReplaceMode)}
-          use:tooltip={$_("findReplace.toggleReplaceMode")}
+          onclick={onReplace}
+          disabled={searchScope === "all" || !!searchState.regexError}
+          aria-label={$_("common.replace")}
+          use:tooltip={$_("common.replace")}
         >
           <Replace size={16} />
         </button>
-      </div>
-
-      <div class="flex-1"></div>
-
+        <button
+          type="button"
+          class="btn-icon h-7 w-7"
+          onclick={onReplaceAll}
+          disabled={!!searchState.regexError}
+          aria-label={$_("findReplace.replaceAll")}
+          use:tooltip={$_("findReplace.replaceAll")}
+        >
+          <ReplaceAll size={16} />
+        </button>
+      {/if}
       <button
         type="button"
-        class="btn-icon h-7 w-7"
+        class="btn-icon ml-auto h-7 w-7"
         aria-label={$_("findReplace.closeEsc")}
         onclick={close}
         use:tooltip={$_("findReplace.closeEsc")}
@@ -371,126 +495,43 @@ onMount(() => {
       </button>
     </div>
 
-    <div class="flex max-h-125 flex-col gap-3 overflow-y-auto p-3">
-      <div class="flex items-center gap-2">
-        <div class="relative flex-1">
-          <Input
-            bind:ref={searchInputRef}
-            type="text"
-            bind:value={searchState.findText}
-            aria-label={$_("findReplace.find")}
-            class={searchState.regexError || (searchState.findText && !hasMatches) ? "border-danger" : ""}
-            oninput={onInput}
-            spellcheck="false"
-          />
-          {#if !searchState.findText}
-            <div
-              class="text-fg-muted pointer-events-none absolute inset-0 flex items-center gap-1.5 px-3 text-ui opacity-60"
-            >
-              <Search size={14} class="shrink-0" />
-              <span class="truncate">{$_("findReplace.find")}</span>
-            </div>
-          {/if}
-        </div>
-        <div class="text-fg-muted min-w-8 text-center text-ui whitespace-nowrap {hasMatches ? "" : "opacity-50"}">
-          {#if searchScope === "current"}
-            {searchState.currentMatches > 0 ? searchState.currentIndex + 1 : 0}
-            / {searchState.currentMatches}
-          {:else if searchState.allTabsResults.size > 0}
-            {$_("findReplace.tabs", { values: { count: searchState.allTabsResults.size } })}
-          {:else}
-            {$_("findReplace.zeroTabs")}
-          {/if}
-        </div>
-        <div class="flex items-center">
-          <button
-            type="button"
-            class="btn-icon h-8 w-8"
-            onclick={onFindPrevious}
-            disabled={searchScope === "all" || !!searchState.regexError}
-            aria-label={$_("common.previous")}
-            use:tooltip={$_("common.previous")}
-          >
-            <ChevronUp size={24} />
-          </button>
-          <button
-            type="button"
-            class="btn-icon -ml-1 h-8 w-8"
-            onclick={onFindNext}
-            disabled={searchScope === "all" || !!searchState.regexError}
-            aria-label={$_("common.next")}
-            use:tooltip={$_("common.next")}
-          >
-            <ChevronDown size={24} />
-          </button>
-        </div>
+    {#if searchState.regexError}
+      <div class="text-danger bg-danger/10 border-danger/30 mx-2 mb-1 rounded border px-2 py-1 text-ui-sm">
+        {searchState.regexError}
       </div>
+    {/if}
 
-      {#if searchState.regexError}
-        <div class="text-danger bg-danger/10 border-danger/30 rounded border px-2 py-1 text-ui-sm">
-          {searchState.regexError}
-        </div>
-      {/if}
-
-      {#if isReplaceMode}
-        <div class="flex items-center gap-2">
-          <Input
-            type="text"
-            bind:value={searchState.replaceText}
-            placeholder={$_("findReplace.replace")}
-            class="flex-1"
-            oninput={onReplaceInput}
-            spellcheck="false"
-          />
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-          <button
-            type="button"
-            class="btn-base btn-sm btn-outline"
-            onclick={onReplace}
-            disabled={searchScope === "all" || !!searchState.regexError}
-          >
-            <Replace size={12} />
-            {$_("common.replace")}
-          </button>
-          <button
-            type="button"
-            class="btn-base btn-sm btn-outline"
-            onclick={onReplaceAll}
-            disabled={!!searchState.regexError}
-          >
-            <Replace size={12} />
-            {$_("findReplace.replaceAll")}
-          </button>
-        </div>
-      {/if}
-
-      {#if searchScope === "all" && searchState.allTabsResults.size > 0}
-        <div class="flex max-h-50 flex-col gap-1 overflow-y-auto">
-          <div class="text-fg-muted mb-1 text-ui font-semibold">{$_("findReplace.results")}</div>
-          {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
-            {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
-            {#if tab}
-              <button
-                type="button"
-                class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
-                onclick={() => navigateToTab(tabId)}
-              >
-                <span class="text-fg-default overflow-hidden text-ui text-ellipsis whitespace-nowrap">{tab.title}</span>
-                <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-ui-sm">{count}</span>
-              </button>
-            {/if}
-          {/each}
-        </div>
-      {/if}
-    </div>
+    {#if searchScope === "all" && searchState.allTabsResults.size > 0}
+      <div class="flex max-h-50 flex-col gap-1 overflow-y-auto px-2 pb-1">
+        <div class="text-fg-muted mb-1 text-ui font-semibold">{$_("findReplace.results")}</div>
+        {#each [...searchState.allTabsResults.entries()] as [tabId, count] (tabId)}
+          {@const tab = appContext.editor.tabs.find((t) => t.id === tabId)}
+          {#if tab}
+            <button
+              type="button"
+              class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
+              onclick={() => navigateToTab(tabId)}
+            >
+              <span class="text-fg-default overflow-hidden text-ui text-ellipsis whitespace-nowrap">{tab.title}</span>
+              <span class="text-fg-muted bg-bg-panel rounded-xl px-2 py-0.5 text-ui-sm">{count}</span>
+            </button>
+          {/if}
+        {/each}
+      </div>
+    {/if}
   </div>
 {/if}
 
 <style>
-.find-panel {
-  top: 0.5rem;
-  right: calc(var(--find-panel-right, 0px) + 0.5rem);
+.find-field,
+.replace-field {
+  max-width: 460px;
+}
+
+.find-bar .btn-icon:focus-visible {
+  background-color: var(--surface-active);
+  color: var(--accent-secondary);
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
 }
 </style>
