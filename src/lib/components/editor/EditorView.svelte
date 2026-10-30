@@ -59,6 +59,7 @@ let {
   customKeymap = [],
   eventHandlers,
   onContextMenu,
+  findBarHeight = 0,
   cmView = $bindable(),
 }: {
   tabId: string;
@@ -80,11 +81,13 @@ let {
   customKeymap?: readonly KeyBinding[];
   eventHandlers: Extension;
   onContextMenu?: ContextMenuCallback;
+  findBarHeight?: number;
   cmView?: AppEditorView;
 } = $props();
 
 let editorContainer = $state<HTMLDivElement>();
 let view = $state<AppEditorView>();
+const scrollMarginComp = new Compartment();
 
 let tabSync = new TabSyncManager();
 let gutterObserver: ResizeObserver | null = null;
@@ -275,6 +278,14 @@ $effect(() => {
   view.dispatch({ effects: comps.handlersComp.reconfigure(eventHandlers) });
 });
 
+$effect(() => {
+  if (!view) return;
+  const top = findBarHeight;
+  view.dispatch({
+    effects: scrollMarginComp.reconfigure(EditorView.scrollMargins.of(() => ({ top }))),
+  });
+});
+
 function createExtensions(currentHistoryState: unknown): Extension[] {
   const extensions = createBaseExtensions({
     currentHistoryState,
@@ -288,6 +299,7 @@ function createExtensions(currentHistoryState: unknown): Extension[] {
     onContextMenu,
   });
   extensions.push(
+    scrollMarginComp.of(EditorView.scrollMargins.of(() => ({ top: findBarHeight }))),
     createUpdateListener(
       () => view?._currentTabId,
       onContentChange,

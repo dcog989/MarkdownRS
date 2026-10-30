@@ -281,6 +281,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     customKeymap={spellCheckKeymap}
     {eventHandlers}
     {onContextMenu}
+    {findBarHeight}
     onContentChange={handleContentChange}
     onMetricsChange={handleMetricsChange}
     onScrollChange={handleScrollChange}
