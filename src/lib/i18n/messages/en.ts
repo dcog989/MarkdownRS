@@ -146,6 +146,7 @@ export const en = {
     toggleSplitPreview: "Toggle Split Preview",
     toggleWriterMode: "Toggle Writer Mode",
     toggleFileTree: "Toggle File Tree",
+    toggleOutline: "Document Outline",
     refreshFileTree: "Refresh File Tree",
     toggleViewMode: "Toggle Raw/Rendered Mode",
     toggleFileType: "Toggle File Type (Markdown/Text)",
@@ -300,6 +301,13 @@ export const en = {
     title: "Emoji",
     placeholder: "Search emoji...",
     noMatch: "No emoji match search",
+  },
+  outline: {
+    title: "Outline",
+    filterPlaceholder: "Filter headings...",
+    empty: "No headings in this document",
+    noMatch: "No headings match the filter",
+    untitled: "Untitled heading",
   },
   settings: {
     modalTitle: "Settings",

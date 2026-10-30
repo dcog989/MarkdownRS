@@ -11,6 +11,7 @@ export const interfaceStore = $state({
   showBookmarks: false,
   showFileHistory: false,
   showCommandPalette: false,
+  showOutline: false,
   showData: false,
   showRumdlConfig: false,
   showEmojiPicker: false,
@@ -62,6 +63,9 @@ export function toggleFileHistory() {
 }
 export function toggleCommandPalette() {
   interfaceStore.showCommandPalette = !interfaceStore.showCommandPalette;
+}
+export function toggleOutline() {
+  interfaceStore.showOutline = !interfaceStore.showOutline;
 }
 export function toggleAbout() {
   interfaceStore.showAbout = !interfaceStore.showAbout;

@@ -6,6 +6,7 @@ import CommandPalette from "$lib/components/ui/CommandPalette.svelte";
 import DataModal from "$lib/components/ui/DataModal.svelte";
 import EmojiPicker from "$lib/components/ui/EmojiPicker.svelte";
 import FileHistoryModal from "$lib/components/ui/FileHistoryModal.svelte";
+import OutlineModal from "$lib/components/ui/OutlineModal.svelte";
 import PromptModal from "$lib/components/ui/PromptModal.svelte";
 import RumdlConfigModal from "$lib/components/ui/RumdlConfigModal.svelte";
 import SettingsModal from "$lib/components/ui/SettingsModal.svelte";
@@ -24,6 +25,10 @@ const paletteCommands: Command[] = commands.filter((c) => c.showInPalette !== fa
 <FileHistoryModal
   bind:isOpen={appContext.interface.showFileHistory}
   onClose={() => (appContext.interface.showFileHistory = false)}
+/>
+<OutlineModal
+  bind:isOpen={appContext.interface.showOutline}
+  onClose={() => (appContext.interface.showOutline = false)}
 />
 <SettingsModal
   bind:isOpen={appContext.interface.showSettings}

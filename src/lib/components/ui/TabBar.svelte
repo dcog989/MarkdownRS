@@ -1,5 +1,6 @@
 <script lang="ts">
 import ChevronDown from "lucide-svelte/icons/chevron-down";
+import ListTree from "lucide-svelte/icons/list-tree";
 import Menu from "lucide-svelte/icons/menu";
 import Plus from "lucide-svelte/icons/plus";
 import { onDestroy, onMount, tick } from "svelte";
@@ -17,6 +18,7 @@ import TabDropdown from "$lib/components/ui/TabDropdown.svelte";
 import { editorMetrics } from "$lib/stores/editorMetrics.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { createNewFile, pushToMru, reorderTabs } from "$lib/stores/editorStore.svelte";
+import { toggleOutline } from "$lib/stores/interfaceStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { asHTMLElement, assertHTMLElement } from "$lib/utils/dom";
@@ -318,6 +320,14 @@ $effect(() => {
   </div>
 
   <div class="flex h-full items-stretch border-l">
+    <button
+      type="button"
+      use:tooltip={`${$_("outline.title")}${shortcutManager.getShortcutDisplay("view.toggleOutline") ? ` (${shortcutManager.getShortcutDisplay("view.toggleOutline")})` : ""}`}
+      class="btn-icon relative h-8 w-8 shrink-0"
+      onclick={() => toggleOutline()}
+    >
+      <ListTree size={16} />
+    </button>
     <button
       type="button"
       use:tooltip={$_("tabBar.menu")}

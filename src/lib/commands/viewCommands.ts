@@ -2,6 +2,7 @@ import { translate } from "$lib/i18n";
 import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import { togglePreferredExtension } from "$lib/stores/editorStore.svelte";
 import { refreshTree } from "$lib/stores/fileTreeStore.svelte";
+import { toggleOutline } from "$lib/stores/interfaceStore.svelte";
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -69,6 +70,17 @@ export const viewCommands: Command[] = [
     handler: () => {
       toggleFileTree();
       saveSettings();
+    },
+  },
+  {
+    id: "view.toggleOutline",
+    label: "Document Outline",
+    labelKey: "command.toggleOutline",
+    category: "commandCategory.navigation",
+    defaultKey: "ctrl+shift+o",
+    global: true,
+    handler: () => {
+      toggleOutline();
     },
   },
   {
