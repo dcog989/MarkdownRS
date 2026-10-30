@@ -20,12 +20,15 @@ export function createAppInit() {
     const appStartTime = performance.now();
 
     try {
+      // Bookmarks need no settings, so they load while the settings file is read.
+      const bookmarks = loadBookmarks();
+
       const settingsStart = performance.now();
       await initSettings();
       logger.editor.debug("SettingsInitialized", { duration: formatDuration(settingsStart) });
 
       const sessionStart = performance.now();
-      await Promise.all([loadSession(), loadBookmarks()]);
+      await Promise.all([loadSession(), bookmarks]);
       logger.session.info("SessionRestored", { duration: formatDuration(sessionStart) });
 
       if (editorStore.tabs.length === 0) {
