@@ -133,6 +133,88 @@ export class ExportService {
     }
   }
 
+  private async saveDocumentPath(tab: EditorTab, extension: "docx" | "epub" | "tex"): Promise<string | null> {
+    return save({
+      defaultPath: `${tab.title.replace(/\.[^/.]+$/, "")}.${extension}`,
+      filters: [{ name: translate(`export.${extension}Filter`), extensions: [extension] }],
+    });
+  }
+
+  async exportToDocx() {
+    const tab = this.getActiveTab();
+    if (!tab) {
+      showToast("error", translate("export.noActiveTab"));
+      return;
+    }
+
+    try {
+      const path = await this.saveDocumentPath(tab, "docx");
+      if (!path) return;
+
+      showToast("info", translate("export.generatingDocument"));
+      await callBackend(
+        "export_to_docx",
+        { path, content: tab.content },
+        "Export:Document",
+        { path: tab.path },
+        { report: true, msg: translate("export.failedGenerateDocument") },
+      );
+      showToast("success", translate("export.exportedTo", { values: { path } }));
+    } catch (err) {
+      logger.file.warn("ExportDocxFailed", { error: String(err) });
+    }
+  }
+
+  async exportToEpub() {
+    const tab = this.getActiveTab();
+    if (!tab) {
+      showToast("error", translate("export.noActiveTab"));
+      return;
+    }
+
+    try {
+      const path = await this.saveDocumentPath(tab, "epub");
+      if (!path) return;
+
+      showToast("info", translate("export.generatingDocument"));
+      await callBackend(
+        "export_to_epub",
+        { path, content: tab.content, title: tab.title.replace(/\.[^/.]+$/, "") },
+        "Export:Document",
+        { path: tab.path },
+        { report: true, msg: translate("export.failedGenerateDocument") },
+      );
+      showToast("success", translate("export.exportedTo", { values: { path } }));
+    } catch (err) {
+      logger.file.warn("ExportEpubFailed", { error: String(err) });
+    }
+  }
+
+  async exportToLatex() {
+    const tab = this.getActiveTab();
+    if (!tab) {
+      showToast("error", translate("export.noActiveTab"));
+      return;
+    }
+
+    try {
+      const path = await this.saveDocumentPath(tab, "tex");
+      if (!path) return;
+
+      showToast("info", translate("export.generatingDocument"));
+      await callBackend(
+        "export_to_latex",
+        { path, content: tab.content },
+        "Export:Document",
+        { path: tab.path },
+        { report: true, msg: translate("export.failedGenerateDocument") },
+      );
+      showToast("success", translate("export.exportedTo", { values: { path } }));
+    } catch (err) {
+      logger.file.warn("ExportLatexFailed", { error: String(err) });
+    }
+  }
+
   async exportToImage(format: "png" | "webp" | "svg") {
     const tab = this.getActiveTab();
     if (!tab) {

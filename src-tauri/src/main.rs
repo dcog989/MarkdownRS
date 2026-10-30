@@ -3,6 +3,7 @@
 mod bootstrap;
 mod commands;
 mod db;
+mod export;
 mod markdown;
 mod migration;
 mod portable;
@@ -134,6 +135,10 @@ fn main() {
             commands::settings::toggle_devtools,
             #[cfg(feature = "pdf-export")]
             commands::export::export_to_pdf,
+            #[cfg(feature = "pdf-export")]
+            commands::export::export_to_docx,
+            commands::export::export_to_epub,
+            commands::export::export_to_latex,
             commands::data::export_bookmarks,
             commands::data::import_bookmarks,
             commands::data::export_file_history,

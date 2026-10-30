@@ -67,6 +67,18 @@ export class TabContextMenuLogic {
     },
     { label: translate("tabContextMenu.exportToPdf"), handler: () => this.doExport(() => exportService.exportToPdf()) },
     {
+      label: translate("tabContextMenu.exportToDocx"),
+      handler: () => this.doExport(() => exportService.exportToDocx()),
+    },
+    {
+      label: translate("tabContextMenu.exportToEpub"),
+      handler: () => this.doExport(() => exportService.exportToEpub()),
+    },
+    {
+      label: translate("tabContextMenu.exportToLatex"),
+      handler: () => this.doExport(() => exportService.exportToLatex()),
+    },
+    {
       label: translate("tabContextMenu.exportToPng"),
       handler: () => this.doExport(() => exportService.exportToImage("png")),
     },

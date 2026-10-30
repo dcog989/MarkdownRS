@@ -314,6 +314,18 @@ export interface BackendCommands {
     args: { path: string; content: string; backgroundColor: string | null };
     return: undefined;
   };
+  export_to_docx: {
+    args: { path: string; content: string };
+    return: undefined;
+  };
+  export_to_epub: {
+    args: { path: string; content: string; title: string };
+    return: undefined;
+  };
+  export_to_latex: {
+    args: { path: string; content: string };
+    return: undefined;
+  };
   // Data Management
   export_bookmarks: {
     args: Record<string, never>;

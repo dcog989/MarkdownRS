@@ -4970,6 +4970,7 @@ dependencies = [
  "unicode-segmentation",
  "uuid",
  "winreg",
+ "zip 9.1.3",
 ]
 
 [[package]]

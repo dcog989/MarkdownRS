@@ -25,6 +25,7 @@ export type ErrorContext =
   | "FileWatcher:Unwatch"
   | "Export:PDF"
   | "Export:HTML"
+  | "Export:Document"
   | "Spellcheck:Init"
   | "Spellcheck:Suggest"
   | "Bookmark:Add"

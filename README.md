@@ -18,7 +18,7 @@ The only Markdown editor you need? Many people are saying so.
 - *Formatting* — rumdl linting and auto-formatting ([usage](#usage)).
 - *Grammar* — optional Harper grammar check ([usage](#usage)).
 - *Customisation* — command palette, custom shortcuts, built-in and custom themes.
-- *Export* — PDF, PNG, WebP, HTML.
+- *Export* — PDF, DOCX, EPUB, LaTeX, PNG, WebP, HTML.
 - *Performance* — Tauri / Rust / SQLite backend; TypeScript / Svelte / CodeMirror frontend.
 
 ---
