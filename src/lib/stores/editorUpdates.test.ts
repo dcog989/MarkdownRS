@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { hashContent } from "$lib/utils/contentHash";
 import { editorStore } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
-import { markAsSaved } from "./editorUpdates";
+import { markAsSaved, reloadTabContent } from "./editorUpdates";
 
 function tab(overrides: Partial<EditorTab> = {}): EditorTab {
   return {
@@ -46,5 +46,21 @@ describe("markAsSaved", () => {
 
     expect(editorStore.tabs[0].lastSavedHash).toBe(hashContent("written"));
     expect(editorStore.tabs[0].isDirty).toBe(true);
+  });
+});
+
+describe("reloadTabContent", () => {
+  beforeEach(() => {
+    editorStore.tabs = [];
+    editorStore.sessionDirty = false;
+  });
+
+  it("marks a reopened tab as loaded so it can be saved again", () => {
+    editorStore.tabs = [tab({ content: "", contentLoaded: false })];
+
+    reloadTabContent("t1", "# disk\n", "LF", "UTF-8", 7, false);
+
+    expect(editorStore.tabs[0].content).toBe("# disk\n");
+    expect(editorStore.tabs[0].contentLoaded).toBe(true);
   });
 });

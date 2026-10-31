@@ -165,6 +165,7 @@ export function reloadTabContent(
 
   updateTab(id, (tab) => ({
     content,
+    contentLoaded: true,
     lastSavedHash: hashContent(content),
     isDirty: false,
     lineEnding,

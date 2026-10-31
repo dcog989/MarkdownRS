@@ -1,10 +1,12 @@
 import { translate } from "$lib/i18n";
-import { reloadTabContent, setFileCheckStatus, updateMetadata } from "$lib/stores/editorStore.svelte";
+import { reloadTabContent, setFileCheckStatus, updateMetadata, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { callBackendSafe } from "$lib/utils/backend";
 import { hashContent } from "$lib/utils/contentHash";
+import { getEditorInstance } from "$lib/utils/editorCommands";
 import { logger } from "$lib/utils/logger";
 import { byteLength, detectLineEnding } from "$lib/utils/textMetrics";
+import type { AppEditorView } from "../../global";
 
 export type FileContent = {
   content: string;
@@ -133,6 +135,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   const tab = appContext.editor.tabs.find((t) => t.id === tabId);
   if (!tab?.path) return;
 
+  const contentAtStart = tab.content;
   const sanitizedPath = sanitizePath(tab.path);
   const result = await callBackendSafe("read_text_file", { path: sanitizedPath }, "File:Read", {
     userMessage: translate("fileOps.failedReload"),
@@ -140,6 +143,18 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   });
 
   if (!result) return;
+
+  // The read can land after the user typed into a tab that was still empty
+  // (a large closed tab is reopened without its content). Applying the disk
+  // text would replace those edits, so keep the buffer as the source of truth.
+  const currentTab = appContext.editor.tabs.find((t) => t.id === tabId);
+  if (!currentTab) return;
+  const view = getEditorInstance(tabId) as AppEditorView | undefined;
+  const liveContent = view?._currentTabId === tabId ? view.state.doc.toString() : currentTab.content;
+  if (currentTab.isDirty || liveContent !== contentAtStart) {
+    updateTabFields(tabId, { contentLoaded: true, isDirty: true });
+    return;
+  }
 
   const detectedLineEnding = detectLineEnding(result.content);
 
