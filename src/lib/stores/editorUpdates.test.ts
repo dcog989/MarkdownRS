@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { CONFIG } from "$lib/utils/config";
 import { hashContent } from "$lib/utils/contentHash";
 import { clearTabCaches } from "./editorCache";
 import { editorStore } from "./editorStoreCore.svelte";
@@ -73,7 +74,19 @@ describe("updateContent", () => {
     editorStore.sessionDirty = false;
   });
 
-  it("keeps the last known size for a large tab instead of re-encoding it", () => {
+  it("keeps the last known size while the tab is still large", () => {
+    editorStore.tabs = [
+      tab({ content: "before", lastSavedHash: hashContent("before"), sizeBytes: 3_000_000, path: "/big.md" }),
+    ];
+    const stillLarge = "a".repeat(CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES + 1);
+
+    updateContent("t1", stillLarge, 1);
+
+    expect(editorStore.tabs[0].sizeBytes).toBe(3_000_000);
+    expect(editorStore.tabs[0].isDirty).toBe(true);
+  });
+
+  it("re-measures a large tab that shrank below the limit", () => {
     editorStore.tabs = [
       tab({ content: "before", lastSavedHash: hashContent("before"), sizeBytes: 3_000_000, path: "/big.md" }),
     ];
@@ -81,7 +94,7 @@ describe("updateContent", () => {
     updateContent("t1", "after", 1);
 
     expect(editorStore.tabs[0].content).toBe("after");
-    expect(editorStore.tabs[0].sizeBytes).toBe(3_000_000);
+    expect(editorStore.tabs[0].sizeBytes).toBe(5);
     expect(editorStore.tabs[0].isDirty).toBe(true);
   });
 

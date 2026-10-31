@@ -56,7 +56,7 @@ describe("renderCell", () => {
 
   it("escapes quotes inside autolinks", () => {
     expect(renderCell('<https://x.com/"onclick="alert(1)>')).toBe(
-      '<a href="https://x.com/&quot;onclick=&quot;alert(1)" target="_blank" rel="noreferrer">https://x.com/"onclick="alert(1)</a>',
+      '<a href="https://x.com/&quot;onclick=&quot;alert(1)" target="_blank" rel="noreferrer">https://x.com/&quot;onclick=&quot;alert(1)</a>',
     );
   });
 
