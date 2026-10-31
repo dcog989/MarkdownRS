@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { EditorView } from "@codemirror/view";
-import { handleTrackMouseDown } from "$lib/utils/minimapInteractions";
+import { handleTrackPointerDown } from "$lib/utils/minimapInteractions";
 import type { MinimapLayout } from "$lib/utils/minimapLayout";
 import { renderMinimap as renderMinimapCanvas } from "$lib/utils/minimapRenderer";
 import { debounce } from "$lib/utils/timing";
@@ -38,10 +38,10 @@ function scheduleRender() {
 
 let cancelDrag: (() => void) | null = null;
 
-function onTrackMouseDown(e: MouseEvent) {
+function onTrackPointerDown(e: PointerEvent) {
   if (!view || !canvasRef || !minimapLayout) return;
   cancelDrag?.();
-  cancelDrag = handleTrackMouseDown(e, view, canvasRef, minimapLayout);
+  cancelDrag = handleTrackPointerDown(e, view, canvasRef, minimapLayout);
 }
 
 function onWheel(e: WheelEvent) {
@@ -120,7 +120,7 @@ $effect(() => {
   class:minimap-track-hover={hovered}
   onmouseenter={() => (hovered = true)}
   onmouseleave={() => (hovered = false)}
-  onmousedown={onTrackMouseDown}
+  onpointerdown={onTrackPointerDown}
   onwheel={onWheel}
 >
   <canvas bind:this={canvasRef} class="minimap-canvas"></canvas>

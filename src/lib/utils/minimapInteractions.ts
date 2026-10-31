@@ -1,8 +1,8 @@
 import type { EditorView } from "@codemirror/view";
 import { lineToY, type MinimapLayout, minimapLineHeight, yToLine } from "./minimapLayout";
 
-export function handleTrackMouseDown(
-  e: MouseEvent,
+export function handleTrackPointerDown(
+  e: PointerEvent,
   view: EditorView,
   canvas: HTMLCanvasElement,
   layout: MinimapLayout,
@@ -14,6 +14,13 @@ export function handleTrackMouseDown(
   const editorView = view;
   const canvasRect = canvas.getBoundingClientRect();
   if (canvasRect.height === 0) return null;
+
+  // Capture the pointer: a release outside the window delivers no mouseup on
+  // the document, which would otherwise leave the drag live and the body's
+  // user-select disabled.
+  const dragTarget = e.currentTarget;
+  if (!(dragTarget instanceof HTMLElement)) return null;
+  dragTarget.setPointerCapture(e.pointerId);
 
   // Keep the grabbed point of the viewport rect under the cursor: record where
   // the pointer sits inside the rect (in minimap coordinates) and preserve it
@@ -33,16 +40,22 @@ export function handleTrackMouseDown(
     sd.scrollTop = Math.max(0, Math.min(maxScroll, target));
   }
 
-  function onMouseMove(ev: MouseEvent) {
+  function onPointerMove(ev: PointerEvent) {
     moved = true;
     const targetTopY = ev.clientY - canvasRect.top - grabOffset;
     scrollToLine(yToLine(layout, targetTopY));
   }
 
-  function onMouseUp(ev: MouseEvent) {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
+  function endDrag() {
+    dragTarget.removeEventListener("pointermove", onPointerMove);
+    dragTarget.removeEventListener("pointerup", onPointerUp);
+    dragTarget.removeEventListener("pointercancel", endDrag);
+    if (dragTarget.hasPointerCapture(e.pointerId)) dragTarget.releasePointerCapture(e.pointerId);
     document.body.style.userSelect = "";
+  }
+
+  function onPointerUp(ev: PointerEvent) {
+    endDrag();
 
     if (!moved) {
       const clickY = ev.clientY - canvasRect.top;
@@ -60,15 +73,12 @@ export function handleTrackMouseDown(
     }
   }
 
-  document.addEventListener("mousemove", onMouseMove);
-  document.addEventListener("mouseup", onMouseUp);
+  dragTarget.addEventListener("pointermove", onPointerMove);
+  dragTarget.addEventListener("pointerup", onPointerUp);
+  dragTarget.addEventListener("pointercancel", endDrag);
   document.body.style.userSelect = "none";
 
-  // Returned so the caller can release the drag on unmount; mouseup only covers
-  // the normal path.
-  return () => {
-    document.removeEventListener("mousemove", onMouseMove);
-    document.removeEventListener("mouseup", onMouseUp);
-    document.body.style.userSelect = "";
-  };
+  // Returned so the caller can release the drag on unmount; pointerup only
+  // covers the normal path.
+  return endDrag;
 }
