@@ -35,7 +35,11 @@ impl Database {
         conn.execute_batch("PRAGMA auto_vacuum = INCREMENTAL;")?;
         if auto_vacuum == 0 && page_count > 0 {
             log::info!("Converting existing database to auto_vacuum=INCREMENTAL");
-            conn.execute_batch("VACUUM;")?;
+            // Best effort: VACUUM rewrites the whole file and needs free disk equal
+            // to its size, and the conversion is only a space optimization.
+            if let Err(e) = conn.execute_batch("VACUUM;") {
+                log::warn!("Skipped auto_vacuum conversion, keeping the current mode: {}", e);
+            }
         }
 
         conn.execute_batch(&format!(
