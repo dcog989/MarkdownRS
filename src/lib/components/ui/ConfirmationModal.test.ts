@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import { confirmDialog, resolveDialog } from "$lib/stores/dialogStore.svelte";
 import ConfirmationModal from "./ConfirmationModal.svelte";
@@ -57,6 +57,22 @@ describe("ConfirmationModal", () => {
     await fireEvent.keyDown(getDialogPanel(), { key: "Escape" });
 
     await expect(promise).resolves.toBe("cancel");
+  });
+
+  it("shows a queued dialog after the first one is resolved", async () => {
+    const first = confirmDialog({ title: "First question", message: "one" });
+    const second = confirmDialog({ title: "Second question", message: "two" });
+    render(ConfirmationModal);
+
+    expect(screen.getByText("First question")).toBeTruthy();
+    expect(screen.queryByText("Second question")).toBeNull();
+
+    resolveDialog("cancel");
+    await expect(first).resolves.toBe("cancel");
+    await waitFor(() => expect(screen.getByText("Second question")).toBeTruthy());
+
+    resolveDialog("cancel");
+    await expect(second).resolves.toBe("cancel");
   });
 
   it("applies the default labels for omitted buttons", async () => {
