@@ -3,7 +3,7 @@ import { hashContent } from "$lib/utils/contentHash";
 import { clearTabCaches } from "./editorCache";
 import { editorStore } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
-import { markAsSaved, reloadTabContent, updateContent } from "./editorUpdates";
+import { markAsSaved, reloadTabContent, updateContent, updateContentOnly } from "./editorUpdates";
 
 function tab(overrides: Partial<EditorTab> = {}): EditorTab {
   return {
@@ -93,5 +93,24 @@ describe("updateContent", () => {
 
     updateContent("t1", "saved", 1);
     expect(editorStore.tabs[0].isDirty).toBe(false);
+  });
+});
+
+describe("updateContentOnly", () => {
+  beforeEach(() => {
+    clearTabCaches("t1");
+    editorStore.tabs = [];
+    editorStore.sessionDirty = false;
+  });
+
+  it("refreshes line and column stats when the text is replaced", () => {
+    editorStore.tabs = [tab({ content: "old", lineCount: 1, widestColumn: 3 })];
+
+    updateContentOnly("t1", "one\ntwo longer", true);
+
+    expect(editorStore.tabs[0].content).toBe("one\ntwo longer");
+    expect(editorStore.tabs[0].lineCount).toBe(2);
+    expect(editorStore.tabs[0].widestColumn).toBe(10);
+    expect(editorStore.tabs[0].wordCountPending).toBe(true);
   });
 });

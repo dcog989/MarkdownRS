@@ -191,8 +191,13 @@ export function updateContentOnly(id: string, content: string, forceSync: boolea
   // A forced sync replaces the whole document (e.g. format-on-save). Recent
   // changes are kept: the view plugin remaps tracked lines through the change,
   // so markers persist as long as undo can still revert the edits.
+  const { lineCount, widestColumn } = computeLineStats(content);
+  scheduleWordCountUpdate(id, content);
   updateTab(id, (tab) => ({
     content,
+    lineCount,
+    widestColumn,
+    wordCountPending: true,
     forceSync: forceSync ? (tab.forceSync ?? 0) + 1 : tab.forceSync,
   }));
 }
