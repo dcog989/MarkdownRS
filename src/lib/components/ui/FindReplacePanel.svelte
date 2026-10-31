@@ -211,7 +211,7 @@ function onReplaceAll() {
       updateSearchEditor(cmView);
     }
   } else {
-    cmView.flushPendingContent?.();
+    cmView?.flushPendingContent?.();
     const count = replaceAllInTabs();
     if (count > 0) {
       showToast("success", translate("findReplace.replacedCount", { values: { count } }));
