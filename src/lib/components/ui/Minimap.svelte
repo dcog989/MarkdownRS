@@ -28,12 +28,17 @@ function renderMinimap() {
   minimapLayout = renderMinimapCanvas(view, canvasRef, trackRef, hovered);
 }
 
-let scheduleRafId = 0;
+let scheduleRafId: number | null = null;
 
+// Never cancel a pending frame: scroll events arrive once per frame, before
+// animation frame callbacks, so cancelling would push the paint back forever
+// while the user keeps scrolling.
 function scheduleRender() {
-  if (!view) return;
-  cancelAnimationFrame(scheduleRafId);
-  scheduleRafId = requestAnimationFrame(renderMinimap);
+  if (!view || scheduleRafId !== null) return;
+  scheduleRafId = requestAnimationFrame(() => {
+    scheduleRafId = null;
+    renderMinimap();
+  });
 }
 
 let cancelDrag: (() => void) | null = null;
@@ -105,7 +110,10 @@ $effect(() => {
     themeObserver.disconnect();
     scrollDOM.removeEventListener("scroll", onScroll);
     cancelAnimationFrame(themeRafId);
-    cancelAnimationFrame(scheduleRafId);
+    if (scheduleRafId !== null) {
+      cancelAnimationFrame(scheduleRafId);
+      scheduleRafId = null;
+    }
     cancelDrag?.();
     cancelDrag = null;
     debouncedContentRender.clear();
