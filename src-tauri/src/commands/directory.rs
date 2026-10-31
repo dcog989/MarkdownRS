@@ -38,7 +38,13 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
             .map_err(|e| handle_error(Some(&name), "get file type", e))?;
         let is_symlink = file_type.is_symlink();
 
-        let metadata = entry.metadata().ok();
+        // `DirEntry::metadata` does not follow symlinks, so a linked directory
+        // would be reported as a file and could not be expanded in the tree.
+        let metadata = if is_symlink {
+            std::fs::metadata(entry.path()).ok().or_else(|| entry.metadata().ok())
+        } else {
+            entry.metadata().ok()
+        };
         let is_dir = metadata.as_ref().map(|m| m.is_dir()).unwrap_or(false);
         let size = metadata.as_ref().map(|m| m.len()).unwrap_or(0);
         let modified = metadata.as_ref().and_then(|m| format_system_time(m.modified()));
@@ -179,6 +185,23 @@ mod tests {
     fn errors_on_missing_directory() {
         let result = list_directory_sync("/nonexistent/markdownrs-xyz-404", false);
         assert!(result.is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn reports_a_symlinked_directory_as_a_directory() {
+        let dir = make_temp_dir("symlink-dir");
+        let target = dir.join("target");
+        fs::create_dir(&target).unwrap();
+        fs::write(target.join("note.md"), "x").unwrap();
+        std::os::unix::fs::symlink(&target, dir.join("link")).unwrap();
+
+        let entries = list_directory_sync(&dir.to_string_lossy(), false).unwrap();
+        let link = entries.iter().find(|e| e.name == "link").unwrap();
+
+        assert!(link.is_symlink);
+        assert!(link.is_dir, "a symlinked directory must stay expandable");
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[test]
