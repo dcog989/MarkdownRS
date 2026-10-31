@@ -1,4 +1,4 @@
-use crate::utils::{format_system_time, handle_error, run_blocking, validate_path_input};
+use crate::utils::{format_system_time, handle_error, handle_io_error, run_blocking, validate_path_input};
 use serde::Serialize;
 use tokio::fs;
 
@@ -14,7 +14,7 @@ pub async fn get_file_metadata(path: String) -> Result<FileMetadata, String> {
     validate_path_input(&path)?;
     let metadata = fs::metadata(&path)
         .await
-        .map_err(|e| handle_error(Some(&path), "get metadata", e))?;
+        .map_err(|e| handle_io_error(Some(&path), "get metadata", e))?;
     Ok(FileMetadata {
         created: format_system_time(metadata.created()),
         modified: format_system_time(metadata.modified()),

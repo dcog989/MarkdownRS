@@ -1,4 +1,4 @@
-use crate::utils::{handle_error, run_blocking, validate_path_input};
+use crate::utils::{handle_error, handle_io_error, run_blocking, validate_path_input};
 use tokio::fs;
 
 #[tauri::command]
@@ -13,7 +13,7 @@ pub async fn copy_file(from_path: String, to_path: String) -> Result<(), String>
 /// `create_new`, so a file appearing after the caller's own existence check
 /// cannot be silently overwritten (unlike `fs::copy`, which truncates).
 fn copy_no_replace(from: &str, to: &str) -> Result<(), String> {
-    let mut source = std::fs::File::open(from).map_err(|e| handle_error(Some(from), "copy file", e))?;
+    let mut source = std::fs::File::open(from).map_err(|e| handle_io_error(Some(from), "copy file", e))?;
     let mut target = std::fs::OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -22,13 +22,13 @@ fn copy_no_replace(from: &str, to: &str) -> Result<(), String> {
             std::io::ErrorKind::AlreadyExists => {
                 handle_error(Some(to), "copy file", "a file with that name already exists")
             },
-            _ => handle_error(Some(to), "copy file", e),
+            _ => handle_io_error(Some(to), "copy file", e),
         })?;
 
     if let Err(e) = std::io::copy(&mut source, &mut target) {
         drop(target);
         let _ = std::fs::remove_file(to);
-        return Err(handle_error(Some(from), "copy file", e));
+        return Err(handle_io_error(Some(from), "copy file", e));
     }
 
     // Match `fs::copy`, which carries the source mode onto the new file.
@@ -51,7 +51,7 @@ pub async fn create_file(path: String) -> Result<(), String> {
         .open(&path)
         .await
         .map(|_| ())
-        .map_err(|e| handle_error(Some(&path), "create file", e))
+        .map_err(|e| handle_io_error(Some(&path), "create file", e))
 }
 
 #[tauri::command]
@@ -59,7 +59,7 @@ pub async fn create_dir(path: String) -> Result<(), String> {
     validate_path_input(&path)?;
     fs::create_dir(&path)
         .await
-        .map_err(|e| handle_error(Some(&path), "create directory", e))
+        .map_err(|e| handle_io_error(Some(&path), "create directory", e))
 }
 
 #[tauri::command]
@@ -74,7 +74,7 @@ pub async fn ensure_dir(path: String) -> Result<(), String> {
         )),
         Err(_) => fs::create_dir_all(&path)
             .await
-            .map_err(|e| handle_error(Some(&path), "create directory", e)),
+            .map_err(|e| handle_io_error(Some(&path), "create directory", e)),
     }
 }
 
@@ -108,7 +108,7 @@ pub async fn rename_file(old_path: String, new_path: String) -> Result<(), Strin
 
     fs::rename(&old_path, &new_path).await.map_err(|e| match e.kind() {
         std::io::ErrorKind::NotFound => handle_error(Some(&old_path), "rename file", "source file does not exist"),
-        _ => handle_error(Some(&old_path), "rename file", e),
+        _ => handle_io_error(Some(&old_path), "rename file", e),
     })
 }
 

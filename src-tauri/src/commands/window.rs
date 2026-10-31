@@ -11,6 +11,7 @@
 // Remove this entire command and revert to `getCurrentWindow().setTitle()` in
 // the frontend once https://github.com/tauri-apps/tauri/issues/13749 is resolved.
 
+use crate::utils::handle_error;
 use tauri::AppHandle;
 use tauri::Manager;
 
@@ -27,7 +28,9 @@ pub fn set_window_title(app: AppHandle, title: String) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or_else(|| "Failed to get main window".to_string())?;
 
-    tauri_window.set_title(&title).map_err(|e| e.to_string())?;
+    tauri_window
+        .set_title(&title)
+        .map_err(|e| handle_error(None, "set window title", e))?;
 
     #[cfg(target_os = "linux")]
     {

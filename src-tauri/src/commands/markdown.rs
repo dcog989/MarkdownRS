@@ -4,7 +4,7 @@ use crate::markdown::linter::{self, LintDiagnostic};
 use crate::markdown::renderer::{self, MarkdownOptions, RenderResult};
 use crate::markdown::toc;
 use crate::state::AppState;
-use crate::utils::{IntoTauriError, run_blocking};
+use crate::utils::{IntoTauriError, handle_error, run_blocking};
 use serde::Serialize;
 use std::path::Path;
 use tauri::State;
@@ -70,6 +70,7 @@ pub async fn format_markdown(
         {
             run_blocking("format markdown", move || {
                 formatter_rumdl::format_markdown(&content, fp.as_deref(), pr.as_deref())
+                    .map_err(|e| handle_error(None, "format markdown", e))
             })
             .await
         },
@@ -96,6 +97,7 @@ pub async fn lint_markdown(
             linter_overrides: harper_linters.unwrap_or_default(),
         };
         linter::lint_content(&content, fp.as_deref(), pr.as_deref(), &harper_options)
+            .map_err(|e| handle_error(None, "lint markdown", e))
     })
     .await
 }
@@ -160,7 +162,8 @@ pub async fn read_rumdl_config(
             let resolved = config::resolve_config_target(fp.as_deref(), pr.as_deref(), scope);
             let exists = resolved.exists();
             let content = if exists {
-                std::fs::read_to_string(&resolved).map_err(|e| format!("Failed to read rumdl config: {}", e))?
+                std::fs::read_to_string(&resolved)
+                    .map_err(|e| handle_error(Some(resolved.to_string_lossy().as_ref()), "read rumdl config", e))?
             } else {
                 String::new()
             };
@@ -197,7 +200,8 @@ pub async fn write_rumdl_config(
             let validation_root = pr.as_deref().or_else(|| resolved.parent()).unwrap_or(Path::new("."));
 
             if let Some(dir) = resolved.parent() {
-                std::fs::create_dir_all(dir).map_err(|e| format!("Failed to create config directory: {}", e))?;
+                std::fs::create_dir_all(dir)
+                    .map_err(|e| handle_error(Some(dir.to_string_lossy().as_ref()), "create config directory", e))?;
             }
 
             config::validate_config_content(&content, validation_root, &resolved)?;
@@ -208,7 +212,7 @@ pub async fn write_rumdl_config(
 
         crate::utils::atomic_write(&resolved, content.as_bytes())
             .await
-            .map_err(|e| format!("Failed to write rumdl config: {}", e))?;
+            .map_err(|e| handle_error(Some(resolved.to_string_lossy().as_ref()), "write rumdl config", e))?;
 
         Ok(resolved.to_string_lossy().to_string())
     })

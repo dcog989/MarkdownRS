@@ -71,8 +71,10 @@ class Logger {
     // Buffer for Backend Logger
     this.buffer.push({ level, message });
 
-    if (this.buffer.length >= this.MAX_BUFFER_SIZE) {
-      this.flush();
+    // Errors flush now: the app can quit before the 500 ms timer fires, and an
+    // error log is exactly the one worth keeping.
+    if (level === "error" || this.buffer.length >= this.MAX_BUFFER_SIZE) {
+      void this.flush();
     } else if (!this.flushTimer) {
       this.flushTimer = window.setTimeout(() => this.flush(), this.FLUSH_INTERVAL_MS);
     }
@@ -105,33 +107,20 @@ class Logger {
     }
   }
 
-  editor = {
-    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Editor", action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log("info", "Editor", action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Editor", action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log("error", "Editor", action, metadata),
-  };
+  private ns(name: string) {
+    return {
+      debug: (action: string, metadata?: LogMetadata) => this.log("debug", name, action, metadata),
+      info: (action: string, metadata?: LogMetadata) => this.log("info", name, action, metadata),
+      warn: (action: string, metadata?: LogMetadata) => this.log("warn", name, action, metadata),
+      error: (action: string, metadata?: LogMetadata) => this.log("error", name, action, metadata),
+    };
+  }
 
-  session = {
-    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Session", action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log("info", "Session", action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Session", action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log("error", "Session", action, metadata),
-  };
-
-  file = {
-    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "File", action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log("info", "File", action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "File", action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log("error", "File", action, metadata),
-  };
-
-  spellcheck = {
-    debug: (action: string, metadata?: LogMetadata) => this.log("debug", "Spellcheck", action, metadata),
-    info: (action: string, metadata?: LogMetadata) => this.log("info", "Spellcheck", action, metadata),
-    warn: (action: string, metadata?: LogMetadata) => this.log("warn", "Spellcheck", action, metadata),
-    error: (action: string, metadata?: LogMetadata) => this.log("error", "Spellcheck", action, metadata),
-  };
+  editor = this.ns("Editor");
+  session = this.ns("Session");
+  file = this.ns("File");
+  spellcheck = this.ns("Spellcheck");
+  app = this.ns("App");
 }
 
 export const logger = new Logger();

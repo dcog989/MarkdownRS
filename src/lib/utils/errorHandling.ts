@@ -1,7 +1,7 @@
 import { translate } from "$lib/i18n";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { getFilename } from "./fileValidation";
-import { logger, logToBackend } from "./logger";
+import { logger } from "./logger";
 
 export type ErrorContext =
   | "Session:Save"
@@ -75,7 +75,6 @@ function safeStringify(obj: unknown): string {
 
 export class AppError extends Error {
   public readonly context: ErrorContext;
-  public readonly timestamp: Date;
   public readonly severity: ErrorSeverity;
   public readonly additionalInfo?: Record<string, unknown>;
   public readonly originalError?: Error;
@@ -89,7 +88,6 @@ export class AppError extends Error {
     super(message);
     this.name = "AppError";
     this.context = context;
-    this.timestamp = new Date();
     this.severity = options.severity || "error";
     this.additionalInfo = options.additionalInfo;
     this.originalError = options.originalError;
@@ -102,7 +100,17 @@ export class AppError extends Error {
 
   static from(context: ErrorContext, error: unknown, options: Omit<ErrorOptions, "userMessage"> = {}): AppError {
     if (error instanceof AppError) {
-      return error;
+      // Keep the original message but let the caller add its own context and
+      // details (e.g. the command and path that failed).
+      return new AppError(context, error.message, {
+        severity: options.severity ?? error.severity,
+        additionalInfo:
+          options.additionalInfo || error.additionalInfo
+            ? { ...(error.additionalInfo ?? {}), ...(options.additionalInfo ?? {}) }
+            : undefined,
+        fromBackend: options.fromBackend ?? error.fromBackend,
+        originalError: error.originalError,
+      });
     }
 
     const message = error instanceof Error ? error.message : String(error);
@@ -120,11 +128,12 @@ export class AppError extends Error {
   private process(options: ErrorOptions = {}): void {
     const { showToast: shouldShowToast = true, userMessage, toastDuration, logToDisk = true } = options;
 
-    logger.editor.error(this.formatForDiskLog());
-
-    this.logError(logToDisk && !this.fromBackend).catch((err) => {
-      logger.editor.warn("DiskLogFailed", { error: String(err) });
-    });
+    // Log once. Backend command errors are already written by Rust, so only
+    // frontend-originated errors are written here.
+    if (logToDisk && !this.fromBackend) {
+      const level = this.severity === "info" ? "info" : this.severity === "warning" ? "warn" : "error";
+      logger.app[level](this.formatForDiskLog());
+    }
 
     if (shouldShowToast) {
       const message = userMessage || this.getUserFriendlyMessage();
@@ -145,15 +154,6 @@ export class AppError extends Error {
     }
   }
 
-  private async logError(toDisk: boolean): Promise<void> {
-    if (toDisk) {
-      try {
-        const diskMessage = this.formatForDiskLog();
-        await logToBackend("error", diskMessage);
-      } catch (_e) {}
-    }
-  }
-
   private formatForDiskLog(): string {
     const parts = [`[${this.context}] ${this.message}`];
 
@@ -169,15 +169,23 @@ export class AppError extends Error {
   }
 
   private getUserFriendlyMessage(): string {
-    if (
-      this.message.includes("No such file") ||
-      this.message.includes("does not exist") ||
-      this.message.includes("not found")
-    ) {
+    // Stable codes from `handle_io_error`; OS error text is localized and
+    // cannot be matched here.
+    if (this.message.includes("NOT_FOUND")) {
       return this.getFileNotFoundMessage();
     }
 
-    if (this.message.includes("Permission denied") || this.message.includes("Access denied")) {
+    if (this.message.includes("PERMISSION_DENIED")) {
+      return this.getPermissionDeniedMessage();
+    }
+
+    const message = this.message.toLowerCase();
+
+    if (message.includes("no such file") || message.includes("does not exist")) {
+      return this.getFileNotFoundMessage();
+    }
+
+    if (message.includes("permission denied") || message.includes("access denied")) {
       return this.getPermissionDeniedMessage();
     }
 

@@ -16,6 +16,7 @@ vi.mock("$lib/utils/logger", () => ({
     session: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     file: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     spellcheck: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+    app: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
   },
 }));
 

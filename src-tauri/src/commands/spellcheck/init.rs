@@ -243,8 +243,12 @@ pub async fn init_spellchecker(
         enable_science
     );
 
-    let cache_root = app_handle.path().app_cache_dir().map_err(|e| e.to_string())?;
-    let data_dir = utils::app_data_dir(&app_handle).map_err(|e| e.to_string())?;
+    let cache_root = app_handle
+        .path()
+        .app_cache_dir()
+        .map_err(|e| utils::handle_error(None, "resolve spellcheck cache dir", e))?;
+    let data_dir =
+        utils::app_data_dir(&app_handle).map_err(|e| utils::handle_error(None, "resolve spellcheck data dir", e))?;
 
     let handle = tauri::async_runtime::spawn(run_spellcheck_init(
         app_handle.clone(),

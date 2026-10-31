@@ -1,4 +1,4 @@
-use crate::utils::{format_system_time, handle_error, run_blocking, validate_path_input};
+use crate::utils::{format_system_time, handle_io_error, run_blocking, validate_path_input};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -16,11 +16,11 @@ fn is_hidden(name: &str) -> bool {
 
 pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntry>, String> {
     validate_path_input(path)?;
-    let entries = std::fs::read_dir(path).map_err(|e| handle_error(Some(path), "read directory", e))?;
+    let entries = std::fs::read_dir(path).map_err(|e| handle_io_error(Some(path), "read directory", e))?;
 
     let mut result = Vec::new();
     for entry in entries {
-        let entry = entry.map_err(|e| handle_error(Some(path), "read directory entry", e))?;
+        let entry = entry.map_err(|e| handle_io_error(Some(path), "read directory entry", e))?;
         // Every path below this layer is a UTF-8 string (IPC + string joins in
         // the tree), so a mangled name would only produce an unopenable row.
         let Some(name) = entry.file_name().into_string().ok() else {
@@ -33,7 +33,7 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
 
         let file_type = entry
             .file_type()
-            .map_err(|e| handle_error(Some(&name), "get file type", e))?;
+            .map_err(|e| handle_io_error(Some(&name), "get file type", e))?;
         let is_symlink = file_type.is_symlink();
 
         // `DirEntry::metadata` does not follow symlinks, so a linked directory
@@ -84,7 +84,7 @@ pub async fn list_directory(path: String, show_hidden: bool) -> Result<Vec<FileE
 
 pub fn get_directory_mtime_sync(path: &str) -> Result<Option<u64>, String> {
     validate_path_input(path)?;
-    let metadata = std::fs::metadata(path).map_err(|e| handle_error(Some(path), "stat path", e))?;
+    let metadata = std::fs::metadata(path).map_err(|e| handle_io_error(Some(path), "stat path", e))?;
     if !metadata.is_dir() {
         return Ok(None);
     }

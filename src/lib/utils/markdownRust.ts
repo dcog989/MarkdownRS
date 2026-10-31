@@ -16,9 +16,6 @@ export async function renderMarkdown(
   const flavor = gfm ? "gfm" : "commonmark";
   const result = await callBackendSafe("render_markdown", { content, flavor }, "Markdown:Render", {
     showToast: false,
-    onError: async (e) => {
-      await logToBackend("error", `[Markdown] Render error: ${e}`);
-    },
   });
 
   if (!result) {

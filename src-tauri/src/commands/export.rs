@@ -48,7 +48,10 @@ where
     crate::utils::validate_path_input(&path)?;
 
     let (bytes, duration) = crate::timed!({ run_blocking(name, build).await });
-    let bytes = bytes?;
+    let bytes = bytes.map_err(|e| {
+        log::error!("[Export] {} failed: {}", name, e);
+        e
+    })?;
 
     let path_buf = std::path::PathBuf::from(&path);
     atomic_write(&path_buf, &bytes)

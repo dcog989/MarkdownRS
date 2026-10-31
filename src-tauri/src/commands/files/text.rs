@@ -1,5 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{decode_text, encode_text, handle_error, validate_path_input};
+use crate::utils::{decode_text, encode_text, handle_io_error, validate_path_input};
 use encoding_rs::Encoding;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -29,7 +29,7 @@ pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Resul
         validate_path_input(&path)?;
         let metadata = fs::metadata(&path)
             .await
-            .map_err(|e| handle_error(Some(&path), "read metadata", e))?;
+            .map_err(|e| handle_io_error(Some(&path), "read metadata", e))?;
 
         if metadata.is_dir() {
             log::warn!("Attempted to read directory as file: {}", path);
@@ -49,7 +49,7 @@ pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Resul
 
         let bytes = fs::read(&path)
             .await
-            .map_err(|e| handle_error(Some(&path), "read file", e))?;
+            .map_err(|e| handle_io_error(Some(&path), "read file", e))?;
 
         let (content, encoding, has_bom) = decode_text(bytes);
         Ok::<_, String>(FileContent {
@@ -110,7 +110,7 @@ pub async fn write_text_file(
 
             crate::utils::atomic_write(&path_buf, &bytes)
                 .await
-                .map_err(|e| handle_error(Some(&path), "save file", e))?;
+                .map_err(|e| handle_io_error(Some(&path), "save file", e))?;
 
             Ok::<_, String>(WriteFileResult {
                 bytes_written: bytes.len() as u64,
@@ -130,7 +130,7 @@ pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), Str
 
     crate::utils::atomic_write(&path_buf, &content)
         .await
-        .map_err(|e| handle_error(Some(&path), "write binary file", e))?;
+        .map_err(|e| handle_io_error(Some(&path), "write binary file", e))?;
 
     log::debug!("Successfully wrote binary file: {}", path);
     Ok(())
