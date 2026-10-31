@@ -100,8 +100,10 @@ fn desktop_entry(appimage: &Path) -> String {
 }
 
 fn quote_exec(path: &str) -> String {
+    // `%` starts a field code in a desktop entry, so escape it in every path.
+    let path = path.replace('%', "%%");
     if !path.contains(EXEC_RESERVED) {
-        return path.to_string();
+        return path;
     }
     let escaped = path
         .replace('\\', "\\\\")
@@ -128,6 +130,14 @@ mod tests {
         assert_eq!(
             quote_exec("/home/user/My Apps/$new.AppImage"),
             "\"/home/user/My Apps/\\$new.AppImage\""
+        );
+    }
+
+    #[test]
+    fn percent_signs_are_escaped() {
+        assert_eq!(
+            quote_exec("/home/user/100%/MarkdownRS.AppImage"),
+            "/home/user/100%%/MarkdownRS.AppImage"
         );
     }
 
