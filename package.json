@@ -8,7 +8,7 @@
     "bench": "vitest bench",
     "build": "tauri build --no-bundle",
     "check": "svelte-kit sync && bun run check:types && bun run check:frontend && bun run check:backend",
-    "check:backend": "cd src-tauri && cargo clippy --all-targets --all-features -- -D warnings",
+    "check:backend": "cd src-tauri && cargo fmt --check && cargo clippy --all-targets --all-features -- -D warnings",
     "check:frontend": "bunx biome check .",
     "check:types": "svelte-check --tsconfig ./tsconfig.json --config ./vite.config.ts --tsgo",
     "clean": "rm -rf .svelte-kit build node_modules src-tauri/gen src-tauri/target website/dist coverage .pkg/src .pkg/pkg .pkg/*.zst .pkg/*.gz \"$HOME/.local/share/com.markdownrs.editor/WebKitCache\"",

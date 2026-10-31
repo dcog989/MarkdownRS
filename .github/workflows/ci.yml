@@ -84,8 +84,7 @@ jobs:
         run: bunx --bun vite build
 
       - name: Check backend
-        working-directory: src-tauri
-        run: cargo clippy --all-targets --all-features -- -D warnings
+        run: bun run check:backend
 
       - name: Check cargo-deny
         uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25
