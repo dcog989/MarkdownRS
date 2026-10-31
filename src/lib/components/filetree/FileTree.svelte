@@ -201,35 +201,48 @@ $effect(() => {
 let activeFilePath = $derived(activeTab?.path ?? "");
 
 // Reveal the active file when its tab is activated or the panel becomes
-// visible, expanding collapsed ancestors and centering its row.
+// visible, expanding collapsed ancestors and centering its row. The attempt is
+// only remembered once it succeeds: a reveal that failed against a locked or
+// stale tree is retried when the lock or the root changes.
 let lastRevealed = "";
+let revealInFlight = "";
 $effect(() => {
   if (!settingsState.fileTreeVisible) return;
+  settingsState.fileTreeLocked;
+  fileTreeStore.root;
   const path = activeFilePath;
-  if (!path || path === lastRevealed) return;
-  lastRevealed = path;
-  void revealActiveFile(path);
+  if (!path || path === lastRevealed || path === revealInFlight) return;
+  revealInFlight = path;
+  void revealActiveFile(path)
+    .then((revealed) => {
+      if (revealed) lastRevealed = path;
+    })
+    .finally(() => {
+      if (revealInFlight === path) revealInFlight = "";
+    });
 });
 
-async function revealActiveFile(path: string) {
+async function revealActiveFile(path: string): Promise<boolean> {
   if (!(await revealPath(path))) {
     // A same-folder tab switch does not move the root (the follow effect only
     // reacts to a folder change), so the tree can be left inside a subfolder
     // that does not contain the newly active file. Re-root once to the file's
     // folder and retry; a locked tree keeps its pinned root.
     const dir = dirname(path);
-    if (settingsState.fileTreeLocked || dir === fileTreeStore.root) return;
+    if (settingsState.fileTreeLocked || dir === fileTreeStore.root) return false;
     setRoot(dir);
-    if (!(await revealPath(path))) return;
+    if (!(await revealPath(path))) return false;
   }
   await tick();
+  if (activeFilePath !== path) return false;
   const rowIndex = allRows.findIndex((r) => r.entry.path === path);
-  if (rowIndex === -1 || !scrollEl) return;
+  if (rowIndex === -1 || !scrollEl) return false;
   const top = rowIndex * ROW_HEIGHT;
   const bottom = top + ROW_HEIGHT;
   if (top < scrollEl.scrollTop || bottom > scrollEl.scrollTop + viewportHeight) {
     scrollEl.scrollTop = Math.max(0, top + ROW_HEIGHT / 2 - viewportHeight / 2);
   }
+  return true;
 }
 
 function handleRowClick(e: MouseEvent, row: TreeRow) {
