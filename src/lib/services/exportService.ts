@@ -243,7 +243,9 @@ export class ExportService {
       const bgColor = computedStyle.getPropertyValue("--surface-1").trim() || "#ffffff";
 
       const targetWidth = 1200;
-      const scale = targetWidth / container.scrollWidth;
+      // A zero-width container (hidden pane, empty document) would make this
+      // Infinity and fail the capture with nothing drawn.
+      const scale = container.scrollWidth > 0 ? targetWidth / container.scrollWidth : 1;
 
       const options = {
         backgroundColor: bgColor,
