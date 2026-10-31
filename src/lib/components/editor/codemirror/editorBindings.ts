@@ -14,6 +14,7 @@ import {
   undo,
 } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
+import { commands } from "$lib/commands/commands";
 import { TEXT_OPERATIONS_REGISTRY } from "$lib/config/textOperationsRegistry";
 import { addBookmarkForActiveTab } from "$lib/stores/bookmarkStore.svelte";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
@@ -26,6 +27,27 @@ export interface CmBindingDef {
   registryKey: string;
   handler: CmHandler;
 }
+
+const commandsById = new Map(commands.map((cmd) => [cmd.id, cmd]));
+
+function runRegistryCommand(registryKey: string): CmHandler {
+  return () => {
+    void commandsById.get(registryKey)?.handler?.();
+    return true;
+  };
+}
+
+// App-level keys the window handler skips while the editor (a contenteditable) has focus.
+const appBindings: CmBindingDef[] = [
+  "view.toggleViewMode",
+  "view.toggleWhitespace",
+  "nav.tab1",
+  "nav.tab2",
+  "nav.tab3",
+  "nav.tab4",
+  "nav.tab5",
+  "nav.lastTab",
+].map((registryKey) => ({ registryKey, handler: runRegistryCommand(registryKey) }));
 
 const textOpBindings: CmBindingDef[] = Object.values(TEXT_OPERATIONS_REGISTRY)
   .filter((op) => op.defaultKey)
@@ -87,6 +109,7 @@ export const cmHandlerMap: CmBindingDef[] = [
     handler: (view) => indentLess(view),
   },
   ...textOpBindings,
+  ...appBindings,
   {
     registryKey: "edit.undo",
     handler: (view) => undo(view),
