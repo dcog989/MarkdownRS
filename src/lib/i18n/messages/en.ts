@@ -602,7 +602,7 @@ export const en = {
     closeEsc: "Close (Esc)",
     find: "Find",
     replace: "Replace",
-    tabs: "{count} tabs",
+    tabs: "{count, plural, one {# tab} other {# tabs}}",
     zeroTabs: "0 tabs",
     matchCase: "Match Case",
     wholeWord: "Whole Word",
@@ -611,7 +611,7 @@ export const en = {
     allOpenDocuments: "All Open Documents",
     replaceAll: "Replace All",
     results: "Results:",
-    replacedCount: "Replaced {count} occurrences across open tabs.",
+    replacedCount: "Replaced {count, plural, one {# occurrence} other {# occurrences}} across open tabs.",
     invalidRegex: "Invalid regex pattern",
   },
   editor: {
