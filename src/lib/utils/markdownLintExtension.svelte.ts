@@ -28,8 +28,9 @@ function cacheLintResult(tabId: string, content: string, diagnostics: LintDiagno
 export const markdownLintRefreshEffect = StateEffect.define<null>();
 
 export function forceMarkdownRelint(view: EditorView) {
-  const tabId = (view as AppEditorView)._currentTabId;
-  if (tabId) lintCache.delete(tabId);
+  // Lint settings and the rumdl config apply to every tab, so no cached result
+  // may survive a change; the focused view is the one that re-runs now.
+  lintCache.clear();
   view.dispatch({ effects: markdownLintRefreshEffect.of(null) });
   forceLinting(view);
 }
