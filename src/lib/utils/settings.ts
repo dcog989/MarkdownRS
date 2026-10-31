@@ -36,14 +36,14 @@ function getSettingsObject(includeRuntime: boolean): Record<string, unknown> {
  * strings) or replaced with the default, so a hand-edited file with a bad value
  * can never flow an invalid type into the state and break consumers.
  */
-function coerceSettingValue(value: unknown, fallback: unknown): unknown {
+export function coerceSettingValue(value: unknown, fallback: unknown): unknown {
   const expected = typeof fallback;
 
   if (expected === "number") {
-    if (typeof value === "number") return value;
+    if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
     if (typeof value === "string" && value.trim() !== "") {
       const num = Number(value);
-      if (!Number.isNaN(num)) return num;
+      if (Number.isFinite(num)) return num;
     }
     return fallback;
   }
@@ -65,6 +65,35 @@ function coerceSettingValue(value: unknown, fallback: unknown): unknown {
   }
 
   return fallback;
+}
+
+const MIN_OPACITY = 0;
+const MAX_OPACITY = 100;
+const LEGACY_TRANSPARENT_FIND_PANEL_OPACITY = 15;
+
+function clampOpacity(value: number): number {
+  return Math.min(MAX_OPACITY, Math.max(MIN_OPACITY, value));
+}
+
+/**
+ * Applies settings written by older versions to `target`. Transparency used to
+ * be stored where opacity is now stored, so older files need the inverse
+ * conversion. Exposed for tests; `initSettings` is the only caller.
+ */
+export function applyLegacySettingMappings(saved: Record<string, unknown>, target: Record<string, unknown>): void {
+  if (saved.enableAutocomplete === false) {
+    target.autocompleteDelay = -1;
+  }
+  if (!Object.hasOwn(saved, "statusBarOpacity") && typeof saved.statusBarTransparency === "number") {
+    target.statusBarOpacity = clampOpacity(100 - saved.statusBarTransparency);
+  }
+  if (!Object.hasOwn(saved, "findPanelOpacity")) {
+    if (typeof saved.findPanelTransparency === "number") {
+      target.findPanelOpacity = clampOpacity(100 - saved.findPanelTransparency);
+    } else if (saved.findPanelTransparent === true) {
+      target.findPanelOpacity = LEGACY_TRANSPARENT_FIND_PANEL_OPACITY;
+    }
+  }
 }
 
 export async function initSettings() {
@@ -94,20 +123,8 @@ export async function initSettings() {
   }
 
   const legacy = saved as Record<string, unknown> | null;
-  if (legacy?.enableAutocomplete === false) {
-    settingsState.autocompleteDelay = -1;
-  }
-  if (legacy && !Object.hasOwn(legacy, "statusBarOpacity")) {
-    if (typeof legacy.statusBarTransparency === "number") {
-      settingsState.statusBarOpacity = 100 - legacy.statusBarTransparency;
-    }
-  }
-  if (legacy && !Object.hasOwn(legacy, "findPanelOpacity")) {
-    if (typeof legacy.findPanelTransparency === "number") {
-      settingsState.findPanelOpacity = 100 - legacy.findPanelTransparency;
-    } else if (legacy.findPanelTransparent === true) {
-      settingsState.findPanelOpacity = 15;
-    }
+  if (legacy) {
+    applyLegacySettingMappings(legacy, settingsState as unknown as Record<string, unknown>);
   }
 
   // Delivered with the settings so the first frame is already themed.

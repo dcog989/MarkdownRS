@@ -39,7 +39,7 @@ vi.mock("./backend", () => ({
 }));
 
 import { settingsState } from "$lib/stores/settingsState.svelte";
-import { initSettings, saveSettingsNow } from "./settings";
+import { applyLegacySettingMappings, coerceSettingValue, initSettings, saveSettingsNow } from "./settings";
 
 describe("settings persistence", () => {
   beforeEach(async () => {
@@ -91,5 +91,53 @@ describe("settings persistence", () => {
     expect(backend.overlap).toBe(false);
     expect(backend.saves).toHaveLength(2);
     expect(JSON.stringify(backend.saves[1])).toContain('"editorFontSize":18');
+  });
+});
+
+describe("coerceSettingValue", () => {
+  it("replaces values of the wrong type with the fallback", () => {
+    expect(coerceSettingValue("fast", 850)).toBe(850);
+    expect(coerceSettingValue(true, 14)).toBe(14);
+    expect(coerceSettingValue(42, "monospace")).toBe("monospace");
+  });
+
+  it("coerces numeric strings but rejects non-finite numbers", () => {
+    expect(coerceSettingValue("42", 14)).toBe(42);
+    expect(coerceSettingValue("0", 14)).toBe(0);
+    expect(coerceSettingValue("", 14)).toBe(14);
+    expect(coerceSettingValue(Number.NaN, 14)).toBe(14);
+    expect(coerceSettingValue("Infinity", 14)).toBe(14);
+  });
+
+  it("keeps arrays and objects only when the fallback has the same shape", () => {
+    expect(coerceSettingValue(["en-US"], ["en-GB"])).toEqual(["en-US"]);
+    expect(coerceSettingValue({ a: 1 }, { b: 2 })).toEqual({ a: 1 });
+    expect(coerceSettingValue(null, { b: 2 })).toEqual({ b: 2 });
+  });
+});
+
+describe("applyLegacySettingMappings", () => {
+  it("converts the old transparency keys to opacity", () => {
+    const target: Record<string, unknown> = {};
+    applyLegacySettingMappings({ statusBarTransparency: 30, findPanelTransparency: 85 }, target);
+
+    expect(target.statusBarOpacity).toBe(70);
+    expect(target.findPanelOpacity).toBe(15);
+  });
+
+  it("does not override the new keys and maps the old autocomplete flag", () => {
+    const target: Record<string, unknown> = { statusBarOpacity: 55 };
+    applyLegacySettingMappings({ statusBarOpacity: 55, statusBarTransparency: 0, enableAutocomplete: false }, target);
+
+    expect(target.statusBarOpacity).toBe(55);
+    expect(target.autocompleteDelay).toBe(-1);
+  });
+
+  it("keeps converted opacity inside 0-100", () => {
+    const target: Record<string, unknown> = {};
+    applyLegacySettingMappings({ statusBarTransparency: 150, findPanelTransparency: -10 }, target);
+
+    expect(target.statusBarOpacity).toBe(0);
+    expect(target.findPanelOpacity).toBe(100);
   });
 });
