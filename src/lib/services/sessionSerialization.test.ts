@@ -6,7 +6,7 @@ vi.mock("$lib/utils/backend", () => ({
 
 import { initTransientState } from "$lib/stores/editorCache";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
-import { editorStore } from "$lib/stores/editorStore.svelte";
+import { closeTab, editorStore } from "$lib/stores/editorStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { persistSession } from "./sessionSerialization";
 
@@ -94,5 +94,38 @@ describe("persistSession", () => {
       { activeTabs: Array<{ content: string | null }> },
     ];
     expect(payload.activeTabs[0].content).toBe("# test unsaved content\n\nblah blah blah\n");
+  });
+
+  it("keeps the session dirty when a tab closes during the save", async () => {
+    let resolveSave: () => void = () => {};
+    mockedCallBackend.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+
+    editorStore.tabs = [
+      makeTab({ id: "keep" }),
+      makeTab({ id: "closed", title: "Closed", path: "/closed.md", content: "unsaved text", isDirty: true }),
+    ];
+    initTransientState("closed", { contentChanged: true, isPersisted: false });
+
+    const saving = persistSession();
+    closeTab("closed");
+    resolveSave();
+    await saving;
+
+    expect(editorStore.sessionDirty).toBe(true);
+
+    await persistSession();
+
+    const calls = mockedCallBackend.mock.calls;
+    const [, payload] = calls[calls.length - 1] as unknown as [
+      string,
+      { activeTabs: Array<{ id: string }>; closedTabs: Array<{ id: string; content: string | null }> },
+    ];
+    expect(payload.activeTabs.map((t) => t.id)).toEqual(["keep"]);
+    expect(payload.closedTabs).toContainEqual(expect.objectContaining({ id: "closed", content: "unsaved text" }));
   });
 });

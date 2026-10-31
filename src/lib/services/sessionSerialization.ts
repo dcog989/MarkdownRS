@@ -98,6 +98,9 @@ export async function persistSession(): Promise<void> {
   }
 
   saveInProgress = true;
+  // Consume the flag before the write: a change made while it is in flight
+  // sets it again, so finishing this save cannot clear it.
+  editorStore.sessionDirty = false;
   const start = performance.now();
 
   try {
@@ -165,11 +168,16 @@ export async function persistSession(): Promise<void> {
       }
     }
 
+    // Only entries that were part of this write are persisted; one closed
+    // while it was in flight must still send its content on the next save.
+    const savedClosedIds = new Set(closedTabs.map((t) => t.id));
     editorStore.closedTabsHistory.forEach((entry) => {
-      updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
+      if (savedClosedIds.has(entry.tab.id)) {
+        updateTransientState(entry.tab.id, { contentChanged: false, isPersisted: true });
+      }
     });
 
-    editorStore.sessionDirty = anyUnpersisted;
+    if (anyUnpersisted) editorStore.sessionDirty = true;
   } catch (err) {
     editorStore.sessionDirty = true;
     AppError.handle("Session:Save", err, {
