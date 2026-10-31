@@ -89,6 +89,18 @@ describe("createNewFile", () => {
     const tab = editorStore.tabs.find((t) => t.id === id);
     expect(tab?.isDirty).toBe(false);
   });
+
+  it("only counts exact New-<n> titles when numbering a new tab", async () => {
+    editorStore.tabs = [
+      { ...tab("exact", false), title: "New-3" },
+      { ...tab("substring", false), title: "New-2024-review.md" },
+    ];
+
+    const id = await createNewFile();
+
+    const created = editorStore.tabs.find((t) => t.id === id);
+    expect(created?.title).toBe("New-4");
+  });
 });
 
 function tab(id: string, isPinned: boolean): EditorTab {

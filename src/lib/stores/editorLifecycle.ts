@@ -55,7 +55,7 @@ export function addTab(title: string = "", content: string = "") {
   const finalContent = content;
 
   if (!title || title === "Untitled" || title === "") {
-    const newTabPattern = /New-(\d+)/;
+    const newTabPattern = /^New-(\d+)$/;
     let maxNewNumber = 0;
     for (const tab of editorStore.tabs) {
       const currentTitle = tab.customTitle || tab.title || "";
