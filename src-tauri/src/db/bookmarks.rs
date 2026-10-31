@@ -88,8 +88,7 @@ impl BookmarkStore {
     }
 
     pub fn delete_orphan_bookmarks(&self) -> Result<Vec<String>> {
-        let conn = lock_conn!(self);
-        crate::db::delete_orphans(&conn, "bookmarks", "id")
+        crate::db::delete_orphans(&self.conn, "bookmarks", "id")
     }
 
     pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {

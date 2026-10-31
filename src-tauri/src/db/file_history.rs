@@ -86,8 +86,7 @@ impl FileHistoryStore {
     }
 
     pub fn delete_orphan_file_history(&self) -> Result<Vec<String>> {
-        let conn = lock_conn!(self);
-        crate::db::delete_orphans(&conn, "file_history", "path")
+        crate::db::delete_orphans(&self.conn, "file_history", "path")
     }
 
     pub fn import_file_history(&self, paths: &[String]) -> Result<()> {
