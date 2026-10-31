@@ -1,6 +1,5 @@
 import { SearchQuery, setSearchQuery } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
-import { SvelteMap } from "svelte/reactivity";
 import { translate } from "$lib/i18n";
 import { updateContent, updateContentOnly } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -130,6 +129,19 @@ export function clearSearch(view: EditorView | undefined) {
   searchState.regexError = null;
 }
 
+/** Counts matches by walking the regex, without one object per match. */
+export function countMatches(content: string, regex: RegExp): number {
+  let count = 0;
+  let match = regex.exec(content);
+  while (match !== null) {
+    count++;
+    // A zero-length match ("^", "a*") must advance or exec loops forever.
+    if (match[0] === "") regex.lastIndex++;
+    match = regex.exec(content);
+  }
+  return count;
+}
+
 export function searchAllTabs() {
   if (!searchState.findText) {
     searchState.allTabsResults.clear();
@@ -139,18 +151,10 @@ export function searchAllTabs() {
   const regex = buildSearchRegex();
   if (!regex) return;
 
-  const results = new SvelteMap<string, number>();
-
-  appContext.editor.tabs.forEach((tab) => {
-    const matches = [...tab.content.matchAll(regex)];
-    if (matches.length > 0) {
-      results.set(tab.id, matches.length);
-    }
-  });
-
   searchState.allTabsResults.clear();
-  results.forEach((value, key) => {
-    searchState.allTabsResults.set(key, value);
+  appContext.editor.tabs.forEach((tab) => {
+    const count = countMatches(tab.content, regex);
+    if (count > 0) searchState.allTabsResults.set(tab.id, count);
   });
 }
 
@@ -161,14 +165,13 @@ export function replaceAllInTabs(): number {
   let total = 0;
 
   appContext.editor.tabs.forEach((tab) => {
-    const matches = [...tab.content.matchAll(regex)];
-    if (matches.length > 0) {
-      const newContent = tab.content.replace(regex, searchState.replaceText);
-      updateContent(tab.id, newContent, newContent.split("\n").length);
-      // Mounted editors only pick up store content when forceSync advances.
-      updateContentOnly(tab.id, newContent, true);
-      total += matches.length;
-    }
+    const count = countMatches(tab.content, regex);
+    if (count === 0) return;
+    const newContent = tab.content.replace(regex, searchState.replaceText);
+    updateContent(tab.id, newContent, newContent.split("\n").length);
+    // Mounted editors only pick up store content when forceSync advances.
+    updateContentOnly(tab.id, newContent, true);
+    total += count;
   });
 
   searchAllTabs();

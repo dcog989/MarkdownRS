@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { buildSearchRegex, searchState } from "./searchManager.svelte";
+import { buildSearchRegex, countMatches, searchState } from "./searchManager.svelte";
 
 function requireRegex(): RegExp {
   const regex = buildSearchRegex();
@@ -45,5 +45,15 @@ describe("buildSearchRegex", () => {
     searchState.findText = "(";
     expect(buildSearchRegex()).toBeNull();
     expect(searchState.regexError).toBeTruthy();
+  });
+});
+
+describe("countMatches", () => {
+  it("counts non-overlapping matches", () => {
+    expect(countMatches("aaaa", /aa/g)).toBe(2);
+  });
+
+  it("advances past zero-length matches instead of looping", () => {
+    expect(countMatches("a\nb\nc", /^/gm)).toBe(3);
   });
 });
