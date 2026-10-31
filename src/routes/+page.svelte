@@ -42,13 +42,15 @@ function handleToggleFileTree() {
   saveSettings();
 }
 
-let activeTab = $derived(tabsById().get(appContext.app.activeTabId ?? ""));
-
 let primaryTabId = $derived(appContext.app.paneTabs[0] ?? appContext.app.activeTabId ?? "");
 let secondaryTabId = $derived(appContext.app.paneTabs[1] ?? "");
 let splitPaneActive = $derived(
   isSplitPaneActive() && !appContext.app.writerMode && primaryTabId !== "" && secondaryTabId !== "",
 );
+
+// Pane sync is suspended while a background tab is saved, so the visible
+// document must follow the pane, not activeTabId.
+let activeTab = $derived(tabsById().get(primaryTabId));
 
 let isMarkdown = $derived.by(() => {
   if (!activeTab) return true;
@@ -216,7 +218,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
           </div>
         {/if}
 
-        {#if appContext.app.activeTabId}
+        {#if primaryTabId}
           {#if splitPaneActive && primaryTabId && secondaryTabId}
             <div class="flex w-full min-h-0 flex-1 flex-row">
               <div
@@ -312,7 +314,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
                     <TabBarMenu bind:showMenu={showWriterMenu} />
                   </div>
                 {/if}
-                <Editor tabId={appContext.app.activeTabId} />
+                <Editor tabId={primaryTabId} />
               </div>
 
               {#if showPreview}
@@ -330,7 +332,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
 
               {#if showPreview}
                 <div class="flex-1-height-100 min-w-0 min-h-0">
-                  <Preview tabId={appContext.app.activeTabId} />
+                  <Preview tabId={primaryTabId} />
                 </div>
               {/if}
             </div>
