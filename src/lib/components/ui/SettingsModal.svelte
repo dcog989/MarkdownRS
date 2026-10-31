@@ -92,14 +92,6 @@ let settingsDefinitions = $derived(getSettingDefinitions(appContext.settings.ava
 let sortedSettings = $derived(
   (settingsDefinitions as SettingDef[])
     .filter((s) => {
-      if (s.visibleWhen) {
-        const condition = s.visibleWhen;
-        const dependentValue = getSettingValue(condition.key, null);
-        if (dependentValue !== condition.value) {
-          return false;
-        }
-      }
-
       if (searchQuery.length < 2) return true;
       const fullString = `${translate(s.category)}: ${translate(s.label)}`;
       return fullString.toLowerCase().includes(searchQuery.toLowerCase());

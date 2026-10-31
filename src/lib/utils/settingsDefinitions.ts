@@ -24,8 +24,6 @@ export type SettingDef = {
   tooltip?: string;
   unit?: string;
   labelWarning?: string;
-  visibleWhen?: { key: string; value: unknown };
-  groupWith?: string;
   onChange?: (newValue: unknown, oldValue: unknown) => void;
 };
 
@@ -178,7 +176,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       min: 0,
       max: 9999,
       step: 10,
-      groupWith: "recentChangesCount",
       tooltip: "settings.recentChangesTimespanTooltip",
       unit: "settings.unitSecs",
     },
