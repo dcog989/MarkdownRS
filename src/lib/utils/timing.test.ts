@@ -41,39 +41,56 @@ describe("throttle", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it("fires at most once per interval with trailing calls coalesced", () => {
+  it("delivers only the latest call after the interval", () => {
     const fn = vi.fn();
-    const throttled = throttle(fn, 100, { leading: true });
+    const throttled = throttle(fn, 100);
 
     throttled(1);
     throttled(2);
     throttled(3);
-    expect(fn).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledWith(1);
+    expect(fn).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(100);
-    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenCalledWith(3);
   });
 
-  it("trailing-only (default) schedules the first call", () => {
+  it("keeps at least one interval between invocations", () => {
     const fn = vi.fn();
     const throttled = throttle(fn, 100);
 
     throttled("a");
-    expect(fn).not.toHaveBeenCalled();
     vi.advanceTimersByTime(100);
     expect(fn).toHaveBeenCalledWith("a");
+
+    throttled("b");
+    vi.advanceTimersByTime(99);
+    expect(fn).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(1);
+    expect(fn).toHaveBeenCalledTimes(2);
+    expect(fn).toHaveBeenLastCalledWith("b");
+  });
+
+  it("waits a full interval after a long idle gap", () => {
+    const fn = vi.fn();
+    const throttled = throttle(fn, 100);
+
+    throttled("a");
+    vi.advanceTimersByTime(1100);
+
+    throttled("b");
+    vi.advanceTimersByTime(100);
+    expect(fn).toHaveBeenLastCalledWith("b");
   });
 
   it("clear cancels the trailing invocation", () => {
     const fn = vi.fn();
-    const throttled = throttle(fn, 100, { leading: true });
+    const throttled = throttle(fn, 100);
 
     throttled(1);
     throttled(2);
     throttled.clear();
     vi.advanceTimersByTime(200);
-    expect(fn).toHaveBeenCalledTimes(1);
+    expect(fn).not.toHaveBeenCalled();
   });
 });
