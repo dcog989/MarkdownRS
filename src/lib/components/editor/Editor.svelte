@@ -39,12 +39,7 @@ import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { pasteFromClipboard } from "$lib/utils/imagePaste";
 import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
-import {
-  invalidateSpellcheckCache,
-  refreshSpellcheck,
-  spellCheckKeymap,
-  triggerImmediateLint,
-} from "$lib/utils/spellcheckExtension.svelte";
+import { spellCheckKeymap, triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte";
 import { calculateCursorMetrics } from "$lib/utils/textMetrics";
 
 let { tabId }: { tabId: string } = $props();
@@ -231,7 +226,6 @@ function handleHistoryUpdate(state: unknown) {
 
 function handleDictionaryUpdate() {
   if (cmView) {
-    invalidateSpellcheckCache();
     triggerImmediateLint(cmView);
   }
 }
@@ -386,12 +380,10 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     }}
     onReplaceWord={(w) => {
       if (!cmView) return;
+      // The dispatch re-runs the linter; the added-to-dictionary word needs no
+      // cache invalidation because the dictionary is checked before the caches.
       cmView.dispatch({ changes: { from: contextWordFrom, to: contextWordTo, insert: w } });
       showContextMenu = false;
-      // No delay needed: the dispatch applies synchronously and
-      // refreshSpellcheck awaits the custom-dictionary reload before
-      // re-linting, so the replaced word is settled by then.
-      refreshSpellcheck(cmView);
     }}
   />
 {/if}

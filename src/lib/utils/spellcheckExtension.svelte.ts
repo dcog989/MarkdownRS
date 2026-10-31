@@ -12,16 +12,6 @@ export function invalidateSpellcheckCache() {
   spellcheckState.misspelledCache.clear();
 }
 
-export async function refreshSpellcheck(view: EditorView | undefined) {
-  if (!view) return;
-
-  invalidateSpellcheckCache();
-
-  await spellcheckState.refreshCustomDictionary();
-  spellcheckState.misspelledCache = new SvelteSet<string>();
-  triggerImmediateLint(view);
-}
-
 export const spellCheckKeymap = [
   {
     key: "F8",
@@ -53,7 +43,6 @@ export const spellCheckKeymap = [
         spellcheckState.misspelledCache.delete(stripPossessiveSuffix(w));
       }
 
-      invalidateSpellcheckCache();
       view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
       forceLinting(view);
 
