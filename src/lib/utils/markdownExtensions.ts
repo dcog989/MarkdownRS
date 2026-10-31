@@ -82,7 +82,7 @@ const linkTextTheme = EditorView.baseTheme({
 });
 
 const bqMatchRe = /^\s*> ?/;
-const bulletMatchRe = /^(\s*)-\s/;
+const bulletMatchRe = /^(\s*)([-*+])\s/;
 const stRegex = /~~([^~]+)~~/g;
 
 function findCursorHeadingLines(view: EditorView): Set<number> {
@@ -329,9 +329,11 @@ function collectBlockquoteLine(walk: DecorationWalk, line: Line): void {
 function collectBulletPoint(walk: DecorationWalk, line: Line): void {
   const bulletMatch = bulletMatchRe.exec(line.text);
   if (!bulletMatch) return;
-  const dashStart = line.from + bulletMatch[1].length;
-  if (isHrLineRevealed(walk.view, dashStart, dashStart + 1)) return;
-  walk.ranges.push(bulletPointDeco.range(dashStart, dashStart + 1));
+  const markerStart = line.from + bulletMatch[1].length;
+  const markerEnd = markerStart + bulletMatch[2].length;
+  if (isVisibleInCodeBlock(walk.tree, markerStart)) return;
+  if (isHrLineRevealed(walk.view, markerStart, markerEnd)) return;
+  walk.ranges.push(bulletPointDeco.range(markerStart, markerEnd));
 }
 
 function collectStrikethrough(walk: DecorationWalk, line: Line): void {

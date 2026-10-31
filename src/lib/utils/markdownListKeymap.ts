@@ -19,16 +19,16 @@ function listMarkerBackspace(view: EditorView): boolean {
   // default handler so the literal `- ` text is edited normally.
   if (isVisibleInCodeBlock(syntaxTree(state), line.from)) return false;
 
-  const match = /^(\s*)-\s?$/.exec(line.text);
+  const match = /^(\s*)([-*+])\s?$/.exec(line.text);
   if (!match) return false;
 
-  const dashStart = line.from + match[1].length;
-  const dashEnd = dashStart + 1;
-  const hasTrailingSpace = dashEnd < line.to;
+  const markerStart = line.from + match[1].length;
+  const markerEnd = markerStart + match[2].length;
+  const hasTrailingSpace = markerEnd < line.to;
 
   view.dispatch({
-    changes: hasTrailingSpace ? { from: dashEnd, to: line.to } : { from: dashStart, to: dashEnd },
-    selection: { anchor: hasTrailingSpace ? dashEnd : dashStart },
+    changes: hasTrailingSpace ? { from: markerEnd, to: line.to } : { from: markerStart, to: markerEnd },
+    selection: { anchor: hasTrailingSpace ? markerEnd : markerStart },
   });
   return true;
 }

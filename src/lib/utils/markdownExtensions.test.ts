@@ -190,6 +190,29 @@ describe("inline marker reveal", () => {
   });
 });
 
+describe("bullet widgets", () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = "";
+  });
+
+  it("replaces -, * and + list markers with a bullet", async () => {
+    const { view, parent } = createCalloutView("- dash\n* star\n+ plus\n", true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelectorAll(".cm-bullet-widget")).toHaveLength(3);
+    view.destroy();
+  });
+
+  it("leaves a dash in an indented code block alone", async () => {
+    const { view, parent } = createCalloutView("Sample:\n\n    - code\n", true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-bullet-widget")).toBeNull();
+    expect(parent.textContent).toContain("- code");
+    view.destroy();
+  });
+});
+
 describe("horizontal rule decorations", () => {
   beforeEach(mockLayout);
   afterEach(() => {
