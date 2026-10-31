@@ -14,8 +14,12 @@ import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
 export function reloadSpellcheck() {
   spellcheckState.clear();
   invalidateSpellcheckCache();
-  appContext.spellcheck.init(true).then(() => {
-    showToast("success", translate("settings.spellcheckSettingsUpdated"));
+  appContext.spellcheck.init(true).then((ready) => {
+    if (ready === null) return;
+    showToast(
+      ready ? "success" : "error",
+      translate(ready ? "settings.spellcheckSettingsUpdated" : "settings.spellcheckSettingsFailed"),
+    );
     const activeView = getActiveEditorView();
     if (activeView) triggerImmediateLint(activeView);
   });

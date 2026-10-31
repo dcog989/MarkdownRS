@@ -441,6 +441,7 @@ export const en = {
     languageTooltip: 'Interface language. "System Language" follows the operating system.',
     noTemplateSelected: "No template selected",
     spellcheckSettingsUpdated: "Spellcheck settings updated",
+    spellcheckSettingsFailed: "Spellcheck settings updated, but the dictionaries could not be loaded",
     logLevelChanged: "Log level updated",
   },
   shortcuts: {

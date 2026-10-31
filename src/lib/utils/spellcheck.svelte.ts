@@ -38,7 +38,7 @@ export class SpellcheckManager {
   validCache = new Set<string>();
   linterFailedNotified = false;
 
-  private initPromise: Promise<void> | null = null;
+  private initPromise: Promise<boolean | null> | null = null;
   private initGeneration = 0;
   private pendingFetches = new Set<string>();
 
@@ -49,8 +49,8 @@ export class SpellcheckManager {
     this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
   }
 
-  async init(force = false): Promise<void> {
-    if (this.dictionaryLoaded && !force) return;
+  async init(force = false): Promise<boolean | null> {
+    if (this.dictionaryLoaded && !force) return true;
     if (this.initPromise) {
       if (!force) return this.initPromise;
       // Never stack concurrent inits: let the in-flight one settle, then start
@@ -63,7 +63,8 @@ export class SpellcheckManager {
     return this.initPromise;
   }
 
-  private async runInit(generation: number): Promise<void> {
+  /** True when ready, false on failure, null when a newer init superseded this one. */
+  private async runInit(generation: number): Promise<boolean | null> {
     try {
       await this.loadCustomDictionary();
 
@@ -81,12 +82,13 @@ export class SpellcheckManager {
         );
       } catch {
         this.dictionaryLoaded = false;
-        return;
+        return false;
       }
 
       const status = await this.waitForInitCompletion();
-      if (generation !== this.initGeneration) return;
+      if (generation !== this.initGeneration) return null;
       this.dictionaryLoaded = status === "ready";
+      return this.dictionaryLoaded;
     } finally {
       // A stale closure (superseded or cleared) must not clobber a newer init.
       if (generation === this.initGeneration) {
