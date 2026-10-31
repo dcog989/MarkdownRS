@@ -27,6 +27,8 @@ class FileWatcherService {
   private lastToastTime = new Map<string, number>();
   private renewInFlight = new Set<string>();
   private renewQueued = new Set<string>();
+  /** Pending re-checks for paths whose change event landed inside a write lock. */
+  private retryTimers = new Map<string, number>();
 
   async watch(tabId: string, rawPath: string): Promise<void> {
     if (!tabId || !rawPath) return;
@@ -73,6 +75,7 @@ class FileWatcherService {
 
     this.pathTabs.delete(path);
     this.lastToastTime.delete(path);
+    this.clearRetry(path);
 
     const unwatch = this.watchers.get(path);
     if (unwatch) {
@@ -196,8 +199,42 @@ class FileWatcherService {
     return true;
   }
 
+  /**
+   * A change event that arrives while the app's own save holds the lock is
+   * ignored, but it may have been an external write. Re-check once the lock
+   * expires so that edit is not lost until the next event.
+   */
+  private scheduleRecheck(path: string): void {
+    if (!this.pathTabs.has(path) || this.retryTimers.has(path)) return;
+
+    const expiry = this.writeLocks.get(path);
+    const delay =
+      expiry === -1 || expiry === undefined
+        ? CONFIG.PERFORMANCE.FILE_WATCHER_LOCK_BUFFER_MS
+        : Math.max(0, expiry - Date.now());
+
+    this.retryTimers.set(
+      path,
+      window.setTimeout(() => {
+        this.retryTimers.delete(path);
+        void this.handleFileChange(path);
+      }, delay),
+    );
+  }
+
+  private clearRetry(path: string): void {
+    const timer = this.retryTimers.get(path);
+    if (timer === undefined) return;
+    window.clearTimeout(timer);
+    this.retryTimers.delete(path);
+  }
+
   private async handleFileChange(path: string): Promise<void> {
-    if (this.isWriteLocked(path) || this.pendingChecks.has(path)) return;
+    if (this.isWriteLocked(path)) {
+      this.scheduleRecheck(path);
+      return;
+    }
+    if (this.pendingChecks.has(path)) return;
     this.pendingChecks.add(path);
 
     try {
@@ -271,6 +308,10 @@ class FileWatcherService {
     this.pendingChecks.clear();
     this.renewInFlight.clear();
     this.renewQueued.clear();
+    for (const timer of this.retryTimers.values()) {
+      window.clearTimeout(timer);
+    }
+    this.retryTimers.clear();
   }
 }
 
