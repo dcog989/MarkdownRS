@@ -10,6 +10,7 @@ import { logger } from "$lib/utils/logger";
 import { extractSmartTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
 import { formatDuration } from "$lib/utils/timing";
+import type { AppEditorView } from "../../global";
 import { normalizeLineEndings } from "./fileMetadata";
 
 enum TabLoadState {
@@ -199,7 +200,10 @@ async function loadTabContentInternal(tabId: string): Promise<boolean> {
       // appeared while the load was in flight (user edits — possibly not yet
       // debounced into the store — or a disk reload) must win over the stored
       // session content instead of being clobbered by it.
-      const viewText = getEditorInstance(tabId)?.state.doc.toString() ?? "";
+      // Only trust the registered view when it still shows this tab; a stale
+      // entry from a previous tab would hand us another document's text.
+      const view = getEditorInstance(tabId) as AppEditorView | undefined;
+      const viewText = view?._currentTabId === tabId ? view.state.doc.toString() : "";
       const alreadyHadContent = currentTab.content !== "" || viewText !== "";
       const content = alreadyHadContent ? viewText || currentTab.content : normalizedContent;
 

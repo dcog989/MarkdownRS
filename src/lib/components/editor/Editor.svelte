@@ -91,13 +91,13 @@ onMount(() => {
   };
 });
 
-// Register/unregister editor instance when cmView changes
+// Register under the current tab id and drop the previous key on a tab switch,
+// so getEditorInstance(id) never returns a view that now shows another tab.
 $effect(() => {
-  if (cmView) {
-    registerEditorInstance(tabId, cmView);
-  } else {
-    unregisterEditorInstance(tabId);
-  }
+  const view = cmView;
+  if (!view) return;
+  registerEditorInstance(tabId, view);
+  return () => unregisterEditorInstance(tabId, view);
 });
 
 // Two panes can each host an editor; only the focused pane's view receives
