@@ -41,6 +41,10 @@ $effect(() => {
   if (isOpen) {
     searchQuery = "";
     nav.reset();
+  } else {
+    // Closing mid-recording must restore the global shortcut handler and the listener.
+    stopRecording();
+    conflictCommand = null;
   }
 });
 
