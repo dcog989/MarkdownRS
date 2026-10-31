@@ -89,7 +89,8 @@ export class ExportService {
 
       if (!path) return;
 
-      const result = await renderMarkdown(tab.content, appContext.settings.markdownFlavor === "gfm", tab.path);
+      // Exported HTML is opened outside the app, where asset URLs do not resolve.
+      const result = await renderMarkdown(tab.content, appContext.settings.markdownFlavor === "gfm", tab.path, false);
 
       const baseVars = this.getComputedCssVariables();
       const html = buildExportHtml(

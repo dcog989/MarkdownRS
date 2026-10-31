@@ -17,6 +17,7 @@ export async function renderMarkdown(
   content: string,
   gfm: boolean = true,
   basePath: string | null = null,
+  resolveImagePaths: boolean = true,
 ): Promise<RenderResult> {
   const flavor = gfm ? "gfm" : "commonmark";
   const result = await callBackendSafe("render_markdown", { content, flavor }, "Markdown:Render", {
@@ -36,7 +37,7 @@ export async function renderMarkdown(
 
   let html = result.html;
 
-  if (html.includes("<img")) {
+  if (resolveImagePaths && html.includes("<img")) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
     const images = doc.querySelectorAll("img");
