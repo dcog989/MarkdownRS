@@ -179,6 +179,14 @@ let endIndex = $derived(Math.min(allRows.length, Math.ceil((scrollTop + viewport
 let visibleRows = $derived(allRows.slice(startIndex, endIndex));
 let spacerHeight = $derived(allRows.length * ROW_HEIGHT);
 
+// A newly positioned root starts at the top; the reveal effect below can still
+// center the active file afterwards.
+$effect(() => {
+  fileTreeStore.root;
+  scrollTop = 0;
+  if (scrollEl) scrollEl.scrollTop = 0;
+});
+
 $effect(() => {
   if (!scrollEl) return;
   const el = scrollEl;
