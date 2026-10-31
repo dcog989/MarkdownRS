@@ -2,6 +2,7 @@ import { translate } from "$lib/i18n";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { getCurrentTimestamp } from "$lib/utils/date";
+import { AppError } from "$lib/utils/errorHandling";
 import { appState } from "./appState.svelte";
 import { editorStore } from "./editorStoreCore.svelte";
 
@@ -47,13 +48,27 @@ export async function addBookmark(
   };
 
   bookmarkStore.bookmarks.unshift(bookmark);
-  await callBackend("add_bookmark", { bookmark }, "Bookmark:Add", undefined, { report: true });
+  try {
+    await callBackend("add_bookmark", { bookmark }, "Bookmark:Add");
+  } catch (err) {
+    // The optimistic row never reached SQLite; reload instead of showing a
+    // bookmark that disappears on the next launch.
+    await loadBookmarks();
+    AppError.handle("Bookmark:Add", err, { showToast: true });
+    return { bookmark, isNew: false };
+  }
   return { bookmark, isNew: true };
 }
 
 export async function deleteBookmark(id: string) {
   bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id !== id);
-  await callBackend("delete_bookmark", { id }, "Bookmark:Remove", undefined, { report: true });
+  try {
+    await callBackend("delete_bookmark", { id }, "Bookmark:Remove");
+  } catch (err) {
+    // A failed delete leaves the row in SQLite; re-read so the UI matches it.
+    await loadBookmarks();
+    AppError.handle("Bookmark:Remove", err, { showToast: true });
+  }
 }
 
 export function pruneBookmarks(paths: string[]) {
@@ -79,9 +94,15 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
   // copy needs removing; deleting it first would lose both if the write fails.
   bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id === id || b.path !== updated.path);
 
-  await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, {
-    report: true,
-  });
+  try {
+    await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add");
+  } catch (err) {
+    // The old row is still in SQLite and the new one was not written; reload
+    // rather than dropping the bookmark from the list for the whole session.
+    await loadBookmarks();
+    AppError.handle("Bookmark:Add", err, { showToast: true });
+    return;
+  }
   const index = bookmarkStore.bookmarks.findIndex((b) => b.id === id);
   if (index !== -1) bookmarkStore.bookmarks[index] = updated;
 }
@@ -111,7 +132,10 @@ export function getBookmarkByPath(path: string): Bookmark | undefined {
 export function addBookmarkForActiveTab(): boolean {
   const tab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
   if (tab?.path) {
-    addBookmark(tab.path, tab.title).then(({ isNew }) => {
+    addBookmark(tab.path, tab.title).then(({ bookmark, isNew }) => {
+      // A failed write reloaded the list and already showed an error, so the
+      // row is gone; do not report success or "already bookmarked" for it.
+      if (!bookmarkStore.bookmarks.some((b) => b.id === bookmark.id)) return;
       if (isNew) showToast("success", translate("bookmarks.addedToast", { values: { title: tab.title } }));
       else showToast("info", translate("bookmarks.alreadyToast", { values: { title: tab.title } }));
     });
