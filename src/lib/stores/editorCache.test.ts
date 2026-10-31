@@ -129,4 +129,15 @@ describe("editorCache", () => {
     expect(editorStore.tabs[0]?.wordCount).toBe(2);
     vi.useRealTimers();
   });
+
+  it("updates the widest column after the debounce", async () => {
+    vi.useFakeTimers();
+    editorStore.tabs = [tab("t1", "")];
+
+    scheduleWordCountUpdate("t1", "short\na much longer line");
+    vi.advanceTimersByTime(501);
+
+    await vi.waitFor(() => expect(editorStore.tabs[0]?.widestColumn).toBe(18));
+    vi.useRealTimers();
+  });
 });

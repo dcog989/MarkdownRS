@@ -1,6 +1,6 @@
 import { CONFIG } from "$lib/utils/config";
 import { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
-import { countWords } from "$lib/utils/textMetrics";
+import { computeLineStats, countWords } from "$lib/utils/textMetrics";
 import { editorStore } from "./editorStoreCore.svelte";
 import type { TabTransientState } from "./editorTypes";
 
@@ -96,10 +96,12 @@ export function scheduleWordCountUpdate(tabId: string, content: string) {
     }
 
     const wordCount = computeWordCount(content);
+    const { widestColumn } = computeLineStats(content);
 
     // In-place mutation (see updateContent) to avoid churning the tabs array.
     Object.assign(editorStore.tabs[index], {
       wordCount,
+      widestColumn,
       wordCountPending: false,
     });
 
