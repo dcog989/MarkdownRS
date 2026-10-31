@@ -103,14 +103,24 @@ async fn clear_language_cache(cache_dir: &Path) {
 }
 
 async fn load_custom_dictionary(store: &AppState, custom_path: &Path) {
-    if let Ok(text) = tokio::fs::read_to_string(custom_path).await {
-        let mut custom = store.custom_dict.write_or_recover();
-        let set = Arc::make_mut(&mut custom);
-        for line in text.lines() {
-            let w = line.trim();
-            if !w.is_empty() {
-                set.insert(w.to_lowercase());
-            }
+    // The file is the source of truth: replace the in-memory set so words
+    // removed from it (or a deleted file) stop being accepted this session.
+    let text = match tokio::fs::read_to_string(custom_path).await {
+        Ok(text) => text,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => {
+            log::error!("Failed to read custom dictionary {:?}: {}", custom_path, e);
+            return;
+        },
+    };
+
+    let mut custom = store.custom_dict.write_or_recover();
+    let set = Arc::make_mut(&mut custom);
+    set.clear();
+    for line in text.lines() {
+        let w = line.trim();
+        if !w.is_empty() {
+            set.insert(w.to_lowercase());
         }
     }
 }
