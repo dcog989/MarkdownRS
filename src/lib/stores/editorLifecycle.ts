@@ -53,9 +53,8 @@ export function addTab(title: string = "", content: string = "") {
   const now = getCurrentTimestamp();
 
   let finalTitle = title;
-  const finalContent = content;
 
-  if (!title || title === "Untitled" || title === "") {
+  if (!title || title === "Untitled") {
     const newTabPattern = /^New-(\d+)$/;
     let maxNewNumber = 0;
     for (const tab of editorStore.tabs) {
@@ -66,7 +65,7 @@ export function addTab(title: string = "", content: string = "") {
     finalTitle = `New-${maxNewNumber + 1}`;
   }
 
-  const normalizedContent = finalContent.replace(/\r\n/g, "\n");
+  const normalizedContent = content.replace(/\r\n/g, "\n");
   const sizeBytes = byteLength(normalizedContent);
 
   let wordCount = 0;
@@ -114,7 +113,9 @@ export function addTab(title: string = "", content: string = "") {
     editorStore.tabs.unshift(newTab);
   } else if (settingsState.newTabPosition === "right" && appState.activeTabId) {
     const activeIndex = editorStore.tabs.findIndex((t) => t.id === appState.activeTabId);
-    editorStore.tabs.splice(activeIndex + 1, 0, newTab);
+    // A stale active id (a tab closed earlier in a batch) would land at index 0.
+    const insertIndex = activeIndex === -1 ? editorStore.tabs.length : activeIndex + 1;
+    editorStore.tabs.splice(insertIndex, 0, newTab);
   } else {
     editorStore.tabs.push(newTab);
   }

@@ -16,8 +16,9 @@ vi.mock("$lib/services/fileWatcher", () => ({
 import { fileWatcher } from "$lib/services/fileWatcher";
 import { callBackend } from "$lib/utils/backend";
 import { readTextFile } from "$lib/utils/fileIO";
+import { appState } from "./appState.svelte";
 import { getTransientState, initTransientState } from "./editorCache";
-import { closeTab, createNewFile, reopenClosedTab, reorderTabs } from "./editorLifecycle";
+import { addTab, closeTab, createNewFile, reopenClosedTab, reorderTabs } from "./editorLifecycle";
 import { editorStore, sortTabsPinnedFirst } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
 import { settingsState } from "./settingsState.svelte";
@@ -162,6 +163,30 @@ describe("pinned tab ordering", () => {
     expect(pinned).toHaveLength(1);
     expect(unpinned).toHaveLength(2);
     expect(editorStore.tabs[0].id).toBe("p");
+  });
+});
+
+describe("addTab placement", () => {
+  beforeEach(() => {
+    editorStore.tabs = [tab("a", false), tab("b", false)];
+    editorStore.mruStack = [];
+    settingsState.newTabPosition = "right";
+  });
+
+  it("inserts after the active tab", () => {
+    appState.activeTabId = "a";
+
+    addTab("new file");
+
+    expect(editorStore.tabs.map((t) => t.title)).toEqual(["a", "new file", "b"]);
+  });
+
+  it("appends when the active tab no longer exists", () => {
+    appState.activeTabId = "gone";
+
+    addTab("new file");
+
+    expect(editorStore.tabs.map((t) => t.title)).toEqual(["a", "b", "new file"]);
   });
 });
 
