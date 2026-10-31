@@ -1,11 +1,4 @@
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "$lib/utils/dom";
 
 // Sanitizes a CSS font-family value so it cannot break out of the declaration
 // with `;`, `{`, `}`, or a backslash escape. Quoted multi-word font names are

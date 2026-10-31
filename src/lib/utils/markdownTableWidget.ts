@@ -2,6 +2,7 @@ import { syntaxTree } from "@codemirror/language";
 import type { Range } from "@codemirror/state";
 import { type EditorState, StateField } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
+import { escapeHtml } from "$lib/utils/dom";
 import { widgetPointerAction } from "./editorWidgetClick";
 import type { PointerResolver } from "./renderedPointer";
 
@@ -58,10 +59,6 @@ export function parseAlignment(delimiter: string): TableAlignment[] {
     if (ALIGN_LEFT.test(c)) return "left";
     return "none";
   });
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 const PLACEHOLDER_START = "\uE000";
