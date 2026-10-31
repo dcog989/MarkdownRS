@@ -8,6 +8,7 @@ import {
 } from "@codemirror/autocomplete";
 import { defaultKeymap, deleteGroupForwardWin, historyKeymap, indentLess, indentMore } from "@codemirror/commands";
 import { indentUnit } from "@codemirror/language";
+import { EditorSelection } from "@codemirror/state";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
 import { commands } from "$lib/commands/commands";
 import { cmHandlerMap } from "$lib/components/editor/codemirror/editorBindings";
@@ -110,20 +111,21 @@ export function createWrapExtension(isLargeFile = false) {
 }
 
 // Tab indents the selected lines via CodeMirror's `indentMore`, or inserts the
-// configured indent at the cursor (no built-in inserts `indentUnit` as spaces;
+// configured indent at each cursor (no built-in inserts `indentUnit` as spaces;
 // `insertTab` inserts a literal tab). Shift+Tab is `indentLess`.
 const handleTabKey = (view: EditorView) => {
   const { state } = view;
-  const { from, to } = state.selection.main;
 
-  if (from !== to) {
+  if (state.selection.ranges.some((range) => !range.empty)) {
     return indentMore(view);
   }
 
   const indentStr = state.facet(indentUnit) || "    ";
   view.dispatch({
-    changes: { from, to, insert: indentStr },
-    selection: { anchor: from + indentStr.length },
+    ...state.changeByRange((range) => ({
+      changes: { from: range.from, insert: indentStr },
+      range: EditorSelection.cursor(range.from + indentStr.length),
+    })),
     scrollIntoView: true,
   });
   return true;
