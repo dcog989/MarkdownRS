@@ -22,7 +22,10 @@ function tabSwitch(index: number): Command {
     defaultKey: `ctrl+${index + 1}`,
     handler: () => {
       const tab = appContext.editor.tabs[index];
-      if (tab) appContext.app.activeTabId = tab.id;
+      if (tab) {
+        appContext.app.activeTabId = tab.id;
+        pushToMru(tab.id);
+      }
     },
   };
 }
@@ -56,7 +59,9 @@ export const navigationCommands: Command[] = [
     handler: () => {
       const tabs = appContext.editor.tabs;
       if (tabs.length > 0) {
-        appContext.app.activeTabId = tabs[tabs.length - 1].id;
+        const last = tabs[tabs.length - 1];
+        appContext.app.activeTabId = last.id;
+        pushToMru(last.id);
       }
     },
   },
