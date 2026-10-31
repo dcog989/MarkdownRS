@@ -17,6 +17,9 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     window::configure(&window);
 
     let paths = paths::resolve_app_paths(app_handle)?;
+    // Migration runs before the first read: an upgrade still keeps its
+    // settings in the old location until they are moved.
+    migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
     // The window background and the log level both come from settings, so the
     // file is read once instead of once per consumer.
     let saved_settings = crate::utils::read_settings_toml(&paths.config_path).ok();
@@ -25,7 +28,6 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     window::apply_saved_background(&window, saved_settings.as_ref());
     fs::create_dir_all(&paths.log_dir)?;
     logging::init(saved_settings.as_ref(), &paths.log_dir)?;
-    migration::migrate_to_config(&paths.local_dir, &paths.config_dir);
     paths::ensure_directories(&paths);
     paths::schedule_temp_cleanup(vec![
         paths.local_dir.clone(),
