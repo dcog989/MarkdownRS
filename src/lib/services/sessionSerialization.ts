@@ -251,7 +251,8 @@ function convertRustTabToEditorTab(t: RustTabState, contentLoaded: boolean = tru
     topLine: t.top_line,
     contentChanged: contentLoaded ? t.is_dirty || (!t.path && content.length > 0) : t.is_dirty,
     isPersisted: true,
-    fileCheckPerformed: t.file_check_performed || false,
+    // The file may have changed while the app was closed, so always check once.
+    fileCheckPerformed: false,
   });
 
   return editorTab;

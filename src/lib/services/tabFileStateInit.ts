@@ -1,5 +1,5 @@
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
-import { editorStore, setFileCheckStatus } from "$lib/stores/editorStore.svelte";
+import { editorStore, getTransientState, setFileCheckStatus } from "$lib/stores/editorStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { hashContent, isDirty } from "$lib/utils/contentHash";
 import { AppError } from "$lib/utils/errorHandling";
@@ -18,6 +18,11 @@ export async function initializeTabFileState(tab: EditorTab, diskContentVerified
     return;
   }
 
+  // One read of the disk content per dirty episode: save and reload reset the
+  // flag, and the watcher clears it when the file changes. Without this, every
+  // switch to a dirty tab re-read and re-hashed the whole file.
+  const baselineChecked = getTransientState(tab.id)?.fileCheckPerformed === true && !tab.fileCheckFailed;
+
   // One metadata read covers both existence and created/modified.
   if (!(await refreshMetadata(tab.id, tab.path))) {
     setFileCheckStatus(tab.id, true, true);
@@ -33,7 +38,7 @@ export async function initializeTabFileState(tab: EditorTab, diskContentVerified
       }
     }
 
-    if (tab.isDirty) {
+    if (tab.isDirty && !baselineChecked) {
       try {
         const res = await callBackend("read_text_file", { path: tab.path }, "File:Read");
 

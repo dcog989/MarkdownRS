@@ -1,7 +1,7 @@
 import { type WatchEvent, watchImmediate } from "@tauri-apps/plugin-fs";
 import { translate } from "$lib/i18n";
 import { hasFileChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
-import { reloadTabContent } from "$lib/stores/editorStore.svelte";
+import { reloadTabContent, updateTransientState } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -218,6 +218,8 @@ class FileWatcherService {
           translate("fileOps.fileChangedOnDisk", { values: { tabs: tabNames } }),
           CONFIG.UI.TOAST_DURATION_MS,
         );
+        // The disk baseline these tabs were checked against is now stale.
+        for (const t of dirtyTabs) updateTransientState(t.id, { fileCheckPerformed: false });
       }
 
       if (cleanTabs.length > 0) {
