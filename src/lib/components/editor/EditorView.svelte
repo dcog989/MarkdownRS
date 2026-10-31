@@ -117,7 +117,6 @@ let comps: Compartments = {
   whitespaceComp: new Compartment(),
   languageComp: new Compartment(),
   handlersComp: new Compartment(),
-  rulerComp: new Compartment(),
   filePathComp: new Compartment(),
   markdownLintComp: new Compartment(),
   decorationComp: new Compartment(),

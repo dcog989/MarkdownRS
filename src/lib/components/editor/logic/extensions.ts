@@ -64,7 +64,6 @@ export interface Compartments {
   whitespaceComp: Compartment;
   languageComp: Compartment;
   handlersComp: Compartment;
-  rulerComp: Compartment;
   filePathComp: Compartment;
   markdownLintComp: Compartment;
   decorationComp: Compartment;
@@ -131,7 +130,7 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
           )
         : [],
     ),
-    c.rulerComp.of(rulerPlugin),
+    rulerPlugin,
     c.wrapComp.of(createWrapExtension(config.isLargeFile)),
     EditorView.contentAttributes.of({ spellcheck: "false" }),
     EditorView.scrollMargins.of(() => ({ bottom: 30 })),
