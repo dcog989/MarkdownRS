@@ -195,7 +195,7 @@ fn transform_callout_block(html: &str, frame: &CalloutFrame) -> String {
             let interior = &frame.interior;
             let mut out = String::new();
             out.push_str(&format!(
-                r#"<div class="callout callout-{}"{}<p class="callout-title">{}<span class="callout-title-text">{}</span></p>"#,
+                r#"<div class="callout callout-{}"{}><p class="callout-title">{}<span class="callout-title-text">{}</span></p>"#,
                 callout.class,
                 callout.attrs,
                 callout_icon(callout.class),
@@ -393,5 +393,18 @@ mod tests {
         );
         assert!(html.contains("<blockquote"), "outer quote kept: {html}");
         assert!(!html.contains("[!NOTE]"), "marker should be stripped: {html}");
+    }
+
+    #[test]
+    fn transforms_callout_in_blockquote_without_attributes() {
+        // comrak emits a bare `<blockquote>` when sourcepos tracking is off; the
+        // callout div's opening tag must still be closed by the format string.
+        let html = super::transform_callouts("<blockquote>\n<p>[!NOTE]\nBody.</p>\n</blockquote>");
+        assert!(
+            html.contains(r#"<div class="callout callout-note">"#),
+            "html was: {html}"
+        );
+        assert!(html.contains("Body."), "html was: {html}");
+        assert!(!html.contains("<blockquote"), "html was: {html}");
     }
 }
