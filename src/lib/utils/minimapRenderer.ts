@@ -1,4 +1,5 @@
 import { syntaxTree } from "@codemirror/language";
+import type { Text } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 import { highlightTree } from "@lezer/highlight";
 import {
@@ -25,6 +26,188 @@ import {
 } from "./minimapLayout";
 
 const VIEWPORT_BAND_ALPHA = 0.15;
+
+interface CachedBar {
+  index: number;
+  kind: string;
+  maxLen: number;
+}
+
+interface CachedRun {
+  kind: string;
+  text: string;
+  col: number;
+}
+
+interface CachedContent {
+  doc: Text;
+  tree: ReturnType<typeof syntaxTree> | null;
+  fontFamily: string | null;
+  compressed: boolean;
+  lineH: number;
+  gap: number;
+  totalBars: number;
+  linesPerBar: number;
+  bars: CachedBar[] | null;
+  lines: CachedRun[][] | null;
+}
+
+/**
+ * Scroll frames redraw the same document at the same layout, so the per-line
+ * scan is kept until the document, syntax tree, font or box size changes.
+ */
+let cachedContent: CachedContent | null = null;
+
+function buildCompressedBars(doc: Text, totalLines: number, linesPerBar: number, totalBars: number): CachedBar[] {
+  const bars: CachedBar[] = [];
+  const calloutTypes = computeCalloutTypes(doc);
+  let inCodeBlock = false;
+  let currentBarIdx = -1;
+  let counts: Record<string, number> = {};
+  let barMaxLen = 0;
+
+  const flushBar = () => {
+    if (currentBarIdx >= 0) bars.push({ index: currentBarIdx, kind: pickBarKind(counts), maxLen: barMaxLen });
+  };
+
+  for (let i = 1; i <= totalLines; i++) {
+    const line = doc.line(i).text;
+    const barIdx = Math.min(Math.floor((i - 1) / linesPerBar), totalBars - 1);
+
+    if (barIdx !== currentBarIdx) {
+      flushBar();
+      currentBarIdx = barIdx;
+      counts = {};
+      barMaxLen = 0;
+    }
+
+    const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
+    inCodeBlock = newInCodeBlock;
+    const calloutType = calloutTypes[i - 1];
+    const isComment = kind === "code" && findCommentStart(line) >= 0;
+    const effKind = calloutType ? `callout-${calloutType}` : isComment ? "comment" : kind;
+    counts[effKind] = (counts[effKind] ?? 0) + 1;
+    barMaxLen = Math.max(barMaxLen, line.length);
+  }
+
+  flushBar();
+  return bars;
+}
+
+function buildLineRuns(doc: Text, totalLines: number, tree: ReturnType<typeof syntaxTree>): CachedRun[][] {
+  const lineStart = new Int32Array(totalLines);
+  const lineEnd = new Int32Array(totalLines);
+  for (let i = 0; i < totalLines; i++) {
+    const line = doc.line(i + 1);
+    lineStart[i] = line.from;
+    lineEnd[i] = line.to;
+  }
+
+  const tokenSpans: { from: number; to: number; kind: string }[][] = new Array(totalLines);
+  for (let i = 0; i < totalLines; i++) tokenSpans[i] = [];
+
+  let cur = 0;
+  highlightTree(tree, [minimapHighlighter, codeBlockHighlighter], (from, to, classes) => {
+    const kind = classesToKind(classes);
+    if (!kind) return;
+    while (cur < totalLines && from >= lineEnd[cur]) cur++;
+    // A span can cover several lines (a fenced code block highlights as one
+    // range), so split it across every line it touches.
+    for (let i = cur; i < totalLines && lineStart[i] < to; i++) {
+      const s = Math.max(from, lineStart[i]);
+      const e = Math.min(to, lineEnd[i]);
+      if (e <= s) continue;
+      tokenSpans[i].push({ from: s - lineStart[i], to: e - lineStart[i], kind });
+    }
+  });
+
+  const calloutTypes = computeCalloutTypes(doc);
+  const lines: CachedRun[][] = new Array(totalLines);
+  let inCodeBlock = false;
+
+  for (let i = 0; i < totalLines; i++) {
+    const text = doc.line(i + 1).text;
+    const lineKind = getLineKind(text, inCodeBlock);
+    inCodeBlock = lineKind.inCodeBlock;
+
+    const runs: CachedRun[] = [];
+    lines[i] = runs;
+    if (text.length === 0) continue;
+
+    const calloutType = calloutTypes[i];
+    if (calloutType) {
+      runs.push({ kind: `callout-${calloutType}`, text, col: 0 });
+      continue;
+    }
+
+    // Fenced code paints from the fence state, since only the viewport is
+    // syntax-parsed; comments are found by marker so the whole document colors.
+    if (lineKind.kind === "code") {
+      const commentStart = findCommentStart(text);
+      if (commentStart < 0) {
+        runs.push({ kind: "code", text, col: 0 });
+      } else {
+        if (commentStart > 0) runs.push({ kind: "code", text: text.slice(0, commentStart), col: 0 });
+        runs.push({ kind: "comment", text: text.slice(commentStart), col: commentStart });
+      }
+      continue;
+    }
+
+    // Paint one segment per span so colored tokens replace the base text
+    // instead of stacking on it (overlap would smear the tiny glyphs).
+    let cursor = 0;
+    for (const sp of tokenSpans[i]) {
+      if (sp.from > cursor) runs.push({ kind: "text", text: text.slice(cursor, sp.from), col: cursor });
+      runs.push({ kind: sp.kind, text: text.slice(sp.from, sp.to), col: sp.from });
+      cursor = Math.max(cursor, sp.to);
+    }
+    if (cursor < text.length) runs.push({ kind: "text", text: text.slice(cursor), col: cursor });
+  }
+
+  return lines;
+}
+
+function getContent(view: EditorView, totalLines: number, layout: MinimapLayout): CachedContent {
+  const { compressed, lineH, gap, totalBars, linesPerBar } = layout;
+  const doc = view.state.doc;
+  const tree = compressed ? null : syntaxTree(view.state);
+  const fontFamily = compressed ? null : getComputedStyle(view.contentDOM).fontFamily || "monospace";
+
+  const cached = cachedContent;
+  if (
+    cached &&
+    cached.doc === doc &&
+    cached.tree === tree &&
+    cached.fontFamily === fontFamily &&
+    cached.compressed === compressed &&
+    cached.lineH === lineH &&
+    cached.gap === gap &&
+    cached.totalBars === totalBars &&
+    cached.linesPerBar === linesPerBar
+  ) {
+    return cached;
+  }
+
+  const content: CachedContent = {
+    doc,
+    tree,
+    fontFamily,
+    compressed,
+    lineH,
+    gap,
+    totalBars,
+    linesPerBar,
+    bars: null,
+    lines: null,
+  };
+  if (compressed) {
+    content.bars = buildCompressedBars(doc, totalLines, linesPerBar, totalBars);
+  } else if (tree) {
+    content.lines = buildLineRuns(doc, totalLines, tree);
+  }
+  cachedContent = content;
+  return content;
+}
 
 export function renderMinimap(
   view: EditorView | null,
@@ -98,70 +281,18 @@ export function renderMinimap(
     ctx.globalAlpha = 1;
   }
 
-  let inCodeBlock = false;
-  const calloutTypes = computeCalloutTypes(doc);
+  const content = getContent(view, totalLines, layout);
 
-  if (compressed) {
-    let currentBarIdx = -1;
-    let counts: Record<string, number> = {};
-    let barMaxLen = 0;
-
-    const drawCompressedBar = (barIdx: number, barKind: string) => {
-      if (barKind === "empty") return;
-      const barY = barIdx * COMPRESS_SPACING;
+  if (content.bars) {
+    for (const bar of content.bars) {
+      if (bar.kind === "empty") continue;
+      const barY = bar.index * COMPRESS_SPACING;
       const inViewport = barY + 1 >= viewportTop && barY <= viewportBottom;
-      const barW = Math.max(1, Math.min(barWidth, barMaxLen * CHARS_TO_PX));
-      drawSpan(ctx, barKind, paddingX, barY, barW, 1, colors, inViewport, hovered, 1.5);
-    };
-
-    for (let i = 1; i <= totalLines; i++) {
-      const line = doc.line(i).text;
-      const barIdx = Math.min(Math.floor((i - 1) / layout.linesPerBar), layout.totalBars - 1);
-
-      if (barIdx !== currentBarIdx) {
-        if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
-        currentBarIdx = barIdx;
-        counts = {};
-        barMaxLen = 0;
-      }
-
-      const { kind, inCodeBlock: newInCodeBlock } = getLineKind(line, inCodeBlock);
-      inCodeBlock = newInCodeBlock;
-      const calloutType = calloutTypes[i - 1];
-      const isComment = kind === "code" && findCommentStart(line) >= 0;
-      const effKind = calloutType ? `callout-${calloutType}` : isComment ? "comment" : kind;
-      counts[effKind] = (counts[effKind] ?? 0) + 1;
-      barMaxLen = Math.max(barMaxLen, line.length);
+      const barW = Math.max(1, Math.min(barWidth, bar.maxLen * CHARS_TO_PX));
+      drawSpan(ctx, bar.kind, paddingX, barY, barW, 1, colors, inViewport, hovered, 1.5);
     }
-
-    if (currentBarIdx >= 0) drawCompressedBar(currentBarIdx, pickBarKind(counts));
-  } else {
-    const lineStart = new Int32Array(totalLines);
-    const lineEnd = new Int32Array(totalLines);
-    for (let i = 0; i < totalLines; i++) {
-      const line = doc.line(i + 1);
-      lineStart[i] = line.from;
-      lineEnd[i] = line.to;
-    }
-
-    const tokenSpans: { from: number; to: number; kind: string }[][] = new Array(totalLines);
-    for (let i = 0; i < totalLines; i++) tokenSpans[i] = [];
-
-    let cur = 0;
-    highlightTree(syntaxTree(view.state), [minimapHighlighter, codeBlockHighlighter], (from, to, classes) => {
-      const kind = classesToKind(classes);
-      if (!kind) return;
-      while (cur < totalLines && from >= lineEnd[cur]) cur++;
-      // A span can cover several lines (a fenced code block highlights as one
-      // range), so split it across every line it touches.
-      for (let i = cur; i < totalLines && lineStart[i] < to; i++) {
-        const s = Math.max(from, lineStart[i]);
-        const e = Math.min(to, lineEnd[i]);
-        if (e <= s) continue;
-        tokenSpans[i].push({ from: s - lineStart[i], to: e - lineStart[i], kind });
-      }
-    });
-
+  } else if (content.lines) {
+    const lines = content.lines;
     ctx.save();
     ctx.beginPath();
     ctx.rect(paddingX, 0, barWidth, contentH);
@@ -169,59 +300,25 @@ export function renderMinimap(
 
     // Glyphs cover far less pixel area than bars and rows can shrink to 1px,
     // so the font never goes below TEXT_MIN_FONT_PX; painted bold to hold color.
-    const fontFamily = getComputedStyle(view.contentDOM).fontFamily || "monospace";
-    ctx.font = `700 ${Math.max(TEXT_MIN_FONT_PX, lineH)}px ${fontFamily}`;
+    ctx.font = `700 ${Math.max(TEXT_MIN_FONT_PX, lineH)}px ${content.fontFamily ?? "monospace"}`;
     ctx.textBaseline = "alphabetic";
     // Horizontal positions follow the painted glyph advance so text runs and
     // syntax spans stay aligned with each other.
     // shortcut: one advance for every char assumes a monospace editor font; proportional fonts drift.
     const advance = ctx.measureText("M").width || CHARS_TO_PX;
 
-    let inCodeBlock = false;
-    for (let i = 0; i < totalLines; i++) {
+    for (let i = 0; i < lines.length; i++) {
       const y = i * (lineH + gap);
       if (y > contentH) break;
 
+      const runs = lines[i];
+      if (runs.length === 0) continue;
+
       const inViewport = y + lineH >= viewportTop && y <= viewportBottom;
       const baseline = y + lineH;
-
-      const line = doc.line(i + 1).text;
-      const lineKind = getLineKind(line, inCodeBlock);
-      inCodeBlock = lineKind.inCodeBlock;
-      if (line.length === 0) continue;
-
-      const drawRun = (kind: string, text: string, col: number) =>
-        drawTextRun(ctx, kind, text, paddingX + col * advance, baseline, colors, inViewport, hovered);
-
-      const calloutType = calloutTypes[i];
-
-      if (calloutType) {
-        drawRun(`callout-${calloutType}`, line, 0);
-        continue;
+      for (const run of runs) {
+        drawTextRun(ctx, run.kind, run.text, paddingX + run.col * advance, baseline, colors, inViewport, hovered);
       }
-
-      // Fenced code paints from the fence state, since only the viewport is
-      // syntax-parsed; comments are found by marker so the whole document colors.
-      if (lineKind.kind === "code") {
-        const commentStart = findCommentStart(line);
-        if (commentStart < 0) {
-          drawRun("code", line, 0);
-        } else {
-          if (commentStart > 0) drawRun("code", line.slice(0, commentStart), 0);
-          drawRun("comment", line.slice(commentStart), commentStart);
-        }
-        continue;
-      }
-
-      // Paint one segment per span so colored tokens replace the base text
-      // instead of stacking on it (overlap would smear the tiny glyphs).
-      let cursor = 0;
-      for (const sp of tokenSpans[i]) {
-        if (sp.from > cursor) drawRun("text", line.slice(cursor, sp.from), cursor);
-        drawRun(sp.kind, line.slice(sp.from, sp.to), sp.from);
-        cursor = Math.max(cursor, sp.to);
-      }
-      if (cursor < line.length) drawRun("text", line.slice(cursor), cursor);
     }
 
     ctx.restore();
