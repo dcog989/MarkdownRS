@@ -1,7 +1,5 @@
 <script lang="ts">
 import { open } from "@tauri-apps/plugin-dialog";
-import ArrowDown from "lucide-svelte/icons/arrow-down";
-import ArrowUp from "lucide-svelte/icons/arrow-up";
 import Bookmark from "lucide-svelte/icons/bookmark";
 import Pen from "lucide-svelte/icons/pen";
 import Plus from "lucide-svelte/icons/plus";
@@ -12,6 +10,7 @@ import { tooltip } from "$lib/actions/tooltip";
 import Input from "$lib/components/ui/Input.svelte";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import SortSelect from "$lib/components/ui/SortSelect.svelte";
 import { translate } from "$lib/i18n";
 import {
   addBookmark,
@@ -243,25 +242,16 @@ function handleKeydown(e: KeyboardEvent) {
       onKeydown={handleKeydown}
     >
       {#snippet extraActions()}
-        <div class="flex shrink-0 items-center gap-1">
-          <select bind:value={sortBy} class="w-auto">
-            <option value="date-added">{$_("bookmarks.sortDateAdded")}</option>
-            <option value="alphabetical">{$_("bookmarks.sortAlphabetical")}</option>
-            <option value="last-accessed">{$_("bookmarks.sortLastAccessed")}</option>
-          </select>
-          <button
-            type="button"
-            onclick={toggleSortDirection}
-            class="btn-icon"
-            title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
-          >
-            {#if sortDirection === "asc"}
-              <ArrowUp size={16} />
-            {:else}
-              <ArrowDown size={16} />
-            {/if}
-          </button>
-        </div>
+        <SortSelect
+          bind:value={sortBy}
+          options={[
+            { value: "date-added", label: $_("bookmarks.sortDateAdded") },
+            { value: "alphabetical", label: $_("bookmarks.sortAlphabetical") },
+            { value: "last-accessed", label: $_("bookmarks.sortLastAccessed") },
+          ]}
+          direction={sortDirection}
+          onToggleDirection={toggleSortDirection}
+        />
 
         <button
           type="button"

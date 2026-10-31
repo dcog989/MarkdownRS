@@ -1,6 +1,4 @@
 <script lang="ts">
-import ArrowDown from "lucide-svelte/icons/arrow-down";
-import ArrowUp from "lucide-svelte/icons/arrow-up";
 import Clock from "lucide-svelte/icons/clock";
 import History from "lucide-svelte/icons/history";
 import X from "lucide-svelte/icons/x";
@@ -8,6 +6,7 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
+import SortSelect from "$lib/components/ui/SortSelect.svelte";
 import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { openFile } from "$lib/utils/fileSystem";
@@ -98,24 +97,16 @@ function toggleSortDirection() {
       onKeydown={nav.handleKeydown}
     >
       {#snippet extraActions()}
-        <div class="flex shrink-0 items-center gap-1">
-          <select bind:value={sortBy} class="w-auto" title={$_("fileHistory.sortBy")}>
-            <option value="recent">{$_("fileHistory.sortRecent")}</option>
-            <option value="alphabetical">{$_("fileHistory.sortAlphabetical")}</option>
-          </select>
-          <button
-            type="button"
-            onclick={toggleSortDirection}
-            class="btn-icon"
-            title={sortDirection === "asc" ? $_("common.sortAscending") : $_("common.sortDescending")}
-          >
-            {#if sortDirection === "asc"}
-              <ArrowUp size={16} />
-            {:else}
-              <ArrowDown size={16} />
-            {/if}
-          </button>
-        </div>
+        <SortSelect
+          bind:value={sortBy}
+          options={[
+            { value: "recent", label: $_("fileHistory.sortRecent") },
+            { value: "alphabetical", label: $_("fileHistory.sortAlphabetical") },
+          ]}
+          direction={sortDirection}
+          onToggleDirection={toggleSortDirection}
+          title={$_("fileHistory.sortBy")}
+        />
       {/snippet}
     </ModalSearchHeader>
   {/snippet}
