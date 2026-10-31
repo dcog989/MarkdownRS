@@ -32,12 +32,6 @@ let {
 let viewport = $state<HTMLDivElement>();
 let modalPanel = $state<HTMLDivElement>();
 
-function handleBackdropClick(e: MouseEvent) {
-  if (e.target === e.currentTarget) {
-    onClose();
-  }
-}
-
 const selector =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -132,6 +126,7 @@ $effect(() => {
   };
 
   modalPanel?.addEventListener("focusout", handleFocusOut);
+  modalPanel?.addEventListener("keydown", handleKeydown);
 
   // Set up a mutation observer to invalidate focus cache when DOM changes
   const mutationObserver = new MutationObserver(() => {
@@ -149,6 +144,7 @@ $effect(() => {
 
   return () => {
     modalPanel?.removeEventListener("focusout", handleFocusOut);
+    modalPanel?.removeEventListener("keydown", handleKeydown);
     mutationObserver.disconnect();
 
     // Restore focus (e.g. the editor) so keyboard input keeps working after closing.
@@ -163,16 +159,18 @@ $effect(() => {
 
 {#if isOpen}
   <div
-    role="button"
-    tabindex="0"
-    aria-label={$_("modal.closeModal")}
     class="ui-backdrop z-index-auto justify-center pointer-events-auto {position === "center"
       ? "items-center"
       : "items-start pt-12"}"
     style:z-index={zIndex}
-    onclick={handleBackdropClick}
-    onkeydown={handleKeydown}
   >
+    <button
+      type="button"
+      class="absolute inset-0 cursor-default"
+      tabindex="-1"
+      aria-label={$_("modal.closeModal")}
+      onclick={onClose}
+    ></button>
     <div
       bind:this={modalPanel}
       role="dialog"
@@ -183,7 +181,6 @@ $effect(() => {
       style:max-width={MODAL_CONSTRAINTS.MAX_WIDTH}
       style:max-height="calc(100vh - 5rem)"
       style:width={width}
-      onclick={(e) => e.stopPropagation()}
       onkeydown={() => {}}
     >
       <!-- Header Strategy: Snippet First, then Title+Close Default -->

@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 import { confirmDialog, resolveDialog } from "$lib/stores/dialogStore.svelte";
 import ConfirmationModal from "./ConfirmationModal.svelte";
 
+function getBackdropCloseButton(): HTMLElement {
+  return screen.getByLabelText("Close modal");
+}
+
+function getDialogPanel(): HTMLElement {
+  return screen.getByRole("dialog");
+}
+
 describe("ConfirmationModal", () => {
   it("renders the queued dialog options and resolves on a button click", async () => {
     const promise = confirmDialog({
@@ -23,7 +31,7 @@ describe("ConfirmationModal", () => {
     expect(screen.queryByText("Save before closing?")).toBeNull();
   });
 
-  it("resolves cancel when the backdrop is clicked", async () => {
+  it("resolves cancel when the area outside the dialog is clicked", async () => {
     const promise = confirmDialog({
       title: "Keep changes?",
       message: "body",
@@ -32,7 +40,7 @@ describe("ConfirmationModal", () => {
     });
     render(ConfirmationModal);
 
-    await fireEvent.click(screen.getByLabelText("Close modal"));
+    await fireEvent.click(getBackdropCloseButton());
 
     await expect(promise).resolves.toBe("cancel");
   });
@@ -46,7 +54,7 @@ describe("ConfirmationModal", () => {
     });
     render(ConfirmationModal);
 
-    await fireEvent.keyDown(screen.getByLabelText("Close modal"), { key: "Escape" });
+    await fireEvent.keyDown(getDialogPanel(), { key: "Escape" });
 
     await expect(promise).resolves.toBe("cancel");
   });
