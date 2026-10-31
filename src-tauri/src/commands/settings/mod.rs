@@ -46,7 +46,14 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
         None => return Ok(serde_json::json!({})),
     };
 
-    let toml_val = parse_settings_toml(&content)?;
+    let toml_val = match parse_settings_toml(&content) {
+        Ok(toml_val) => toml_val,
+        Err(e) => {
+            let path = io::settings_path(&app_handle)?;
+            io::quarantine_invalid(&path, &e).await;
+            return Err(e);
+        },
+    };
 
     let mut json_val = serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
@@ -76,8 +83,7 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 
 #[tauri::command]
 pub async fn save_settings(app_handle: tauri::AppHandle, settings: serde_json::Value) -> Result<(), String> {
-    let config_dir = app_config_path(&app_handle)?;
-    let path = config_dir.join("settings.toml");
+    let path = io::settings_path(&app_handle)?;
 
     let mut settings = settings;
     io::normalize_max_file_size(&mut settings);

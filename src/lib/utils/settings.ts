@@ -70,7 +70,6 @@ function coerceSettingValue(value: unknown, fallback: unknown): unknown {
 export async function initSettings() {
   const [saved, appInfo] = await Promise.all([
     callBackendSafe("load_settings", {}, "Settings:Load", {
-      showToast: false,
       userMessage: translate("error.failedToLoadSettings"),
     }),
     callBackendSafe("get_app_info", {}, "Settings:AppInfo", {
