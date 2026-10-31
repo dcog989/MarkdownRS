@@ -125,6 +125,7 @@ let comps: Compartments = {
   imagePasteComp: new Compartment(),
 };
 
+// Large files take the plain-text path: no markdown lint, decorations, or fold.
 let effectiveMarkdown = $derived(isMarkdown && !isLargeFile);
 let autocompletionConfig = $derived(isLargeFile ? [] : getAutocompletionConfig());
 
