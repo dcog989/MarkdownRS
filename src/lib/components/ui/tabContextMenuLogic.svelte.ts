@@ -192,12 +192,9 @@ export class TabContextMenuLogic {
     const targetTitle = this.tab?.title;
     const targetId = this.tabId;
 
-    if (!targetPath) {
-      this.onClose();
-      return;
-    }
-
     this.onClose();
+
+    if (!targetPath) return;
 
     try {
       if (!appContext.settings.confirmationSuppressed) {
@@ -211,16 +208,16 @@ export class TabContextMenuLogic {
         if (result !== "discard") return;
       }
 
-      const { fileWatcher } = await import("$lib/services/fileWatcher");
-      const { invalidateMetadataCache } = await import("$lib/services/fileMetadata");
-
-      fileWatcher.unwatch(targetId);
-      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
-      invalidateMetadataCache(targetPath);
+      // Close the tab before trashing: the close prompt can be cancelled (or
+      // its save can fail), and the file must not already be gone when it is.
+      // A saved prompt would otherwise write the "deleted" file back.
       await requestCloseTab(targetId, true);
-    } catch (_err) {
-      const { fileWatcher } = await import("$lib/services/fileWatcher");
-      await fileWatcher.watch(targetId, targetPath);
+      if (appContext.editor.tabs.some((t) => t.id === targetId)) return;
+
+      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
+      (await import("$lib/services/fileMetadata")).invalidateMetadataCache(targetPath);
+    } catch {
+      // The failure has already been reported by callBackend.
     }
   };
 
