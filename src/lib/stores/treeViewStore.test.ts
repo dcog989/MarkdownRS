@@ -211,6 +211,19 @@ describe("treeViewStore", () => {
     expect(treeViewStore.filterRows.some((r) => r.entry.path === "/root/note.md")).toBe(true);
   });
 
+  it("searches folders named build, which may hold user files", async () => {
+    mockedListDirectory.mockImplementation(async (path: string) =>
+      path === "/root/build" ? [{ ...entry("notes.md"), path: "/root/build/notes.md" }] : [],
+    );
+    fileTreeStore.root = "/root";
+    fileTreeStore.children.set("/root", [entry("build", true)]);
+
+    await applyFilter("notes", false);
+
+    expect(mockedListDirectory).toHaveBeenCalledWith("/root/build", false);
+    expect(treeViewStore.filterRows.map((r) => r.entry.path)).toContain("/root/build/notes.md");
+  });
+
   it("applyFilter respects markdown-only mode", async () => {
     fileTreeStore.root = "/root";
     fileTreeStore.children.set("/root", [entry("note.md"), entry("note.txt")]);

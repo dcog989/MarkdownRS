@@ -131,19 +131,12 @@ export async function applyFilter(query: string, markdownOnly: boolean): Promise
 
 type WalkNode = { entry: FileEntry; depth: number };
 
-// Folders that are typically huge and are never the target of a name filter.
-// Hidden ones are already dropped by the listing unless hidden files are shown.
-const SEARCH_SKIP_DIRS = new Set([
-  "node_modules",
-  ".git",
-  "target",
-  "dist",
-  "build",
-  ".next",
-  "vendor",
-  ".venv",
-  "__pycache__",
-]);
+// Dependency and tool folders that are never the target of a name filter.
+// Generated-output names (build, dist, target, vendor) are deliberately not
+// skipped: a user folder with one of those names may hold real notes, and a
+// silent miss is worse than a slower walk. Hidden ones are already dropped by
+// the listing unless hidden files are shown.
+const SEARCH_SKIP_DIRS = new Set(["node_modules", ".git", ".next", ".venv", "__pycache__"]);
 
 // A symlinked folder can point at one of its own ancestors, in which case every
 // listing reports a longer alias path (`/a/up/a/up/...`) and the path-based
