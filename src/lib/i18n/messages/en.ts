@@ -671,6 +671,7 @@ export const en = {
     textShortFilter: "Text",
     untitled: "Untitled",
     failedMetadata: "Failed to retrieve file metadata",
+    notTextFile: "Not a text file: {name}",
     failedReadNull: "Failed to read file: null result",
     failedRead: "Failed to read file",
     tooLarge: "File is too large ({size} MB). Maximum allowed is {max} MB.",

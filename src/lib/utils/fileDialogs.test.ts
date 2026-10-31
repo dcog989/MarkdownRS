@@ -173,6 +173,27 @@ describe("save overwrite guard", () => {
   });
 });
 
+describe("openFile", () => {
+  beforeEach(() => {
+    editorStore.tabs = [];
+    appContext.app.activeTabId = null;
+    fakeDisk.files.clear();
+    fakeDisk.files.set("/tmp/shot.png", {
+      content: "\u{FFFD}PNG",
+      mtime: fakeDisk.nextMtime(),
+      size: 8,
+      encoding: "windows-1252",
+      has_bom: false,
+    });
+  });
+
+  it("refuses to open a binary file as editable text", async () => {
+    await openFile("/tmp/shot.png");
+
+    expect(editorStore.tabs).toHaveLength(0);
+  });
+});
+
 describe("navigateToPath", () => {
   it("opens web and mail links externally instead of resolving them as file paths", async () => {
     await navigateToPath("https://example.com/docs");

@@ -34,7 +34,7 @@ import { extractSmartTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats, detectLineEnding } from "$lib/utils/textMetrics";
 import { formatDuration } from "$lib/utils/timing";
 import { getFileMetadata, readTextFile, resolveRelativePath, writeTextFile } from "./fileIO";
-import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
+import { getFilename, isMarkdownFile, isTextFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
 import { formatMarkdown } from "./formatterRust";
 
 export async function openFile(path?: string): Promise<void> {
@@ -53,6 +53,14 @@ export async function openFile(path?: string): Promise<void> {
       });
       if (!selected || typeof selected !== "string") return;
       targetPath = selected;
+    }
+
+    // Reading is a lossy text decode and saving writes that text back, so a
+    // binary opened here is destroyed by one keystroke plus Ctrl+S.
+    // shortcut: extension-based only; an extensionless binary still passes, sniff content if that bites.
+    if (!isTextFile(targetPath)) {
+      showToast("error", translate("fileOps.notTextFile", { values: { name: getFilename(targetPath) } }));
+      return;
     }
 
     const sanitizedPath = sanitizePath(targetPath);
