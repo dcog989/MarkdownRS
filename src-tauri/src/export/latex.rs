@@ -13,6 +13,7 @@ const PREAMBLE: &str = r"\documentclass[11pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{fancyvrb}
 \usepackage[normalem]{ulem}
 ";
 
@@ -110,9 +111,18 @@ fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push('\n');
         },
         NodeValue::CodeBlock(code) => {
-            out.push_str("\\begin{verbatim}\n");
-            out.push_str(code.literal.trim_end_matches('\n'));
-            out.push_str("\n\\end{verbatim}\n\n");
+            let literal = code.literal.trim_end_matches('\n');
+            // A line reading `\end{verbatim}` would end the block early, so switch
+            // that block to fancyvrb, whose terminator is a different word.
+            // shortcut: a block containing both terminators on their own lines still breaks.
+            let environment = if has_terminator_line(literal, "\\end{verbatim}") {
+                "Verbatim"
+            } else {
+                "verbatim"
+            };
+            out.push_str(&format!("\\begin{{{environment}}}\n"));
+            out.push_str(literal);
+            out.push_str(&format!("\n\\end{{{environment}}}\n\n"));
         },
         NodeValue::ThematicBreak => out.push_str("\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par\n\n"),
         NodeValue::Table(_) => render_table(node, out),
@@ -129,6 +139,10 @@ fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
         NodeValue::HtmlBlock(_) | NodeValue::FrontMatter(_) | NodeValue::FootnoteDefinition(_) => {},
         _ => render_blocks(node, out),
     }
+}
+
+fn has_terminator_line(literal: &str, terminator: &str) -> bool {
+    literal.lines().any(|line| line.trim_end() == terminator)
 }
 
 fn render_table<'a>(node: &'a AstNode<'a>, out: &mut String) {
@@ -372,5 +386,16 @@ mod tests {
             !markdown_to_latex("1. one\n2. two\n", MarkdownFlavor::Gfm).contains("setcounter"),
             "a list starting at 1 must not set a counter"
         );
+    }
+
+    #[test]
+    fn switches_code_environment_when_it_contains_a_verbatim_terminator() {
+        let latex = markdown_to_latex("```\na\n\\end{verbatim}\nb\n```\n", MarkdownFlavor::Gfm);
+
+        assert!(
+            latex.contains("\\begin{Verbatim}\na\n\\end{verbatim}\nb\n\\end{Verbatim}"),
+            "latex was: {latex}"
+        );
+        assert!(latex.contains("\\usepackage{fancyvrb}"), "latex was: {latex}");
     }
 }
