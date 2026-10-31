@@ -317,7 +317,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
             {#each appContext.editor.closedTabsHistory.slice(0, 8) as entry, i (entry.tab.id)}
               <button
                 type="button"
-                onclick={() => reopenClosedTab(i)}
+                onclick={() => void reopenClosedTab(i)}
                 use:tooltip={entry.tab.path || entry.tab.customTitle || entry.tab.title}
                 class:bg-row-even={i % 2 === 1}
                 class="hover:bg-bg-hover flex w-full items-center gap-3 border-b border-transparent px-4 py-2.5 text-left text-ui last:border-b-0 transition-colors"

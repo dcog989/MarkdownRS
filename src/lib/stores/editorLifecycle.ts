@@ -1,6 +1,7 @@
 import { translate } from "$lib/i18n";
-import { reloadFileContent } from "$lib/services/fileMetadata";
+import { normalizeLineEndings, reloadFileContent } from "$lib/services/fileMetadata";
 import { initializeTabLoadState } from "$lib/services/tabLoadStateMachine";
+import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { isTabDirty, updateSavedHash } from "$lib/utils/contentHash";
 import { formatTimestampForDisplay, getCurrentDate, getCurrentTime, getCurrentTimestamp } from "$lib/utils/date";
@@ -178,11 +179,36 @@ export function closeTab(id: string) {
   editorStore.sessionDirty = true;
 }
 
-export function reopenClosedTab(historyIndex: number): string | null {
+export async function reopenClosedTab(historyIndex: number): Promise<string | null> {
   if (historyIndex < 0 || historyIndex >= editorStore.closedTabsHistory.length) return null;
 
   const entry = editorStore.closedTabsHistory[historyIndex];
-  editorStore.closedTabsHistory.splice(historyIndex, 1);
+
+  // A restored history entry carries no text. Read it while the entry is still
+  // in the history: inserting it first would let a session save create its
+  // active row with NULL content and delete the closed row.
+  if (entry.tab.contentLoaded === false && (entry.tab.isDirty || !entry.tab.path)) {
+    const stored = await callBackend("load_tab_content", { tabId: entry.tab.id }, "Session:Load", undefined, {
+      ignore: true,
+    });
+    if (stored && stored.content !== null) {
+      const content = normalizeLineEndings(stored.content);
+      const { lineCount, widestColumn } = computeLineStats(content);
+      Object.assign(entry.tab, {
+        content,
+        contentLoaded: true,
+        sizeBytes: byteLength(content),
+        wordCount: computeWordCount(content),
+        lineCount,
+        widestColumn,
+      });
+    }
+  }
+
+  // The await above lets another close shift the list; find the entry again.
+  const currentIndex = editorStore.closedTabsHistory.findIndex((e) => e.tab.id === entry.tab.id);
+  if (currentIndex === -1) return null;
+  editorStore.closedTabsHistory.splice(currentIndex, 1);
 
   const restoredTs = getTransientState(entry.tab.id) ?? defaultTransientState();
   restoredTs.contentChanged = true;

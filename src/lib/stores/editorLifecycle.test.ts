@@ -4,14 +4,21 @@ vi.mock("$lib/utils/fileIO", () => ({
   readTextFile: vi.fn(),
 }));
 
+vi.mock("$lib/utils/backend", () => ({
+  callBackend: vi.fn(),
+  callBackendSafe: vi.fn(),
+}));
+
+import { callBackend } from "$lib/utils/backend";
 import { readTextFile } from "$lib/utils/fileIO";
 import { getTransientState, initTransientState } from "./editorCache";
-import { closeTab, createNewFile, reorderTabs } from "./editorLifecycle";
+import { closeTab, createNewFile, reopenClosedTab, reorderTabs } from "./editorLifecycle";
 import { editorStore, sortTabsPinnedFirst } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
 import { settingsState } from "./settingsState.svelte";
 
 const mockedReadTextFile = vi.mocked(readTextFile);
+const mockedCallBackend = vi.mocked(callBackend);
 
 describe("createNewFile", () => {
   beforeEach(() => {
@@ -177,5 +184,38 @@ describe("closeTab history", () => {
 
     expect(editorStore.closedTabsHistory).toHaveLength(1);
     expect(getTransientState("a")).toMatchObject({ contentChanged: false, isPersisted: true });
+  });
+});
+
+describe("reopenClosedTab", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    editorStore.tabs = [];
+    editorStore.closedTabsHistory = [];
+    editorStore.mruStack = [];
+    editorStore.sessionDirty = false;
+    settingsState.enableClosedTabHistory = true;
+  });
+
+  it("loads a restored dirty entry's text before inserting the tab", async () => {
+    editorStore.closedTabsHistory = [
+      {
+        tab: { ...tab("closed", false), path: "/closed.md", isDirty: true, contentLoaded: false },
+        index: 0,
+      },
+    ];
+    const load = (async () => ({ content: "unsaved text" })) as unknown as typeof callBackend;
+    mockedCallBackend.mockImplementation(load);
+
+    const id = await reopenClosedTab(0);
+
+    expect(id).toBe("closed");
+    expect(mockedCallBackend).toHaveBeenCalledWith("load_tab_content", { tabId: "closed" }, "Session:Load", undefined, {
+      ignore: true,
+    });
+    const reopened = editorStore.tabs.find((t) => t.id === "closed");
+    expect(reopened?.content).toBe("unsaved text");
+    expect(reopened?.contentLoaded).toBe(true);
+    expect(reopened?.isDirty).toBe(true);
   });
 });

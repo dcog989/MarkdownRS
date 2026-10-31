@@ -165,8 +165,8 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   persistSessionDebounced();
 }
 
-export function triggerReopenClosedTab(historyIndex: number): void {
-  const reopenedTabId = reopenClosedTab(historyIndex);
+export async function triggerReopenClosedTab(historyIndex: number): Promise<void> {
+  const reopenedTabId = await reopenClosedTab(historyIndex);
   if (reopenedTabId) {
     appContext.app.activeTabId = reopenedTabId;
     persistSessionDebounced();

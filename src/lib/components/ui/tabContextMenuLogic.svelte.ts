@@ -236,7 +236,7 @@ export class TabContextMenuLogic {
   };
 
   handleReopenClosed = async (index: number) => {
-    triggerReopenClosedTab(index);
+    void triggerReopenClosedTab(index);
     this.onClose();
   };
 
