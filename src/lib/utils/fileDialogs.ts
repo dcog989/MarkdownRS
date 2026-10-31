@@ -150,7 +150,7 @@ const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;
 const MAX_LINK_LENGTH = 1024;
 
 /** Hrefs are percent-encoded by the renderer (or written encoded by authors); the resolver wants a real path. */
-function decodeHref(href: string): string {
+export function decodeHref(href: string): string {
   try {
     return decodeURIComponent(href);
   } catch {

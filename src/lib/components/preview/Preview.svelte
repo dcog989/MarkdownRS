@@ -12,7 +12,7 @@ import { getTransientState, tabsById, updateTransientState } from "$lib/stores/e
 import { toggleOrientation, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
-import { navigateToPath } from "$lib/utils/fileSystem";
+import { decodeHref, navigateToPath } from "$lib/utils/fileDialogs";
 import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { renderMermaidDiagrams } from "$lib/utils/mermaidRenderer";
 import { PreviewRenderer } from "$lib/utils/previewRenderer.svelte";
@@ -145,7 +145,8 @@ function injectHtml(node: HTMLElement, content: string) {
         e.preventDefault();
         const href = a.getAttribute("href") || "";
         if (href.startsWith("#")) {
-          container?.querySelector(href)?.scrollIntoView({
+          const id = decodeHref(href.slice(1));
+          container?.querySelector(`[id="${CSS.escape(id)}"]`)?.scrollIntoView({
             behavior: "smooth",
             block: "start",
           });
