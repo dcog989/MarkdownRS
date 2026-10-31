@@ -70,7 +70,14 @@ $effect(() => {
     scrollSync.endTabSwitch(0);
     return;
   }
-  if (content === renderer.lastRendered && renderer.htmlContent) return;
+  if (
+    content === renderer.lastRendered &&
+    currentFlavor === renderer.lastFlavor &&
+    (tabPath ?? null) === (renderer.lastPath ?? null) &&
+    renderer.htmlContent
+  ) {
+    return;
+  }
 
   return renderer.scheduleRender(content, currentFlavor, tabPath);
 });

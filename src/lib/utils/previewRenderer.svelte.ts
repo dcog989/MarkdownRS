@@ -19,6 +19,8 @@ export class PreviewRenderer {
   renderError = $state("");
 
   lastRendered = "";
+  lastFlavor = "";
+  lastPath: string | null | undefined = undefined;
   lastTabId = "";
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private spinnerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -31,6 +33,8 @@ export class PreviewRenderer {
     if (this.lastTabId === tabId) return;
     this.lastTabId = tabId;
     this.lastRendered = "";
+    this.lastFlavor = "";
+    this.lastPath = undefined;
     this.htmlContent = "";
     this.renderError = "";
     this.cancelPending();
@@ -57,11 +61,15 @@ export class PreviewRenderer {
 
         this.htmlContent = result.html;
         this.lastRendered = content;
+        this.lastFlavor = flavor;
+        this.lastPath = tabPath;
         cachePreviewHeadings(content, result.headings);
         this.callbacks.onContentRendered();
       } catch (err) {
         if (epoch !== this.renderEpoch) return;
         this.lastRendered = content;
+        this.lastFlavor = flavor;
+        this.lastPath = tabPath;
         this.renderError = err instanceof Error ? err.message : translate("preview.renderFailed");
       } finally {
         // Only the current render owns the shared state: a superseded render
