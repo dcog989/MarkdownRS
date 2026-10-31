@@ -31,8 +31,9 @@ export function createAppInit() {
       const bookmarks = loadBookmarks();
 
       const settingsStart = performance.now();
-      await initSettings();
-      settingsReady = true;
+      // A failed read leaves defaults in memory; writing them back would
+      // replace the user's file with those defaults.
+      settingsReady = await initSettings();
       logger.editor.debug("SettingsInitialized", { duration: formatDuration(settingsStart) });
 
       const sessionStart = performance.now();
@@ -118,7 +119,7 @@ export function createAppInit() {
 
   function handleBlur() {
     persistSession();
-    saveSettings();
+    if (settingsReady) saveSettings();
   }
 
   function handleBeforeUnload() {
@@ -152,7 +153,7 @@ export function createAppInit() {
     if (isInitialized && !initError && !isUnloading) {
       persistSessionDebounced.clear();
       persistSession();
-      saveSettingsNow();
+      if (settingsReady) saveSettingsNow();
     }
   }
 

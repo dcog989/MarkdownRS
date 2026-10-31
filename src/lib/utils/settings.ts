@@ -96,7 +96,9 @@ export function applyLegacySettingMappings(saved: Record<string, unknown>, targe
   }
 }
 
-export async function initSettings() {
+/** Returns false when the file could not be read, so callers must not write the
+ *  defaults back over it. A missing file is a successful load and yields `{}`. */
+export async function initSettings(): Promise<boolean> {
   const [saved, appInfo] = await Promise.all([
     callBackendSafe("load_settings", {}, "Settings:Load", {
       userMessage: translate("error.failedToLoadSettings"),
@@ -136,6 +138,7 @@ export async function initSettings() {
   syncThemeFromSystem();
 
   lastSavedState = JSON.stringify(getSettingsObject(false));
+  return saved !== null;
 }
 
 // Writes run one at a time so a slower, older snapshot cannot finish last.
