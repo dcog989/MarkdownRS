@@ -33,7 +33,7 @@ const CM_KEY_NAMES: Record<string, string> = {
   contextmenu: "ContextMenu",
 };
 
-function toCmKey(registryKey: string): string {
+export function toCmKey(registryKey: string): string {
   const parts = registryKey.split("+").map((p) => p.toLowerCase());
   const mods: string[] = [];
   let keyPart = "";

@@ -218,7 +218,7 @@ export class TabSyncManager {
   }
 }
 
-function computeContentDiff(currentDoc: string, storeContent: string) {
+export function computeContentDiff(currentDoc: string, storeContent: string) {
   let from = 0;
   let to = currentDoc.length;
   let insert = storeContent;
