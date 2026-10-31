@@ -6,6 +6,7 @@ Exec=/usr/bin/markdownrs
 Icon=markdownrs
 Terminal=false
 Categories=Utility;TextEditor;
+MimeType=text/markdown;text/plain;
 Keywords=markdown;text;editor;notes;
 StartupNotify=true
 StartupWMClass=markdownrs
