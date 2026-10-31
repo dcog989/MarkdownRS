@@ -77,6 +77,9 @@ fn collect_heading_display_text_into<'a>(node: &'a AstNode<'a>, out: &mut String
 /// Text content of an HTML fragment: everything between tags, with the basic
 /// entities unescaped. Used to recover link labels from the HtmlInline spans
 /// linkify injects.
+///
+/// `&amp;` is decoded last so `&amp;lt;` yields the literal `&lt;` instead of
+/// being decoded twice into `<`.
 fn html_text_content(html: &str) -> String {
     let mut out = String::new();
     let mut in_tag = false;
@@ -88,10 +91,22 @@ fn html_text_content(html: &str) -> String {
             _ => out.push(c),
         }
     }
-    out.replace("&amp;", "&")
-        .replace("&lt;", "<")
+    out.replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
         .replace("&#39;", "'")
         .replace("&#x27;", "'")
+        .replace("&amp;", "&")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn html_text_content_decodes_entities_once() {
+        assert_eq!(html_text_content("&amp;lt;"), "&lt;");
+        assert_eq!(html_text_content("&amp;amp;"), "&amp;");
+        assert_eq!(html_text_content("<b>a &amp; b</b>"), "a & b");
+    }
 }
