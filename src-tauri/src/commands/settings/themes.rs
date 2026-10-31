@@ -1,6 +1,6 @@
 use crate::utils::handle_error;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use std::time::SystemTime;
 use tokio::fs;
@@ -19,6 +19,13 @@ static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> = LazyLock::ne
 
 fn keyed(name: &str) -> String {
     name.trim().to_lowercase().replace(' ', "-")
+}
+
+/// A theme name must be a plain file stem. Names with a path separator or a
+/// parent segment are rejected so `get_theme_css` cannot read outside the
+/// themes directory (a name comes from settings.toml or the theme picker).
+fn is_plain_name(name: &str) -> bool {
+    Path::new(name).file_name().is_some_and(|n| n.to_str() == Some(name))
 }
 
 pub fn default_css(theme: &str) -> Option<&'static str> {
@@ -75,6 +82,12 @@ pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Opt
 }
 
 async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<PathBuf> {
+    let keyed_name = keyed(theme_name);
+    if !is_plain_name(theme_name) || !is_plain_name(&keyed_name) {
+        log::warn!("Rejected theme name with path components: {:?}", theme_name);
+        return None;
+    }
+
     let data_dir = match super::app_data_path(app_handle) {
         Ok(dir) => dir,
         Err(e) => {
@@ -88,7 +101,7 @@ async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option
     if fs::try_exists(&exact).await.unwrap_or(false) {
         return Some(exact);
     }
-    let keyed_path = themes_dir.join(format!("{}.css", keyed(theme_name)));
+    let keyed_path = themes_dir.join(format!("{}.css", keyed_name));
     fs::try_exists(&keyed_path).await.unwrap_or(false).then_some(keyed_path)
 }
 
@@ -130,4 +143,31 @@ async fn read_css_file(theme_path: PathBuf) -> Result<String, String> {
     );
 
     Ok(css)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_plain_name;
+
+    #[test]
+    fn rejects_names_with_path_components() {
+        for name in ["", ".", "..", "../x", "../../etc/passwd", "a/b", "/abs"] {
+            assert!(!is_plain_name(name), "{name:?} should be rejected");
+        }
+    }
+
+    #[test]
+    fn accepts_plain_theme_names() {
+        for name in ["tokyo-night", "My Theme", "gruvbox"] {
+            assert!(is_plain_name(name), "{name:?} should be accepted");
+        }
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn rejects_windows_separators_and_prefixes() {
+        for name in ["a\\b", "C:theme"] {
+            assert!(!is_plain_name(name), "{name:?} should be rejected");
+        }
+    }
 }
