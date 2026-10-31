@@ -95,15 +95,22 @@ export function scheduleWordCountUpdate(tabId: string, content: string) {
       return;
     }
 
-    const wordCount = computeWordCount(content);
-    const { widestColumn } = computeLineStats(content);
+    const tab = editorStore.tabs[index];
+    if (tab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES) {
+      // Counting scans the whole document; above the large-file limit the hitch
+      // on every pause costs more than a count frozen at load time.
+      tab.wordCountPending = false;
+    } else {
+      const wordCount = computeWordCount(content);
+      const { widestColumn } = computeLineStats(content);
 
-    // In-place mutation (see updateContent) to avoid churning the tabs array.
-    Object.assign(editorStore.tabs[index], {
-      wordCount,
-      widestColumn,
-      wordCountPending: false,
-    });
+      // In-place mutation (see updateContent) to avoid churning the tabs array.
+      Object.assign(tab, {
+        wordCount,
+        widestColumn,
+        wordCountPending: false,
+      });
+    }
 
     wordCountDebounceMap.delete(tabId);
   }, CONFIG.PERFORMANCE.WORD_COUNT_DEBOUNCE_MS);

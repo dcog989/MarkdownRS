@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { CONFIG } from "$lib/utils/config";
 import {
   clearTabCaches,
   defaultTransientState,
@@ -138,6 +139,23 @@ describe("editorCache", () => {
     vi.advanceTimersByTime(501);
 
     await vi.waitFor(() => expect(editorStore.tabs[0]?.widestColumn).toBe(18));
+    vi.useRealTimers();
+  });
+
+  it("skips the recount for a large tab and keeps the loaded count", () => {
+    vi.useFakeTimers();
+    const large = tab("t1", "one two");
+    large.sizeBytes = CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES + 1;
+    large.wordCount = 7;
+    large.widestColumn = 12;
+    editorStore.tabs = [large];
+
+    scheduleWordCountUpdate("t1", "one two");
+    vi.advanceTimersByTime(501);
+
+    expect(editorStore.tabs[0]?.wordCount).toBe(7);
+    expect(editorStore.tabs[0]?.widestColumn).toBe(12);
+    expect(editorStore.tabs[0]?.wordCountPending).toBe(false);
     vi.useRealTimers();
   });
 });
