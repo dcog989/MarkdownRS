@@ -175,7 +175,7 @@ export function replaceAllInTabs(): number {
   return total;
 }
 
-function buildSearchRegex(): RegExp | null {
+export function buildSearchRegex(): RegExp | null {
   try {
     let pattern = searchState.findText;
     if (!searchState.useRegex) {
