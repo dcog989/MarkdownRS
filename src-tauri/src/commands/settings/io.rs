@@ -151,9 +151,49 @@ pub async fn preserved_settings_from_path(path: &Path) -> Result<toml::Value, St
 
 #[cfg(test)]
 mod tests {
-    use super::quarantine_invalid;
+    use super::{preserved_settings_from_path, quarantine_invalid};
     use crate::utils::test_util::make_temp_dir;
     use std::fs;
+
+    #[tokio::test]
+    async fn preserved_settings_keep_only_backend_managed_keys() {
+        let dir = make_temp_dir("settings-preserved");
+        let path = dir.join("settings.toml");
+        fs::write(&path, "workspaceRoot = \"/work\"\nactiveTheme = \"nord\"\n").unwrap();
+
+        let preserved = preserved_settings_from_path(&path).await.unwrap();
+
+        assert_eq!(preserved.get("workspaceRoot").and_then(|v| v.as_str()), Some("/work"));
+        assert!(
+            preserved.get("activeTheme").is_none(),
+            "frontend-owned keys must not be preserved"
+        );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn preserved_settings_are_empty_when_the_file_is_missing() {
+        let dir = make_temp_dir("settings-preserved-missing");
+
+        let preserved = preserved_settings_from_path(&dir.join("settings.toml")).await.unwrap();
+
+        assert!(preserved.as_table().is_some_and(|table| table.is_empty()));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[tokio::test]
+    async fn invalid_settings_do_not_block_the_save() {
+        let dir = make_temp_dir("settings-preserved-invalid");
+        let path = dir.join("settings.toml");
+        fs::write(&path, "workspaceRoot = [broken").unwrap();
+
+        let preserved = preserved_settings_from_path(&path).await.unwrap();
+
+        assert!(preserved.as_table().is_some_and(|table| table.is_empty()));
+        assert!(!path.exists(), "the invalid file should be moved aside");
+        assert!(dir.join("settings.toml.bak").exists());
+        fs::remove_dir_all(&dir).unwrap();
+    }
 
     #[tokio::test]
     async fn quarantine_keeps_the_broken_file_next_to_the_target() {

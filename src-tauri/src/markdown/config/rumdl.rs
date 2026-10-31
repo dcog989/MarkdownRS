@@ -301,6 +301,27 @@ mod tests {
     }
 
     #[test]
+    fn resolve_config_target_anchors_on_the_file_directory_without_a_project_root() {
+        let dir = make_temp_dir("target-no-root");
+        let file = dir.join("doc.md");
+
+        let target = resolve_config_target(Some(&file), None, RumdlConfigScope::Project);
+
+        assert_eq!(target, dir.join(".rumdl.toml"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn resolve_config_target_uses_the_project_root_for_a_file_less_document() {
+        let dir = make_temp_dir("target-no-file");
+
+        let target = resolve_config_target(None, Some(&dir), RumdlConfigScope::Project);
+
+        assert_eq!(target, dir.join(".rumdl.toml"));
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
     fn validate_config_content_accepts_valid_toml() {
         let dir = make_temp_dir("validate-ok");
         let target = dir.join(".rumdl.toml");
