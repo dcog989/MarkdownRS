@@ -116,7 +116,13 @@ async function importFileHistory() {
 
 async function clearHistory() {
   if (busy) return;
-  if (!confirm(translate("data.confirmClearFileHistory"))) return;
+  const result = await confirmDialog({
+    title: translate("data.clearFileHistory"),
+    message: translate("data.confirmClearFileHistory"),
+    saveLabel: undefined,
+    discardLabel: translate("common.clear"),
+  });
+  if (result !== "discard") return;
   busy = true;
   try {
     await clearFileHistory();
