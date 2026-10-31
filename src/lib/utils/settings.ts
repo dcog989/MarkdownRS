@@ -121,7 +121,10 @@ export async function initSettings() {
   lastSavedState = JSON.stringify(getSettingsObject(false));
 }
 
-async function saveSettingsImmediate(): Promise<void> {
+// Writes run one at a time so a slower, older snapshot cannot finish last.
+let saveInFlight: Promise<void> = Promise.resolve();
+
+async function writeSettings(): Promise<void> {
   const settingsToSave = getSettingsObject(true);
   const serialized = JSON.stringify(settingsToSave);
 
@@ -129,16 +132,31 @@ async function saveSettingsImmediate(): Promise<void> {
     return;
   }
 
+  let failed = false;
   await callBackendSafe("save_settings", { settings: settingsToSave }, "Settings:Save", {
     showToast: false,
     userMessage: translate("error.failedToSaveSettings"),
+    onError: () => {
+      failed = true;
+    },
   });
-  lastSavedState = serialized;
+  // A failed write must stay unsaved so the next save retries it. The command
+  // returns nothing, so null means both success and failure; the error callback
+  // is the only signal.
+  if (!failed) {
+    lastSavedState = serialized;
+  }
 }
 
-// Persists user-visible settings. Runtime analytics (command usage) are omitted
-// so a command run alone does not trigger a write; they are included when
-// `saveSettingsNow` is used (window close/teardown).
+function saveSettingsImmediate(): Promise<void> {
+  const next = saveInFlight.then(writeSettings);
+  // Keep the queue usable even if a write rejects.
+  saveInFlight = next.catch(() => {});
+  return next;
+}
+
+// Persists settings. Runtime analytics (command usage) never trigger a write
+// on their own; they ride along whenever another change writes the file.
 export const saveSettings = debounce(saveSettingsImmediate, 500);
 
 export function saveSettingsNow(): Promise<void> {
