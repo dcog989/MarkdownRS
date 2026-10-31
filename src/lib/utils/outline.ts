@@ -10,7 +10,7 @@ export interface OutlineHeading {
 
 const ATX_HEADING_RE = /^ATXHeading([1-6])$/;
 const LEADING_MARKERS_RE = /^\s*#{1,6}\s*/;
-const TRAILING_MARKERS_RE = /\s*#+\s*$/;
+const TRAILING_MARKERS_RE = /(?:^#+|\s+#+)\s*$/;
 
 /** Headings from the editor's own parser, so the outline exists with the preview closed. */
 export function collectOutlineHeadings(state: EditorState): OutlineHeading[] {

@@ -31,4 +31,10 @@ describe("collectOutlineHeadings", () => {
   it("ignores setext headings, matching the renderer", () => {
     expect(collectOutlineHeadings(stateOf("Title\n=====\n\nBody\n"))).toEqual([]);
   });
+
+  it("keeps a literal trailing hash that has no preceding space", () => {
+    const headings = collectOutlineHeadings(stateOf("## C#\n\n## Section ##\n"));
+
+    expect(headings.map((heading) => heading.text)).toEqual(["C#", "Section"]);
+  });
 });
