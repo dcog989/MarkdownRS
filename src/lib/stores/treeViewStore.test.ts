@@ -161,6 +161,29 @@ describe("treeViewStore", () => {
     expect(treeViewStore.filterRows.map((r) => r.entry.path)).toContain("/root/a/alpha.md");
   });
 
+  it("applyFilter lists one folder at a time instead of starting every load at once", async () => {
+    const resolvers: Array<() => void> = [];
+    mockedListDirectory.mockImplementation(
+      (path: string) =>
+        new Promise((resolve) => {
+          resolvers.push(() => resolve(path === "/root/a" ? [{ ...entry("alpha.md"), path: "/root/a/alpha.md" }] : []));
+        }),
+    );
+    fileTreeStore.root = "/root";
+    fileTreeStore.children.set("/root", [entry("a", true), entry("b", true)]);
+
+    const search = applyFilter("alpha", false);
+    await vi.waitFor(() => expect(mockedListDirectory).toHaveBeenCalledTimes(1));
+    expect(mockedListDirectory).toHaveBeenLastCalledWith("/root/a", false);
+
+    resolvers.shift()?.();
+    await vi.waitFor(() => expect(mockedListDirectory).toHaveBeenCalledTimes(2));
+    resolvers.shift()?.();
+    await search;
+
+    expect(treeViewStore.filterRows.map((r) => r.entry.path)).toContain("/root/a/alpha.md");
+  });
+
   it("applyFilter does not descend into heavy folders like node_modules", async () => {
     mockedListDirectory.mockImplementation(async (path: string) =>
       path === "/root/node_modules" ? [{ ...entry("deep.md"), path: "/root/node_modules/deep.md" }] : [],

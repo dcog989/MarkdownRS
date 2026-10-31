@@ -158,12 +158,8 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
       if (child.is_dir && SEARCH_SKIP_DIRS.has(child.name)) continue;
       visited.add(child.path);
       if (child.is_dir) {
-        // Kick off listings for newly discovered folders immediately so pending
-        // loads run concurrently; the await below then joins an in-flight load
-        // instead of starting a new serial round-trip.
-        if (!fileTreeStore.children.has(child.path)) {
-          void loadChildren(child.path);
-        }
+        // List folders only when the walk reaches them. Starting a load for
+        // every discovered folder here floods the backend on a large tree.
         stack.push({ entry: child, depth: node.depth + 1 });
       } else if (passesMarkdownOnly(child, markdownOnly)) {
         stack.push({ entry: child, depth: node.depth + 1 });
