@@ -18,8 +18,10 @@ export function handleTrackPointerDown(
   // Capture the pointer: a release outside the window delivers no mouseup on
   // the document, which would otherwise leave the drag live and the body's
   // user-select disabled.
-  const dragTarget = e.currentTarget;
-  if (!(dragTarget instanceof HTMLElement)) return null;
+  const target = e.currentTarget;
+  if (!(target instanceof HTMLElement)) return null;
+  // Explicit type: narrowing does not survive into the drag closures.
+  const dragTarget: HTMLElement = target;
   dragTarget.setPointerCapture(e.pointerId);
 
   // Keep the grabbed point of the viewport rect under the cursor: record where
