@@ -14,9 +14,35 @@ const SPELL_CHECK_MAX_ATTEMPTS: u32 = 2;
 /// upstream wordlist changes); older files are ignored by the versioned name.
 const DICT_CACHE_VERSION: &str = "v1";
 
+/// Hunspell `.dic` files start with a word count and `.aff` files start with a
+/// directive. A proxy or captive portal can answer HTTP 200 with an HTML page,
+/// which must not stay in the cache or every retry parses it again.
+fn cache_content_is_usable(label: &str, content: &str) -> bool {
+    let trimmed = content.trim_start_matches('\u{feff}').trim_start();
+    if trimmed.is_empty() || trimmed.starts_with('<') {
+        return false;
+    }
+    if label.ends_with(".dic") {
+        return trimmed
+            .split_whitespace()
+            .next()
+            .is_some_and(|n| n.parse::<u32>().is_ok());
+    }
+    true
+}
+
 async fn read_cache_or_delete(path: &PathBuf, label: &str) -> Result<String> {
     match fs::read_to_string(path).await {
-        Ok(content) => Ok(content),
+        Ok(content) if cache_content_is_usable(label, &content) => Ok(content),
+        Ok(_) => {
+            log::warn!(
+                "Cached {} is not a dictionary: {:?}, deleting corrupted cache",
+                label,
+                path
+            );
+            let _ = fs::remove_file(path).await;
+            Err(anyhow!("Invalid cached content: {}", label))
+        },
         Err(e) => {
             log::warn!("Failed to read cached {}: {:?}, deleting corrupted cache", label, path);
             let _ = fs::remove_file(path).await;
@@ -241,4 +267,35 @@ pub fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usi
     }
 
     Some((combined_dic, total))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cache_content_is_usable;
+
+    #[test]
+    fn rejects_html_saved_as_a_dictionary() {
+        assert!(!cache_content_is_usable("en.aff", "<!doctype html><html>..."));
+        assert!(!cache_content_is_usable("en.dic", "<!doctype html><html>..."));
+    }
+
+    #[test]
+    fn rejects_empty_content() {
+        assert!(!cache_content_is_usable("en.aff", ""));
+        assert!(!cache_content_is_usable("en.dic", "  \n"));
+    }
+
+    #[test]
+    fn accepts_hunspell_files() {
+        assert!(cache_content_is_usable("en.aff", "SET UTF-8\nTRY abc"));
+        assert!(cache_content_is_usable("en.dic", "312368\nà\na\n"));
+        assert!(cache_content_is_usable("en.dic", "\u{feff}500668\nword"));
+        assert!(cache_content_is_usable("en.dic", "465914\t1\nبيد"));
+    }
+
+    #[test]
+    fn accepts_technical_word_lists() {
+        assert!(cache_content_is_usable("software-terms", "A-Bomb\ncdylib"));
+        assert!(cache_content_is_usable("software-terms", "# comment\nword"));
+    }
 }

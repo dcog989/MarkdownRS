@@ -56,16 +56,21 @@ fn set_spellcheck_status(app_handle: &tauri::AppHandle, status: SpellcheckStatus
 
 /// Build one `Dictionary` per language (each keeps its own affix rules)
 /// plus a single supplemental word-only dictionary for technical terms.
+/// Also reports how many language files failed to parse.
 fn build_spellbook_dictionaries(
     language_dicts: Vec<(String, String)>,
     technical_words: HashSet<String>,
-) -> Vec<Dictionary> {
+) -> (Vec<Dictionary>, usize) {
     let mut dictionaries = Vec::new();
+    let mut failed_languages = 0;
 
     for (aff, dic) in &language_dicts {
         match Dictionary::new(aff, dic) {
             Ok(dict) => dictionaries.push(dict),
-            Err(e) => log::error!("Failed to build language dictionary: {:?}", e),
+            Err(e) => {
+                failed_languages += 1;
+                log::error!("Failed to build language dictionary: {:?}", e);
+            },
         }
     }
 
@@ -76,7 +81,25 @@ fn build_spellbook_dictionaries(
         dictionaries.push(dict);
     }
 
-    dictionaries
+    (dictionaries, failed_languages)
+}
+
+/// Remove cached language files so a file that fails to parse cannot make every
+/// later init fail against the same cache entry.
+async fn clear_language_cache(cache_dir: &Path) {
+    let Ok(mut entries) = tokio::fs::read_dir(cache_dir).await else {
+        return;
+    };
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        let path = entry.path();
+        if path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some_and(|ext| ext == "aff" || ext == "dic")
+        {
+            let _ = tokio::fs::remove_file(&path).await;
+        }
+    }
 }
 
 async fn load_custom_dictionary(store: &AppState, custom_path: &Path) {
@@ -161,12 +184,15 @@ async fn run_spellcheck_init(
         tokio::task::spawn_blocking(move || build_spellbook_dictionaries(language_dicts, technical_words)).await;
 
     match dictionaries_result {
-        Ok(dictionaries) if !dictionaries.is_empty() => {
-            let dict_count = dictionaries.len();
+        Ok((dictionaries, failed_languages)) if !dictionaries.is_empty() => {
             if !is_current_generation(&state, generation_id) {
                 log::info!("[SPELLCHECK-RUST] Init superseded, discarding dictionaries");
                 return;
             }
+            if failed_languages > 0 {
+                clear_language_cache(&cache_dir).await;
+            }
+            let dict_count = dictionaries.len();
             let mut speller = state.speller.lock_or_recover();
             *speller = Some(dictionaries);
             log::info!(
@@ -177,6 +203,9 @@ async fn run_spellcheck_init(
             set_spellcheck_status(&app_handle, SpellcheckStatus::Ready);
         },
         Ok(_) => {
+            if is_current_generation(&state, generation_id) {
+                clear_language_cache(&cache_dir).await;
+            }
             log::warn!("No dictionary content available");
             finish_init(&app_handle, &state, generation_id, SpellcheckStatus::Failed);
         },
