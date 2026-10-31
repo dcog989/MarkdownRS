@@ -114,25 +114,11 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
 }
 
 export async function saveAllFiles(): Promise<void> {
-  const previousActiveId = appContext.app.activeTabId;
   const dirtyTabs = appContext.editor.tabs.filter((t) => t.isDirty && t.path);
 
-  // Restore the active tab inside the suspended window: letting the tree
-  // follow back after the loop would re-root it once more.
-  await suspendTreeFollow(async () => {
-    appContext.app.paneSyncSuspended = true;
-    try {
-      for (const tab of dirtyTabs) {
-        appContext.app.activeTabId = tab.id;
-        await saveCurrentFile();
-      }
-    } finally {
-      if (previousActiveId) {
-        appContext.app.activeTabId = previousActiveId;
-      }
-      appContext.app.paneSyncSuspended = false;
-    }
-  });
+  for (const tab of dirtyTabs) {
+    await withActiveTab(tab.id, saveCurrentFile);
+  }
 }
 
 export async function requestCloseTab(id: string, force = false): Promise<void> {
