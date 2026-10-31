@@ -1,4 +1,5 @@
 import { LOCALE_NAMES, SUPPORTED_LOCALES, SYSTEM_LOCALE, setAppLocale } from "$lib/i18n";
+import { DEFAULT_TAB_WIDTH_MAX, DEFAULT_TAB_WIDTH_MIN } from "$lib/stores/settingsState.svelte";
 import {
   onClosedTabHistoryChange,
   onHarperChanged,
@@ -205,7 +206,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: "settings.tabWidthMin",
       type: "number",
       category: "settings.category.tabs",
-      defaultValue: 120,
+      defaultValue: DEFAULT_TAB_WIDTH_MIN,
       min: 80,
       max: 300,
       tooltip: "settings.tabWidthMinTooltip",
@@ -216,7 +217,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       label: "settings.tabWidthMax",
       type: "number",
       category: "settings.category.tabs",
-      defaultValue: 180,
+      defaultValue: DEFAULT_TAB_WIDTH_MAX,
       min: 100,
       max: 400,
       tooltip: "settings.tabWidthMaxTooltip",

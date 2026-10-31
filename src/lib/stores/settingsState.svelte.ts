@@ -1,5 +1,10 @@
 import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
 
+// Shared with the settings definitions so the shown default cannot drift from
+// the value the app actually starts with.
+export const DEFAULT_TAB_WIDTH_MIN = 120;
+export const DEFAULT_TAB_WIDTH_MAX = 240;
+
 export const settingsState = $state({
   splitView: true,
   locale: "system",
@@ -12,8 +17,8 @@ export const settingsState = $state({
   paneSplitPercentage: 0.5,
   splitOrientation: "vertical" as "vertical" | "horizontal",
   tabCycling: "mru" as "mru" | "sequential",
-  tabWidthMin: 120,
-  tabWidthMax: 240,
+  tabWidthMin: DEFAULT_TAB_WIDTH_MIN,
+  tabWidthMax: DEFAULT_TAB_WIDTH_MAX,
   statusBarOpacity: 100,
   newTabPosition: "end" as "beginning" | "right" | "end",
   startupBehavior: "last-focused" as "first" | "last-focused" | "new",

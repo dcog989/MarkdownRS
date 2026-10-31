@@ -25,15 +25,6 @@ const DEFAULT_CONFIG = {
     LINT_DELAY_MS: 400,
   },
 
-  // Tab Settings
-  TABS: {
-    WIDTH_MIN: 100,
-    WIDTH_MAX: 200,
-    SCROLL_CHECK_INTERVAL_MS: 500,
-    SCROLL_CHECK_THROTTLE_MS: 50,
-    SCROLL_AMOUNT_PX: 200,
-  },
-
   // Split View
   SPLIT: {
     MIN_PERCENTAGE: 0.1,
