@@ -1,4 +1,4 @@
-import { translate } from "$lib/i18n";
+import { type AppLocale, SUPPORTED_LOCALES, SYSTEM_LOCALE, translate } from "$lib/i18n";
 import { appState } from "$lib/stores/appState.svelte";
 import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { callBackendSafe } from "./backend";
@@ -122,6 +122,10 @@ export async function initSettings(): Promise<boolean> {
         );
       }
     });
+  }
+
+  if (settingsState.locale !== SYSTEM_LOCALE && !SUPPORTED_LOCALES.includes(settingsState.locale as AppLocale)) {
+    settingsState.locale = SYSTEM_LOCALE;
   }
 
   const legacy = saved as Record<string, unknown> | null;

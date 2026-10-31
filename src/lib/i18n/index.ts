@@ -51,7 +51,8 @@ export function detectSystemLocale(): string {
 }
 
 export function resolveLocale(localeId: string): string {
-  return localeId === SYSTEM_LOCALE ? detectSystemLocale() : localeId;
+  const base = localeId === SYSTEM_LOCALE ? "" : localeId.split("-")[0];
+  return base && SUPPORTED_LOCALES.includes(base as AppLocale) ? base : detectSystemLocale();
 }
 
 export function setAppLocale(localeId: string): void {
