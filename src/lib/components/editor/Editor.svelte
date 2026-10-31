@@ -126,9 +126,13 @@ $effect(() => {
 });
 
 $effect(() => {
-  if (cmView && searchState.findText) {
-    updateSearchEditor(cmView);
-  }
+  const view = cmView;
+  if (!view) return;
+  // Only re-highlight when the editor changes; findText runs through the
+  // debounced search, so tracking it here would scan the document per keystroke.
+  untrack(() => {
+    if (searchState.findText) updateSearchEditor(view);
+  });
 });
 
 $effect(() => {

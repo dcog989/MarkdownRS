@@ -117,17 +117,6 @@ $effect(() => {
   }
 });
 
-$effect(() => {
-  const view = cmView;
-  if (!view || !isOpen || searchScope !== "current") return;
-  searchState.findText;
-  searchState.matchCase;
-  searchState.matchWholeWord;
-  searchState.useRegex;
-  searchState.replaceText;
-  untrack(() => updateSearchEditor(view));
-});
-
 function close() {
   isOpen = false;
   clearSearch(cmView);
