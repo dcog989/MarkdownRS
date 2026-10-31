@@ -2,6 +2,7 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { tick } from "svelte";
 import { translate } from "$lib/i18n";
 import { exportService } from "$lib/services/exportService";
+import { invalidateMetadataCache } from "$lib/services/fileMetadata";
 import {
   addBookmark,
   deleteBookmark,
@@ -225,7 +226,7 @@ export class TabContextMenuLogic {
       if (appContext.editor.tabs.some((t) => t.id === targetId)) return;
 
       if (!(await trashFileOnDisk(targetPath))) return;
-      (await import("$lib/services/fileMetadata")).invalidateMetadataCache(targetPath);
+      invalidateMetadataCache(targetPath);
     } catch (err) {
       AppError.handle("File:Write", err, {
         showToast: true,
