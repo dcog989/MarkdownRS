@@ -22,7 +22,12 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
     let mut result = Vec::new();
     for entry in entries {
         let entry = entry.map_err(|e| handle_error(Some(path), "read directory entry", e))?;
-        let name = entry.file_name().to_string_lossy().to_string();
+        // Every path below this layer is a UTF-8 string (IPC + string joins in
+        // the tree), so a mangled name would only produce an unopenable row.
+        let Some(name) = entry.file_name().into_string().ok() else {
+            log::warn!("Skipping non-UTF-8 file name in '{}'", path);
+            continue;
+        };
         if !show_hidden && is_hidden(&name) {
             continue;
         }
@@ -181,6 +186,23 @@ mod tests {
     fn errors_on_missing_directory() {
         let result = list_directory_sync("/nonexistent/markdownrs-xyz-404", false);
         assert!(result.is_err());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn skips_names_that_are_not_valid_utf8() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let dir = make_temp_dir("non-utf8");
+        let broken = dir.join(std::ffi::OsStr::from_bytes(b"broken\xFF.md"));
+        fs::write(&broken, "x").unwrap();
+        fs::write(dir.join("ok.md"), "x").unwrap();
+
+        let names = list_names(&dir, false);
+
+        assert_eq!(names, vec!["ok.md"]);
+        assert!(broken.exists(), "the file itself must be left alone");
+        fs::remove_dir_all(&dir).unwrap();
     }
 
     #[cfg(unix)]
