@@ -204,6 +204,7 @@ $effect(() => {
     <button
       type="button"
       use:tooltip={$_("tabBar.switchTab")}
+      aria-expanded={showDropdown}
       class="text-fg-muted hover-surface flex h-full items-center gap-1 text-ui"
       onclick={() => (showDropdown = !showDropdown)}
     >
@@ -250,8 +251,7 @@ $effect(() => {
       {#each appContext.editor.tabs as tab (tab.id)}
         {@const isTabCollapsed = appContext.settings.collapsePinnedTabs && tab.isPinned}
         <div
-          role="tab"
-          tabindex="-1"
+          role="presentation"
           class="flex h-full touch-none items-stretch outline-none select-none"
           data-tab-item="true"
           animate:flip={{ duration: sortController.draggingId === tab.id ? 0 : 250 }}
@@ -292,6 +292,7 @@ $effect(() => {
         {#if dragGhostTab}
           <div
             class="pointer-events-none fixed z-999"
+            aria-hidden="true"
             style:left="0"
             style:top={`${dragBarTop}px`}
             style:transform={`translateX(${sortController.currentDragX - sortController.dragOffsetX}px)`}
@@ -323,6 +324,7 @@ $effect(() => {
     <button
       type="button"
       use:tooltip={$_("tabBar.menu")}
+      aria-expanded={showMenu}
       class="btn-icon relative h-8 w-8 shrink-0"
       onclick={() => (showMenu = !showMenu)}
     >

@@ -26,7 +26,8 @@ let tooltipContent = $derived.by(() =>
 </script>
 
 <div
-  role="button"
+  role="tab"
+  aria-selected={isActive}
   tabindex="0"
   data-active={isActive}
   data-tab-id={tab.id}
@@ -46,7 +47,11 @@ let tooltipContent = $derived.by(() =>
     e.preventDefault();
     oncontextmenu?.(e, tab.id);
   }}
-  onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
+  onkeydown={(e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onclick?.(tab.id);
+  }}
   use:tooltip={isCollapsed ? tooltipContent : null}
 >
   <TabIcon {tab} {isActive} />
