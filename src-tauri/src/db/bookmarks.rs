@@ -51,10 +51,14 @@ impl BookmarkStore {
 
         let bookmarks = stmt
             .query_map([], |row| {
+                let id: String = row.get(0)?;
                 let tags_json: String = row.get(3)?;
-                let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_default();
+                let tags: Vec<String> = serde_json::from_str(&tags_json).unwrap_or_else(|e| {
+                    log::warn!("Bookmark {} has malformed tags JSON, reading it as untagged: {}", id, e);
+                    Vec::new()
+                });
                 Ok(Bookmark {
-                    id: row.get(0)?,
+                    id,
                     path: row.get(1)?,
                     title: row.get(2)?,
                     tags,
