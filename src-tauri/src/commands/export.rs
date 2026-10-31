@@ -2,6 +2,7 @@ use crate::utils::handle_error;
 #[cfg(feature = "pdf-export")]
 use pdf_oxide::api::Pdf;
 
+#[cfg(feature = "pdf-export")]
 #[tauri::command]
 pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> {
     crate::utils::validate_path_input(&path)?;

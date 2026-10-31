@@ -2,7 +2,6 @@ pub mod bookmarks;
 pub mod context_menu;
 pub mod data;
 pub mod directory;
-#[cfg(feature = "pdf-export")]
 pub mod export;
 pub mod files;
 pub mod logging;
