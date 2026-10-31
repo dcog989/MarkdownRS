@@ -142,6 +142,19 @@ describe("table widget integration", () => {
     view.destroy();
   });
 
+  it("switches the rendered table when the cursor moves between tables", async () => {
+    const { view, parent } = createEditor(TWO_TABLES_SOURCE, 25);
+    await nextFrame();
+    expect(parent.querySelector(".cm-table-widget th")?.textContent).toBe("Q");
+
+    view.dispatch({ selection: { anchor: 70 } });
+    await nextFrame();
+    const widgets = parent.querySelectorAll(".cm-table-widget");
+    expect(widgets).toHaveLength(1);
+    expect(widgets[0].querySelector("th")?.textContent).toBe("Name");
+    view.destroy();
+  });
+
   it("switches to raw markdown when the widget is clicked anywhere", async () => {
     const { view, parent } = createEditor(PRECEDED_SOURCE, 0);
     await nextFrame();

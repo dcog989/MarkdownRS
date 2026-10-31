@@ -174,6 +174,17 @@ export function collectTableSpans(
   return findTableSpans(state, viewport);
 }
 
+/**
+ * Starts of the tables currently rendered as widgets. A selection-only update
+ * only needs a rebuild when this set changes, i.e. when a caret enters or
+ * leaves a table; moving the caret around elsewhere must not re-render tables.
+ */
+function renderedTableKey(state: EditorState): string {
+  return findTableSpans(state)
+    .map((span) => span.from)
+    .join(",");
+}
+
 class MarkdownTableWidget extends WidgetType {
   constructor(
     private readonly from: number,
@@ -303,8 +314,11 @@ export function createTableWidgetField(): StateField<DecorationSet> {
       // outside the initially-parsed region (first ~3000 chars) would stay
       // raw until the next click unless we also rebuild when the tree grows,
       // e.g. right after a tab switch restores a deep scroll position.
-      if (!tr.docChanged && tr.selection == null && syntaxTree(tr.startState) === syntaxTree(tr.state))
-        return decorations;
+      if (!tr.docChanged && syntaxTree(tr.startState) === syntaxTree(tr.state)) {
+        if (renderedTableKey(tr.startState) === renderedTableKey(tr.state)) return decorations;
+      }
+      // shortcut: a doc change re-renders every table in the document, not only the
+      // changed ones; add per-table HTML reuse if typing in table-heavy files lags.
       return buildTableDecorations(tr.state);
     },
     provide: (field) => EditorView.decorations.compute([field], (state) => state.field(field)),
