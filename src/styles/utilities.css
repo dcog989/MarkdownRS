@@ -101,6 +101,10 @@
   background-color: var(--accent-primary);
 }
 
+.resize-handle:focus-visible {
+  background-color: var(--accent-primary);
+}
+
 /* Scrollbar Utility */
 .no-scrollbar {
   scrollbar-width: none;

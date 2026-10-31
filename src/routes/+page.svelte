@@ -24,6 +24,7 @@ import { pushToMru, tabsById } from "$lib/stores/editorStore.svelte";
 import { focusPane, isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import { CONFIG } from "$lib/utils/config";
 import { getEditorInstance } from "$lib/utils/editorCommands";
 import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
@@ -124,6 +125,30 @@ function onResizeMouseDown(e: MouseEvent) {
   splitResize.startResize(e);
 }
 
+function clampPaneSplit(ratio: number): number {
+  return Math.min(PANE_MAX_RATIO, Math.max(PANE_MIN_RATIO, ratio));
+}
+
+function resetPaneSplit() {
+  paneSplitPercentage = 0.5;
+}
+
+function onPaneResizeKeyDown(e: KeyboardEvent) {
+  if (e.key === "Home") {
+    e.preventDefault();
+    resetPaneSplit();
+    return;
+  }
+
+  let delta = 0;
+  if (e.key === "ArrowLeft") delta = -CONFIG.SPLIT.KEYBOARD_STEP;
+  else if (e.key === "ArrowRight") delta = CONFIG.SPLIT.KEYBOARD_STEP;
+  if (delta === 0) return;
+
+  e.preventDefault();
+  paneSplitPercentage = clampPaneSplit(paneSplitPercentage + delta);
+}
+
 function onPaneResizeMouseDown(e: MouseEvent) {
   if (!mainContainer) return;
   e.preventDefault();
@@ -133,7 +158,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
     const rect = mainContainer.getBoundingClientRect();
     if (rect.width <= 0) return;
     const ratio = (ev.clientX - rect.left) / rect.width;
-    paneSplitPercentage = Math.min(PANE_MAX_RATIO, Math.max(PANE_MIN_RATIO, ratio));
+    paneSplitPercentage = clampPaneSplit(ratio);
   };
 
   const onUp = () => {
@@ -241,15 +266,21 @@ function onPaneResizeMouseDown(e: MouseEvent) {
                 </div>
               </div>
 
+              <!-- A focusable separator is the ARIA window-splitter pattern. -->
+              <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
               <div
-                role="button"
+                role="separator"
                 tabindex="0"
+                aria-orientation="vertical"
                 aria-label={$_("common.resizeSplitView")}
+                aria-valuemin={Math.round(PANE_MIN_RATIO * 100)}
+                aria-valuemax={Math.round(PANE_MAX_RATIO * 100)}
+                aria-valuenow={Math.round(paneSplitPercentage * 100)}
                 class="resize-handle"
                 style:cursor="col-resize"
                 onmousedown={onPaneResizeMouseDown}
-                ondblclick={() => (paneSplitPercentage = 0.5)}
-                onkeydown={() => {}}
+                ondblclick={resetPaneSplit}
+                onkeydown={onPaneResizeKeyDown}
               ></div>
 
               <div role="group" class="flex min-h-0 min-w-0 flex-1 flex-col" onfocusin={() => focusPane(1)}>
@@ -314,15 +345,21 @@ function onPaneResizeMouseDown(e: MouseEvent) {
               </div>
 
               {#if showPreview}
+                <!-- A focusable separator is the ARIA window-splitter pattern. -->
+                <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
                 <div
-                  role="button"
+                  role="separator"
                   tabindex="0"
+                  aria-orientation={splitResize.isVertical ? "vertical" : "horizontal"}
                   aria-label={$_("common.resizeSplitView")}
+                  aria-valuemin={Math.round(CONFIG.SPLIT.MIN_PERCENTAGE * 100)}
+                  aria-valuemax={Math.round(CONFIG.SPLIT.MAX_PERCENTAGE * 100)}
+                  aria-valuenow={Math.round(appContext.settings.splitPercentage * 100)}
                   class="resize-handle"
                   style:cursor={splitResize.resizeCursor}
                   onmousedown={onResizeMouseDown}
                   ondblclick={splitResize.resetSplit}
-                  onkeydown={() => {}}
+                  onkeydown={splitResize.handleKeyDown}
                 ></div>
               {/if}
 

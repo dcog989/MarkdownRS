@@ -40,6 +40,8 @@ const DEFAULT_CONFIG = {
     MAX_PERCENTAGE: 0.9,
     DEFAULT_PERCENTAGE: 0.5,
     SNAP_THRESHOLD_PX: 10,
+    // Arrow-key step for the split handles.
+    KEYBOARD_STEP: 0.02,
   },
 
   // File Tree

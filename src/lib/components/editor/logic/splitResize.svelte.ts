@@ -61,6 +61,33 @@ export function createSplitResize() {
     appContext.settings.splitPercentage = 0.5;
   }
 
+  function keyboardDelta(key: string): number {
+    if (isVertical) {
+      if (key === "ArrowLeft") return -CONFIG.SPLIT.KEYBOARD_STEP;
+      if (key === "ArrowRight") return CONFIG.SPLIT.KEYBOARD_STEP;
+    } else {
+      if (key === "ArrowUp") return -CONFIG.SPLIT.KEYBOARD_STEP;
+      if (key === "ArrowDown") return CONFIG.SPLIT.KEYBOARD_STEP;
+    }
+    return 0;
+  }
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Home") {
+      e.preventDefault();
+      resetSplit();
+      return;
+    }
+
+    const delta = keyboardDelta(e.key);
+    if (delta === 0) return;
+    e.preventDefault();
+    appContext.settings.splitPercentage = Math.max(
+      CONFIG.SPLIT.MIN_PERCENTAGE,
+      Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, appContext.settings.splitPercentage + delta),
+    );
+  }
+
   function cleanup() {
     isDragging = false;
     if (_boundHandleResize) window.removeEventListener("mousemove", _boundHandleResize);
@@ -83,6 +110,7 @@ export function createSplitResize() {
     registerContainer,
     startResize,
     resetSplit,
+    handleKeyDown,
     cleanup,
   };
 }
