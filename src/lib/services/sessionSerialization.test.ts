@@ -4,7 +4,7 @@ vi.mock("$lib/utils/backend", () => ({
   callBackend: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { initTransientState } from "$lib/stores/editorCache";
+import { getTransientState, initTransientState, updateTransientState } from "$lib/stores/editorCache";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { closeTab, editorStore } from "$lib/stores/editorStore.svelte";
 import { callBackend } from "$lib/utils/backend";
@@ -146,5 +146,55 @@ describe("persistSession", () => {
     expect(second).toBe(first);
     resolveSave();
     await second;
+  });
+
+  it("keeps a tab dirty when its content changes during the save", async () => {
+    let resolveSave: () => void = () => {};
+    mockedCallBackend.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    editorStore.tabs = [makeTab({ id: "t1", content: "before", contentLoaded: true })];
+    initTransientState("t1", { contentChanged: true, isPersisted: false });
+
+    const saving = persistSession();
+    editorStore.tabs[0].content = "after";
+    updateTransientState("t1", { contentChanged: true });
+    editorStore.sessionDirty = true;
+
+    resolveSave();
+    await saving;
+
+    expect(editorStore.sessionDirty).toBe(true);
+    expect(getTransientState("t1")?.contentChanged).toBe(true);
+
+    await persistSession();
+    const calls = mockedCallBackend.mock.calls;
+    const [, payload] = calls[calls.length - 1] as unknown as [
+      string,
+      { activeTabs: Array<{ content: string | null }> },
+    ];
+    expect(payload.activeTabs[0].content).toBe("after");
+  });
+
+  it("marks an unchanged tab persisted and omits its content next time", async () => {
+    editorStore.tabs = [makeTab({ id: "t1", content: "text", contentLoaded: true })];
+    initTransientState("t1", { contentChanged: true, isPersisted: false });
+
+    await persistSession();
+
+    expect(getTransientState("t1")).toMatchObject({ contentChanged: false, isPersisted: true });
+
+    editorStore.sessionDirty = true;
+    await persistSession();
+
+    const calls = mockedCallBackend.mock.calls;
+    const [, payload] = calls[calls.length - 1] as unknown as [
+      string,
+      { activeTabs: Array<{ content: string | null }> },
+    ];
+    expect(payload.activeTabs[0].content).toBeNull();
   });
 });
