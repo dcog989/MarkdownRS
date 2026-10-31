@@ -8,7 +8,7 @@ vi.mock("$lib/commands/directory", () => ({
 }));
 
 import { getDirectoryMtime, listDirectory } from "$lib/commands/directory";
-import { fileTreeStore } from "./fileTreeStore.svelte";
+import { fileTreeStore, treeRevision } from "./fileTreeStore.svelte";
 import { applyFilter, computeTreeRows, treeViewStore } from "./treeViewStore.svelte";
 
 const mockedListDirectory = vi.mocked(listDirectory);
@@ -206,6 +206,28 @@ describe("treeViewStore", () => {
 
     expect(paths).toContain("/root/note.md");
     expect(paths).not.toContain("/root/note.txt");
+  });
+
+  it("applyFilter drops results when the tree changes while the walk is running", async () => {
+    let resolveLoad: (value: FileEntry[]) => void = () => {};
+    mockedListDirectory.mockImplementation(
+      () =>
+        new Promise<FileEntry[]>((resolve) => {
+          resolveLoad = resolve;
+        }),
+    );
+    fileTreeStore.root = "/root";
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
+
+    const search = applyFilter("deep", false);
+    await vi.waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith("/root/sub", false));
+
+    // The row was renamed or deleted while the walk was in flight.
+    treeRevision.value++;
+    resolveLoad([{ ...entry("deep.md"), path: "/root/sub/deep.md" }]);
+    await search;
+
+    expect(treeViewStore.filterRows).toEqual([]);
   });
 
   it("applyFilter clears results for an empty or whitespace query", async () => {

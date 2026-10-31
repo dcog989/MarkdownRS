@@ -62,6 +62,11 @@ export function setRoot(path: string): void {
 // on every save.
 export const treeFollowState = $state({ suspended: false });
 
+// Bumped when a cached listing changes under an active filter (rename,
+// delete, in-place refresh) so the whole-tree search re-runs with fresh data
+// instead of leaving rows for paths that no longer exist.
+export const treeRevision = $state({ value: 0 });
+
 export async function suspendTreeFollow<T>(operation: () => Promise<T>): Promise<T> {
   treeFollowState.suspended = true;
   try {
@@ -161,6 +166,7 @@ export function toggleMarkdownOnly(): void {
 async function refreshPath(path: string): Promise<void> {
   fileTreeStore.dirMtimes.delete(path);
   await loadChildren(path, true);
+  treeRevision.value++;
 }
 
 /**
@@ -231,6 +237,7 @@ export function forgetSubtree(path: string): void {
   if (fileTreeStore.root === path || fileTreeStore.root.startsWith(prefix)) {
     setRoot(dirname(path));
   }
+  treeRevision.value++;
 }
 
 const REFRESH_SPIN_MIN_MS = 400;

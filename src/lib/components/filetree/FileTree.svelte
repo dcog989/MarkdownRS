@@ -24,6 +24,7 @@ import {
   setRoot,
   toggle,
   treeFollowState,
+  treeRevision,
 } from "$lib/stores/fileTreeStore.svelte";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -160,10 +161,12 @@ let effectiveFilterQuery = $derived(filterRoot === fileTreeStore.root ? appliedQ
 let filterActive = $derived(effectiveFilterQuery.trim() !== "");
 
 // Run the whole-tree search once the debounced query settles; re-run when the
-// root, the markdown-only toggle, or the hidden-files toggle changes so stale
-// results are dropped and new matches appear.
+// root, a cached listing (rename/delete/refresh), the markdown-only toggle, or
+// the hidden-files toggle changes so stale results are dropped and new matches
+// appear.
 $effect(() => {
   settingsState.fileTreeShowHidden;
+  treeRevision.value;
   void applyFilter(effectiveFilterQuery, settingsState.fileTreeShowMarkdownOnly);
 });
 

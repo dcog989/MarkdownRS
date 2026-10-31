@@ -1,7 +1,7 @@
 import type { FileEntry } from "$lib/types/api";
 import { fuzzyMatches } from "$lib/utils/fuzzyMatch";
 import { basename, dirname } from "$lib/utils/path";
-import { fileTreeStore, loadChildren, passesMarkdownOnly } from "./fileTreeStore.svelte";
+import { fileTreeStore, loadChildren, passesMarkdownOnly, treeRevision } from "./fileTreeStore.svelte";
 import { settingsState } from "./settingsState.svelte";
 
 export const treeViewStore = $state({
@@ -98,6 +98,7 @@ export function computeTreeRows(): TreeRow[] {
  */
 export async function applyFilter(query: string, markdownOnly: boolean): Promise<void> {
   const generation = ++filterGeneration;
+  const revision = treeRevision.value;
   const q = query.trim();
   const root = fileTreeStore.root;
   if (!q || !root) {
@@ -109,7 +110,9 @@ export async function applyFilter(query: string, markdownOnly: boolean): Promise
   treeViewStore.filterLoading = true;
   try {
     const rows = await searchTree(root, q, markdownOnly, generation);
-    if (generation !== filterGeneration) return;
+    // Drop the result when the tree changed underneath the walk: the cached
+    // listings it matched may describe paths that were renamed or deleted.
+    if (generation !== filterGeneration || revision !== treeRevision.value) return;
     treeViewStore.filterRows = rows;
   } finally {
     if (generation === filterGeneration) {
