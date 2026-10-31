@@ -80,10 +80,12 @@ export function renderCell(cell: string): string {
   html = html.replace(/__([^_]+)__/g, "<strong>$1</strong>");
   html = html.replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
   html = html.replace(/\b_([^_\n]+)_\b/g, "<em>$1</em>");
-  html = html.replace(
-    /\[([^\]]+)\]\((https?:\/\/[^\s)\]]+)\)/g,
-    '<a href="$2" target="_blank" rel="noreferrer">$1</a>',
-  );
+  // The URL may reach here unescaped (only &, < and > are escaped above), so
+  // quotes are re-escaped to keep it inside the href attribute.
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)\]]+)\)/g, (_match, text: string, url: string) => {
+    const href = url.replace(/"/g, "&quot;");
+    return `<a href="${href}" target="_blank" rel="noreferrer">${text}</a>`;
+  });
   // GFM autolinks: `<https://...>` and `<mail@example.com>`. The cell was
   // HTML-escaped above, so the angle brackets are `&lt;`/`&gt;`; a URL cannot
   // contain `>` so a lazy match up to the first `&gt;` is safe. Quotes are

@@ -60,6 +60,12 @@ describe("renderCell", () => {
     );
   });
 
+  it("escapes quotes inside link urls", () => {
+    expect(renderCell('[x](https://a/"onclick="alert(1))')).toBe(
+      '<a href="https://a/&quot;onclick=&quot;alert(1" target="_blank" rel="noreferrer">x</a>)',
+    );
+  });
+
   it("does not format autolinks inside code spans", () => {
     expect(renderCell("`<https://example.com>`")).toBe("<code>&lt;https://example.com&gt;</code>");
   });
