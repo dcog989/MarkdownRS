@@ -79,11 +79,8 @@ pub fn extract_frontmatter(content: &str) -> Option<Frontmatter> {
     let mut offset = first.len();
     // Brace-style JSON: the opening `{` counts as depth 1; exact-match
     // delimiters keep a depth of 0 so the `line == closing` check applies.
-    let mut brace_depth = if format == FrontmatterFormat::Json && closing == "}" {
-        1
-    } else {
-        0
-    };
+    let brace_style = format == FrontmatterFormat::Json && closing == "}";
+    let mut brace_depth = if brace_style { 1 } else { 0 };
     let mut in_string = false;
     let mut escaped = false;
 
@@ -117,6 +114,11 @@ pub fn extract_frontmatter(content: &str) -> Option<Frontmatter> {
         };
 
         if is_closing {
+            // A bare `{` is not an explicit delimiter: only a block that parses
+            // as JSON counts, so a pasted code snippet stays visible.
+            if brace_style && serde_json::from_str::<serde_json::Value>(&content[..offset]).is_err() {
+                return None;
+            }
             return Some(Frontmatter {
                 format,
                 line_count,
@@ -203,7 +205,7 @@ mod tests {
 
     #[test]
     fn brace_json_ignores_braces_inside_strings() {
-        let content = "{\n\"s\": \"a }\nb\"\n}\n# Body\n";
+        let content = "{\n\"s\": \"a }\\nb\"\n}\n# Body\n";
         let fm = extract_frontmatter(content).unwrap();
         assert_eq!(fm.format, FrontmatterFormat::Json);
         assert_eq!(fm.line_count, 4);
@@ -217,6 +219,13 @@ mod tests {
         assert_eq!(fm.format, FrontmatterFormat::Json);
         assert_eq!(fm.line_count, 2);
         assert_eq!(&content[fm.end_offset..], "# Body\n");
+    }
+
+    #[test]
+    fn brace_block_that_is_not_json_is_not_frontmatter() {
+        // A pasted C/JS snippet starting with `{` must not be silently hidden.
+        let content = "{\nint main() {\n  return 0;\n}\n}\n\n# Body\n";
+        assert_eq!(extract_frontmatter(content), None);
     }
 
     #[test]
