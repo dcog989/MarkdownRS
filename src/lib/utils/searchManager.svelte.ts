@@ -183,7 +183,7 @@ function buildSearchRegex(): RegExp | null {
     }
 
     if (searchState.matchWholeWord) {
-      pattern = `\\b${pattern}\\b`;
+      pattern = `\\b(?:${pattern})\\b`;
     }
 
     const flags = searchState.matchCase ? "g" : "gi";
