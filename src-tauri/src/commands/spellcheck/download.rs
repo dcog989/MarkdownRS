@@ -109,16 +109,39 @@ async fn ensure_file_downloaded(
     Err(last_error.unwrap_or_else(|| anyhow!("Download failed: {}", label)))
 }
 
+/// Language codes arrive from the webview and become cache file names, so
+/// accept only `xx` or `xx-YY` and never a path separator or `..`.
+fn is_safe_language_code(code: &str) -> bool {
+    let ascii = |s: &str, lower: bool| {
+        s.len() == 2
+            && s.bytes().all(|b| {
+                if lower {
+                    b.is_ascii_lowercase()
+                } else {
+                    b.is_ascii_uppercase()
+                }
+            })
+    };
+    match code.split_once('-') {
+        None => ascii(code, true),
+        Some((base, region)) => ascii(base, true) && ascii(region, false),
+    }
+}
+
 pub async fn load_language_dictionary(
     client: reqwest::Client,
     cache_dir: PathBuf,
     dict_code: String,
 ) -> Result<(String, String)> {
-    let aff_path = cache_dir.join(format!("{}.{}.aff", dict_code, DICT_CACHE_VERSION));
-    let dic_path = cache_dir.join(format!("{}.{}.dic", dict_code, DICT_CACHE_VERSION));
+    if !is_safe_language_code(&dict_code) {
+        return Err(anyhow!("Invalid language dictionary code: {}", dict_code));
+    }
 
     let (aff_url, dic_url) = dicts::resolve_language_urls(&dict_code)
         .ok_or_else(|| anyhow!("Unknown language dictionary: {}", dict_code))?;
+
+    let aff_path = cache_dir.join(format!("{}.{}.aff", dict_code, DICT_CACHE_VERSION));
+    let dic_path = cache_dir.join(format!("{}.{}.dic", dict_code, DICT_CACHE_VERSION));
 
     let aff_label = format!("{}.aff", dict_code);
     let dic_label = format!("{}.dic", dict_code);
@@ -259,8 +282,20 @@ pub fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usi
 
 #[cfg(test)]
 mod tests {
-    use super::{build_combined_dic_string, cache_content_is_usable, read_cache_or_delete};
+    use super::{build_combined_dic_string, cache_content_is_usable, is_safe_language_code, read_cache_or_delete};
     use std::collections::HashSet;
+
+    #[test]
+    fn rejects_language_codes_that_could_escape_the_cache_directory() {
+        for code in ["en", "en-US", "pt-BR", "de-AT", "xx"] {
+            assert!(is_safe_language_code(code), "{} should be allowed", code);
+        }
+        for code in [
+            "", "e", "eng", "en-us", "EN-US", "en-US-x", "..", "../../x", "en/../x", "en_US", "en US",
+        ] {
+            assert!(!is_safe_language_code(code), "{} should be rejected", code);
+        }
+    }
 
     #[test]
     fn rejects_html_saved_as_a_dictionary() {
