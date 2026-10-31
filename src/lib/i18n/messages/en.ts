@@ -168,6 +168,7 @@ export const en = {
     escapeWriterMode: "Escape / Exit Writer Mode",
     nextTab: "Next Tab",
     previousTab: "Previous Tab",
+    goToTab: "Go to Tab {number}",
     lastTab: "Go to Last Tab",
     emoji: "Emoji",
     editRumdlConfig: "Edit rumdl Config",

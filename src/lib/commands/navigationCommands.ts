@@ -1,3 +1,4 @@
+import { translate } from "$lib/i18n";
 import { pushToMru } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import type { Command } from "./types";
@@ -16,7 +17,7 @@ function cycleTab(direction: 1 | -1): void {
 function tabSwitch(index: number): Command {
   return {
     id: `nav.tab${index + 1}`,
-    label: `Go to Tab ${index + 1}`,
+    labelKey: () => translate("command.goToTab", { values: { number: index + 1 } }),
     category: "commandCategory.navigation",
     showInPalette: false,
     defaultKey: `ctrl+${index + 1}`,
