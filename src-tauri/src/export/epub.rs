@@ -2,8 +2,8 @@
 //!
 //! The document body is the same HTML the preview renders, wrapped in an
 //! XHTML shell and packaged with OPF metadata, a navigation document and CSS.
-//! Local images are referenced by their markdown path, not embedded, and raw
-//! HTML passes through verbatim, so it must already be well-formed XHTML.
+//! Raw HTML is dropped because the body must be well-formed XHTML. Local
+//! images are referenced by their markdown path, not embedded.
 //! shortcut: images are not embedded and links are not rewritten, embed them
 //! when exported EPUBs need to be self-contained.
 
@@ -38,6 +38,7 @@ pub fn markdown_to_epub(content: &str, title: &str) -> Result<Vec<u8>, String> {
         content,
         MarkdownOptions {
             flavor: MarkdownFlavor::Gfm,
+            safe_html: true,
         },
     )
     .map_err(|e| format!("Failed to render markdown: {e}"))?
@@ -166,5 +167,19 @@ mod tests {
             .expect("read content");
         assert!(content.contains(r#"<h1 id="title""#), "content was: {content}");
         assert!(content.contains("Hello &amp; goodbye."));
+    }
+
+    #[test]
+    fn drops_raw_html_that_would_break_xhtml() {
+        let bytes = markdown_to_epub("Hello <br> world", "Title").expect("epub should build");
+        let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
+
+        let mut content = String::new();
+        archive
+            .by_name("OEBPS/content.xhtml")
+            .expect("content entry")
+            .read_to_string(&mut content)
+            .expect("read content");
+        assert!(!content.contains("<br>"), "raw HTML leaked: {content}");
     }
 }

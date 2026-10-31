@@ -15,6 +15,7 @@ pub async fn render_markdown(content: String, flavor: Option<String>) -> Result<
 
     let options = MarkdownOptions {
         flavor: MarkdownFlavor::from_option_str(flavor),
+        ..Default::default()
     };
 
     crate::timed_debug!(

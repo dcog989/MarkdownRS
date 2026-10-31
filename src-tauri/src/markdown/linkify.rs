@@ -235,6 +235,7 @@ mod tests {
             content,
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed")
@@ -262,6 +263,7 @@ mod tests {
             "# See [[notes/foo]] and /home/user/file.md\n",
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed");

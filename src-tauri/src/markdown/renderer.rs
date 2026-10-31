@@ -10,6 +10,9 @@ use std::borrow::Cow;
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
     pub flavor: MarkdownFlavor,
+    /// Drop raw HTML instead of passing it through. EPUB output must be XHTML.
+    #[serde(default)]
+    pub safe_html: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,7 +23,10 @@ pub struct RenderResult {
 
 /// Renders markdown to HTML with line number tracking
 pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult> {
-    let comrak_options = options.flavor.to_comrak_options();
+    let mut comrak_options = options.flavor.to_comrak_options();
+    if options.safe_html {
+        comrak_options.render.r#unsafe = false;
+    }
 
     // Strip any leading frontmatter block by blanking it out: the block is
     // excluded from the rendered output while preserving the document's line
@@ -61,6 +67,7 @@ mod tests {
             content,
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed")
@@ -85,6 +92,7 @@ mod tests {
             "# $x^2$\n\n## Some Heading\n",
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed");
@@ -206,6 +214,7 @@ mod tests {
             "---\ntitle: Test\n---\n",
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed");

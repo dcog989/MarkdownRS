@@ -232,6 +232,7 @@ mod tests {
             content,
             MarkdownOptions {
                 flavor: MarkdownFlavor::Gfm,
+                ..Default::default()
             },
         )
         .expect("render should succeed")
