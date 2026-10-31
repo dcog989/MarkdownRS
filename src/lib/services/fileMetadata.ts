@@ -23,6 +23,16 @@ type FileMetadata = {
 const metadataCache = new Map<string, { expires: number; promise: Promise<FileMetadata> }>();
 const CACHE_TTL_MS = 500;
 
+/** Last disk stat seen per path (`modified|size`), so an unchanged file is not
+ *  read and hashed again before a save. The mtime has second granularity, so a
+ *  write landing in the same second as the recorded stat is missed; the file
+ *  watcher still reports those. */
+const lastStat = new Map<string, string>();
+
+function statKey(meta: FileMetadata): string {
+  return `${meta.modified ?? ""}|${meta.size}`;
+}
+
 export async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
   const now = Date.now();
   const cached = metadataCache.get(path);
@@ -65,6 +75,9 @@ export function normalizeLineEndings(text: string): string {
 export async function refreshMetadata(tabId: string, path: string): Promise<boolean> {
   try {
     const meta = await getCachedFileMetadata(path);
+    // Our own save just changed the file; record the new stat so the next
+    // save's change check does not have to read the whole file back.
+    lastStat.set(path, statKey(meta));
     updateMetadata(tabId, meta.created, meta.modified);
     return true;
   } catch {
@@ -95,6 +108,7 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
   const tab = appContext.editor.tabs.find((t) => t.id === tabId);
   if (!tab?.path) return false;
 
+  const previousStat = lastStat.get(tab.path);
   const meta = await callBackendSafe("get_file_metadata", { path: tab.path }, "File:Metadata", {
     showToast: false,
     severity: "warning",
@@ -105,6 +119,12 @@ export async function hasFileChanged(tabId: string): Promise<boolean> {
   });
 
   if (!meta) return false;
+
+  const stat = statKey(meta);
+  lastStat.set(tab.path, stat);
+  // Same size and mtime as the last check: the file cannot have been edited
+  // externally, so the full read below would only re-hash the saved bytes.
+  if (previousStat === stat) return false;
 
   // mtime/size are second-granularity hints, not proof of an external edit.
   // tab.modified is also stamped from the frontend clock on edits and keeps a
