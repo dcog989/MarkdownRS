@@ -94,8 +94,8 @@ Requires: [Rust](https://rustup.rs/), [bun](https://bun.com/), [Tauri](https://v
 
 ```sh
 bun install          # Install dependencies
-bun run check        # Full check: Svelte types, Biome lint, and cargo check + clippy
-bun run fix          # Apply all fixes: Biome autofix, cargo clippy --fix, cargo fmt
+bun run check        # Full check: Svelte types, Biome lint, and cargo clippy
+bun run fix          # Apply all fixes, then run the full check
 bun run update       # Update packages + crates
 bun run dev          # Start dev server / HMR
 bun run preview      # Preview the production build
