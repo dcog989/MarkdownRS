@@ -93,7 +93,7 @@ $effect(() => {
 
 let filteredBookmarks = $derived(
   appContext.bookmarks.bookmarks.filter((bookmark) => {
-    if (searchQuery.length < 2) return true;
+    if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     const titleMatch = bookmark.title.toLowerCase().includes(query);
     const pathMatch = bookmark.path.toLowerCase().includes(query);
@@ -381,7 +381,7 @@ function handleKeydown(e: KeyboardEvent) {
           {/if}
         </div>
       {/each}
-    {:else if searchQuery.length >= 2}
+    {:else if searchQuery}
       <div class="text-fg-muted px-4 py-8 text-center">{$_("bookmarks.noMatch")}</div>
     {:else if appContext.bookmarks.bookmarks.length === 0}
       <div class="text-fg-muted px-4 py-8 text-center">
