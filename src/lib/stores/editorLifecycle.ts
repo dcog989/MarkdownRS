@@ -130,8 +130,10 @@ export function closeTab(id: string) {
   if (index === -1) return;
 
   const tab = editorStore.tabs[index];
+  const transient = getTransientState(id);
+  let storedInHistory = false;
 
-  if (tab.path || (tab.content && tab.content.trim().length > 0)) {
+  if (settingsState.enableClosedTabHistory && (tab.path || (tab.content && tab.content.trim().length > 0))) {
     const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
     const historyState = getHistoryState(id);
 
@@ -153,13 +155,25 @@ export function closeTab(id: string) {
       historyState: canReloadFromDisk ? undefined : historyState,
     };
 
-    editorStore.closedTabsHistory = [closedEntry, ...editorStore.closedTabsHistory].slice(0, limit);
+    const nextHistory = [closedEntry, ...editorStore.closedTabsHistory];
+    for (const evicted of nextHistory.slice(limit)) {
+      clearTabCaches(evicted.tab.id);
+    }
+    editorStore.closedTabsHistory = nextHistory.slice(0, limit);
+    storedInHistory = true;
   }
 
   editorStore.tabs = editorStore.tabs.filter((t) => t.id !== id);
   editorStore.mruStack = editorStore.mruStack.filter((tId) => tId !== id);
 
   clearTabCaches(id);
+
+  if (storedInHistory) {
+    // Keep the small transient state for the history entry: the session save
+    // reads it to know the closed content is already persisted. Without it,
+    // every save rewrites the full text of every closed tab.
+    initTransientState(id, transient ?? defaultTransientState());
+  }
 
   editorStore.sessionDirty = true;
 }

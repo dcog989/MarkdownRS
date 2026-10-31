@@ -5,7 +5,8 @@ vi.mock("$lib/utils/fileIO", () => ({
 }));
 
 import { readTextFile } from "$lib/utils/fileIO";
-import { createNewFile, reorderTabs } from "./editorLifecycle";
+import { getTransientState, initTransientState } from "./editorCache";
+import { closeTab, createNewFile, reorderTabs } from "./editorLifecycle";
 import { editorStore, sortTabsPinnedFirst } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
 import { settingsState } from "./settingsState.svelte";
@@ -137,5 +138,32 @@ describe("pinned tab ordering", () => {
     expect(pinned).toHaveLength(1);
     expect(unpinned).toHaveLength(2);
     expect(editorStore.tabs[0].id).toBe("p");
+  });
+});
+
+describe("closeTab history", () => {
+  beforeEach(() => {
+    editorStore.tabs = [];
+    editorStore.closedTabsHistory = [];
+    settingsState.enableClosedTabHistory = true;
+  });
+
+  it("does not keep history when closed-tab history is disabled", () => {
+    settingsState.enableClosedTabHistory = false;
+    editorStore.tabs = [{ ...tab("a", false), path: "/a.md", content: "text" }];
+
+    closeTab("a");
+
+    expect(editorStore.closedTabsHistory).toHaveLength(0);
+  });
+
+  it("keeps the transient state of a history entry so its content is not rewritten", () => {
+    editorStore.tabs = [{ ...tab("a", false), path: "/a.md", content: "text" }];
+    initTransientState("a", { contentChanged: false, isPersisted: true });
+
+    closeTab("a");
+
+    expect(editorStore.closedTabsHistory).toHaveLength(1);
+    expect(getTransientState("a")).toMatchObject({ contentChanged: false, isPersisted: true });
   });
 });

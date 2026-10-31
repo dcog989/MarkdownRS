@@ -1,5 +1,6 @@
 import { LOCALE_NAMES, SUPPORTED_LOCALES, SYSTEM_LOCALE, setAppLocale } from "$lib/i18n";
 import {
+  onClosedTabHistoryChange,
   onHarperChanged,
   onLogLevelChange,
   onTabNameFromContentChange,
@@ -255,6 +256,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: "settings.category.files",
       defaultValue: true,
       tooltip: "settings.closedTabHistoryTooltip",
+      onChange: onClosedTabHistoryChange,
     },
     {
       key: "fileHistoryLimit",

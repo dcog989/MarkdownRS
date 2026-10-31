@@ -1,5 +1,5 @@
 import { translate } from "$lib/i18n";
-import { editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
+import { clearTabCaches, editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -56,4 +56,14 @@ export function onTabNameFromContentChange(newValue: unknown) {
       updateTabFields(tab.id, { title: targetTitle });
     }
   }
+}
+
+/** Turning off closed-tab history frees the stored buffers now; the next
+ *  session save clears their persisted rows too. */
+export function onClosedTabHistoryChange(newValue: unknown) {
+  if (newValue) return;
+  for (const entry of editorStore.closedTabsHistory) {
+    clearTabCaches(entry.tab.id);
+  }
+  editorStore.closedTabsHistory = [];
 }
