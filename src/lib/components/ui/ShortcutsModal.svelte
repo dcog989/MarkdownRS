@@ -14,7 +14,7 @@ import { CONFIG } from "$lib/utils/config";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
 import { saveSettings } from "$lib/utils/settings";
-import { shortcutManager, UNBOUND } from "$lib/utils/shortcuts";
+import { isReservedShortcut, shortcutManager, UNBOUND } from "$lib/utils/shortcuts";
 
 interface Props {
   isOpen: boolean;
@@ -27,7 +27,7 @@ let { isOpen = $bindable(false), onClose, onBack }: Props = $props();
 let searchQuery = $state("");
 let searchInputEl = $state<HTMLInputElement>();
 let recordingCommandId = $state<string | null>(null);
-let conflictCommand = $state<{ command: Command; key: string; targetId: string } | null>(null);
+let conflictCommand = $state<{ command: Command | null; key: string; targetId: string } | null>(null);
 
 const nav = createListNavigation(
   () => flatShortcuts.length,
@@ -72,6 +72,12 @@ function handleRecordKey(e: KeyboardEvent) {
 
   const keyStr = shortcutManager.getEventKey(e);
 
+  if (isReservedShortcut(keyStr)) {
+    conflictCommand = { command: null, key: keyStr, targetId: recordingCommandId };
+    stopRecording();
+    return;
+  }
+
   const conflict = shortcutManager.findCommandByShortcut(keyStr, recordingCommandId);
   if (conflict) {
     conflictCommand = { command: conflict, key: keyStr, targetId: recordingCommandId };
@@ -89,9 +95,10 @@ function assignShortcut(commandId: string, key: string) {
 }
 
 function handleReassign() {
-  if (!conflictCommand) return;
-  appContext.settings.customShortcuts[conflictCommand.command.id] = UNBOUND;
-  assignShortcut(conflictCommand.targetId, conflictCommand.key);
+  const conflict = conflictCommand;
+  if (!conflict?.command) return;
+  appContext.settings.customShortcuts[conflict.command.id] = UNBOUND;
+  assignShortcut(conflict.targetId, conflict.key);
   conflictCommand = null;
 }
 
@@ -167,27 +174,39 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
         <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
           <div class="bg-bg-panel border-border-primary pointer-events-auto mx-4 w-96 rounded-lg border p-6 shadow-xl">
             <h3 class="text-fg-default mb-4 text-base font-semibold">{$_("shortcuts.conflictTitle")}</h3>
-            <p class="text-fg-muted mb-3 text-ui leading-relaxed">
-              <span class="text-fg-default font-mono text-ui">{conflict.key}</span>
-              {$_("shortcuts.alreadyAssigned")} <strong>{translate(commandLabel(conflict.command))}</strong>.
-            </p>
-            <p class="text-fg-muted mb-5 text-ui leading-relaxed">
-              {$_("shortcuts.reassignTo")}
-              <strong
-                >{(() => {
-                  const c = shortcutManager.getDefinitions().find((d) => d.id === conflict.targetId);
-                  return c ? translate(commandLabel(c)) : "";
-                })()}</strong
-              >?
-            </p>
-            <div class="flex justify-end gap-3">
-              <button type="button" class="btn-base btn-secondary px-4 py-2" onclick={handleCancelConflict}>
-                {$_("shortcuts.cancel")}
-              </button>
-              <button type="button" class="btn-base px-4 py-2" onclick={handleReassign}>
-                {$_("shortcuts.reassign")}
-              </button>
-            </div>
+            {#if conflict.command}
+              {@const other = conflict.command}
+              <p class="text-fg-muted mb-3 text-ui leading-relaxed">
+                <span class="text-fg-default font-mono text-ui">{conflict.key}</span>
+                {$_("shortcuts.alreadyAssigned")} <strong>{translate(commandLabel(other))}</strong>.
+              </p>
+              <p class="text-fg-muted mb-5 text-ui leading-relaxed">
+                {$_("shortcuts.reassignTo")}
+                <strong
+                  >{(() => {
+                    const c = shortcutManager.getDefinitions().find((d) => d.id === conflict.targetId);
+                    return c ? translate(commandLabel(c)) : "";
+                  })()}</strong
+                >?
+              </p>
+              <div class="flex justify-end gap-3">
+                <button type="button" class="btn-base btn-secondary px-4 py-2" onclick={handleCancelConflict}>
+                  {$_("shortcuts.cancel")}
+                </button>
+                <button type="button" class="btn-base px-4 py-2" onclick={handleReassign}>
+                  {$_("shortcuts.reassign")}
+                </button>
+              </div>
+            {:else}
+              <p class="text-fg-muted mb-5 text-ui leading-relaxed">
+                {$_("shortcuts.reservedKey", { values: { key: conflict.key } })}
+              </p>
+              <div class="flex justify-end gap-3">
+                <button type="button" class="btn-base px-4 py-2" onclick={handleCancelConflict}>
+                  {$_("common.ok")}
+                </button>
+              </div>
+            {/if}
           </div>
         </div>
       </div>

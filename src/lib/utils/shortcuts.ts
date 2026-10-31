@@ -16,6 +16,29 @@ function isModalOpen(): boolean {
   );
 }
 
+// Keys the system or the editor already owns; recording one would break typing.
+const RESERVED_CHORDS = new Set([
+  "ctrl+a",
+  "ctrl+c",
+  "ctrl+v",
+  "ctrl+x",
+  "ctrl+shift+v",
+  "ctrl+r",
+  "ctrl+shift+i",
+  "f12",
+]);
+const MODIFIER_PARTS = new Set(["ctrl", "alt", "meta"]);
+
+export function isReservedShortcut(key: string): boolean {
+  if (RESERVED_CHORDS.has(key)) return true;
+  const parts = key.split("+");
+  const base = parts[parts.length - 1];
+  if (parts.some((part) => MODIFIER_PARTS.has(part))) return false;
+  // A bare key would fire while the user is not typing, so only function keys and
+  // Escape may stand alone.
+  return base !== "escape" && !/^f\d{1,2}$/.test(base);
+}
+
 // Stored when another command takes this one's key; "" would fall back to the default.
 export const UNBOUND = "none";
 

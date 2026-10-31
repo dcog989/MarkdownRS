@@ -450,6 +450,7 @@ export const en = {
     placeholder: "Search shortcuts...",
     conflictTitle: "Shortcut Conflict",
     alreadyAssigned: "is already assigned to",
+    reservedKey: "{key} cannot be used as a shortcut.",
     reassignTo: "Reassign it to",
     cancel: "Cancel",
     reassign: "Reassign",
