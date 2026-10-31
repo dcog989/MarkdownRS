@@ -62,8 +62,8 @@ impl LineMap {
 ///
 /// A fence is CommonMark-style: 3+ identical backtick or tilde characters at up
 /// to 3 spaces of indentation; the closing fence must use the same character
-/// with at least the opening length. The opening and closing fence lines
-/// themselves are not flagged. An indented code line is 4+ spaces at the start
+/// with at least the opening length and carry no info string. The opening and
+/// closing fence lines themselves are not flagged. An indented code line is 4+ spaces at the start
 /// of a block (after a blank line or another code line), which also covers the
 /// first line of a `    <!-- toc -->` sample.
 fn mark_code_lines(content: &str) -> Vec<bool> {
@@ -80,10 +80,10 @@ fn mark_code_lines(content: &str) -> Vec<bool> {
         code.push(is_code);
 
         if indent < INDENTED_CODE_INDENT
-            && let Some((first, len)) = fence_run(stripped)
+            && let Some((first, len, rest)) = fence_run(stripped)
         {
             match open {
-                Some((fence_char, min_len)) if fence_char == first && len >= min_len => {
+                Some((fence_char, min_len)) if fence_char == first && len >= min_len && rest.trim().is_empty() => {
                     open = None;
                 },
                 None => {
@@ -99,14 +99,16 @@ fn mark_code_lines(content: &str) -> Vec<bool> {
     code
 }
 
-/// The fence character and run length when `line` opens or closes a fence.
-fn fence_run(line: &str) -> Option<(char, usize)> {
+/// The fence character, run length and trailing text when `line` opens or
+/// closes a fence. A closing fence has only whitespace after the run, so the
+/// trailing text tells the caller whether this can close an open fence.
+fn fence_run(line: &str) -> Option<(char, usize, &str)> {
     let first = line.chars().next()?;
     if first != '`' && first != '~' {
         return None;
     }
     let len = line.chars().take_while(|&c| c == first).count();
-    (len >= 3).then_some((first, len))
+    (len >= 3).then_some((first, len, &line[len..]))
 }
 
 fn extract_headings(content: &str) -> Vec<HeadingEntry> {
@@ -422,6 +424,39 @@ mod tests {
         assert_eq!(result.matches("<!-- toc -->").count(), 2);
         assert_eq!(result.matches("<!-- tocstop -->").count(), 2);
         assert!(result.contains("- [Section](#section)"));
+    }
+
+    #[test]
+    fn info_string_does_not_close_a_fence_before_the_toc_anchor() {
+        // A closing fence may not carry an info string, so `# still inside code`
+        // is code and must not become the insertion point.
+        let content = "```\n# inside code\n```js\n# still inside code\n```\n\n# Real Title\n\n## Section\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(
+            result.starts_with("```\n# inside code\n```js\n# still inside code\n```\n\n# Real Title\n\n<!-- toc -->"),
+            "TOC must be inserted after the real H1: {result}"
+        );
+        assert!(
+            !result.contains("- [inside code]"),
+            "code headings must not be TOC entries: {result}"
+        );
+    }
+
+    #[test]
+    fn toc_markers_after_an_info_string_are_still_code() {
+        let content = "```\ncode\n```js\n<!-- toc -->\nstale\n<!-- tocstop -->\n```\n\n# Title\n\n## Section";
+        let result = generate_document_toc(content);
+
+        assert!(
+            result.contains("```js\n<!-- toc -->\nstale\n<!-- tocstop -->\n```"),
+            "code sample must be untouched: {result}"
+        );
+        assert!(
+            result
+                .starts_with("```\ncode\n```js\n<!-- toc -->\nstale\n<!-- tocstop -->\n```\n\n# Title\n\n<!-- toc -->"),
+            "fresh TOC must be inserted after the H1: {result}"
+        );
     }
 
     #[test]
