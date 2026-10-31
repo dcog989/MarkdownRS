@@ -145,6 +145,7 @@ export const viewCommands: Command[] = [
     handler: (e) => {
       e?.preventDefault();
       appContext.settings.editorFontSize = Math.min(32, appContext.settings.editorFontSize + 1);
+      saveSettings();
     },
   },
   {
@@ -156,6 +157,7 @@ export const viewCommands: Command[] = [
     handler: (e) => {
       e?.preventDefault();
       appContext.settings.editorFontSize = Math.max(8, appContext.settings.editorFontSize - 1);
+      saveSettings();
     },
   },
   {
@@ -167,6 +169,7 @@ export const viewCommands: Command[] = [
     handler: (e) => {
       e?.preventDefault();
       appContext.settings.editorFontSize = 14;
+      saveSettings();
     },
   },
   {
