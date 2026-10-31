@@ -19,8 +19,10 @@ use gtk::prelude::{BinExt, Cast, GtkWindowExt, HeaderBarExt};
 #[cfg(target_os = "linux")]
 use gtk::{EventBox, HeaderBar};
 
+// Deliberately not `async`: Tauri runs async commands on a worker thread, and
+// the GTK calls below are main-thread only.
 #[tauri::command]
-pub async fn set_window_title(app: AppHandle, title: String) -> Result<(), String> {
+pub fn set_window_title(app: AppHandle, title: String) -> Result<(), String> {
     let tauri_window = app
         .get_webview_window("main")
         .ok_or_else(|| "Failed to get main window".to_string())?;
