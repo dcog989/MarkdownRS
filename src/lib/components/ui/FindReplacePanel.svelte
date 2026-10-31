@@ -258,13 +258,15 @@ function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
     e.stopPropagation();
     close();
-  } else if (e.key === "Enter") {
-    e.preventDefault();
-    if (e.shiftKey) {
-      onFindPrevious();
-    } else {
-      if (isReplaceMode && e.ctrlKey) {
-        onReplaceAll();
+  } else if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+    // Buttons need Enter for their own click; only the text fields act on it.
+    if (isReplaceMode && e.ctrlKey) {
+      e.preventDefault();
+      onReplaceAll();
+    } else if (searchScope === "current") {
+      e.preventDefault();
+      if (e.shiftKey) {
+        onFindPrevious();
       } else {
         onFindNext();
       }
