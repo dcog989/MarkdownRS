@@ -41,3 +41,13 @@ export function formatTimestampForDisplay(timestamp: string): string {
   }
   return timestamp;
 }
+
+/**
+ * `YYYYMMDD / HHMMSS` -> `YYYY-MM-DD`. Returns null for a string in any other
+ * shape (imported data may carry one), so callers can fall back to the raw text
+ * instead of slicing it into `2026-0-1-`.
+ */
+export function formatTimestampAsDate(timestamp: string): string | null {
+  const match = /^(\d{4})(\d{2})(\d{2}) \//.exec(timestamp);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : null;
+}

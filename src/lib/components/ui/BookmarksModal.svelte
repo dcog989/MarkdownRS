@@ -23,6 +23,7 @@ import {
 import { appContext } from "$lib/stores/state.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
+import { formatTimestampAsDate } from "$lib/utils/date";
 import { getFilename } from "$lib/utils/fileValidation";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
@@ -216,13 +217,9 @@ async function handleAddBookmark() {
 }
 
 // Created timestamps are "YYYYMMDD / HHMMSS"; imported files may carry any string.
-const APP_TIMESTAMP = /^(\d{4})(\d{2})(\d{2})/;
-
 function formatDate(timestamp: string | null): string {
   if (!timestamp) return translate("bookmarks.never");
-  const match = APP_TIMESTAMP.exec(timestamp);
-  if (match) return `${match[1]}-${match[2]}-${match[3]}`;
-  return timestamp;
+  return formatTimestampAsDate(timestamp) ?? timestamp;
 }
 
 function toggleSortDirection() {
