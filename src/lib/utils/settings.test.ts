@@ -8,11 +8,15 @@ const backend = vi.hoisted(() => ({
   failSaves: false,
 }));
 
-vi.mock("$lib/i18n", () => ({ translate: (key: string) => key }));
+vi.mock("$lib/i18n", () => ({
+  translate: (key: string) => key,
+  SYSTEM_LOCALE: "system",
+  SUPPORTED_LOCALES: ["en"],
+}));
 vi.mock("./themes", () => ({ applyThemeCss: vi.fn() }));
 vi.mock("$lib/stores/appState.svelte", () => ({ appState: { osPlatform: "linux" } }));
 vi.mock("$lib/stores/settingsState.svelte", () => ({
-  settingsState: { activeTheme: "Auto (Light/Dark)", splitView: true, editorFontSize: 14 },
+  settingsState: { activeTheme: "Auto (Light/Dark)", splitView: true, editorFontSize: 14, locale: "system" },
   syncThemeFromSystem: vi.fn(),
 }));
 vi.mock("./backend", () => ({
