@@ -26,8 +26,11 @@ function serializedPaste<T>(op: () => Promise<T>): Promise<T> {
   return run;
 }
 
-function relativeTo(targetPath: string, directory: string): string {
-  return targetPath.slice(directory.length + 1).replace(/\\/g, "/");
+/** Path relative to `directory`, for the `![](…)` link. Handles a `/` directory. */
+export function relativeTo(targetPath: string, directory: string): string {
+  const prefix = directory.endsWith("/") ? directory : `${directory}/`;
+  const relative = targetPath.startsWith(prefix) ? targetPath.slice(prefix.length) : targetPath;
+  return relative.replace(/\\/g, "/");
 }
 
 function handlePasteError(err: unknown): void {
@@ -145,7 +148,7 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
   return true;
 }
 
-function sanitizeFileName(name: string): string {
+export function sanitizeFileName(name: string): string {
   const dot = name.lastIndexOf(".");
   const stem = dot > 0 ? name.slice(0, dot) : name;
   const ext = dot > 0 ? name.slice(dot) : "";
@@ -156,7 +159,7 @@ function sanitizeFileName(name: string): string {
   return `${clean || "image"}${ext.toLowerCase()}`;
 }
 
-function extractImagePath(text: string): string | null {
+export function extractImagePath(text: string): string | null {
   const ext = text.split(/[.?#]/).pop()?.toLowerCase() ?? "";
   if (!IMAGE_EXTENSIONS.has(ext)) return null;
 
@@ -200,7 +203,7 @@ async function savePastedImage(tabPath: string, image: Image): Promise<string | 
   return relativeTo(fileName, directory);
 }
 
-function buildFileName(markdownPath: string): string {
+export function buildFileName(markdownPath: string): string {
   const baseName = markdownPath.split("/").pop() ?? "";
   const stem = (baseName.split(".").slice(0, -1).join(".") || "image")
     .toLowerCase()
@@ -217,8 +220,8 @@ function formatTimestamp(date: Date = new Date()): string {
   return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
 }
 
-async function uniqueFileName(directory: string, baseFileName: string): Promise<string> {
-  const assetDir = `${directory}/${IMAGE_ASSET_DIR}`;
+export async function uniqueFileName(directory: string, baseFileName: string): Promise<string> {
+  const assetDir = `${directory.replace(/\/+$/, "")}/${IMAGE_ASSET_DIR}`;
   try {
     await callBackend("ensure_dir", { path: assetDir }, "File:Write", undefined, { ignore: true });
   } catch {
