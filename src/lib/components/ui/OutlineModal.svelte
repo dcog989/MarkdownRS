@@ -32,6 +32,7 @@ const nav = createListNavigation(
 $effect(() => {
   if (!isOpen) return;
   query = "";
+  nav.reset();
   const view = getActiveEditorView();
   headings = view ? collectOutlineHeadings(view.state) : [];
 });
