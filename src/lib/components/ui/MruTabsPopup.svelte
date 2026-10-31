@@ -6,6 +6,7 @@ import Modal from "$lib/components/ui/Modal.svelte";
 import TabIcon from "$lib/components/ui/TabIcon.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { appContext } from "$lib/stores/state.svelte";
+import { scrollIntoView } from "$lib/utils/modalUtils";
 
 interface Props {
   isOpen: boolean;
@@ -39,19 +40,6 @@ let mruTabs = $derived(
     .map((id) => appContext.editor.tabs.find((t) => t.id === id))
     .filter((t) => t !== undefined),
 );
-
-function scrollIntoView(node: HTMLElement, isSelected: boolean) {
-  if (isSelected) {
-    node.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }
-  return {
-    update(newIsSelected: boolean) {
-      if (newIsSelected) {
-        node.scrollIntoView({ block: "nearest", behavior: "smooth" });
-      }
-    },
-  };
-}
 </script>
 
 <Modal {isOpen} {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
