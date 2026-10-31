@@ -13,7 +13,8 @@ import { pushToMru, reorderTabs, togglePin, updateTabTitle } from "$lib/stores/e
 import type { EditorTab } from "$lib/stores/editorTypes";
 import { triggerScrollToTab } from "$lib/stores/interfaceStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { callBackend } from "$lib/utils/backend";
+import { AppError } from "$lib/utils/errorHandling";
+import { trashFileOnDisk } from "$lib/utils/fileIO";
 import {
   closeManyTabs,
   renameFile,
@@ -214,10 +215,13 @@ export class TabContextMenuLogic {
       await requestCloseTab(targetId, true);
       if (appContext.editor.tabs.some((t) => t.id === targetId)) return;
 
-      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
+      if (!(await trashFileOnDisk(targetPath))) return;
       (await import("$lib/services/fileMetadata")).invalidateMetadataCache(targetPath);
-    } catch {
-      // The failure has already been reported by callBackend.
+    } catch (err) {
+      AppError.handle("File:Write", err, {
+        showToast: true,
+        userMessage: translate("fileOps.failedDelete"),
+      });
     }
   };
 

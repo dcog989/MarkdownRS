@@ -10,8 +10,8 @@ import { forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeSto
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import type { FileEntry } from "$lib/types/api";
-import { callBackend } from "$lib/utils/backend";
-import { createDirOnDisk, createFileOnDisk, renameFileOnDisk } from "$lib/utils/fileIO";
+import { AppError } from "$lib/utils/errorHandling";
+import { createDirOnDisk, createFileOnDisk, renameFileOnDisk, trashFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
 import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { dirname } from "$lib/utils/path";
@@ -139,18 +139,21 @@ export class FileTreeContextMenuLogic {
     try {
       if (this.isDir) {
         const newPath = `${parent}/${clean}`;
-        await callBackend("rename_file", { oldPath: this.path, newPath }, "File:Write");
+        if (!(await renameFileOnDisk(this.path, newPath))) return;
         await retargetTabs(this.path, newPath);
         forgetSubtree(this.path);
       } else if (tab) {
         await renameFile(tab.id, clean);
       } else {
         const newPath = `${parent}/${resolveRenamedName(this.name, clean)}`;
-        await callBackend("rename_file", { oldPath: this.path, newPath }, "File:Write");
+        if (!(await renameFileOnDisk(this.path, newPath))) return;
       }
       refreshDirectoryIfInTree(parent);
-    } catch {
-      // rename failed; the error has already been reported
+    } catch (err) {
+      AppError.handle("File:Write", err, {
+        showToast: true,
+        userMessage: translate("fileOps.failedRename"),
+      });
     } finally {
       this.onClose();
     }
@@ -208,7 +211,7 @@ export class FileTreeContextMenuLogic {
       );
       if (stillOpen) return;
 
-      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
+      if (!(await trashFileOnDisk(targetPath))) return;
       invalidateMetadataCache(targetPath);
       forgetSubtree(targetPath);
       refreshDirectoryIfInTree(dirname(targetPath));
@@ -216,8 +219,11 @@ export class FileTreeContextMenuLogic {
       // Bookmark and history rows for the deleted path (or its children) now
       // point at nothing. Drop them so a click cannot open a dead path.
       await Promise.all([pruneBookmarksUnder(targetPath), pruneFileHistoryUnder(targetPath)]);
-    } catch {
-      // The failure has already been reported.
+    } catch (err) {
+      AppError.handle("File:Write", err, {
+        showToast: true,
+        userMessage: translate("fileOps.failedDelete"),
+      });
     } finally {
       this.onClose();
     }

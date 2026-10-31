@@ -687,6 +687,7 @@ export const en = {
     failedOpen: "Failed to open: {error}",
     failedSave: "Failed to save file",
     failedRename: "Failed to rename file",
+    failedDelete: "Failed to delete file",
     renameTargetExists: 'A file named "{name}" already exists',
     failedLoadDirectory: "Failed to load directory",
     failedReload: "Failed to reload file",

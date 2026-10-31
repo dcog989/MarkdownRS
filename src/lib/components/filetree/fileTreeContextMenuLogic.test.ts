@@ -6,10 +6,6 @@ vi.mock("$lib/i18n", () => ({
   translate: (key: string) => key,
 }));
 
-vi.mock("$lib/utils/backend", () => ({
-  callBackend: vi.fn(),
-}));
-
 vi.mock("$lib/utils/fileSystem", () => ({
   openFile: vi.fn(),
   renameFile: vi.fn(),
@@ -20,6 +16,7 @@ vi.mock("$lib/utils/fileIO", () => ({
   createDirOnDisk: vi.fn(),
   createFileOnDisk: vi.fn(),
   renameFileOnDisk: vi.fn(),
+  trashFileOnDisk: vi.fn(),
 }));
 
 vi.mock("$lib/services/fileWatcher", () => ({
@@ -69,7 +66,7 @@ import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import { pruneFileHistoryUnder } from "$lib/stores/fileHistoryStore.svelte";
 import { forgetSubtree } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { callBackend } from "$lib/utils/backend";
+import { trashFileOnDisk } from "$lib/utils/fileIO";
 import { requestCloseTab } from "$lib/utils/fileSystem";
 import { FileTreeContextMenuLogic } from "./fileTreeContextMenuLogic.svelte";
 
@@ -110,6 +107,7 @@ describe("FileTreeContextMenuLogic.handleDelete", () => {
     appContext.settings.confirmationSuppressed = false;
     appContext.editor.tabs = [tab()];
     vi.mocked(confirmDialog).mockResolvedValue("discard");
+    vi.mocked(trashFileOnDisk).mockResolvedValue(true);
   });
 
   it("does not trash the file when closing the dirty tab is cancelled", async () => {
@@ -118,8 +116,7 @@ describe("FileTreeContextMenuLogic.handleDelete", () => {
     await makeLogic(onClose).handleDelete();
 
     expect(requestCloseTab).toHaveBeenCalledWith("t1", true);
-    const trashed = vi.mocked(callBackend).mock.calls.some(([command]) => command === "send_to_recycle_bin");
-    expect(trashed).toBe(false);
+    expect(trashFileOnDisk).not.toHaveBeenCalled();
     expect(forgetSubtree).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalledTimes(1);
   });
@@ -131,10 +128,9 @@ describe("FileTreeContextMenuLogic.handleDelete", () => {
 
     await makeLogic().handleDelete();
 
-    const trashIndex = vi.mocked(callBackend).mock.calls.findIndex(([command]) => command === "send_to_recycle_bin");
-    expect(trashIndex).toBeGreaterThanOrEqual(0);
+    expect(trashFileOnDisk).toHaveBeenCalledWith("/root/a.md");
     expect(vi.mocked(requestCloseTab).mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(callBackend).mock.invocationCallOrder[trashIndex],
+      vi.mocked(trashFileOnDisk).mock.invocationCallOrder[0],
     );
     expect(forgetSubtree).toHaveBeenCalledWith("/root/a.md");
     expect(pruneBookmarksUnder).toHaveBeenCalledWith("/root/a.md");

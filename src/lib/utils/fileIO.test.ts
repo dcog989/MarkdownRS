@@ -6,7 +6,7 @@ vi.mock("./errorHandling", () => ({ AppError: { handle: vi.fn() } }));
 
 import { callBackend } from "./backend";
 import { AppError } from "./errorHandling";
-import { createDirOnDisk, createFileOnDisk } from "./fileIO";
+import { createDirOnDisk, createFileOnDisk, trashFileOnDisk } from "./fileIO";
 
 describe("file creation helpers", () => {
   beforeEach(() => {
@@ -27,6 +27,20 @@ describe("file creation helpers", () => {
 
     await expect(createFileOnDisk("/tmp/a.md")).resolves.toBe(false);
     await expect(createDirOnDisk("/tmp/dir")).resolves.toBe(false);
+    expect(AppError.handle).toHaveBeenCalledWith("File:Write", error, expect.anything());
+  });
+});
+
+describe("trashFileOnDisk", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reports a failed delete instead of swallowing it", async () => {
+    const error = new Error("denied");
+    vi.mocked(callBackend).mockRejectedValue(error);
+
+    await expect(trashFileOnDisk("/tmp/a.md")).resolves.toBe(false);
     expect(AppError.handle).toHaveBeenCalledWith("File:Write", error, expect.anything());
   });
 });

@@ -34,6 +34,19 @@ export async function renameFileOnDisk(oldPath: string, newPath: string): Promis
   }
 }
 
+export async function trashFileOnDisk(path: string): Promise<boolean> {
+  try {
+    await callBackend("send_to_recycle_bin", { path }, "File:Write");
+    return true;
+  } catch (err) {
+    AppError.handle("File:Write", err, {
+      showToast: true,
+      userMessage: translate("fileOps.failedDelete"),
+    });
+    return false;
+  }
+}
+
 export async function createFileOnDisk(path: string): Promise<boolean> {
   try {
     await callBackend("create_file", { path }, "File:Write");
