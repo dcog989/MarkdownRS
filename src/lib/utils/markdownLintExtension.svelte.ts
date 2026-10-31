@@ -13,6 +13,17 @@ const lintCache = new Map<string, { content: string; diagnostics: LintDiagnostic
 // A failing lint re-runs after every typing pause, so only the first failure of
 // a streak is reported; the next success re-arms it.
 let lintFailedNotified = false;
+// Each entry holds a full copy of a document, so keep only recent tabs.
+const MAX_LINT_CACHE_ENTRIES = 20;
+
+function cacheLintResult(tabId: string, content: string, diagnostics: LintDiagnostic[]): void {
+  lintCache.delete(tabId);
+  lintCache.set(tabId, { content, diagnostics });
+  if (lintCache.size > MAX_LINT_CACHE_ENTRIES) {
+    const oldest = lintCache.keys().next().value;
+    if (oldest !== undefined) lintCache.delete(oldest);
+  }
+}
 
 export const markdownLintRefreshEffect = StateEffect.define<null>();
 
@@ -139,12 +150,12 @@ export const createMarkdownLinter = () => {
       }
 
       if (!result) {
-        lintCache.set(tabId, { content, diagnostics: [] });
+        cacheLintResult(tabId, content, []);
         if (tabId === appContext.app.activeTabId) resetMarkdownLintState();
         return [];
       }
 
-      lintCache.set(tabId, { content, diagnostics: result });
+      cacheLintResult(tabId, content, result);
 
       return applyDiagnostics(view, result);
     },
