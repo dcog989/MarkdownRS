@@ -138,14 +138,20 @@ function findTableSpans(
 ): Array<{ from: number; to: number }> {
   const spans: Array<{ from: number; to: number }> = [];
   const tree = syntaxTree(state);
-  const cursor = state.selection.main.head;
+  // Any caret or selection touching a table keeps it raw, so edits never land
+  // in replaced text. Checking only the main range hid the text of a table
+  // covered by a selection (or under an extra range).
+  const inTable = (from: number, to: number) =>
+    state.selection.ranges.some((range) =>
+      range.empty ? range.from >= from && range.from <= to : range.from < to && range.to > from,
+    );
   const collect = (from: number, to: number) => {
     tree.iterate({
       from,
       to,
       enter: (node) => {
         if (node.name !== "Table") return;
-        if (cursor >= node.from && cursor <= node.to) return false;
+        if (inTable(node.from, node.to)) return false;
         spans.push({ from: node.from, to: node.to });
         return false;
       },

@@ -54,6 +54,14 @@ describe("findTableWidgetRanges", () => {
     expect(ranges).toHaveLength(1);
     expect(ranges[0].html).toContain("<th>Name</th>");
   });
+
+  it("keeps a table raw when a selection covers it", () => {
+    const state = createState(TWO_TABLES_SOURCE, 0).update({
+      selection: { anchor: 0, head: TWO_TABLES_SOURCE.length },
+    }).state;
+
+    expect(findTableWidgetRanges(state)).toHaveLength(0);
+  });
 });
 
 const originalGetClientRects = Range.prototype.getClientRects;
