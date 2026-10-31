@@ -51,7 +51,12 @@ let filteredTabs = $derived.by(() => {
 
 const nav = createListNavigation(
   () => filteredTabs.length,
-  (index) => handleSelect(filteredTabs[index].id),
+  // The list can shrink after the index was set (a filter is typed, tabs are
+  // closed), so fall back to the last row instead of reading an undefined entry.
+  (index) => {
+    const tab = filteredTabs[index] ?? filteredTabs[filteredTabs.length - 1];
+    if (tab) handleSelect(tab.id);
+  },
 );
 
 function getDropdownTitle(tab: EditorTab): string {
@@ -80,6 +85,13 @@ $effect(() => {
     const activeIndex = untrack(() => appContext.editor.tabs.findIndex((tab) => tab.id === appContext.app.activeTabId));
     nav.select(Math.max(activeIndex, 0));
   }
+});
+
+// Enter resolves an index against the filtered list, so a typed query must move
+// the selection back to the top match instead of leaving it on an old position.
+$effect(() => {
+  if (searchQuery.trim() === "") return;
+  nav.select(0);
 });
 
 function handleSelect(id: string) {
