@@ -323,17 +323,9 @@ export interface BackendCommands {
     return: undefined;
   };
   // Data Management
-  export_bookmarks: {
-    args: Record<string, never>;
-    return: Bookmark[];
-  };
   import_bookmarks: {
     args: { bookmarks: Bookmark[] };
     return: number;
-  };
-  export_file_history: {
-    args: Record<string, never>;
-    return: string[];
   };
   import_file_history: {
     args: { paths: string[] };

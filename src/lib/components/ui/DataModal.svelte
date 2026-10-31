@@ -27,7 +27,7 @@ async function exportBookmarks() {
   if (busy) return;
   busy = true;
   try {
-    const bookmarks = await callBackend("export_bookmarks", {}, "Data:ExportBookmarks");
+    const bookmarks = await callBackend("get_all_bookmarks", {}, "Data:ExportBookmarks");
     if (!bookmarks) return;
     const path = await save({
       defaultPath: "markdownrs-bookmarks.json",
@@ -69,7 +69,7 @@ async function exportFileHistory() {
   if (busy) return;
   busy = true;
   try {
-    const paths = await callBackend("export_file_history", {}, "Data:ExportFileHistory");
+    const paths = await callBackend("get_file_history", {}, "Data:ExportFileHistory");
     if (!paths) return;
     const dest = await save({
       defaultPath: "markdownrs-file-history.json",

@@ -4,17 +4,6 @@ use crate::utils::{handle_error, run_blocking};
 use tauri::State;
 
 #[tauri::command]
-pub async fn export_bookmarks(state: State<'_, AppState>) -> Result<Vec<Bookmark>, String> {
-    let db = state.db.clone();
-    run_blocking("export bookmarks", move || {
-        db.bookmarks()
-            .get_all_bookmarks()
-            .map_err(|e| handle_error(Some("bookmarks"), "export bookmarks", e))
-    })
-    .await
-}
-
-#[tauri::command]
 pub async fn import_bookmarks(state: State<'_, AppState>, bookmarks: Vec<Bookmark>) -> Result<usize, String> {
     let count = bookmarks.len();
     let db = state.db.clone();
@@ -23,17 +12,6 @@ pub async fn import_bookmarks(state: State<'_, AppState>, bookmarks: Vec<Bookmar
             .import_bookmarks(&bookmarks)
             .map_err(|e| handle_error(Some("bookmarks"), "import bookmarks", e))?;
         Ok(count)
-    })
-    .await
-}
-
-#[tauri::command]
-pub async fn export_file_history(state: State<'_, AppState>) -> Result<Vec<String>, String> {
-    let db = state.db.clone();
-    run_blocking("export file history", move || {
-        db.file_history()
-            .get_file_history()
-            .map_err(|e| handle_error(Some("file history"), "export file history", e))
     })
     .await
 }
