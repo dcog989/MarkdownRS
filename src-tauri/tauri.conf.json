@@ -10,7 +10,9 @@
   },
   "app": {
     "security": {
+      "dangerousDisableAssetCspModification": ["style-src"],
       "csp": {
+        "style-src": "'self' 'unsafe-inline'",
         "img-src": "'self' asset: http://asset.localhost blob: data:",
         "media-src": "'self' asset: http://asset.localhost blob: data:"
       },
