@@ -128,4 +128,23 @@ describe("persistSession", () => {
     expect(payload.activeTabs.map((t) => t.id)).toEqual(["keep"]);
     expect(payload.closedTabs).toContainEqual(expect.objectContaining({ id: "closed", content: "unsaved text" }));
   });
+
+  it("hands a second caller the in-flight save so close can await it", async () => {
+    let resolveSave: () => void = () => {};
+    mockedCallBackend.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    editorStore.tabs = [makeTab({ id: "t1", content: "text", contentLoaded: true })];
+    initTransientState("t1", { contentChanged: false, isPersisted: true });
+
+    const first = persistSession();
+    const second = persistSession();
+
+    expect(second).toBe(first);
+    resolveSave();
+    await second;
+  });
 });

@@ -1,4 +1,5 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { translate } from "$lib/i18n";
 import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { addTab, editorStore } from "$lib/stores/editorStore.svelte";
@@ -20,6 +21,8 @@ export function createAppInit() {
   // Settings are only safe to write back once the file has been read; a failed
   // init must not overwrite it with defaults.
   let settingsReady = false;
+  // True while the final save runs; further close requests are ignored.
+  let closing = false;
 
   async function initialize() {
     const appStartTime = performance.now();
@@ -102,6 +105,10 @@ export function createAppInit() {
     });
     unlisteners.push(unlisten4);
 
+    // Closing the window must wait for the final session and settings write:
+    // the async IPC is not guaranteed to finish if the webview is torn down.
+    unlisteners.push(await getCurrentWindow().onCloseRequested(handleCloseRequested));
+
     // Track the cursor position so tooltips anchor to where the pointer is when
     // their show-delay elapses, not where it was when the element was entered.
     const handleCursorMove = (e: MouseEvent) => setCursorPosition(e.clientX, e.clientY);
@@ -124,7 +131,26 @@ export function createAppInit() {
     persistSessionDebounced.clear();
     runFlushFunctions();
     persistSession();
-    saveSettingsNow();
+    if (settingsReady) saveSettingsNow();
+  }
+
+  async function handleCloseRequested(event: { preventDefault: () => void }): Promise<void> {
+    // Every request is answered explicitly below, so an extra click while the
+    // save runs cannot destroy the window before the write finishes.
+    event.preventDefault();
+    if (closing) return;
+
+    closing = true;
+    try {
+      persistSessionDebounced.clear();
+      runFlushFunctions();
+      // Wait out an in-flight save, then persist the content flushed above.
+      await persistSession();
+      if (editorStore.sessionDirty) await persistSession();
+      if (settingsReady) await saveSettingsNow();
+    } finally {
+      await getCurrentWindow().destroy();
+    }
   }
 
   function handleDestroy(isUnloading: boolean) {

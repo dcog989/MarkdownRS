@@ -50,7 +50,7 @@ type RustTabState = {
   preferred_extension?: string | null;
 };
 
-let saveInProgress = false;
+let saveInProgress: Promise<void> | null = null;
 
 /** Large, clean, disk-backed files are re-read from disk on restore, so skip
  *  writing their content into the session DB on every save (dirty ones must
@@ -92,12 +92,19 @@ function toRustTabState(
   };
 }
 
-export async function persistSession(): Promise<void> {
-  if (!editorStore.sessionRestored || !editorStore.sessionDirty || saveInProgress) {
-    return;
-  }
+export function persistSession(): Promise<void> {
+  // Awaiting a call while a save is already running must wait for that write,
+  // not return early (close uses this to know everything reached the DB).
+  if (saveInProgress) return saveInProgress;
+  if (!editorStore.sessionRestored || !editorStore.sessionDirty) return Promise.resolve();
 
-  saveInProgress = true;
+  saveInProgress = runPersistSession().finally(() => {
+    saveInProgress = null;
+  });
+  return saveInProgress;
+}
+
+async function runPersistSession(): Promise<void> {
   // Consume the flag before the write: a change made while it is in flight
   // sets it again, so finishing this save cannot clear it.
   editorStore.sessionDirty = false;
@@ -184,8 +191,6 @@ export async function persistSession(): Promise<void> {
       showToast: false,
       severity: "warning",
     });
-  } finally {
-    saveInProgress = false;
   }
 }
 
