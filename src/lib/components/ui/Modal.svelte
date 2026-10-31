@@ -35,23 +35,6 @@ let modalPanel = $state<HTMLDivElement>();
 const selector =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-// Cache focusable elements to avoid repeated DOM queries
-let cachedFocusableElements: HTMLElement[] = [];
-let cacheValid = false;
-
-function getFocusableElements(container: HTMLElement, forceUpdate = false): HTMLElement[] {
-  if (forceUpdate || !cacheValid || cachedFocusableElements.length === 0) {
-    cachedFocusableElements = Array.from(container.querySelectorAll(selector));
-    cacheValid = true;
-  }
-  return cachedFocusableElements;
-}
-
-function invalidateFocusCache() {
-  cachedFocusableElements = [];
-  cacheValid = false;
-}
-
 function handleKeydown(e: KeyboardEvent) {
   if (!isOpen) return;
 
@@ -96,11 +79,10 @@ $effect(() => {
   viewport?.scrollTo(0, 0);
 
   // Focus the first focusable element when modal opens
-  invalidateFocusCache();
-  const focusableElements = modalPanel ? getFocusableElements(modalPanel, true) : [];
+  const focusableElements = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
   if (focusableElements.length > 0) {
     setTimeout(() => {
-      const currentFocusable = modalPanel ? getFocusableElements(modalPanel) : [];
+      const currentFocusable = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
       if (currentFocusable.length > 0 && !modalPanel?.contains(document.activeElement)) {
         currentFocusable[0].focus();
       }
@@ -118,7 +100,7 @@ $effect(() => {
     // If focus is moving outside the modal, bring it back
     if (target && !modalPanel?.contains(target)) {
       e.preventDefault();
-      const focusable = modalPanel ? getFocusableElements(modalPanel) : [];
+      const focusable = modalPanel ? queryHTMLElements(modalPanel, selector) : [];
       if (focusable.length > 0) {
         focusable[0].focus();
       }
@@ -128,24 +110,9 @@ $effect(() => {
   modalPanel?.addEventListener("focusout", handleFocusOut);
   modalPanel?.addEventListener("keydown", handleKeydown);
 
-  // Set up a mutation observer to invalidate focus cache when DOM changes
-  const mutationObserver = new MutationObserver(() => {
-    invalidateFocusCache();
-  });
-
-  if (modalPanel) {
-    mutationObserver.observe(modalPanel, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["disabled", "tabindex"],
-    });
-  }
-
   return () => {
     modalPanel?.removeEventListener("focusout", handleFocusOut);
     modalPanel?.removeEventListener("keydown", handleKeydown);
-    mutationObserver.disconnect();
 
     // Restore focus (e.g. the editor) so keyboard input keeps working after closing.
     // preventScroll keeps CodeMirror from scrolling its contentDOM (anchored at the
