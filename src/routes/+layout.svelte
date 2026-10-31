@@ -1,4 +1,5 @@
 <script lang="ts">
+import { invoke } from "@tauri-apps/api/core";
 import { onMount } from "svelte";
 import { locale } from "svelte-i18n";
 import { commands } from "$lib/commands/commands";
@@ -89,6 +90,11 @@ onMount(() => {
   const handleKeydown = (e: KeyboardEvent) => {
     const key = e.key.toLowerCase();
     const isCtrl = e.ctrlKey || e.metaKey;
+
+    if (key === "f12") {
+      if ("__TAURI_INTERNALS__" in window) void invoke("toggle_devtools").catch(() => {});
+      return;
+    }
 
     // Prevent default for browser shortcuts that conflict with app shortcuts
     if (isCtrl && key === "p") {

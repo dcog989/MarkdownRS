@@ -38,6 +38,24 @@ export default defineConfig({
       fallback: "404.html",
       strict: true,
     }),
+    csp: {
+      mode: "auto",
+      directives: {
+        "default-src": ["self"],
+        "script-src": ["self"],
+        // Themes and the custom accent are injected as runtime <style> elements.
+        "style-src": ["self", "unsafe-inline"],
+        "img-src": ["self", "asset:", "http://asset.localhost", "data:", "blob:", "https:", "http:"],
+        "font-src": ["self", "data:"],
+        // IPC is an HTTP request in Tauri v2; ws: is the dev server's HMR socket.
+        "connect-src": ["self", "ipc:", "http://ipc.localhost", "ws:", "wss:"],
+        "media-src": ["self", "asset:", "http://asset.localhost"],
+        "object-src": ["none"],
+        "base-uri": ["self"],
+        "frame-src": ["none"],
+        "form-action": ["none"],
+      },
+    },
   }),
   resolve: {
     alias: {
