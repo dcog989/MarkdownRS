@@ -81,6 +81,7 @@
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-image",
     "clipboard-manager:allow-write-image",
-    "updater:default"
+    "updater:default",
+    "process:allow-restart"
   ]
 }
