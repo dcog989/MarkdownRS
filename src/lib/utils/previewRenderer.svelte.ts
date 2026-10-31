@@ -21,6 +21,7 @@ export class PreviewRenderer {
   lastRendered = "";
   lastFlavor = "";
   lastPath: string | null | undefined = undefined;
+  lastTheme = "";
   lastTabId = "";
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private spinnerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -35,12 +36,13 @@ export class PreviewRenderer {
     this.lastRendered = "";
     this.lastFlavor = "";
     this.lastPath = undefined;
+    this.lastTheme = "";
     this.htmlContent = "";
     this.renderError = "";
     this.cancelPending();
   }
 
-  scheduleRender(content: string, flavor: string, tabPath: string | null | undefined): () => void {
+  scheduleRender(content: string, flavor: string, tabPath: string | null | undefined, theme: string): () => void {
     this.cancelPending();
 
     this.renderError = "";
@@ -63,6 +65,7 @@ export class PreviewRenderer {
         this.lastRendered = content;
         this.lastFlavor = flavor;
         this.lastPath = tabPath;
+        this.lastTheme = theme;
         cachePreviewHeadings(content, result.headings);
         this.callbacks.onContentRendered();
       } catch (err) {
@@ -70,6 +73,7 @@ export class PreviewRenderer {
         this.lastRendered = content;
         this.lastFlavor = flavor;
         this.lastPath = tabPath;
+        this.lastTheme = theme;
         this.renderError = err instanceof Error ? err.message : translate("preview.renderFailed");
       } finally {
         // Only the current render owns the shared state: a superseded render

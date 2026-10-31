@@ -31,9 +31,8 @@ function detectTheme(): "dark" | "default" {
   return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "default";
 }
 
-async function getMermaid(): Promise<MermaidModule> {
+async function getMermaid(theme: "dark" | "default"): Promise<MermaidModule> {
   const mod = await loadMermaid();
-  const theme = detectTheme();
   if (initializedTheme !== theme) {
     mod.default.initialize({ startOnLoad: false, theme, securityLevel: "strict" });
     initializedTheme = theme;
@@ -79,14 +78,15 @@ export async function renderMermaidDiagrams(container: HTMLElement): Promise<voi
   const blocks = Array.from(container.querySelectorAll<HTMLElement>(MERMAID_SELECTOR));
   if (blocks.length === 0) return;
 
-  const mermaid = (await getMermaid()).default;
+  const theme = detectTheme();
+  const mermaid = (await getMermaid(theme)).default;
 
   for (const block of blocks) {
     const pre = block.closest("pre");
     if (!pre?.isConnected) continue;
 
     const source = block.textContent ?? "";
-    const key = hashContent(source);
+    const key = `${theme}-${hashContent(source)}`;
     const cached = svgCache.get(key);
     if (cached !== undefined) {
       insertDiagram(pre, cached, key);

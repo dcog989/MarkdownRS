@@ -45,6 +45,7 @@ let tabContent = $derived(activeTab?.content || "");
 
 let isMarkdown = $derived(isMarkdownTab(activeTab));
 let flavor = $derived(appContext.settings.markdownFlavor);
+let theme = $derived(appContext.settings.theme);
 
 $effect(() => {
   // Capture the outgoing tab's preview position before its content is reset,
@@ -74,12 +75,13 @@ $effect(() => {
     content === renderer.lastRendered &&
     currentFlavor === renderer.lastFlavor &&
     (tabPath ?? null) === (renderer.lastPath ?? null) &&
+    theme === renderer.lastTheme &&
     renderer.htmlContent
   ) {
     return;
   }
 
-  return renderer.scheduleRender(content, currentFlavor, tabPath);
+  return renderer.scheduleRender(content, currentFlavor, tabPath, theme);
 });
 
 // Restore the preview's saved scroll position only when htmlContent goes from

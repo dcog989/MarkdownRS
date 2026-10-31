@@ -67,6 +67,17 @@ describe("renderMermaidDiagrams", () => {
     expect(initializeMock).toHaveBeenCalledWith(expect.objectContaining({ theme: "dark" }));
   });
 
+  it("does not reuse a cached diagram across themes", async () => {
+    container.innerHTML = '<pre><code class="language-mermaid">graph TD</code></pre>';
+    await renderMermaidDiagrams(container);
+
+    document.documentElement.setAttribute("data-theme", "dark");
+    container.innerHTML = '<pre><code class="language-mermaid">graph TD</code></pre>';
+    await renderMermaidDiagrams(container);
+
+    expect(renderMock).toHaveBeenCalledTimes(2);
+  });
+
   it("replaces failed blocks with an error fallback", async () => {
     renderMock.mockRejectedValue(new Error("Syntax error in diagram"));
     container.innerHTML = '<pre><code class="language-mermaid">not a diagram</code></pre>';
