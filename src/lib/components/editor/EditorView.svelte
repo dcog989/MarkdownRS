@@ -195,9 +195,14 @@ $effect(() => {
 
 $effect(() => {
   if (!view) return;
-  if (isLargeFile) return;
+  // Install the empty config instead of returning: a tab can grow past the
+  // large-file limit while it is open, and the effect must remove the tracking.
   view.dispatch({
-    effects: comps.recentComp.reconfigure(createRecentChangesHighlighter(lineChangeTracker, onContextMenu)),
+    effects: comps.recentComp.reconfigure(
+      isLargeFile
+        ? createRecentChangesHighlighter(undefined, onContextMenu)
+        : createRecentChangesHighlighter(lineChangeTracker, onContextMenu),
+    ),
   });
 });
 
@@ -206,8 +211,7 @@ $effect(() => {
   const dictLoaded = spellcheckState.dictionaryLoaded;
   tabId;
   if (!dictLoaded) return;
-  if (isLargeFile) return;
-  view.dispatch({ effects: comps.spellComp.reconfigure(createSpellCheckLinter()) });
+  view.dispatch({ effects: comps.spellComp.reconfigure(isLargeFile ? [] : createSpellCheckLinter()) });
 });
 
 $effect(() => {
