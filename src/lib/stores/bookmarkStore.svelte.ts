@@ -1,8 +1,9 @@
 import { translate } from "$lib/i18n";
-import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { getCurrentTimestamp } from "$lib/utils/date";
+import { appState } from "./appState.svelte";
+import { editorStore } from "./editorStoreCore.svelte";
 
 export type Bookmark = {
   id: string;
@@ -101,7 +102,7 @@ export function getBookmarkByPath(path: string): Bookmark | undefined {
 }
 
 export function addBookmarkForActiveTab(): boolean {
-  const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
+  const tab = editorStore.tabs.find((t) => t.id === appState.activeTabId);
   if (tab?.path) {
     addBookmark(tab.path, tab.title).then(({ isNew }) => {
       if (isNew) showToast("success", translate("bookmarks.addedToast", { values: { title: tab.title } }));

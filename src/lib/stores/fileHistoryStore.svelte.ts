@@ -1,6 +1,6 @@
-import { appContext } from "$lib/stores/state.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { getCurrentTimestamp } from "$lib/utils/date";
+import { settingsState } from "./settingsState.svelte";
 
 export const fileHistoryStore = $state({
   files: [] as string[],
@@ -15,7 +15,7 @@ export async function loadFileHistory() {
   });
 
   if (files) {
-    fileHistoryStore.files = files.slice(0, appContext.settings.fileHistoryLimit);
+    fileHistoryStore.files = files.slice(0, settingsState.fileHistoryLimit);
   }
   fileHistoryStore.isLoaded = true;
 }
@@ -26,7 +26,7 @@ export async function addToFileHistory(path: string) {
   // Optimistic UI update
   fileHistoryStore.files = [path, ...fileHistoryStore.files.filter((f) => f !== path)].slice(
     0,
-    appContext.settings.fileHistoryLimit,
+    settingsState.fileHistoryLimit,
   );
 
   await callBackend("add_to_file_history", { path, lastOpened: timestamp }, "Database:Init", undefined, {

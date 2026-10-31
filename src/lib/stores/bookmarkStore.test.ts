@@ -4,10 +4,6 @@ vi.mock("$lib/utils/backend", () => ({
   callBackend: vi.fn().mockResolvedValue(undefined),
 }));
 
-// The real state tree pulls in the whole app; this module only reads it from
-// `addBookmarkForActiveTab`, which these tests do not exercise.
-vi.mock("$lib/stores/state.svelte", () => ({ appContext: {} }));
-
 import { callBackend } from "$lib/utils/backend";
 import { type Bookmark, bookmarkStore, updateBookmark } from "./bookmarkStore.svelte";
 
