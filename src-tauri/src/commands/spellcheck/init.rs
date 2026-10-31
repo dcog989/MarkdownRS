@@ -169,16 +169,11 @@ async fn run_spellcheck_init(
         &cache_dir,
         &spec_codes,
         &tech_cache_dir,
-        &state.spellcheck_cancel,
         &mut progress,
     )
     .await;
     let downloaded_language_count = language_dicts.len();
 
-    if state.spellcheck_cancel.load(Ordering::SeqCst) {
-        log::info!("[SPELLCHECK-RUST] Spellcheck init cancelled");
-        return;
-    }
     emit_progress(&app_handle, "build", 0, 1);
 
     let supplemental_count = technical_words.len();
@@ -259,7 +254,6 @@ pub async fn init_spellchecker(
     }
 
     let generation_id = state.spellcheck_init_gen.fetch_add(1, Ordering::SeqCst).wrapping_add(1);
-    state.spellcheck_cancel.store(false, Ordering::SeqCst);
 
     {
         let mut status = state.spellcheck_status.lock_or_recover();

@@ -8,8 +8,7 @@ use crate::state::SpellcheckStatus;
 use crate::utils::{IntoTauriError, MutexExt, RwLockExt, handle_error};
 use std::collections::HashSet;
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
-use tauri::{Emitter, State};
+use tauri::State;
 
 const MAX_SUGGESTIONS: usize = 5;
 
@@ -139,27 +138,4 @@ pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) 
 pub async fn get_spellcheck_status(state: State<'_, AppState>) -> Result<SpellcheckStatus, String> {
     let status = state.spellcheck_status.lock_or_recover();
     Ok(*status)
-}
-
-#[tauri::command]
-pub async fn cancel_spellcheck_init(app_handle: tauri::AppHandle, state: State<'_, AppState>) -> Result<(), String> {
-    let cancelled = state.spellcheck_cancel.swap(true, Ordering::SeqCst);
-    if !cancelled {
-        log::info!("[SPELLCHECK-RUST] Spellcheck init cancellation requested");
-    }
-
-    // Invalidate any in-flight build so it discards its result.
-    state.spellcheck_init_gen.fetch_add(1, Ordering::SeqCst);
-
-    {
-        let mut status = state.spellcheck_status.lock_or_recover();
-        *status = SpellcheckStatus::Uninitialized;
-    }
-    {
-        let mut loaded = state.loaded_spellcheck_config.lock_or_recover();
-        *loaded = None;
-    }
-    // Let a frontend waiting on init completion resolve promptly.
-    let _ = app_handle.emit(init::SPELLCHECK_STATUS_EVENT, "failed");
-    Ok(())
 }

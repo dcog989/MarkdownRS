@@ -2,7 +2,6 @@ use super::dicts;
 use anyhow::{Result, anyhow};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::Ordering;
 use std::time::Duration;
 use tokio::fs;
 
@@ -179,7 +178,6 @@ pub async fn download_and_collect_words(
     cache_dir: &Path,
     spec_codes: &[String],
     tech_cache_dir: &Path,
-    cancel: &std::sync::atomic::AtomicBool,
     progress: &mut (dyn FnMut(usize, usize) + Send),
 ) -> (Vec<(String, String)>, HashSet<String>) {
     let total = dict_codes.len() + spec_codes.len();
@@ -209,10 +207,6 @@ pub async fn download_and_collect_words(
 
     let mut dict_results: Vec<(usize, _)> = Vec::new();
     for task in dict_tasks {
-        if cancel.load(Ordering::SeqCst) {
-            log::info!("[SPELLCHECK-RUST] Download cancelled, aborting language dictionaries");
-            break;
-        }
         if let Ok((i, res)) = task.await {
             done += 1;
             progress(done, total);
@@ -234,10 +228,6 @@ pub async fn download_and_collect_words(
     }
 
     for task in spec_tasks {
-        if cancel.load(Ordering::SeqCst) {
-            log::info!("[SPELLCHECK-RUST] Download cancelled, aborting supplemental dictionaries");
-            break;
-        }
         if let Ok((code, res)) = task.await {
             done += 1;
             progress(done, total);

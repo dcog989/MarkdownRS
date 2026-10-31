@@ -195,10 +195,6 @@ export interface BackendCommands {
     args: Record<string, never>;
     return: string;
   };
-  cancel_spellcheck_init: {
-    args: Record<string, never>;
-    return: undefined;
-  };
 
   // Markdown / Text
   render_markdown: {
