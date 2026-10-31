@@ -10,6 +10,11 @@ apply() {
   tmp="$(mktemp)"
   sed "$@" "$file" > "$tmp"
   if cmp -s "$file" "$tmp"; then
+    # Re-running for the version already in the file leaves it unchanged; that is not an error.
+    if grep -qF "$version" "$tmp"; then
+      rm -f "$tmp"
+      return 0
+    fi
     echo "error: no version replacement matched in $file" >&2
     rm -f "$tmp"
     exit 1
