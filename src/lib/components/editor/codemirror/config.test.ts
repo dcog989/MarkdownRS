@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toCmKey } from "./config";
+import { canonicalKey, toCmKey } from "./config";
 
 describe("toCmKey", () => {
   it("maps ctrl and meta to Mod", () => {
@@ -18,5 +18,17 @@ describe("toCmKey", () => {
     expect(toCmKey("ctrl+shift+e")).toBe("Mod-Shift-e");
     expect(toCmKey("f8")).toBe("F8");
     expect(toCmKey("ctrl+space")).toBe("Mod-Space");
+  });
+});
+
+describe("canonicalKey", () => {
+  it("treats modifier order and the Mod alias as equivalent", () => {
+    expect(canonicalKey("Mod-Shift-k")).toBe(canonicalKey("Shift-Mod-k"));
+    expect(canonicalKey("Alt-Mod-k")).toBe(canonicalKey("Mod-Alt-k"));
+  });
+
+  it("keeps different chords apart", () => {
+    expect(canonicalKey("Alt-ArrowUp")).not.toBe(canonicalKey("Alt-ArrowDown"));
+    expect(canonicalKey("Mod-k")).not.toBe(canonicalKey("Mod-Shift-k"));
   });
 });

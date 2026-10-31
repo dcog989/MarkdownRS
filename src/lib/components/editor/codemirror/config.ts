@@ -138,13 +138,44 @@ for (const cmd of commands) {
   }
 }
 
+const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
+
+// Settings and CodeMirror's default map write the same chord in different
+// orders ("Mod-Shift-k" vs "Shift-Mod-k"), so compare them in one form.
+export function canonicalKey(key: string): string {
+  const parts = key.split("-");
+  const keyName = parts.pop() ?? "";
+  const mods = new Set<string>();
+  for (const part of parts) {
+    const lower = part.toLowerCase();
+    if (lower === "mod") mods.add(IS_MAC ? "Meta" : "Ctrl");
+    else if (lower === "ctrl" || lower === "control") mods.add("Ctrl");
+    else if (lower === "meta" || lower === "cmd") mods.add("Meta");
+    else if (lower === "alt") mods.add("Alt");
+    else if (lower === "shift") mods.add("Shift");
+  }
+  return [...["Alt", "Ctrl", "Meta", "Shift"].filter((mod) => mods.has(mod)), keyName].join("-");
+}
+
+function addFilteredKey(keys: Set<string>, cmKey: string): void {
+  const key = canonicalKey(cmKey);
+  keys.add(key);
+  const lastChar = key.at(-1);
+  if (lastChar && /^[a-zA-Z]$/.test(lastChar)) {
+    const prefix = key.slice(0, -1);
+    keys.add(prefix + lastChar.toUpperCase());
+    keys.add(prefix + lastChar.toLowerCase());
+  }
+}
+
 export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
   const cmBindings: KeyBinding[] = [];
   const filteredKeys = new Set<string>();
 
   for (const def of cmHandlerMap) {
     const customKey = appContext.settings.customShortcuts[def.registryKey];
-    const cmKey = customKey ? toCmKey(customKey) : toCmKey(commandDefaultKeys.get(def.registryKey) ?? "");
+    const defaultKey = commandDefaultKeys.get(def.registryKey);
+    const cmKey = customKey ? toCmKey(customKey) : toCmKey(defaultKey ?? "");
 
     cmBindings.push({
       key: cmKey,
@@ -154,14 +185,11 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
       },
       preventDefault: true,
     });
-    filteredKeys.add(cmKey);
+    addFilteredKey(filteredKeys, cmKey);
 
-    const lastChar = cmKey.at(-1);
-    if (lastChar && /^[a-zA-Z]$/.test(lastChar)) {
-      const prefix = cmKey.slice(0, -1);
-      filteredKeys.add(prefix + lastChar.toUpperCase());
-      filteredKeys.add(prefix + lastChar.toLowerCase());
-    }
+    // A custom key replaces the default: free the old one, or the default
+    // keymap below still runs the command on it.
+    if (customKey && defaultKey) addFilteredKey(filteredKeys, toCmKey(defaultKey));
   }
 
   return keymap.of([
@@ -172,7 +200,8 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...(closeBracketsKeymap as KeyBinding[]),
     { key: "Mod-Delete", mac: "Alt-Delete", run: deleteGroupForwardWin, preventDefault: true },
     ...(defaultKeymap.filter(
-      (binding) => binding.key !== "Tab" && binding.key !== "Mod-Delete" && !filteredKeys.has(binding.key ?? ""),
+      (binding) =>
+        binding.key !== "Tab" && binding.key !== "Mod-Delete" && !filteredKeys.has(canonicalKey(binding.key ?? "")),
     ) as KeyBinding[]),
     { key: "Tab", run: handleTabKey, shift: indentLess },
   ]);
