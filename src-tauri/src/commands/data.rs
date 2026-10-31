@@ -5,26 +5,23 @@ use tauri::State;
 
 #[tauri::command]
 pub async fn import_bookmarks(state: State<'_, AppState>, bookmarks: Vec<Bookmark>) -> Result<usize, String> {
-    let count = bookmarks.len();
     let db = state.db.clone();
     run_blocking("import bookmarks", move || {
+        // Report what was written, not what the file contained.
         db.bookmarks()
             .import_bookmarks(&bookmarks)
-            .map_err(|e| handle_error(Some("bookmarks"), "import bookmarks", e))?;
-        Ok(count)
+            .map_err(|e| handle_error(Some("bookmarks"), "import bookmarks", e))
     })
     .await
 }
 
 #[tauri::command]
 pub async fn import_file_history(state: State<'_, AppState>, paths: Vec<String>) -> Result<usize, String> {
-    let count = paths.len();
     let db = state.db.clone();
     run_blocking("import file history", move || {
         db.file_history()
             .import_file_history(&paths)
-            .map_err(|e| handle_error(Some("file history"), "import file history", e))?;
-        Ok(count)
+            .map_err(|e| handle_error(Some("file history"), "import file history", e))
     })
     .await
 }

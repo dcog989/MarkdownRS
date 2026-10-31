@@ -56,25 +56,26 @@ impl FileHistoryStore {
         crate::db::delete_orphans(&self.conn, "file_history", "path", dry_run, only)
     }
 
-    pub fn import_file_history(&self, paths: &[String]) -> Result<()> {
+    pub fn import_file_history(&self, paths: &[String]) -> Result<usize> {
         if paths.is_empty() {
-            return Ok(());
+            return Ok(0);
         }
         let now = now_timestamp();
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
         tx.execute_batch("DROP TRIGGER IF EXISTS prune_file_history")?;
+        let mut written = 0;
         {
             let mut stmt =
                 tx.prepare_cached("INSERT OR IGNORE INTO file_history (path, last_opened) VALUES (?1, ?2)")?;
             for path in paths {
-                stmt.execute(rusqlite::params![path, &now])?;
+                written += stmt.execute(rusqlite::params![path, &now])?;
             }
         }
         tx.execute_batch(&schema::prune_file_history_ddl())?;
         tx.execute_batch(&schema::prune_file_history_trigger_ddl())?;
         tx.commit()?;
-        Ok(())
+        Ok(written)
     }
 }
 
@@ -114,6 +115,22 @@ mod tests {
         assert!(
             !files.contains(&"/f0001.md".to_string()),
             "second oldest entry survived the prune"
+        );
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn import_reports_only_the_rows_it_wrote() {
+        let (db, dir) = open_store("file-history-import-count");
+        let store = db.file_history();
+        let paths = vec!["/a.md".to_string()];
+
+        assert_eq!(store.import_file_history(&paths).unwrap(), 1);
+        assert_eq!(
+            store.import_file_history(&paths).unwrap(),
+            0,
+            "a path already in the history must not be counted as imported"
         );
 
         fs::remove_dir_all(&dir).unwrap();

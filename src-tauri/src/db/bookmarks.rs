@@ -89,21 +89,22 @@ impl BookmarkStore {
         crate::db::delete_orphans(&self.conn, "bookmarks", "id", dry_run, only)
     }
 
-    pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {
+    pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<usize> {
         if bookmarks.is_empty() {
-            return Ok(());
+            return Ok(0);
         }
         let mut conn = lock_conn!(self);
         let tx = conn.transaction()?;
+        let mut written = 0;
         {
             let mut stmt = tx.prepare_cached(UPSERT_SQL)?;
             for bookmark in bookmarks {
                 let params = bind_bookmark(bookmark)?;
-                stmt.execute(params)?;
+                written += stmt.execute(params)?;
             }
         }
         tx.commit()?;
-        Ok(())
+        Ok(written)
     }
 }
 
