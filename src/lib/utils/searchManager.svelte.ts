@@ -65,6 +65,9 @@ function calculateSearchStats(view: EditorView, query: SearchQuery) {
       if (item.value.from === selection.from && item.value.to === selection.to) {
         idx = count;
         found = true;
+      } else if (selection.head >= item.value.from && selection.head <= item.value.to) {
+        idx = count;
+        found = true;
       } else if (selection.head < item.value.from) {
         idx = count;
         found = true;
