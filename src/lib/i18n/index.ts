@@ -53,7 +53,6 @@ export function resolveLocale(localeId: string): string {
 
 export type TranslateOptions = {
   values?: Record<string, string | number | boolean | Date | null | undefined>;
-  default?: string;
 };
 
 export function translate(key: MessageKey, options?: TranslateOptions): string {
