@@ -8,11 +8,12 @@ import { updateTabFields } from "$lib/stores/editorStore.svelte";
 import { pruneFileHistoryUnder } from "$lib/stores/fileHistoryStore.svelte";
 import { forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { createDirOnDisk, createFileOnDisk, renameFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
-import { resolveRenamedName } from "$lib/utils/fileValidation";
+import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { dirname } from "$lib/utils/path";
 
 // Open tabs at or inside a renamed path keep the old path; rewrite it so the
@@ -67,6 +68,10 @@ export class FileTreeContextMenuLogic {
     if (!raw?.trim()) return;
 
     const clean = raw.trim();
+    if (!isValidFileName(clean)) {
+      showToast("error", translate("fileOps.invalidName"));
+      return;
+    }
     // Default to a markdown extension for extensionless names.
     const finalName = clean.includes(".") ? clean : `${clean}.md`;
     const newPath = `${this.directory}/${finalName}`;
@@ -89,7 +94,13 @@ export class FileTreeContextMenuLogic {
     });
     if (!raw?.trim()) return;
 
-    const newPath = `${this.directory}/${raw.trim()}`;
+    const clean = raw.trim();
+    if (!isValidFileName(clean)) {
+      showToast("error", translate("fileOps.invalidName"));
+      return;
+    }
+
+    const newPath = `${this.directory}/${clean}`;
     try {
       const created = await createDirOnDisk(newPath);
       if (created) {
@@ -115,6 +126,12 @@ export class FileTreeContextMenuLogic {
     if (!raw?.trim()) return;
 
     const clean = raw.trim();
+    if (!isValidFileName(clean)) {
+      showToast("error", translate("fileOps.invalidName"));
+      this.onClose();
+      return;
+    }
+
     // `directory` is the folder itself for a folder row, so renaming must
     // target its parent (the same place the refresh below has to look).
     const parent = dirname(this.path);

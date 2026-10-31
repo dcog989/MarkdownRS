@@ -130,6 +130,14 @@ export function isMarkdownFile(path: string): boolean {
 }
 
 /**
+ * A name that stays inside the folder it is typed in. Without this a "rename"
+ * to `../notes` or `sub/notes` silently moves the file out of its folder.
+ */
+export function isValidFileName(name: string): boolean {
+  return name !== "." && name !== ".." && !/[/\\]/.test(name);
+}
+
+/**
  * Keep the old extension when the new name has none, so renaming `notes.md`
  * to `notes` does not silently turn it into a plain file. Used by every rename
  * path so an open tab and an unopened file get the same name.

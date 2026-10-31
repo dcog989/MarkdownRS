@@ -5,6 +5,7 @@ import {
   isMarkdownFile,
   isMarkdownTab,
   isTextFile,
+  isValidFileName,
   resolveRenamedName,
 } from "./fileValidation";
 
@@ -75,6 +76,21 @@ describe("isMarkdownFile", () => {
   it("rejects non-markdown extensions", () => {
     expect(isMarkdownFile("a.txt")).toBe(false);
     expect(isMarkdownFile("a.md.js")).toBe(false);
+  });
+});
+
+describe("isValidFileName", () => {
+  it("accepts a plain name", () => {
+    expect(isValidFileName("notes.md")).toBe(true);
+    expect(isValidFileName("my notes (2).md")).toBe(true);
+  });
+
+  it("rejects names that would move the file out of its folder", () => {
+    expect(isValidFileName("../notes")).toBe(false);
+    expect(isValidFileName("sub/notes.md")).toBe(false);
+    expect(isValidFileName("C:\\notes.md")).toBe(false);
+    expect(isValidFileName(".")).toBe(false);
+    expect(isValidFileName("..")).toBe(false);
   });
 });
 

@@ -672,6 +672,7 @@ export const en = {
     untitled: "Untitled",
     failedMetadata: "Failed to retrieve file metadata",
     notTextFile: "Not a text file: {name}",
+    invalidName: 'Use a plain name: no "/" or "\\", and not "." or ".."',
     failedReadNull: "Failed to read file: null result",
     failedRead: "Failed to read file",
     tooLarge: "File is too large ({size} MB). Maximum allowed is {max} MB.",
