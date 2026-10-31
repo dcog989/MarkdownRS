@@ -269,8 +269,18 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
+function isModalOpen(): boolean {
+  if (appContext.ui.dialog.isOpen || appContext.ui.dialog.promptIsOpen) return true;
+  // Modal visibility lives in the interface store's show* flags; showFind is the
+  // find bar itself and must not block F3.
+  return Object.entries(appContext.interface).some(
+    ([key, open]) => key.startsWith("show") && key !== "showFind" && open === true,
+  );
+}
+
 function handleGlobalKeydown(e: KeyboardEvent) {
   if (e.key === "F3") {
+    if (isModalOpen()) return;
     e.preventDefault();
     e.stopPropagation();
 
