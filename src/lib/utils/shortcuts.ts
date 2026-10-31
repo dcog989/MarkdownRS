@@ -7,6 +7,22 @@ import { appContext } from "$lib/stores/state.svelte";
 // ctrl-prefixed default keys match.
 const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
+// Key names CodeMirror compares case-sensitively ("ArrowUp", "PageDown"). Shared so the
+// shortcut display and the editor keymap read the same spelling.
+export const KEY_NAMES: Record<string, string> = {
+  arrowup: "ArrowUp",
+  arrowdown: "ArrowDown",
+  arrowleft: "ArrowLeft",
+  arrowright: "ArrowRight",
+  pageup: "PageUp",
+  pagedown: "PageDown",
+  capslock: "CapsLock",
+  numlock: "NumLock",
+  scrolllock: "ScrollLock",
+  printscreen: "PrintScreen",
+  contextmenu: "ContextMenu",
+};
+
 // A dialog is modal for the keyboard too: nothing may run behind it. The find bar is
 // not a modal and must keep its shortcuts.
 export function isModalOpen(): boolean {
@@ -67,7 +83,7 @@ export class KeyboardShortcutManager {
     return key
       .split("+")
       .map((part) => {
-        const label = part.charAt(0).toUpperCase() + part.slice(1);
+        const label = KEY_NAMES[part] ?? part.charAt(0).toUpperCase() + part.slice(1);
         return IS_MAC && part === "ctrl" ? "Cmd" : label;
       })
       .join("+");

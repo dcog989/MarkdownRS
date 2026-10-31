@@ -108,4 +108,9 @@ describe("KeyboardShortcutManager", () => {
     await expect(manager.handleKeyEvent(event)).resolves.toBe(false);
     expect(event.defaultPrevented).toBe(false);
   });
+
+  it("spells named keys from the shared table", () => {
+    expect(manager.formatKeyDisplay("alt+arrowup")).toBe("Alt+ArrowUp");
+    expect(manager.formatKeyDisplay("ctrl+pagedown")).toContain("PageDown");
+  });
 });
