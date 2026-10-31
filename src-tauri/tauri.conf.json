@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "MarkdownRS",
-  "version": "1.66.2",
   "identifier": "com.markdownrs.editor",
   "build": {
     "beforeDevCommand": "bunx --bun vite dev",
