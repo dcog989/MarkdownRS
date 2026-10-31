@@ -193,10 +193,12 @@ mod tests {
 
     #[test]
     fn brace_json_ignores_braces_inside_strings() {
+        // `\n` is a JSON escape, so the string stays on one line: opening brace,
+        // body, closing brace. The `}` inside the string must not close it.
         let content = "{\n\"s\": \"a }\\nb\"\n}\n# Body\n";
         let fm = extract_frontmatter(content).unwrap();
         assert_eq!(fm.format, FrontmatterFormat::Json);
-        assert_eq!(fm.line_count, 4);
+        assert_eq!(fm.line_count, 3);
         assert_eq!(&content[fm.end_offset..], "# Body\n");
     }
 
