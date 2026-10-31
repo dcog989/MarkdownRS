@@ -71,11 +71,11 @@ export async function suspendTreeFollow<T>(operation: () => Promise<T>): Promise
   }
 }
 
-export function loadChildren(path: string): Promise<void> {
-  if (fileTreeStore.loading.get(path)) {
+export function loadChildren(path: string, force = false): Promise<void> {
+  if (!force && fileTreeStore.loading.get(path)) {
     return inFlightLoads.get(path) ?? Promise.resolve();
   }
-  if (fileTreeStore.children.has(path)) return Promise.resolve();
+  if (!force && fileTreeStore.children.has(path)) return Promise.resolve();
 
   const generation = (loadGeneration.get(path) ?? 0) + 1;
   loadGeneration.set(path, generation);
@@ -93,10 +93,8 @@ export function loadChildren(path: string): Promise<void> {
       );
       fileTreeStore.lastLoaded.set(path, Date.now());
     } catch {
-      if (loadGeneration.get(path) !== generation) return;
-      // Don't cache a failure as an empty folder: that hides the real contents
-      // until a manual refresh. Leaving the key absent lets the next expand retry.
-      fileTreeStore.children.delete(path);
+      // Keep the previous listing on a failed refresh, so a transient error
+      // does not blank the folder. A first load has no listing to keep.
     } finally {
       if (loadGeneration.get(path) === generation) {
         fileTreeStore.loading.set(path, false);
@@ -158,13 +156,11 @@ export function toggleMarkdownOnly(): void {
   toggleFileTreeShowMarkdownOnly();
 }
 
-// Reload a single directory, dropping its cached listing and mtime so a fresh
-// result is fetched and the poll does not reload it again as "changed".
+// Reload a single directory, keeping its cached listing visible until the
+// fresh result arrives, so a save does not blank the folder for a frame.
 async function refreshPath(path: string): Promise<void> {
   fileTreeStore.dirMtimes.delete(path);
-  fileTreeStore.children.delete(path);
-  fileTreeStore.loading.delete(path);
-  await loadChildren(path);
+  await loadChildren(path, true);
 }
 
 /**
@@ -243,11 +239,11 @@ export async function refreshTree(): Promise<void> {
   fileTreeStore.refreshing = true;
   const startedAt = Date.now();
   const expandedPaths = [...fileTreeStore.expanded.keys()].filter((path) => fileTreeStore.expanded.get(path));
-  fileTreeStore.children.clear();
-  fileTreeStore.loading.clear();
-  invalidateLoads();
   try {
-    await Promise.all(expandedPaths.map((path) => loadChildren(path)));
+    // Re-list in place: clearing the cache first blanked the tree and reset
+    // its scroll position on every window focus (the old rows are kept until
+    // each fresh listing lands).
+    await Promise.all(expandedPaths.map((path) => refreshPath(path)));
   } finally {
     const elapsed = Date.now() - startedAt;
     if (elapsed < REFRESH_SPIN_MIN_MS) {

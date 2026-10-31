@@ -216,6 +216,27 @@ describe("fileTreeStore", () => {
     expect(fileTreeStore.children.get("/root/sub")?.some((e) => e.name === "new.md")).toBe(true);
   });
 
+  it("refreshTree keeps the old listing visible until the fresh one arrives", async () => {
+    mockedListDirectory.mockResolvedValue([entry("old.md")]);
+    setRoot("/root");
+    await vi.waitFor(() => expect(fileTreeStore.children.has("/root")).toBe(true));
+
+    let resolveRefresh: (value: FileEntry[]) => void = () => {};
+    mockedListDirectory.mockReturnValue(
+      new Promise<FileEntry[]>((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    const refresh = refreshTree();
+
+    // Re-listing must not blank the folder while the backend call is pending.
+    expect(fileTreeStore.children.get("/root")).toEqual([entry("old.md")]);
+
+    resolveRefresh([entry("new.md")]);
+    await refresh;
+    expect(fileTreeStore.children.get("/root")).toEqual([entry("new.md")]);
+  });
+
   it("isDirLoading tracks in-flight loads", async () => {
     let resolveLoad: (value: FileEntry[]) => void = () => {};
     mockedListDirectory.mockReturnValue(
