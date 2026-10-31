@@ -1,9 +1,10 @@
 import { syntaxTree } from "@codemirror/language";
 import type { Extension } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
+import type { MessageKey } from "$lib/i18n";
 
 export interface CodeBlockCopyDeps {
-  translate: (key: string) => string;
+  translate: (key: MessageKey) => string;
   showToast: (type: "info" | "success" | "warning" | "error", message: string) => void;
 }
 

@@ -25,6 +25,19 @@ const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> =
 let showPopup = $state(false);
 let buttonEl = $state<HTMLButtonElement>();
 
+// The popup snippet is nested inside a block, where store subscriptions are
+// not allowed, so read the strings at the top level.
+let lintLabels = $derived({
+  title: $_("lint.title"),
+  noIssues: $_("lint.noIssues"),
+  issues: $_("lint.issuesTitle"),
+  grammar: $_("lint.grammarTitle"),
+  rumdl: $_("lint.rumdlLabel"),
+  noConfig: $_("lint.noConfigFile"),
+  copyPath: $_("lint.copyConfigPath"),
+  editConfig: $_("lint.editConfig"),
+});
+
 let severityEntry = $derived(severityMap[markdownLintState.highestSeverity]);
 let color = $derived(severityEntry?.color ?? "text-fg-muted");
 
@@ -130,35 +143,35 @@ async function copyConfigPath() {
           <div
             class="border-border-secondary border-b px-3 py-2 text-ui font-semibold uppercase tracking-widest text-fg-muted"
           >
-            {$_("lint.title")}
+            {lintLabels.title}
             <span class="text-fg-muted ml-1 font-normal normal-case tracking-normal">
               ({markdownLintState.issueCount})
             </span>
           </div>
           {#if markdownLintState.diagnostics.length === 0}
             <div class="px-3 py-4 text-center text-ui text-fg-muted">
-              {$_("lint.noIssues")}
+              {lintLabels.noIssues}
             </div>
           {:else}
             <div class="custom-scrollbar max-h-80 overflow-y-auto">
               {#if markdownDiags.length > 0}
-                {@render issueSection($_("lint.issuesTitle"), markdownDiags)}
+                {@render issueSection(lintLabels.issues, markdownDiags)}
               {/if}
               {#if grammarDiags.length > 0}
-                {@render issueSection($_("lint.grammarTitle"), grammarDiags)}
+                {@render issueSection(lintLabels.grammar, grammarDiags)}
               {/if}
             </div>
           {/if}
           <div class="border-border-secondary flex items-center gap-1 border-t px-3 py-1.5">
             <span class="text-fg-muted min-w-0 truncate text-[10px]">
-              {$_("lint.rumdlLabel")}: {configPath ?? $_("lint.noConfigFile")}
+              {lintLabels.rumdl}: {configPath ?? lintLabels.noConfig}
             </span>
             {#if configPath}
               <button
                 type="button"
                 class="hover:text-fg-default shrink-0 transition-colors"
                 onclick={copyConfigPath}
-                title={$_("lint.copyConfigPath")}
+                title={lintLabels.copyPath}
               >
                 <ClipboardCopy size={10} class={copied ? "text-accent-secondary" : "text-fg-muted"} />
               </button>
@@ -171,7 +184,7 @@ async function copyConfigPath() {
                 appContext.interface.showRumdlConfig = true;
               }}
             >
-              {$_("lint.editConfig")}
+              {lintLabels.editConfig}
             </button>
           </div>
         </div>

@@ -416,7 +416,7 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
             category: "settings.category.system",
             defaultValue: false,
             tooltip: "settings.contextMenuEnabledTooltip",
-          },
+          } satisfies SettingDef,
         ]
       : []),
   ];

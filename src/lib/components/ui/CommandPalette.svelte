@@ -53,9 +53,9 @@ let flatOpsIndex = $derived(new Map(flatOps.map((c: Command, i: number) => [c, i
 let displayGroups = $derived(
   (() => {
     if (settingsState.commandPaletteSort !== "categories") {
-      return [{ category: null as string | null, commands: flatOps }];
+      return [{ category: null as MessageKey | null, commands: flatOps }];
     }
-    const byCategory = new Map<string, Command[]>();
+    const byCategory = new Map<MessageKey, Command[]>();
     for (const c of flatOps) {
       let list = byCategory.get(c.category);
       if (!list) {

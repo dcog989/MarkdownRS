@@ -3,7 +3,7 @@ import type { Command } from "$lib/commands/commands";
 import { sortCommands } from "./commandPaletteSort";
 
 const commands: Command[] = [
-  { id: "edit.save", labelKey: "command.save", category: "commandCategory.file" },
+  { id: "edit.save", labelKey: "command.save", category: "commandCategory.edit" },
   { id: "file.open", labelKey: "fileTree.open", category: "commandCategory.file" },
   { id: "view.toggle", labelKey: "command.showOutline", category: "commandCategory.view" },
   { id: "edit.undo", labelKey: "command.undo", category: "commandCategory.edit" },

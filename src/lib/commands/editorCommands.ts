@@ -68,13 +68,15 @@ export const EDITOR_COMMAND_DEFS: EditorCommandDef[] = [
 ];
 
 export const editorCommands: Command[] = [
-  ...EDITOR_COMMAND_DEFS.map((def) => ({
-    id: def.id,
-    labelKey: def.labelKey,
-    category: "commandCategory.editor",
-    defaultKey: def.defaultKey,
-    handler: () => runEditorCommand(def.run),
-  })),
+  ...EDITOR_COMMAND_DEFS.map(
+    (def): Command => ({
+      id: def.id,
+      labelKey: def.labelKey,
+      category: "commandCategory.editor",
+      defaultKey: def.defaultKey,
+      handler: () => runEditorCommand(def.run),
+    }),
+  ),
   {
     id: "editor.find",
     labelKey: "command.find",
