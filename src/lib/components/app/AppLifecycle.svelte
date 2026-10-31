@@ -66,11 +66,12 @@ $effect(() => {
 onMount(() => {
   let unlistenEvents: (() => void) | null = null;
 
-  const listenersReady = appInit.setupEventListeners().then((unlisten) => {
+  const initPromise = appInit.initialize();
+  const listenersReady = appInit.setupEventListeners(initPromise).then((unlisten) => {
     unlistenEvents = unlisten;
   });
 
-  appInit.initialize().then(async () => {
+  initPromise.then(async () => {
     appInit.startSessionPersistence();
     // Tell the backend the session is restored and the listeners exist, so it
     // can hand over a file passed on the command line without a timer.

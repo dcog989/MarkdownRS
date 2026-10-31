@@ -69,7 +69,7 @@ export function createAppInit() {
     }
   }
 
-  async function setupEventListeners(): Promise<() => void> {
+  async function setupEventListeners(whenReady: Promise<void>): Promise<() => void> {
     const { listen } = await import("@tauri-apps/api/event");
 
     const unlisteners: UnlistenFn[] = [];
@@ -80,6 +80,8 @@ export function createAppInit() {
     unlisteners.push(unlisten1);
 
     const unlisten2 = await listen<{ paths: string[] }>("tauri://drag-drop", async (event) => {
+      // A drop during startup must not be overwritten by the session restore.
+      await whenReady;
       for (const path of event.payload.paths) {
         await openFileByPath(path);
       }
