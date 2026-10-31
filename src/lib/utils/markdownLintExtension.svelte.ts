@@ -6,7 +6,7 @@ import { appContext } from "$lib/stores/state.svelte";
 import type { LintDiagnostic } from "$lib/types/api";
 import { callBackendSafe } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
-import { markdownLintState } from "$lib/utils/markdownLint.svelte";
+import { markdownLintState, resetMarkdownLintState } from "$lib/utils/markdownLint.svelte";
 import type { AppEditorView } from "../../global";
 
 const lintCache = new Map<string, { content: string; diagnostics: LintDiagnostic[] }>();
@@ -46,10 +46,17 @@ function highestSeverity(diagnostics: { severity: string }[]): "error" | "warnin
 }
 
 function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnostic[] {
-  markdownLintState.diagnostics = result;
+  const tabId = (view as AppEditorView)._currentTabId;
+
+  // The badge is window-wide, so only the focused tab may update it. A
+  // background pane still gets its own editor markers.
+  if (tabId !== undefined && tabId === appContext.app.activeTabId) {
+    markdownLintState.diagnostics = result;
+    markdownLintState.highestSeverity = highestSeverity(result);
+    markdownLintState.issueCount = result.length;
+  }
 
   const doc = view.state.doc;
-  markdownLintState.highestSeverity = highestSeverity(result);
 
   const diagnostics: Diagnostic[] = result.map((d) => {
     const startLine = doc.line(d.line);
@@ -66,9 +73,27 @@ function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnosti
     };
   });
 
-  markdownLintState.issueCount = diagnostics.length;
-
   return diagnostics;
+}
+
+/** Point the badge at the focused tab: reuse its cached result while it still
+ *  matches the buffer, otherwise clear until the linter runs. */
+export function syncLintStateForTab(tabId: string | null): void {
+  if (!tabId) {
+    resetMarkdownLintState();
+    return;
+  }
+
+  const tab = appContext.editor.tabs.find((t) => t.id === tabId);
+  const cached = lintCache.get(tabId);
+  if (!tab || !cached || cached.content !== tab.content) {
+    resetMarkdownLintState();
+    return;
+  }
+
+  markdownLintState.diagnostics = cached.diagnostics;
+  markdownLintState.issueCount = cached.diagnostics.length;
+  markdownLintState.highestSeverity = highestSeverity(cached.diagnostics);
 }
 
 export const createMarkdownLinter = () => {
@@ -110,9 +135,7 @@ export const createMarkdownLinter = () => {
 
       if (!result) {
         lintCache.set(tabId, { content, diagnostics: [] });
-        markdownLintState.issueCount = 0;
-        markdownLintState.highestSeverity = "clean";
-        markdownLintState.diagnostics = [];
+        if (tabId === appContext.app.activeTabId) resetMarkdownLintState();
         return [];
       }
 

@@ -4,6 +4,7 @@ import CircleCheck from "lucide-svelte/icons/circle-check";
 import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
 import Info from "lucide-svelte/icons/info";
 import TriangleAlert from "lucide-svelte/icons/triangle-alert";
+import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { portal } from "$lib/actions/portal";
 import { tooltip } from "$lib/actions/tooltip";
@@ -13,6 +14,7 @@ import { appContext } from "$lib/stores/state.svelte";
 import { LINT_SOURCE_HARPER, type LintDiagnostic } from "$lib/types/api";
 import { callBackendSafe } from "$lib/utils/backend";
 import { markdownLintState } from "$lib/utils/markdownLint.svelte";
+import { syncLintStateForTab } from "$lib/utils/markdownLintExtension.svelte";
 
 const severityMap: Record<string, { icon: typeof CircleAlert; color: string }> = {
   error: { icon: CircleAlert, color: "text-danger" },
@@ -33,6 +35,13 @@ let grammarDiags = $derived(markdownLintState.diagnostics.filter((d) => d.source
 
 let configPath = $state<string | null>(null);
 let copied = $state(false);
+
+$effect(() => {
+  const tabId = appContext.app.activeTabId;
+  // Track only the focused tab, not its buffer: sync reads the content and the
+  // lint cache, and must not re-run on every keystroke.
+  untrack(() => syncLintStateForTab(tabId));
+});
 
 $effect(() => {
   if (showPopup) {

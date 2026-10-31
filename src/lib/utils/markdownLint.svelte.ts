@@ -6,3 +6,9 @@ class MarkdownLintState {
   diagnostics = $state<LintDiagnostic[]>([]);
 }
 export const markdownLintState = new MarkdownLintState();
+
+export function resetMarkdownLintState(): void {
+  markdownLintState.issueCount = 0;
+  markdownLintState.highestSeverity = "clean";
+  markdownLintState.diagnostics = [];
+}
