@@ -164,7 +164,7 @@ export async function requestCloseTab(id: string, force = false): Promise<void> 
   if (tab.path) {
     addToFileHistory(tab.path);
     try {
-      fileWatcher.unwatch(tab.path);
+      fileWatcher.unwatch(tab.id);
     } catch {
       // Ignore errors when unwatching files that may not exist
     }
@@ -227,8 +227,8 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
     const renamed = await renameFileOnDisk(oldPath, newPath);
     if (!renamed) return false;
 
-    fileWatcher.unwatch(oldPath);
-    await fileWatcher.watch(newPath);
+    fileWatcher.unwatch(tabId);
+    await fileWatcher.watch(tabId, newPath);
     // rename() moves the inode; if another tab already watched newPath, that
     // watch is now on a replaced inode and must be re-armed.
     await fileWatcher.renew(newPath);

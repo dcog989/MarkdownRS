@@ -20,9 +20,9 @@ async function retargetTabs(oldPath: string, newPath: string): Promise<void> {
   for (const tab of affected) {
     if (!tab.path) continue;
     const nextPath = tab.path === oldPath ? newPath : `${newPath}/${tab.path.slice(oldPrefix.length)}`;
-    fileWatcher.unwatch(tab.path);
+    fileWatcher.unwatch(tab.id);
     updateTabFields(tab.id, { path: nextPath });
-    await fileWatcher.watch(nextPath);
+    await fileWatcher.watch(tab.id, nextPath);
   }
 }
 
@@ -174,7 +174,7 @@ export class FileTreeContextMenuLogic {
 
     try {
       for (const t of affected) {
-        if (t.path) fileWatcher.unwatch(t.path);
+        if (t.path) fileWatcher.unwatch(t.id);
       }
 
       await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
@@ -191,7 +191,7 @@ export class FileTreeContextMenuLogic {
       refreshDirectoryIfInTree(dirname(targetPath));
     } catch (_err) {
       for (const t of affected) {
-        if (t.path) await fileWatcher.watch(t.path);
+        if (t.path) await fileWatcher.watch(t.id, t.path);
       }
     } finally {
       this.onClose();

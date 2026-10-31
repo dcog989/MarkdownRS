@@ -18,7 +18,9 @@ function isAccessEvent(event: WatchEvent): boolean {
 
 class FileWatcherService {
   private watchers = new Map<string, UnwatchFn>();
-  private tabCounts = new Map<string, number>();
+  /** Which tabs reference a path. Keyed by tab id so repeated arms from one tab are a no-op. */
+  private tabPaths = new Map<string, string>();
+  private pathTabs = new Map<string, Set<string>>();
   private watchPromises = new Map<string, Promise<void>>();
   private pendingChecks = new Set<string>();
   private writeLocks = new Map<string, number>();
@@ -26,14 +28,20 @@ class FileWatcherService {
   private renewInFlight = new Set<string>();
   private renewQueued = new Set<string>();
 
-  async watch(rawPath: string): Promise<void> {
-    if (!rawPath) return;
+  async watch(tabId: string, rawPath: string): Promise<void> {
+    if (!tabId || !rawPath) return;
     const path = sanitizePath(rawPath);
 
-    const currentCount = this.tabCounts.get(path) ?? 0;
-    this.tabCounts.set(path, currentCount + 1);
+    if (this.tabPaths.get(tabId) === path) return;
+    if (this.tabPaths.has(tabId)) this.unwatch(tabId);
 
-    if (currentCount > 0) return;
+    this.tabPaths.set(tabId, path);
+    const tabIds = this.pathTabs.get(path) ?? new Set<string>();
+    this.pathTabs.set(path, tabIds);
+    const isFirstTab = tabIds.size === 0;
+    tabIds.add(tabId);
+
+    if (!isFirstTab) return;
 
     if (!this.watchPromises.has(path)) {
       this.watchPromises.set(path, this.setupWatcher(path));
@@ -42,7 +50,7 @@ class FileWatcherService {
     try {
       await this.watchPromises.get(path);
     } catch (err) {
-      this.decrementTabCount(path);
+      this.unwatch(tabId);
       AppError.handle("FileWatcher:Watch", err, {
         showToast: false,
         severity: "warning",
@@ -53,10 +61,32 @@ class FileWatcherService {
     }
   }
 
-  unwatch(rawPath: string): void {
-    const path = sanitizePath(rawPath);
+  unwatch(tabId: string): void {
+    const path = this.tabPaths.get(tabId);
     if (!path) return;
-    this.decrementTabCount(path);
+    this.tabPaths.delete(tabId);
+
+    const tabIds = this.pathTabs.get(path);
+    if (!tabIds) return;
+    tabIds.delete(tabId);
+    if (tabIds.size > 0) return;
+
+    this.pathTabs.delete(path);
+    this.lastToastTime.delete(path);
+
+    const unwatch = this.watchers.get(path);
+    if (unwatch) {
+      try {
+        unwatch();
+      } catch (err) {
+        AppError.handle("FileWatcher:Unwatch", err, {
+          showToast: false,
+          severity: "warning",
+          additionalInfo: { path },
+        });
+      }
+      this.watchers.delete(path);
+    }
   }
 
   setWriteLock(rawPath: string, locked: boolean) {
@@ -65,31 +95,6 @@ class FileWatcherService {
       this.writeLocks.set(path, -1);
     } else if (this.writeLocks.has(path)) {
       this.writeLocks.set(path, Date.now() + CONFIG.PERFORMANCE.FILE_WATCHER_LOCK_BUFFER_MS);
-    }
-  }
-
-  private decrementTabCount(path: string): void {
-    const count = (this.tabCounts.get(path) ?? 0) - 1;
-
-    if (count <= 0) {
-      this.tabCounts.delete(path);
-      this.lastToastTime.delete(path);
-
-      const unwatch = this.watchers.get(path);
-      if (unwatch) {
-        try {
-          unwatch();
-        } catch (err) {
-          AppError.handle("FileWatcher:Unwatch", err, {
-            showToast: false,
-            severity: "warning",
-            additionalInfo: { path },
-          });
-        }
-        this.watchers.delete(path);
-      }
-    } else {
-      this.tabCounts.set(path, count);
     }
   }
 
@@ -119,7 +124,7 @@ class FileWatcherService {
       handleEvent();
     });
 
-    if (!this.tabCounts.has(path)) {
+    if (!this.pathTabs.has(path)) {
       unwatch();
       return;
     }
@@ -135,7 +140,7 @@ class FileWatcherService {
    */
   async renew(rawPath: string): Promise<void> {
     const path = sanitizePath(rawPath);
-    if (!path || !this.tabCounts.has(path)) return;
+    if (!path || !this.pathTabs.has(path)) return;
 
     if (this.renewInFlight.has(path)) {
       // A re-arm is mid-setup; coalesce so we don't stack concurrent watchers.
@@ -270,7 +275,8 @@ class FileWatcherService {
       }
     }
     this.watchers.clear();
-    this.tabCounts.clear();
+    this.tabPaths.clear();
+    this.pathTabs.clear();
     this.watchPromises.clear();
     this.writeLocks.clear();
     this.lastToastTime.clear();

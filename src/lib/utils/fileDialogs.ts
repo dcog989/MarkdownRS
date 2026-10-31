@@ -121,7 +121,7 @@ export async function openFile(path?: string): Promise<void> {
 
     await refreshMetadata(id, sanitizedPath);
     await checkFileExists(id);
-    await fileWatcher.watch(sanitizedPath);
+    await fileWatcher.watch(id, sanitizedPath);
     appContext.app.activeTabId = id;
 
     logger.file.debug("FileOpened", {
@@ -352,10 +352,10 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       }
 
       if (oldPath && oldPath !== sanitizedPath) {
-        fileWatcher.unwatch(oldPath);
+        fileWatcher.unwatch(tabId);
       }
       if (oldPath !== sanitizedPath) {
-        await fileWatcher.watch(sanitizedPath);
+        await fileWatcher.watch(tabId, sanitizedPath);
       }
       // atomic_write replaced the inode at the target, which kills the notify
       // file watch (inotify DELETE_SELF / kqueue NOTE_DELETE). Re-arm in all

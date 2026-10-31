@@ -60,7 +60,7 @@ export async function initializeTabFileState(tab: EditorTab, diskContentVerified
   }
 
   try {
-    await fileWatcher.watch(tab.path);
+    await fileWatcher.watch(tab.id, tab.path);
   } catch (err) {
     AppError.handle("FileWatcher:Watch", err, {
       showToast: false,

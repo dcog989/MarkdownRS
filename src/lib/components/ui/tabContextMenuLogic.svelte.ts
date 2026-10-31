@@ -214,13 +214,13 @@ export class TabContextMenuLogic {
       const { fileWatcher } = await import("$lib/services/fileWatcher");
       const { invalidateMetadataCache } = await import("$lib/services/fileMetadata");
 
-      fileWatcher.unwatch(targetPath);
+      fileWatcher.unwatch(targetId);
       await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
       invalidateMetadataCache(targetPath);
       await requestCloseTab(targetId, true);
     } catch (_err) {
       const { fileWatcher } = await import("$lib/services/fileWatcher");
-      await fileWatcher.watch(targetPath);
+      await fileWatcher.watch(targetId, targetPath);
     }
   };
 
