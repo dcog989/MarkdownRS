@@ -2,8 +2,10 @@ import { revealItemInDir } from "@tauri-apps/plugin-opener";
 import { translate } from "$lib/i18n";
 import { invalidateMetadataCache } from "$lib/services/fileMetadata";
 import { fileWatcher } from "$lib/services/fileWatcher";
+import { pruneBookmarksUnder } from "$lib/stores/bookmarkStore.svelte";
 import { confirmDialog, promptDialog } from "$lib/stores/dialogStore.svelte";
 import { updateTabFields } from "$lib/stores/editorStore.svelte";
+import { pruneFileHistoryUnder } from "$lib/stores/fileHistoryStore.svelte";
 import { dirname, forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import type { FileEntry } from "$lib/types/api";
@@ -192,6 +194,10 @@ export class FileTreeContextMenuLogic {
       invalidateMetadataCache(targetPath);
       forgetSubtree(targetPath);
       refreshDirectoryIfInTree(dirname(targetPath));
+
+      // Bookmark and history rows for the deleted path (or its children) now
+      // point at nothing. Drop them so a click cannot open a dead path.
+      await Promise.all([pruneBookmarksUnder(targetPath), pruneFileHistoryUnder(targetPath)]);
     } catch {
       // The failure has already been reported.
     } finally {

@@ -61,6 +61,13 @@ export function pruneBookmarks(paths: string[]) {
   bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => !removed.has(b.path));
 }
 
+/** Delete the bookmarks at or inside `path` (a deleted file or folder), on disk and in memory. */
+export async function pruneBookmarksUnder(path: string): Promise<void> {
+  const prefix = `${path}/`;
+  const doomed = bookmarkStore.bookmarks.filter((b) => b.path === path || b.path.startsWith(prefix));
+  await Promise.all(doomed.map((b) => deleteBookmark(b.id)));
+}
+
 export async function updateBookmark(id: string, title: string, tags: string[], path?: string) {
   const existing = bookmarkStore.bookmarks.find((b) => b.id === id);
   if (!existing) return;

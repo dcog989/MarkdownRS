@@ -54,3 +54,10 @@ export function pruneFileHistory(paths: string[]) {
   const removed = new Set(paths);
   fileHistoryStore.files = fileHistoryStore.files.filter((f) => !removed.has(f));
 }
+
+/** Drop the history entries at or inside `path` (a deleted file or folder). */
+export async function pruneFileHistoryUnder(path: string): Promise<void> {
+  const prefix = `${path}/`;
+  const doomed = fileHistoryStore.files.filter((f) => f === path || f.startsWith(prefix));
+  await Promise.all(doomed.map((f) => removeFromFileHistory(f)));
+}

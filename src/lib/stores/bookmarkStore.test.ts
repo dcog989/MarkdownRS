@@ -5,7 +5,7 @@ vi.mock("$lib/utils/backend", () => ({
 }));
 
 import { callBackend } from "$lib/utils/backend";
-import { type Bookmark, bookmarkStore, updateBookmark } from "./bookmarkStore.svelte";
+import { type Bookmark, bookmarkStore, pruneBookmarksUnder, updateBookmark } from "./bookmarkStore.svelte";
 
 const mockedCallBackend = vi.mocked(callBackend);
 
@@ -47,5 +47,25 @@ describe("updateBookmark", () => {
 
     expect(mockedCallBackend.mock.calls.some(([command]) => command === "delete_bookmark")).toBe(false);
     expect(bookmarkStore.bookmarks).toHaveLength(2);
+  });
+});
+
+describe("pruneBookmarksUnder", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    bookmarkStore.bookmarks = [
+      makeBookmark({ id: "b1", path: "/docs" }),
+      makeBookmark({ id: "b2", path: "/docs/a.md" }),
+      makeBookmark({ id: "b3", path: "/docs-old/b.md" }),
+      makeBookmark({ id: "b4", path: "/other.md" }),
+    ];
+  });
+
+  it("removes the deleted folder and its children, but not a sibling with the same prefix", async () => {
+    await pruneBookmarksUnder("/docs");
+
+    expect(bookmarkStore.bookmarks.map((b) => b.id)).toEqual(["b3", "b4"]);
+    const deletedCalls = mockedCallBackend.mock.calls.filter(([command]) => command === "delete_bookmark");
+    expect(deletedCalls.map((call) => call[1])).toEqual([{ id: "b1" }, { id: "b2" }]);
   });
 });
