@@ -8,6 +8,7 @@ import RefreshCw from "lucide-svelte/icons/refresh-cw";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";
+import { showToast } from "$lib/stores/toastStore.svelte";
 import type { AppInfo } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
@@ -56,7 +57,10 @@ const paths = $derived([
 ] as const);
 
 function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text);
+  navigator.clipboard.writeText(text).then(
+    () => showToast("success", translate("common.copied")),
+    () => showToast("error", translate("common.copyFailed")),
+  );
 }
 
 async function openLogFile() {

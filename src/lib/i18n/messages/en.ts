@@ -20,6 +20,8 @@ export const en = {
     ok: "OK",
     add: "Add",
     copy: "Copy",
+    copied: "Copied to clipboard",
+    copyFailed: "Could not copy to the clipboard",
     update: "Update",
     install: "Install",
     browse: "Browse...",
