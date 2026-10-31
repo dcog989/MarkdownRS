@@ -9,7 +9,6 @@ import History from "lucide-svelte/icons/history";
 import Settings from "lucide-svelte/icons/settings";
 import Zap from "lucide-svelte/icons/zap";
 import { _ } from "svelte-i18n";
-import { translate } from "$lib/i18n";
 import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import {
   toggleAbout,
@@ -21,7 +20,6 @@ import {
 import { isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { showToast } from "$lib/stores/toastStore.svelte";
 import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 import { shortcutManager } from "$lib/utils/shortcuts";
@@ -44,19 +42,6 @@ let shortcuts = $derived({
   writerMode: shortcutManager.getShortcutDisplay("view.toggleWriterMode"),
   fileTree: shortcutManager.getShortcutDisplay("view.toggleFileTree"),
 });
-
-function toggleSplit() {
-  if (!isPreviewAvailable) {
-    showToast("warning", translate("tabBarMenu.previewNotAvailable"));
-    return;
-  }
-  toggleSplitView();
-  saveSettings();
-}
-
-function handleWriterMode() {
-  toggleWriterMode();
-}
 
 function closeMenu() {
   showMenu = false;
@@ -126,10 +111,10 @@ function closeMenu() {
       class:opacity-50={!isPreviewAvailable}
       class:cursor-not-allowed={!isPreviewAvailable}
       onclick={() => {
-        if (isPreviewAvailable) {
-          toggleSplit();
-          closeMenu();
-        }
+        if (!isPreviewAvailable) return;
+        toggleSplitView();
+        saveSettings();
+        closeMenu();
       }}
     >
       {#if isPreviewAvailable}
@@ -170,7 +155,7 @@ function closeMenu() {
       type="button"
       class="text-ui menu-item"
       onclick={() => {
-        handleWriterMode();
+        toggleWriterMode();
         closeMenu();
       }}
     >

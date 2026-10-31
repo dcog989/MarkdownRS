@@ -49,7 +49,7 @@ const nav = createListNavigation(
   // closed), so fall back to the last row instead of reading an undefined entry.
   (index) => {
     const tab = filteredTabs[index] ?? filteredTabs[filteredTabs.length - 1];
-    if (tab) handleSelect(tab.id);
+    if (tab) onSelect(tab.id);
   },
 );
 
@@ -75,10 +75,6 @@ $effect(() => {
   if (searchQuery.trim() === "") return;
   nav.select(0);
 });
-
-function handleSelect(id: string) {
-  onSelect(id);
-}
 
 function handleKeydown(e: KeyboardEvent) {
   if (e.key === "Escape") {
@@ -132,7 +128,7 @@ function handleKeydown(e: KeyboardEvent) {
             <button
               type="button"
               class="text-ui flex min-w-0 flex-1 items-center gap-2 overflow-hidden text-left outline-none"
-              onclick={() => handleSelect(tab.id)}
+              onclick={() => onSelect(tab.id)}
               role="menuitem"
               use:tooltip={getTooltipContent(tab)}
             >
