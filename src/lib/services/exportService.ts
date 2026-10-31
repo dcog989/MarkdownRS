@@ -104,16 +104,11 @@ export class ExportService {
         baseVars,
       );
 
-      await callBackend(
-        "write_text_file",
-        { path, content: html },
-        "File:Write",
-        { path: tab?.path },
-        { report: true, msg: translate("export.failedSaveHtml") },
-      );
+      await callBackend("write_text_file", { path, content: html }, "File:Write", { path: tab?.path });
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportHtmlFailed", { error: String(err) });
+      showToast("error", translate("export.failedSaveHtml"));
     }
   }
 
@@ -134,16 +129,11 @@ export class ExportService {
 
       showToast("info", translate("export.generatingPdf"));
 
-      await callBackend(
-        "export_to_pdf",
-        { path, content: tab.content },
-        "Export:PDF",
-        { path: tab?.path },
-        { report: true, msg: translate("export.failedGeneratePdf") },
-      );
+      await callBackend("export_to_pdf", { path, content: tab.content }, "Export:PDF", { path: tab?.path });
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportPdfFailed", { error: String(err) });
+      showToast("error", translate("export.failedGeneratePdf"));
     }
   }
 
@@ -166,16 +156,11 @@ export class ExportService {
       if (!path) return;
 
       showToast("info", translate("export.generatingDocument"));
-      await callBackend(
-        "export_to_docx",
-        { path, content: tab.content },
-        "Export:Document",
-        { path: tab.path },
-        { report: true, msg: translate("export.failedGenerateDocument") },
-      );
+      await callBackend("export_to_docx", { path, content: tab.content }, "Export:Document", { path: tab.path });
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportDocxFailed", { error: String(err) });
+      showToast("error", translate("export.failedGenerateDocument"));
     }
   }
 
@@ -201,11 +186,11 @@ export class ExportService {
         },
         "Export:Document",
         { path: tab.path },
-        { report: true, msg: translate("export.failedGenerateDocument") },
       );
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportEpubFailed", { error: String(err) });
+      showToast("error", translate("export.failedGenerateDocument"));
     }
   }
 
@@ -226,11 +211,11 @@ export class ExportService {
         { path, content: tab.content, flavor: appContext.settings.markdownFlavor },
         "Export:Document",
         { path: tab.path },
-        { report: true, msg: translate("export.failedGenerateDocument") },
       );
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportLatexFailed", { error: String(err) });
+      showToast("error", translate("export.failedGenerateDocument"));
     }
   }
 
@@ -283,13 +268,7 @@ export class ExportService {
 
       if (format === "svg") {
         const svgContent = decodeURIComponent(dataUrl.split(",")[1]);
-        await callBackend(
-          "write_text_file",
-          { path, content: svgContent },
-          "File:Write",
-          { path: tab?.path },
-          { report: true, msg: translate("export.failedSaveFormat", { values: { format: "SVG" } }) },
-        );
+        await callBackend("write_text_file", { path, content: svgContent }, "File:Write", { path: tab?.path });
       } else {
         const base64Data = dataUrl.split(",")[1];
         const binaryString = atob(base64Data);
@@ -297,17 +276,12 @@ export class ExportService {
         for (let i = 0; i < binaryString.length; i++) {
           bytes[i] = binaryString.charCodeAt(i);
         }
-        await callBackend(
-          "write_binary_file",
-          { path, content: bytes },
-          "File:Write",
-          { path: tab?.path },
-          { report: true, msg: translate("export.failedSaveFormat", { values: { format: format.toUpperCase() } }) },
-        );
+        await callBackend("write_binary_file", { path, content: bytes }, "File:Write", { path: tab?.path });
       }
       showToast("success", translate("export.exportedTo", { values: { path } }));
     } catch (err) {
       logger.file.warn("ExportImageFailed", { error: String(err) });
+      showToast("error", translate("export.failedSaveFormat", { values: { format: format.toUpperCase() } }));
     } finally {
       this.clearExportContent();
     }
