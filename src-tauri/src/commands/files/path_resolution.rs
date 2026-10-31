@@ -1,9 +1,9 @@
-use crate::utils::{handle_error, validate_path};
+use crate::utils::{handle_error, validate_path_input};
 use std::path::{Path, PathBuf};
 
 #[tauri::command]
 pub async fn resolve_path_relative(base_path: Option<String>, click_path: String) -> Result<String, String> {
-    validate_path(&click_path)?;
+    validate_path_input(&click_path)?;
 
     let click_is_absolute = Path::new(&click_path).is_absolute();
 

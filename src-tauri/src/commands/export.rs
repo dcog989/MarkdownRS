@@ -4,7 +4,7 @@ use pdf_oxide::api::Pdf;
 
 #[tauri::command]
 pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> {
-    crate::utils::validate_path(&path)?;
+    crate::utils::validate_path_input(&path)?;
 
     let (pdf_size, duration) = crate::timed!({
         let mut pdf = Pdf::from_markdown(&content).map_err(|e| format!("Failed to create PDF: {}", e))?;
@@ -33,7 +33,7 @@ pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> 
 #[cfg(feature = "pdf-export")]
 #[tauri::command]
 pub async fn export_to_docx(path: String, content: String) -> Result<(), String> {
-    crate::utils::validate_path(&path)?;
+    crate::utils::validate_path_input(&path)?;
 
     let (docx_size, duration) = crate::timed!({
         let mut writer = std::io::Cursor::new(Vec::new());
@@ -61,7 +61,7 @@ pub async fn export_to_docx(path: String, content: String) -> Result<(), String>
 
 #[tauri::command]
 pub async fn export_to_epub(path: String, content: String, title: String) -> Result<(), String> {
-    crate::utils::validate_path(&path)?;
+    crate::utils::validate_path_input(&path)?;
 
     let (epub_size, duration) = crate::timed!({
         let epub_bytes = crate::export::epub::markdown_to_epub(&content, &title)?;
@@ -86,7 +86,7 @@ pub async fn export_to_epub(path: String, content: String, title: String) -> Res
 
 #[tauri::command]
 pub async fn export_to_latex(path: String, content: String) -> Result<(), String> {
-    crate::utils::validate_path(&path)?;
+    crate::utils::validate_path_input(&path)?;
 
     let (latex_size, duration) = crate::timed!({
         let latex = crate::export::latex::markdown_to_latex(&content);

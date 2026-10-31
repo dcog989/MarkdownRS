@@ -1,4 +1,4 @@
-use crate::utils::{format_system_time, handle_error, run_blocking, validate_path};
+use crate::utils::{format_system_time, handle_error, run_blocking, validate_path_input};
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -22,7 +22,7 @@ fn sort_entries(a: &FileEntry, b: &FileEntry) -> std::cmp::Ordering {
 }
 
 pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntry>, String> {
-    validate_path(path)?;
+    validate_path_input(path)?;
     let entries = std::fs::read_dir(path).map_err(|e| handle_error(Some(path), "read directory", e))?;
 
     let mut result = Vec::new();
@@ -78,7 +78,7 @@ pub async fn list_directory(path: String, show_hidden: bool) -> Result<Vec<FileE
 }
 
 pub fn get_directory_mtime_sync(path: &str) -> Result<Option<u64>, String> {
-    validate_path(path)?;
+    validate_path_input(path)?;
     let metadata = std::fs::metadata(path).map_err(|e| handle_error(Some(path), "stat path", e))?;
     if !metadata.is_dir() {
         return Ok(None);

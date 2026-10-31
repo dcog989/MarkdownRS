@@ -1,5 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{decode_text, encode_text, handle_error, validate_path};
+use crate::utils::{decode_text, encode_text, handle_error, validate_path_input};
 use encoding_rs::Encoding;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -26,7 +26,7 @@ pub struct WriteFileResult {
 #[tauri::command]
 pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Result<FileContent, String> {
     let (result, duration) = crate::timed!({
-        validate_path(&path)?;
+        validate_path_input(&path)?;
         let metadata = fs::metadata(&path)
             .await
             .map_err(|e| handle_error(Some(&path), "read metadata", e))?;
@@ -83,7 +83,7 @@ pub async fn write_text_file(
         "[Storage]",
         "write_text_file",
         {
-            validate_path(&path)?;
+            validate_path_input(&path)?;
             let path_buf = PathBuf::from(&path);
 
             let encoding_name = encoding.unwrap_or_else(|| "UTF-8".to_string());
@@ -125,7 +125,7 @@ pub async fn write_text_file(
 
 #[tauri::command]
 pub async fn write_binary_file(path: String, content: Vec<u8>) -> Result<(), String> {
-    validate_path(&path)?;
+    validate_path_input(&path)?;
     let path_buf = PathBuf::from(&path);
 
     crate::utils::atomic_write(&path_buf, &content)

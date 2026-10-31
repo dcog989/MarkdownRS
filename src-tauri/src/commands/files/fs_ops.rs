@@ -1,10 +1,10 @@
-use crate::utils::{handle_error, run_blocking, validate_path};
+use crate::utils::{handle_error, run_blocking, validate_path_input};
 use tokio::fs;
 
 #[tauri::command]
 pub async fn copy_file(from_path: String, to_path: String) -> Result<(), String> {
-    validate_path(&from_path)?;
-    validate_path(&to_path)?;
+    validate_path_input(&from_path)?;
+    validate_path_input(&to_path)?;
 
     run_blocking("copy file", move || {
         // Refuse to overwrite an existing target; the caller picks a fresh name.
@@ -24,7 +24,7 @@ pub async fn copy_file(from_path: String, to_path: String) -> Result<(), String>
 
 #[tauri::command]
 pub async fn create_file(path: String) -> Result<(), String> {
-    validate_path(&path)?;
+    validate_path_input(&path)?;
     // create_new fails if the file already exists, preventing silent overwrites.
     fs::OpenOptions::new()
         .write(true)
@@ -37,7 +37,7 @@ pub async fn create_file(path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn create_dir(path: String) -> Result<(), String> {
-    validate_path(&path)?;
+    validate_path_input(&path)?;
     fs::create_dir(&path)
         .await
         .map_err(|e| handle_error(Some(&path), "create directory", e))
@@ -45,7 +45,7 @@ pub async fn create_dir(path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn ensure_dir(path: String) -> Result<(), String> {
-    validate_path(&path)?;
+    validate_path_input(&path)?;
     match fs::metadata(&path).await {
         Ok(meta) if meta.is_dir() => Ok(()),
         Ok(_) => Err(handle_error(
@@ -61,7 +61,7 @@ pub async fn ensure_dir(path: String) -> Result<(), String> {
 
 #[tauri::command]
 pub async fn path_exists(path: String) -> bool {
-    if validate_path(&path).is_err() {
+    if validate_path_input(&path).is_err() {
         return false;
     }
     fs::metadata(&path).await.is_ok()
@@ -69,8 +69,8 @@ pub async fn path_exists(path: String) -> bool {
 
 #[tauri::command]
 pub async fn rename_file(old_path: String, new_path: String) -> Result<(), String> {
-    validate_path(&old_path)?;
-    validate_path(&new_path)?;
+    validate_path_input(&old_path)?;
+    validate_path_input(&new_path)?;
 
     // Refuse to overwrite an existing target. fs::rename() (rename(2) /
     // MoveFileExW with REPLACE) atomically replaces the destination, so a
