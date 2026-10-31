@@ -24,7 +24,7 @@ import { addToDictionary } from "$lib/services/dictionaryService";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
+import { SPELLCHECK_WORD_PATTERN, spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 
 function opShortcut(opId: string): string {
   return shortcutManager.getShortcutDisplay(`textop.${opId}`);
@@ -175,7 +175,7 @@ $effect(() => {
 });
 
 const targetWord = $derived(
-  (((selectedText || wordUnderCursor) as string) || "").trim().replace(/^[^a-zA-Z']+|[^a-zA-Z']+$/g, ""),
+  (((selectedText || wordUnderCursor) as string) || "").trim().replace(/^[^\p{L}']+|[^\p{L}']+$/gu, ""),
 );
 const canAddSingle = $derived(
   targetWord.length > 1 && !/[a-z][A-Z]/.test(targetWord) && !spellcheckState.isWordValid(targetWord),
@@ -186,7 +186,7 @@ const canAddAll = $derived(invalidWordsInSelection.length > 0 && hasMultipleWord
 
 function findInvalidWords(text: string): string[] {
   if (!text) return [];
-  const matches = text.match(/\b[a-zA-Z']+\b/g) || [];
+  const matches = text.match(SPELLCHECK_WORD_PATTERN) || [];
   const uniqueWords = Array.from(new Set(matches));
   return uniqueWords.filter((w) => !spellcheckState.isWordValid(w));
 }

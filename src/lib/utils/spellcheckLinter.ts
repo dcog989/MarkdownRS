@@ -8,7 +8,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { logger } from "$lib/utils/logger";
-import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
+import { SPELLCHECK_WORD_PATTERN, spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 
 export const spellcheckRefreshEffect = StateEffect.define<null>();
 
@@ -47,8 +47,6 @@ export const createSpellCheckLinter = () => {
       const validCache = spellcheckState.validCache;
       const misspelledCache = spellcheckState.misspelledCache;
 
-      const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
-
       // Text containers span inline code and links, so the excluded ranges must
       // be known before scanning them.
       const excludedRanges: { from: number; to: number }[] = [];
@@ -76,14 +74,8 @@ export const createSpellCheckLinter = () => {
         enter: (node: SyntaxNodeRef): void => {
           if (textContainers.has(node.name)) {
             const nodeText = doc.sliceString(node.from, node.to);
-            let match: RegExpExecArray | null;
 
-            wordRegex.lastIndex = 0;
-
-            while (true) {
-              match = wordRegex.exec(nodeText);
-              if (match === null) break;
-
+            for (const match of nodeText.matchAll(SPELLCHECK_WORD_PATTERN)) {
               const word = match[0];
               if (word.length <= 1) continue;
               if (/[a-z][A-Z]/.test(word)) continue;
@@ -94,7 +86,7 @@ export const createSpellCheckLinter = () => {
               if (customDict.has(word.toLowerCase()) || customDict.has(checkWord.toLowerCase())) continue;
               if (validCache.has(checkWord)) continue;
 
-              const globalFrom = node.from + match.index;
+              const globalFrom = node.from + (match.index ?? 0);
               const globalTo = globalFrom + word.length;
 
               if (excludedRanges.some((range) => globalFrom < range.to && globalTo > range.from)) continue;

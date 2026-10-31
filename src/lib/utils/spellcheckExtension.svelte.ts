@@ -2,7 +2,7 @@ import { forceLinting } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
 import { SvelteSet } from "svelte/reactivity";
 import { addWordsToDictionary } from "$lib/services/dictionaryService";
-import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
+import { SPELLCHECK_WORD_PATTERN, spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
 import { createSpellCheckLinter, spellcheckRefreshEffect, triggerImmediateLint } from "./spellcheckLinter";
 
 export { createSpellCheckLinter, triggerImmediateLint };
@@ -30,11 +30,11 @@ export const spellCheckKeymap = [
       let words: string[] = [];
 
       if (selection && selection.trim().length > 0) {
-        words = selection.split(/\s+/).map((w) => w.replace(/[^a-zA-Z'-]/g, ""));
+        words = selection.match(SPELLCHECK_WORD_PATTERN) ?? [];
       } else {
         const range = view.state.wordAt(view.state.selection.main.head);
         if (range) {
-          words = [view.state.sliceDoc(range.from, range.to).replace(/[^a-zA-Z'-]/g, "")];
+          words = view.state.sliceDoc(range.from, range.to).match(SPELLCHECK_WORD_PATTERN) ?? [];
         }
       }
 

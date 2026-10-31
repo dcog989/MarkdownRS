@@ -20,6 +20,12 @@ const SPELLCHECK_STATUS_EVENT = "spellcheck-status";
 // Safety net in case no event ever arrives (backend panic/IPC failure).
 const INIT_COMPLETION_FALLBACK_MS = 60_000;
 
+// A word is a run of Unicode letters, optionally with an inner apostrophe
+// (straight or typographic). The lookarounds keep identifier fragments such as
+// `foo_bar` intact. Use it with `match`/`matchAll`: `exec` would share
+// `lastIndex` between the two editor panes.
+export const SPELLCHECK_WORD_PATTERN = /(?<![\p{L}\p{N}_])\p{L}+(?:['’]\p{L}+)?(?![\p{L}\p{N}_])/gu;
+
 // The linter stores possessive forms ("word's") under their base ("word") in
 // both validCache and misspelledCache, and the custom dictionary holds base
 // forms too, so every lookup must strip the suffix through this single helper
@@ -27,7 +33,8 @@ const INIT_COMPLETION_FALLBACK_MS = 60_000;
 // custom dictionary is matched case-insensitively, but the valid/misspelled
 // caches preserve case to match the backend's case-sensitive checking.
 export function stripPossessiveSuffix(word: string): string {
-  return word.toLowerCase().endsWith("'s") ? word.slice(0, -2) : word;
+  const lower = word.toLowerCase();
+  return lower.endsWith("'s") || lower.endsWith("’s") ? word.slice(0, -2) : word;
 }
 
 export class SpellcheckManager {
