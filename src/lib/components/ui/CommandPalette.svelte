@@ -74,7 +74,6 @@ let displayGroups = $derived(
 const nav = createListNavigation(
   () => flatOps.length,
   (index) => execute(flatOps[index]),
-  1,
 );
 
 $effect(() => {
