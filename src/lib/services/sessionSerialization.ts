@@ -24,7 +24,7 @@ import { byteLength, computeLineStats } from "$lib/utils/textMetrics";
 import { debounce, formatDuration } from "$lib/utils/timing";
 import { normalizeLineEndings } from "./fileMetadata";
 import { initializeTabFileState } from "./tabFileStateInit";
-import { initializeTabLoadState, loadTabContentLazy } from "./tabLoadStateMachine";
+import { loadTabContentLazy } from "./tabLoadStateMachine";
 
 type RustTabState = {
   id: string;
@@ -291,16 +291,9 @@ export async function loadSession(): Promise<void> {
     if (activeRustTabs.length > 0) {
       activeRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
-      const convertedTabs: EditorTab[] = activeRustTabs.map((t) => {
-        const tab = convertRustTabToEditorTab(t, false);
-        return tab;
-      });
+      const convertedTabs: EditorTab[] = activeRustTabs.map((t) => convertRustTabToEditorTab(t, false));
 
       editorStore.tabs = sortTabsPinnedFirst(convertedTabs);
-
-      convertedTabs.forEach((tab) => {
-        initializeTabLoadState(tab.id, false);
-      });
 
       const sortedMru = activeRustTabs
         .filter((t) => t.mru_position !== null && t.mru_position !== undefined)
@@ -344,7 +337,6 @@ export async function loadSession(): Promise<void> {
 
       editorStore.closedTabsHistory = closedRustTabs.map((t) => {
         const tab = convertRustTabToEditorTab(t, false);
-        initializeTabLoadState(tab.id, false);
 
         return {
           tab,

@@ -13,74 +13,20 @@ import { formatDuration } from "$lib/utils/timing";
 import type { AppEditorView } from "../../global";
 import { normalizeLineEndings } from "./fileMetadata";
 
-enum TabLoadState {
-  UNLOADED = "UNLOADED",
-  LOADING = "LOADING",
-  LOADED = "LOADED",
-  ERROR = "ERROR",
-}
-
-const tabLoadStates = new Map<string, TabLoadState>();
-
-export function initializeTabLoadState(tabId: string, contentLoaded: boolean = true): void {
-  tabLoadStates.set(tabId, contentLoaded ? TabLoadState.LOADED : TabLoadState.UNLOADED);
-}
-
-function validateTransition(currentState: TabLoadState, nextState: TabLoadState): boolean {
-  const validTransitions: Record<TabLoadState, TabLoadState[]> = {
-    [TabLoadState.UNLOADED]: [TabLoadState.LOADING],
-    [TabLoadState.LOADING]: [TabLoadState.LOADED, TabLoadState.ERROR],
-    [TabLoadState.LOADED]: [],
-    [TabLoadState.ERROR]: [TabLoadState.LOADING],
-  };
-
-  return validTransitions[currentState]?.includes(nextState) ?? false;
-}
-
-function setTabLoadState(tabId: string, state: TabLoadState): void {
-  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
-  if (!validateTransition(currentState, state)) {
-    logger.session.warn("InvalidTabStateTransition", {
-      tabId,
-      from: currentState,
-      to: state,
-    });
-    return;
-  }
-
-  tabLoadStates.set(tabId, state);
-}
-
-// LOADING is not a valid source for UNLOADED, so the transition validator would
-// reject a partial-load reset. This unconditional reset marks a tab for retry after
-// an interrupted load (e.g. the active tab changed mid-await).
-function resetTabLoadState(tabId: string): void {
-  tabLoadStates.set(tabId, TabLoadState.UNLOADED);
-}
-
-const loadingRequests = new Map<string, number>();
 const contentLoadPromises = new Map<string, Promise<boolean>>();
 
 /** Resolves true when the disk copy was read and reconciled with the tab. */
 export async function loadTabContentLazy(tabId: string): Promise<boolean> {
-  const index = editorStore.tabs.findIndex((t) => t.id === tabId);
-  if (index === -1) {
-    return false;
-  }
-
-  const tab = editorStore.tabs[index];
-  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
-
-  if (currentState === TabLoadState.LOADED || tab.contentLoaded) {
+  const tab = editorStore.tabs.find((t) => t.id === tabId);
+  if (!tab || tab.contentLoaded) {
     return false;
   }
 
   // The AppLifecycle effect, saveFile, and tab reopen can all race to load the
   // same tab. Coalesce into a single in-flight load so awaiting callers wait
   // for the real result instead of returning early.
-  if (currentState === TabLoadState.LOADING) {
-    return (await contentLoadPromises.get(tabId)) ?? false;
-  }
+  const pending = contentLoadPromises.get(tabId);
+  if (pending) return pending;
 
   const loadPromise = loadTabContentInternal(tabId);
   contentLoadPromises.set(tabId, loadPromise);
@@ -98,14 +44,7 @@ export async function waitForTabContentLoad(tabId: string): Promise<boolean> {
   if (!tab) return false;
   if (tab.contentLoaded) return true;
 
-  const currentState = tabLoadStates.get(tabId) ?? TabLoadState.UNLOADED;
-
-  if (currentState !== TabLoadState.LOADING) {
-    await loadTabContentLazy(tabId);
-  } else {
-    const pending = contentLoadPromises.get(tabId);
-    if (pending) await pending;
-  }
+  await loadTabContentLazy(tabId);
 
   return editorStore.tabs.find((t) => t.id === tabId)?.contentLoaded ?? false;
 }
@@ -119,23 +58,13 @@ async function loadTabContentInternal(tabId: string): Promise<boolean> {
     return false;
   }
 
-  setTabLoadState(tabId, TabLoadState.LOADING);
-
-  const requestId = Date.now();
-  loadingRequests.set(tabId, requestId);
-
   try {
     const data = await callBackend("load_tab_content", { tabId }, "Session:Load");
-
-    if (loadingRequests.get(tabId) !== requestId) {
-      return false;
-    }
 
     const currentActiveId = appState.activeTabId;
     const isVisibleInPane = appState.paneTabs[0] === tabId || appState.paneTabs[1] === tabId;
     if (currentActiveId !== tabId && !isVisibleInPane) {
       logger.session.debug("TabSwitchedDuringLoad", { tabId, currentActiveId });
-      resetTabLoadState(tabId);
       return false;
     }
 
@@ -251,8 +180,6 @@ async function loadTabContentInternal(tabId: string): Promise<boolean> {
       });
     }
 
-    setTabLoadState(tabId, TabLoadState.LOADED);
-
     logger.session.debug("TabContentLazyLoaded", {
       duration: formatDuration(start),
       tabId,
@@ -261,24 +188,11 @@ async function loadTabContentInternal(tabId: string): Promise<boolean> {
 
     return diskContentVerified;
   } catch (err) {
-    if (loadingRequests.get(tabId) === requestId) {
-      setTabLoadState(tabId, TabLoadState.ERROR);
-
-      AppError.handle("Session:Load", err, {
-        showToast: false,
-        severity: "warning",
-        additionalInfo: { tabId },
-      });
-
-      const currentIndex = editorStore.tabs.findIndex((t) => t.id === tabId);
-      if (currentIndex !== -1) {
-        editorStore.tabs[currentIndex].contentLoaded = false;
-      }
-    }
-  } finally {
-    if (loadingRequests.get(tabId) === requestId) {
-      loadingRequests.delete(tabId);
-    }
+    AppError.handle("Session:Load", err, {
+      showToast: false,
+      severity: "warning",
+      additionalInfo: { tabId },
+    });
   }
 
   return false;

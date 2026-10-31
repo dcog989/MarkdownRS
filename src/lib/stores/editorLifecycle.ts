@@ -1,7 +1,6 @@
 import { translate } from "$lib/i18n";
 import { normalizeLineEndings, reloadFileContent } from "$lib/services/fileMetadata";
 import { fileWatcher } from "$lib/services/fileWatcher";
-import { initializeTabLoadState } from "$lib/services/tabLoadStateMachine";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { isTabDirty, updateSavedHash } from "$lib/utils/contentHash";
@@ -110,7 +109,6 @@ export function addTab(title: string = "", content: string = "") {
   // prompts for a save instead of silently discarding it.
   newTab.isDirty = isTabDirty(newTab);
   initTabCaches(id);
-  initializeTabLoadState(id, true);
 
   if (settingsState.newTabPosition === "beginning") {
     editorStore.tabs.unshift(newTab);
