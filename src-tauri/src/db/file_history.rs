@@ -20,39 +20,6 @@ impl FileHistoryStore {
         Self { conn }
     }
 
-    pub fn seed_file_history_from_session(&self) -> Result<()> {
-        let conn = lock_conn!(self);
-
-        // One-time backfill for databases that predate file history. Once any
-        // entry exists the live app owns the list, and re-seeding would also
-        // resurrect paths the user cleared.
-        let has_history: bool = conn.query_row("SELECT EXISTS(SELECT 1 FROM file_history)", [], |row| row.get(0))?;
-        if has_history {
-            return Ok(());
-        }
-
-        let now = now_timestamp();
-
-        conn.execute(
-            "INSERT OR IGNORE INTO file_history (path, last_opened)
-             SELECT path, COALESCE(modified, created, ?1)
-             FROM tabs
-             WHERE path IS NOT NULL AND path != ''",
-            rusqlite::params![&now],
-        )?;
-
-        conn.execute(
-            "INSERT OR IGNORE INTO file_history (path, last_opened)
-             SELECT path, MAX(COALESCE(modified, created, ?1))
-             FROM closed_tabs
-             WHERE path IS NOT NULL AND path != ''
-             GROUP BY path",
-            rusqlite::params![&now],
-        )?;
-
-        Ok(())
-    }
-
     pub fn add_file_history_entry(&self, path: &str, last_opened: &str) -> Result<()> {
         let conn = lock_conn!(self);
 
