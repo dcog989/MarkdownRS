@@ -48,6 +48,9 @@ export function renderedPointerHandler(resolvers: readonly PointerResolver[]): E
 
   return EditorView.domEventHandlers({
     mousedown: (event, view) => {
+      // A previous press may have been released outside the editor, where no
+      // mouseup reached us. Drop that target so it cannot move this caret.
+      pendingMouseup.delete(view);
       if (event.button !== 0) return false;
 
       for (const resolve of resolvers) {
@@ -102,6 +105,16 @@ export function renderedPointerHandler(resolvers: readonly PointerResolver[]): E
         scrollIntoView: false,
       });
       return true;
+    },
+
+    blur: (_event, view) => {
+      pendingMouseup.delete(view);
+      return false;
+    },
+
+    keydown: (_event, view) => {
+      pendingMouseup.delete(view);
+      return false;
     },
   });
 }
