@@ -172,14 +172,14 @@ fn render_inline<'a>(node: &'a AstNode<'a>, out: &mut String) {
         NodeValue::Subscript => wrap(node, out, "\\textsubscript{"),
         NodeValue::Link(link) => {
             out.push_str("\\href{");
-            out.push_str(&escape_text(&link.url));
+            out.push_str(&escape_url(&link.url));
             out.push_str("}{");
             render_inlines(node, out);
             out.push('}');
         },
         NodeValue::WikiLink(link) if !link.embed => {
             out.push_str("\\href{");
-            out.push_str(&escape_text(&link.url));
+            out.push_str(&escape_url(&link.url));
             out.push_str("}{");
             render_inlines(node, out);
             out.push('}');
@@ -213,6 +213,22 @@ fn wrap<'a>(node: &'a AstNode<'a>, out: &mut String, open: &str) {
     out.push_str(open);
     render_inlines(node, out);
     out.push('}');
+}
+
+/// hyperref reads its URL argument in a special mode: only these four characters
+/// still need a backslash, and a text command like `\textasciitilde{}` breaks the link.
+fn escape_url(url: &str) -> String {
+    let mut out = String::with_capacity(url.len());
+    for character in url.chars() {
+        match character {
+            '%' | '#' | '&' | '_' => {
+                out.push('\\');
+                out.push(character);
+            },
+            _ => out.push(character),
+        }
+    }
+    out
 }
 
 fn escape_text(text: &str) -> String {
@@ -254,5 +270,15 @@ mod tests {
         assert!(latex.contains("\\begin{verbatim}\nfn main() {}\n\\end{verbatim}"));
         assert!(latex.contains("\\href{https://example.com/a\\_b}{site}"));
         assert!(latex.contains("\\end{document}"));
+    }
+
+    #[test]
+    fn keeps_url_tilde_and_query_intact() {
+        let latex = markdown_to_latex("[home](https://example.com/~user/?a=1&b=two%20words)\n");
+
+        assert!(
+            latex.contains("\\href{https://example.com/~user/?a=1\\&b=two\\%20words}{home}"),
+            "latex was: {latex}"
+        );
     }
 }
