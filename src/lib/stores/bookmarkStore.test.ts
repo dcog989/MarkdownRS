@@ -34,11 +34,14 @@ describe("updateBookmark", () => {
     ];
   });
 
-  it("deletes the bookmark that still holds the new path", async () => {
+  it("replaces the bookmark that still holds the new path without deleting it first", async () => {
     await updateBookmark("b1", "Renamed", [], "/new.md");
 
-    const deleted = mockedCallBackend.mock.calls.find(([command]) => command === "delete_bookmark");
-    expect(deleted?.[1]).toEqual({ id: "b2" });
+    expect(mockedCallBackend.mock.calls.some(([command]) => command === "delete_bookmark")).toBe(false);
+    const added = mockedCallBackend.mock.calls.find(([command]) => command === "add_bookmark");
+    expect(added?.[1]).toEqual({
+      bookmark: expect.objectContaining({ id: "b1", path: "/new.md", title: "Renamed" }),
+    });
     expect(bookmarkStore.bookmarks).toHaveLength(1);
     expect(bookmarkStore.bookmarks[0]).toMatchObject({ id: "b1", path: "/new.md", title: "Renamed" });
   });

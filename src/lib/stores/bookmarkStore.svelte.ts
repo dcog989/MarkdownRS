@@ -66,11 +66,10 @@ export async function updateBookmark(id: string, title: string, tags: string[], 
 
   const updated: Bookmark = { ...existing, title, tags, path: path ?? existing.path };
 
-  // Only one row can exist per path. A rename can land on a path another
-  // bookmark still holds; that stale entry would keep an id the DB no longer
-  // has, so every action on it would silently do nothing.
-  const stale = bookmarkStore.bookmarks.find((b) => b.id !== id && b.path === updated.path);
-  if (stale) await deleteBookmark(stale.id);
+  // A rename can land on a path another bookmark still holds. The UNIQUE path
+  // plus INSERT OR REPLACE makes the database drop that row, so only the local
+  // copy needs removing; deleting it first would lose both if the write fails.
+  bookmarkStore.bookmarks = bookmarkStore.bookmarks.filter((b) => b.id === id || b.path !== updated.path);
 
   await callBackend("add_bookmark", { bookmark: updated }, "Bookmark:Add", undefined, {
     report: true,
