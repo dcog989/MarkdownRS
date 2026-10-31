@@ -4,6 +4,7 @@ import type { Snippet } from "svelte";
 import { _ } from "svelte-i18n";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
+import { dialogStore } from "$lib/stores/dialogStore.svelte";
 import { asHTMLElement, getActiveHTMLElement, queryHTMLElements } from "$lib/utils/dom";
 
 let {
@@ -114,6 +115,10 @@ $effect(() => {
 
   // Set up a focus monitor to catch focus escaping the modal
   const handleFocusOut = (e: FocusEvent) => {
+    // A shared confirmation/prompt dialog is on top and owns the focus; stealing
+    // it back here would fight that dialog and break its keyboard handling.
+    if (dialogStore.isOpen || dialogStore.promptIsOpen) return;
+
     const target = asHTMLElement(e.relatedTarget);
 
     // If focus is moving outside the modal, bring it back

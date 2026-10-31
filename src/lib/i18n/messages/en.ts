@@ -589,6 +589,8 @@ export const en = {
     willCreate: "No config file yet — this file will be created on save.",
     placeholder: "# rumdl TOML configuration",
     saved: "Saved {path}",
+    discardTitle: "Discard config changes?",
+    discardMessage: "Your edits to this config file have not been saved.",
   },
   findReplace: {
     aria: "Find and Replace",

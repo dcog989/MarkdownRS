@@ -7,6 +7,7 @@ import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
 import { translate } from "$lib/i18n";
+import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
@@ -45,13 +46,35 @@ $effect(() => {
 
 async function setScope(next: "project" | "user") {
   if (next === scope) return;
+  if (!(await confirmDiscard())) return;
   scope = next;
   await loadConfig();
+}
+
+/** Unsaved edits would be lost by changing scope or closing; ask first. */
+async function confirmDiscard(): Promise<boolean> {
+  if (!hasChanges) return true;
+  const result = await confirmDialog({
+    title: translate("rumdlConfig.discardTitle"),
+    message: translate("rumdlConfig.discardMessage"),
+    saveLabel: undefined,
+    discardLabel: translate("common.discard"),
+  });
+  return result === "discard";
+}
+
+async function requestClose() {
+  if (await confirmDiscard()) onClose();
+}
+
+async function requestBack() {
+  if (await confirmDiscard()) onBack();
 }
 
 async function loadConfig() {
   busy = true;
   loaded = false;
+  hasChanges = false;
   try {
     const filePath = activeTab()?.path;
     const result = await callBackend(
@@ -64,7 +87,6 @@ async function loadConfig() {
       exists = result.exists;
       loadedPath = result.loaded_path;
       content = result.content;
-      hasChanges = false;
     }
   } catch (err) {
     AppError.handle("Markdown:ReadRumdlConfig", err, { showToast: true });
@@ -99,16 +121,16 @@ async function saveConfig() {
 }
 </script>
 
-<Modal bind:isOpen {onClose} position="top" width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
+<Modal bind:isOpen onClose={requestClose} position="top" width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <div class="flex items-center gap-2">
-      <button type="button" class="btn-icon outline-none" onclick={onBack} aria-label={$_("common.back")}>
+      <button type="button" class="btn-icon outline-none" onclick={requestBack} aria-label={$_("common.back")}>
         <ArrowLeft size={16} />
       </button>
       <Settings2 size={16} class="text-accent-secondary" />
       <h2 class="text-fg-default text-lg font-semibold">{$_("rumdlConfig.title")}</h2>
     </div>
-    <button type="button" class="btn-icon outline-none" onclick={onClose} aria-label={$_("common.close")}>
+    <button type="button" class="btn-icon outline-none" onclick={requestClose} aria-label={$_("common.close")}>
       <X size={16} />
     </button>
   {/snippet}
@@ -171,7 +193,7 @@ async function saveConfig() {
   </div>
 
   {#snippet footer()}
-    <button type="button" class="btn-base btn-sm whitespace-nowrap" onclick={onClose} disabled={busy}>
+    <button type="button" class="btn-base btn-sm whitespace-nowrap" onclick={requestClose} disabled={busy}>
       {$_("common.cancel")}
     </button>
     <button
