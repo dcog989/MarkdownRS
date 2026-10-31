@@ -20,7 +20,7 @@ import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { translate } from "$lib/i18n";
-import { addToDictionary } from "$lib/services/dictionaryService";
+import { addToDictionary, addWordsToDictionary } from "$lib/services/dictionaryService";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
@@ -203,7 +203,7 @@ async function handleAddAll() {
   onDictionaryUpdate?.();
   onClose();
 
-  for (const word of invalidWords) await addToDictionary(word);
+  await addWordsToDictionary(invalidWords);
 }
 
 function handleOp(type: OperationId | undefined) {
