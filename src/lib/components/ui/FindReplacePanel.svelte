@@ -342,7 +342,7 @@ onMount(() => {
     aria-label={$_("findReplace.aria")}
     tabindex="-1"
   >
-    <div class="flex items-center gap-2 px-2 py-1">
+    <div class="find-row flex items-center gap-2 px-2 py-1">
       <div class="find-field relative min-w-0 flex-1">
         <Input
           bind:ref={searchInputRef}
@@ -452,47 +452,49 @@ onMount(() => {
       >
         <ArrowRightLeft size={16} />
       </button>
-      {#if isReplaceMode}
-        <div class="replace-field min-w-0 flex-1">
-          <Input
-            type="text"
-            bind:value={searchState.replaceText}
-            placeholder={$_("findReplace.replace")}
-            style={`background-color: ${inputBackground}`}
-            oninput={onReplaceInput}
-            spellcheck="false"
-          />
-        </div>
+      <div class="find-tail flex min-w-0 items-center gap-2" class:replace-mode={isReplaceMode}>
+        {#if isReplaceMode}
+          <div class="replace-field min-w-0 flex-1">
+            <Input
+              type="text"
+              bind:value={searchState.replaceText}
+              placeholder={$_("findReplace.replace")}
+              style={`background-color: ${inputBackground}`}
+              oninput={onReplaceInput}
+              spellcheck="false"
+            />
+          </div>
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            onclick={onReplace}
+            disabled={searchScope === "all" || !!searchState.regexError}
+            aria-label={$_("common.replace")}
+            use:tooltip={$_("common.replace")}
+          >
+            <Replace size={16} />
+          </button>
+          <button
+            type="button"
+            class="btn-icon h-7 w-7"
+            onclick={onReplaceAll}
+            disabled={!!searchState.regexError}
+            aria-label={$_("findReplace.replaceAll")}
+            use:tooltip={$_("findReplace.replaceAll")}
+          >
+            <ReplaceAll size={16} />
+          </button>
+        {/if}
         <button
           type="button"
-          class="btn-icon h-7 w-7"
-          onclick={onReplace}
-          disabled={searchScope === "all" || !!searchState.regexError}
-          aria-label={$_("common.replace")}
-          use:tooltip={$_("common.replace")}
+          class="btn-icon ml-auto h-7 w-7"
+          aria-label={$_("findReplace.closeEsc")}
+          onclick={close}
+          use:tooltip={$_("findReplace.closeEsc")}
         >
-          <Replace size={16} />
+          <X size={16} />
         </button>
-        <button
-          type="button"
-          class="btn-icon h-7 w-7"
-          onclick={onReplaceAll}
-          disabled={!!searchState.regexError}
-          aria-label={$_("findReplace.replaceAll")}
-          use:tooltip={$_("findReplace.replaceAll")}
-        >
-          <ReplaceAll size={16} />
-        </button>
-      {/if}
-      <button
-        type="button"
-        class="btn-icon ml-auto h-7 w-7"
-        aria-label={$_("findReplace.closeEsc")}
-        onclick={close}
-        use:tooltip={$_("findReplace.closeEsc")}
-      >
-        <X size={16} />
-      </button>
+      </div>
     </div>
 
     {#if searchState.regexError}
@@ -523,9 +525,42 @@ onMount(() => {
 {/if}
 
 <style>
+/* The bar spans the editor's padding box, which includes the minimap and
+   scrollbar columns; both tracks sit at z-index 60, above the bar's z-50. */
+.find-bar {
+  z-index: 70;
+}
+
 .find-field,
 .replace-field {
   max-width: 460px;
+}
+
+/* The bar sits in the editor pane, so a window breakpoint would be wrong:
+   wrap when the row itself runs out of room. */
+.find-row {
+  flex-wrap: wrap;
+}
+
+/* Enough for the four inline buttons and a few characters of query. */
+.find-field {
+  min-width: 12rem;
+}
+
+.replace-field {
+  min-width: 8rem;
+}
+
+/* The close button travels with the replace controls, so a wrapped row never
+   leaves it alone on its own line. */
+.find-tail:not(.replace-mode) {
+  margin-left: auto;
+}
+
+/* replace field (8rem) + three buttons (5.25rem) + three gaps (1.5rem) */
+.find-tail.replace-mode {
+  flex: 1;
+  min-width: 14.75rem;
 }
 
 .find-bar .btn-icon:focus-visible {

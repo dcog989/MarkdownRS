@@ -129,7 +129,8 @@ $effect(() => {
 <style>
 .minimap-track {
   position: absolute;
-  top: 0;
+  /* Match the editor's text top: the find bar pads the first line down. */
+  top: var(--find-bar-height, 0px);
   right: 0;
   bottom: 0;
   z-index: 60;
