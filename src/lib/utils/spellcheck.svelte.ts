@@ -79,20 +79,18 @@ export class SpellcheckManager {
       const technicalDictionaries = settingsState.technicalDictionaries;
       const scienceDictionaries = settingsState.scienceDictionaries;
 
-      try {
-        await callBackend(
-          "init_spellchecker",
-          { dictionaries, technicalDictionaries, scienceDictionaries },
-          "Spellcheck:Init",
-          undefined,
-          { ignore: true },
-        );
-      } catch {
-        this.dictionaryLoaded = false;
-        return false;
-      }
+      // A failed invoke is not observable here (the command returns `()`, and
+      // `ignore` turns errors into null), so the status probe below is the
+      // failure signal.
+      await callBackend(
+        "init_spellchecker",
+        { dictionaries, technicalDictionaries, scienceDictionaries },
+        "Spellcheck:Init",
+        undefined,
+        { ignore: true },
+      );
 
-      const status = await this.waitForInitCompletion();
+      const status = await this.waitForInitCompletion(generation);
       if (generation !== this.initGeneration) return null;
       this.dictionaryLoaded = status === "ready";
       return this.dictionaryLoaded;
@@ -107,30 +105,37 @@ export class SpellcheckManager {
   /**
    * Resolves with the terminal status ("ready"|"failed"). Waits for the
    * backend status event instead of polling on a fixed window, so slow first
-   * downloads no longer give up prematurely. A generous fallback timeout keeps
-   * the promise from hanging forever if the event is never delivered.
+   * downloads no longer give up prematurely.
    */
-  private async waitForInitCompletion(): Promise<string> {
+  private async waitForInitCompletion(generation: number): Promise<string> {
     return new Promise<string>((resolve) => {
       let settled = false;
       let unlisten: UnlistenFn = () => {};
       const finish = (status: string) => {
-        if (settled) return;
-        settled = true;
         window.clearTimeout(fallback);
         unlisten();
+        if (settled) return;
+        settled = true;
         resolve(status);
       };
 
+      // The timeout only releases the caller so the settings toast is not left
+      // hanging. The listener stays registered: a first download can outlast
+      // this window, and a late "ready" must still turn spellcheck on instead
+      // of waiting for the next restart.
       const fallback = window.setTimeout(() => {
-        logger.spellcheck.warn("Spellcheck init completion timed out");
-        finish("failed");
+        logger.spellcheck.warn("Spellcheck init still running after timeout");
+        if (settled) return;
+        settled = true;
+        resolve("failed");
       }, INIT_COMPLETION_FALLBACK_MS);
 
       const onEvent = (event: { payload: string }) => {
-        if (event.payload === "ready" || event.payload === "failed") {
-          finish(event.payload);
+        if (event.payload !== "ready" && event.payload !== "failed") return;
+        if (event.payload === "ready" && generation === this.initGeneration) {
+          this.dictionaryLoaded = true;
         }
+        finish(event.payload);
       };
 
       // Register the listener first so a fast completion can't be missed, then
@@ -149,7 +154,13 @@ export class SpellcheckManager {
           void callBackend("get_spellcheck_status", {}, "Spellcheck:Init", undefined, { ignore: true }).then(
             (status) => {
               if (status === "ready" || status === "failed") {
+                if (status === "ready" && generation === this.initGeneration) {
+                  this.dictionaryLoaded = true;
+                }
                 finish(status);
+              } else if (status === "uninitialized") {
+                // The command failed before the backend could start a build.
+                finish("failed");
               }
             },
           );
