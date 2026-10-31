@@ -15,12 +15,6 @@ fn is_hidden(name: &str) -> bool {
     name.starts_with('.')
 }
 
-fn sort_entries(a: &FileEntry, b: &FileEntry) -> std::cmp::Ordering {
-    b.is_dir
-        .cmp(&a.is_dir)
-        .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
-}
-
 pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntry>, String> {
     validate_path_input(path)?;
     let entries = std::fs::read_dir(path).map_err(|e| handle_error(Some(path), "read directory", e))?;
@@ -59,7 +53,9 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
         });
     }
 
-    result.sort_by(sort_entries);
+    // Cached keys: one lowercase allocation per entry instead of one per
+    // comparison (O(n log n)) on large directories.
+    result.sort_by_cached_key(|e| (!e.is_dir, e.name.to_lowercase()));
     Ok(result)
 }
 
