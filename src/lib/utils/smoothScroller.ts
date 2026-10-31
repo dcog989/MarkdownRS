@@ -1,5 +1,15 @@
 import { CONFIG } from "$lib/utils/config";
 
+let reducedMotionQuery: MediaQueryList | null | undefined;
+
+/** Read the OS motion preference once; jsdom and older webviews have no matchMedia. */
+function prefersReducedMotion(): boolean {
+  if (reducedMotionQuery === undefined) {
+    reducedMotionQuery = window.matchMedia?.("(prefers-reduced-motion: reduce)") ?? null;
+  }
+  return reducedMotionQuery?.matches ?? false;
+}
+
 export class SmoothScroller {
   private raf: number | null = null;
   private target: { element: HTMLElement | Element; targetY: number } | null = null;
@@ -10,7 +20,7 @@ export class SmoothScroller {
 
     if (diff < CONFIG.PERFORMANCE.SCROLL_SYNC_THRESHOLD_PX) return;
 
-    if (instant || diff < 50) {
+    if (instant || diff < 50 || prefersReducedMotion()) {
       element.scrollTop = targetY;
       return;
     }
