@@ -1,5 +1,4 @@
-export function focusOnMount(node: HTMLElement, delay?: number) {
-  if (delay === undefined) return;
+export function focusOnMount(node: HTMLElement, delay: number) {
   const timer = setTimeout(() => node.focus(), delay);
   return {
     destroy() {

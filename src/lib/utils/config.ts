@@ -100,7 +100,7 @@ const DEFAULT_CONFIG = {
     TOOLTIP_SCREEN_PADDING: 10,
     TOOLTIP_FLIP_OFFSET: 5,
   },
-};
+} as const;
 
 // Global configuration instance
 export const CONFIG = Object.freeze(DEFAULT_CONFIG);
