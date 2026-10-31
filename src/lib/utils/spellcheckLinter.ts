@@ -26,16 +26,21 @@ export const createSpellCheckLinter = () => {
       const diagnostics: Diagnostic[] = [];
       const diagnosticKeys = new Set<string>();
 
-      const safeNodeTypes = new Set([
+      // Only nodes that directly hold raw text. Containers such as ListItem,
+      // Blockquote or Emphasis would re-scan the same words once per nesting
+      // level, and this parser has no "Text" node at all.
+      const textContainers = new Set([
         "Paragraph",
-        "Text",
-        "Emphasis",
-        "StrongEmphasis",
-        "ListItem",
-        "HeaderMark",
+        "Task",
+        "TableCell",
         "ATXHeading1",
         "ATXHeading2",
         "ATXHeading3",
+        "ATXHeading4",
+        "ATXHeading5",
+        "ATXHeading6",
+        "SetextHeading1",
+        "SetextHeading2",
       ]);
 
       const customDict = spellcheckState.customDictionary;
@@ -44,8 +49,8 @@ export const createSpellCheckLinter = () => {
 
       const wordRegex = /\b[a-zA-Z]+(?:'[a-zA-Z]+)?\b/g;
 
-      // Container nodes (Paragraph, ListItem, headings) span inline code and
-      // links, so their ranges must be known before scanning container text.
+      // Text containers span inline code and links, so the excluded ranges must
+      // be known before scanning them.
       const excludedRanges: { from: number; to: number }[] = [];
       syntaxTree(state).iterate({
         from: view.viewport.from,
@@ -69,7 +74,7 @@ export const createSpellCheckLinter = () => {
         from: view.viewport.from,
         to: view.viewport.to,
         enter: (node: SyntaxNodeRef): void => {
-          if (safeNodeTypes.has(node.name)) {
+          if (textContainers.has(node.name)) {
             const nodeText = doc.sliceString(node.from, node.to);
             let match: RegExpExecArray | null;
 
@@ -81,30 +86,23 @@ export const createSpellCheckLinter = () => {
 
               const word = match[0];
               if (word.length <= 1) continue;
+              if (/[a-z][A-Z]/.test(word)) continue;
+
+              // The backend checks case-sensitively (e.g. "Firefox" is valid but
+              // "firefox" is not), so valid/misspelled caches must preserve case.
+              const checkWord = stripPossessiveSuffix(word);
+              if (customDict.has(word.toLowerCase()) || customDict.has(checkWord.toLowerCase())) continue;
+              if (validCache.has(checkWord)) continue;
 
               const globalFrom = node.from + match.index;
               const globalTo = globalFrom + word.length;
 
               if (excludedRanges.some((range) => globalFrom < range.to && globalTo > range.from)) continue;
 
+              // Only uncached candidates pay for the two adjacent-character reads.
               const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
               const charAfter = globalTo < doc.length ? doc.sliceString(globalTo, globalTo + 1) : "";
               if (/[\\/:@.~]/.test(charBefore) || /[\\/:@]/.test(charAfter)) continue;
-
-              if (/\d/.test(word) || /[a-z][A-Z]/.test(word)) continue;
-
-              const wLower = word.toLowerCase();
-
-              if (customDict.has(wLower)) continue;
-
-              // The backend checks case-sensitively (e.g. "Firefox" is valid but
-              // "firefox" is not), so valid/misspelled caches must preserve case.
-              const checkWord = stripPossessiveSuffix(word);
-              if (checkWord !== word && customDict.has(checkWord.toLowerCase())) continue;
-
-              if (validCache.has(checkWord)) {
-                continue;
-              }
 
               if (misspelledCache.has(checkWord)) {
                 const key = `${globalFrom}-${globalTo}`;
