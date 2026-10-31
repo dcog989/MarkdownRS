@@ -79,7 +79,10 @@ export class ExportService {
 
   async exportToHtml() {
     const tab = this.getActiveTab();
-    if (!tab) return;
+    if (!tab) {
+      showToast("error", translate("export.noActiveTab"));
+      return;
+    }
 
     try {
       const path = await save({

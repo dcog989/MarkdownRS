@@ -41,7 +41,7 @@ fn render_blocks<'a>(parent: &'a AstNode<'a>, out: &mut String) {
 }
 
 fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
-    match node.data.borrow().value.clone() {
+    match &node.data.borrow().value {
         NodeValue::Paragraph => {
             render_inlines(node, out);
             out.push_str("\n\n");
@@ -146,11 +146,10 @@ fn has_terminator_line(literal: &str, terminator: &str) -> bool {
 }
 
 fn render_table<'a>(node: &'a AstNode<'a>, out: &mut String) {
-    let alignments = match &node.data.borrow().value {
-        NodeValue::Table(table) => table.alignments.clone(),
-        _ => return,
-    };
-    let columns: String = alignments
+    let data = node.data.borrow();
+    let NodeValue::Table(table) = &data.value else { return };
+    let columns: String = table
+        .alignments
         .iter()
         .map(|alignment| match alignment {
             TableAlignment::Center => 'c',
@@ -187,8 +186,8 @@ fn render_inlines<'a>(parent: &'a AstNode<'a>, out: &mut String) {
 }
 
 fn render_inline<'a>(node: &'a AstNode<'a>, out: &mut String) {
-    match node.data.borrow().value.clone() {
-        NodeValue::Text(text) => out.push_str(&escape_text(&text)),
+    match &node.data.borrow().value {
+        NodeValue::Text(text) => out.push_str(&escape_text(text)),
         NodeValue::SoftBreak => out.push('\n'),
         NodeValue::LineBreak => out.push_str("\\\\\n"),
         NodeValue::Code(code) => {
