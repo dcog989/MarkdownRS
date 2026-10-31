@@ -29,6 +29,7 @@ import { createImagePasteExtension } from "$lib/utils/imagePaste";
 import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 import { createCodeBlockCopyHandler, createMarkdownDecorationsPlugin } from "$lib/utils/markdownExtensions";
 import { createMarkdownLinter } from "$lib/utils/markdownLintExtension.svelte";
+import { dirname } from "$lib/utils/path";
 import { createRecentChangesHighlighter } from "$lib/utils/recentChangesExtension";
 import { userThemeExtension } from "$lib/utils/themeMapper";
 import type { AppEditorView } from "../../../../global";
@@ -46,7 +47,7 @@ export function getTabDirectory(view: EditorView): string {
   const tabId = (view as AppEditorView)._currentTabId ?? appContext.app.activeTabId;
   if (!tabId) return "";
   const path = appContext.editor.tabs.find((t) => t.id === tabId)?.path;
-  return path ? path.replace(/[\\/][^\\/]+$/, "") : "";
+  return path ? dirname(path) : "";
 }
 
 export function resolveFileLanguage(path: string): LanguageDescription | null {

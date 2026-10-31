@@ -1,17 +1,11 @@
 import DOMPurify from "dompurify";
 import { translate } from "$lib/i18n";
-import { appContext } from "$lib/stores/state.svelte";
 import type { RenderResult } from "$lib/types/markdown";
 import { callBackendSafe } from "./backend";
 import { renderMathInHtml } from "./katexRenderer";
 import { logToBackend } from "./logger";
+import { dirname } from "./path";
 import { resolveImageSrc } from "./resolveImagePath";
-
-function getActiveTabDirectory(): string {
-  const tab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
-  if (!tab?.path) return "";
-  return tab.path.replace(/[\\/][^\\/]+$/, "");
-}
 
 export async function renderMarkdown(
   content: string,
@@ -43,7 +37,7 @@ export async function renderMarkdown(
     const images = doc.querySelectorAll("img");
 
     if (images.length > 0) {
-      const directory = basePath?.replace(/[\\/][^\\/]+$/, "") || getActiveTabDirectory();
+      const directory = basePath ? dirname(basePath) : "";
 
       images.forEach((img) => {
         const src = img.getAttribute("src");
