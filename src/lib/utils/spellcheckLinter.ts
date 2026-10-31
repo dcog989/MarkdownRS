@@ -68,6 +68,17 @@ export const createSpellCheckLinter = () => {
         },
       });
 
+      // Ranges and candidate words are both visited in document order, so one
+      // moving cursor replaces a scan of every range per word.
+      let excludedIndex = 0;
+      const isExcluded = (from: number, to: number): boolean => {
+        while (excludedIndex < excludedRanges.length && excludedRanges[excludedIndex].to <= from) {
+          excludedIndex++;
+        }
+        const range = excludedRanges[excludedIndex];
+        return range !== undefined && from < range.to && to > range.from;
+      };
+
       syntaxTree(state).iterate({
         from: view.viewport.from,
         to: view.viewport.to,
@@ -89,7 +100,7 @@ export const createSpellCheckLinter = () => {
               const globalFrom = node.from + (match.index ?? 0);
               const globalTo = globalFrom + word.length;
 
-              if (excludedRanges.some((range) => globalFrom < range.to && globalTo > range.from)) continue;
+              if (isExcluded(globalFrom, globalTo)) continue;
 
               // Only uncached candidates pay for the two adjacent-character reads.
               const charBefore = globalFrom > 0 ? doc.sliceString(globalFrom - 1, globalFrom) : "";
