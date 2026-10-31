@@ -9,7 +9,7 @@ vi.mock("$lib/commands/directory", () => ({
 
 import { getDirectoryMtime, listDirectory } from "$lib/commands/directory";
 import { fileTreeStore, treeRevision } from "./fileTreeStore.svelte";
-import { applyFilter, computeTreeRows, treeViewStore } from "./treeViewStore.svelte";
+import { applyFilter, computeTreeRows, MAX_SEARCH_DEPTH, treeViewStore } from "./treeViewStore.svelte";
 
 const mockedListDirectory = vi.mocked(listDirectory);
 const mockedGetDirectoryMtime = vi.mocked(getDirectoryMtime);
@@ -195,6 +195,20 @@ describe("treeViewStore", () => {
 
     expect(mockedListDirectory).not.toHaveBeenCalledWith("/root/node_modules", false);
     expect(treeViewStore.filterRows).toEqual([]);
+  });
+
+  it("applyFilter stops descending when a symlinked folder points at an ancestor", async () => {
+    // Every listing exposes the same folder through a longer alias path.
+    mockedListDirectory.mockImplementation(async (path: string) => [
+      { name: "up", path: `${path}/up`, is_dir: true, size: 0, modified: null },
+      { name: "note.md", path: `${path}/note.md`, is_dir: false, size: 1, modified: null },
+    ]);
+    fileTreeStore.root = "/root";
+
+    await applyFilter("note", false);
+
+    expect(mockedListDirectory.mock.calls.length).toBeLessThanOrEqual(MAX_SEARCH_DEPTH + 1);
+    expect(treeViewStore.filterRows.some((r) => r.entry.path === "/root/note.md")).toBe(true);
   });
 
   it("applyFilter respects markdown-only mode", async () => {

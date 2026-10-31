@@ -137,6 +137,12 @@ const SEARCH_SKIP_DIRS = new Set([
   "__pycache__",
 ]);
 
+// A symlinked folder can point at one of its own ancestors, in which case every
+// listing reports a longer alias path (`/a/up/a/up/...`) and the path-based
+// visited set never repeats. Stop descending past this depth: files deeper than
+// this are not found by the filter, but the walk cannot fan out without bound.
+export const MAX_SEARCH_DEPTH = 32;
+
 async function searchTree(root: string, query: string, markdownOnly: boolean, generation: number): Promise<TreeRow[]> {
   const visited = new Set<string>([root]);
   const ordered: WalkNode[] = [];
@@ -148,6 +154,9 @@ async function searchTree(root: string, query: string, markdownOnly: boolean, ge
     if (!node) break;
     ordered.push(node);
     if (!node.entry.is_dir) continue;
+    // Folders at the cap stay as rows, but are not listed, so a symlink loop
+    // cannot keep the walk going.
+    if (node.depth >= MAX_SEARCH_DEPTH) continue;
 
     if (!fileTreeStore.children.has(node.entry.path)) {
       await loadChildren(node.entry.path);
