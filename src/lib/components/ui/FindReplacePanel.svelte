@@ -29,6 +29,7 @@ import {
   selectNearestMatch,
   updateSearchEditor,
 } from "$lib/utils/searchManager.svelte";
+import { isModalOpen } from "$lib/utils/shortcuts";
 import { debounce } from "$lib/utils/timing";
 
 let {
@@ -267,15 +268,6 @@ function handleKeydown(e: KeyboardEvent) {
     if (e.key === "h") isReplaceMode = true;
     focusInput();
   }
-}
-
-function isModalOpen(): boolean {
-  if (appContext.ui.dialog.isOpen || appContext.ui.dialog.promptIsOpen) return true;
-  // Modal visibility lives in the interface store's show* flags; showFind is the
-  // find bar itself and must not block F3.
-  return Object.entries(appContext.interface).some(
-    ([key, open]) => key.startsWith("show") && key !== "showFind" && open === true,
-  );
 }
 
 function handleGlobalKeydown(e: KeyboardEvent) {

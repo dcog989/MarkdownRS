@@ -180,19 +180,9 @@ export const viewCommands: Command[] = [
     defaultKey: "escape",
     global: true,
     handler: (): boolean => {
-      const anyModalOpen =
-        appContext.interface.showSettings ||
-        appContext.interface.showShortcuts ||
-        appContext.interface.showAbout ||
-        appContext.interface.showBookmarks ||
-        appContext.interface.showFileHistory ||
-        appContext.interface.showCommandPalette ||
-        appContext.interface.showData ||
-        appContext.interface.showRumdlConfig ||
-        appContext.interface.showEmojiPicker ||
-        appContext.interface.showFind;
-
-      if (anyModalOpen) return false;
+      // Modals already block commands before they run; only the find bar still needs
+      // Escape to reach it so it can close itself.
+      if (appContext.interface.showFind) return false;
 
       if (appContext.app.writerMode) {
         toggleWriterMode();

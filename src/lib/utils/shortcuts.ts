@@ -9,7 +9,7 @@ const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platfor
 
 // A dialog is modal for the keyboard too: nothing may run behind it. The find bar is
 // not a modal and must keep its shortcuts.
-function isModalOpen(): boolean {
+export function isModalOpen(): boolean {
   if (appContext.ui.dialog.isOpen || appContext.ui.dialog.promptIsOpen) return true;
   return Object.entries(appContext.interface).some(
     ([key, open]) => key.startsWith("show") && key !== "showFind" && open === true,
