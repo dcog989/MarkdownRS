@@ -5,6 +5,7 @@ import { callBackendSafe } from "$lib/utils/backend";
 import { hashContent } from "$lib/utils/contentHash";
 import { getEditorInstance } from "$lib/utils/editorCommands";
 import { logger } from "$lib/utils/logger";
+import { normalizePath } from "$lib/utils/path";
 import { byteLength, detectLineEnding } from "$lib/utils/textMetrics";
 import type { AppEditorView } from "../../global";
 
@@ -47,10 +48,6 @@ export function invalidateMetadataCache(path: string) {
 
 export function normalizeLineEndings(text: string): string {
   return text.replace(/\r\n/g, "\n");
-}
-
-export function sanitizePath(path: string): string {
-  return path.replace(/\0/g, "").replace(/\\/g, "/");
 }
 
 /** Returns false when the file is gone or unreadable. */
@@ -136,7 +133,7 @@ export async function reloadFileContent(tabId: string): Promise<void> {
   if (!tab?.path) return;
 
   const contentAtStart = tab.content;
-  const sanitizedPath = sanitizePath(tab.path);
+  const sanitizedPath = normalizePath(tab.path);
   const result = await callBackendSafe("read_text_file", { path: sanitizedPath }, "File:Read", {
     userMessage: translate("fileOps.failedReload"),
     additionalInfo: { path: tab.path, tabId },

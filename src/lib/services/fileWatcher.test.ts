@@ -26,7 +26,6 @@ vi.mock("$lib/i18n", () => ({
 vi.mock("$lib/services/fileMetadata", () => ({
   hasFileChanged: vi.fn(),
   reloadFileContent: vi.fn(),
-  sanitizePath: (path: string) => path,
 }));
 
 vi.mock("$lib/stores/editorStore.svelte", () => ({

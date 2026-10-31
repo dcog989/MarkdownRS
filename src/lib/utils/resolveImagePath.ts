@@ -1,13 +1,14 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
+import { normalizePath } from "./path";
 
 /**
  * Normalizes a relative path against a base directory, collapsing '.' and '..'
  * segments. The result is always an absolute path with forward slashes.
  */
 function joinAndNormalize(baseDir: string, relativePath: string): string {
-  const cleanBase = baseDir.replace(/\\/g, "/");
-  const cleanRelative = relativePath.replace(/\\/g, "/");
-  const parts = [...cleanBase.split("/"), ...cleanRelative.split("/")].filter((p) => p && p !== ".");
+  const parts = [...normalizePath(baseDir).split("/"), ...normalizePath(relativePath).split("/")].filter(
+    (p) => p && p !== ".",
+  );
 
   const resolved: string[] = [];
   for (const part of parts) {

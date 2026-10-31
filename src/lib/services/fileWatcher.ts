@@ -1,11 +1,12 @@
 import { type WatchEvent, watchImmediate } from "@tauri-apps/plugin-fs";
 import { translate } from "$lib/i18n";
-import { hasFileChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
+import { hasFileChanged, reloadFileContent } from "$lib/services/fileMetadata";
 import { updateTransientState } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { AppError } from "$lib/utils/errorHandling";
+import { normalizePath } from "$lib/utils/path";
 import { debounce } from "$lib/utils/timing";
 
 type UnwatchFn = () => void;
@@ -32,7 +33,7 @@ class FileWatcherService {
 
   async watch(tabId: string, rawPath: string): Promise<void> {
     if (!tabId || !rawPath) return;
-    const path = sanitizePath(rawPath);
+    const path = normalizePath(rawPath);
 
     if (this.tabPaths.get(tabId) === path) return;
     if (this.tabPaths.has(tabId)) this.unwatch(tabId);
@@ -93,7 +94,7 @@ class FileWatcherService {
   }
 
   setWriteLock(rawPath: string, locked: boolean) {
-    const path = sanitizePath(rawPath);
+    const path = normalizePath(rawPath);
     if (locked) {
       this.writeLocks.set(path, -1);
     } else if (this.writeLocks.has(path)) {
@@ -142,7 +143,7 @@ class FileWatcherService {
    * watcher first keeps the plugin resource count flat.
    */
   async renew(rawPath: string): Promise<void> {
-    const path = sanitizePath(rawPath);
+    const path = normalizePath(rawPath);
     if (!path || !this.pathTabs.has(path)) return;
 
     if (this.renewInFlight.has(path)) {

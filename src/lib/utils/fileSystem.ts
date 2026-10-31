@@ -6,7 +6,6 @@ import {
   invalidateMetadataCache,
   refreshMetadata,
   reloadFileContent,
-  sanitizePath,
 } from "$lib/services/fileMetadata";
 import { fileWatcher } from "$lib/services/fileWatcher";
 import { loadSession, persistSession, persistSessionDebounced } from "$lib/services/sessionSerialization";
@@ -27,6 +26,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
+import { normalizePath } from "$lib/utils/path";
 import {
   autoSaveCurrentFile,
   navigateToPath,
@@ -212,7 +212,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
   }
 
   try {
-    const oldPath = sanitizePath(tab.path);
+    const oldPath = normalizePath(tab.path);
     const pathParts = oldPath.split("/");
     const oldFileName = pathParts.pop() || "";
     const directory = pathParts.join("/");

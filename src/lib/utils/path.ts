@@ -3,10 +3,10 @@
 
 /**
  * Convert a native filesystem path (`\` on Windows) to the `/` form the store
- * and tab paths use.
+ * and tab paths use, dropping NUL bytes the OS cannot represent.
  */
 export function normalizePath(path: string): string {
-  return path.replaceAll("\\", "/");
+  return path.replace(/\0/g, "").replaceAll("\\", "/");
 }
 
 /**
@@ -28,7 +28,7 @@ export function dirname(path: string): string {
 
 /**
  * Return the final path segment of `path` (empty when the path ends in a
- * separator, e.g. `dirname('/a/')` is `''`).
+ * separator, e.g. `basename('/a/')` is `''`).
  */
 export function basename(path: string): string {
   return path.split(/[\\/]/).pop() || "";

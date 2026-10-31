@@ -7,7 +7,6 @@ import {
   invalidateMetadataCache,
   normalizeLineEndings,
   refreshMetadata,
-  sanitizePath,
 } from "$lib/services/fileMetadata";
 import { fileWatcher } from "$lib/services/fileWatcher";
 import { waitForTabContentLoad } from "$lib/services/tabLoadStateMachine";
@@ -30,6 +29,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { AppError } from "$lib/utils/errorHandling";
 import { logger } from "$lib/utils/logger";
+import { normalizePath } from "$lib/utils/path";
 import { extractSmartTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats, detectLineEnding } from "$lib/utils/textMetrics";
 import { formatDuration } from "$lib/utils/timing";
@@ -63,7 +63,7 @@ export async function openFile(path?: string): Promise<void> {
       return;
     }
 
-    const sanitizedPath = sanitizePath(targetPath);
+    const sanitizedPath = normalizePath(targetPath);
     const existingTab = appContext.editor.tabs.find((t) => t.path === sanitizedPath);
 
     addToFileHistory(sanitizedPath);
@@ -281,7 +281,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     }
 
     if (savePath) {
-      const sanitizedPath = sanitizePath(savePath);
+      const sanitizedPath = normalizePath(savePath);
 
       tab = getTab();
       if (!tab) return false;
