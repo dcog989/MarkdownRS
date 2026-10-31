@@ -1,5 +1,6 @@
 import { translate } from "$lib/i18n";
-import { clearTabCaches, editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
+import { clearTabCaches } from "$lib/stores/editorCache";
+import { editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
