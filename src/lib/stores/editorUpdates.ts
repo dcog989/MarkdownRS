@@ -32,8 +32,12 @@ export function updateContent(id: string, content: string, lineCount: number) {
   // Large tabs keep their last known size and dirty state: hashing and
   // UTF-8-encoding the whole document on every debounce is what makes typing
   // in a big file stutter. Save/reload set both exactly.
-  const tabIsLarge = oldTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
-  const sizeBytes = tabIsLarge ? oldTab.sizeBytes : byteLength(content);
+  const largeFileLimit = CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
+  const tabIsLarge = oldTab.sizeBytes > largeFileLimit;
+  // A large tab skips the UTF-8 encode per keystroke, but a document that just
+  // shrank past the limit must get its real size back or it stays in large-file
+  // mode (no preview, no spellcheck) until the next save.
+  const sizeBytes = tabIsLarge && content.length > largeFileLimit ? oldTab.sizeBytes : byteLength(content);
 
   scheduleWordCountUpdate(id, content);
 
