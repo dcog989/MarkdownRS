@@ -184,7 +184,7 @@ pub async fn write_rumdl_config(
     let scope = config::RumdlConfigScope::from_str(target.as_deref());
 
     crate::timed_info!("[Markdown]", "write_rumdl_config", {
-        run_blocking("write rumdl config", move || {
+        let (resolved, content) = run_blocking("validate rumdl config", move || {
             let pr = pr.unwrap_or_else(|| dirs::home_dir().unwrap_or_default());
             let resolved = config::resolve_config_target(fp.as_deref(), Some(&pr), scope);
 
@@ -194,10 +194,14 @@ pub async fn write_rumdl_config(
 
             config::validate_config_content(&content, &pr, &resolved)?;
 
-            std::fs::write(&resolved, content).map_err(|e| format!("Failed to write rumdl config: {}", e))?;
-
-            Ok(resolved.to_string_lossy().to_string())
+            Ok((resolved, content))
         })
-        .await
+        .await?;
+
+        crate::utils::atomic_write(&resolved, content.as_bytes())
+            .await
+            .map_err(|e| format!("Failed to write rumdl config: {}", e))?;
+
+        Ok(resolved.to_string_lossy().to_string())
     })
 }
