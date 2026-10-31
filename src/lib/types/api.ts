@@ -165,11 +165,11 @@ export interface BackendCommands {
   // Dictionary / Spellcheck
   add_to_dictionary: {
     args: { word: string };
-    return: undefined;
+    return: boolean;
   };
   add_words_to_dictionary: {
     args: { words: string[] };
-    return: undefined;
+    return: boolean;
   };
   load_user_dictionary: {
     args: Record<string, never>;

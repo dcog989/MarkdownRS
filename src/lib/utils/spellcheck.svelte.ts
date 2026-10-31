@@ -53,7 +53,10 @@ export class SpellcheckManager {
     const words = await callBackend("load_user_dictionary", {}, "Dictionary:Add", undefined, {
       ignore: true,
     });
-    this.customDictionary = new SvelteSet((words || []).map((w) => w.toLowerCase()));
+    // A failed read must not wipe the words already in memory; only a real
+    // (possibly empty) list replaces the set.
+    if (!words) return;
+    this.customDictionary = new SvelteSet(words.map((w) => w.toLowerCase()));
   }
 
   async init(force = false): Promise<boolean | null> {

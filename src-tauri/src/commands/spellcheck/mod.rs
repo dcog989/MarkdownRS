@@ -13,16 +13,18 @@ use tauri::State;
 const MAX_SUGGESTIONS: usize = 5;
 
 #[tauri::command]
-pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<(), String> {
+pub async fn add_to_dictionary(app_handle: tauri::AppHandle, word: String) -> Result<bool, String> {
     user_dict::add_to_dictionary_inner(app_handle, word)
         .await
+        .map(|_| true)
         .to_tauri_result()
 }
 
 #[tauri::command]
-pub async fn add_words_to_dictionary(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<(), String> {
+pub async fn add_words_to_dictionary(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<bool, String> {
     user_dict::add_words_to_dictionary_inner(app_handle, words)
         .await
+        .map(|_| true)
         .to_tauri_result()
 }
 

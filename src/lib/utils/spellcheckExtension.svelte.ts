@@ -57,8 +57,10 @@ export const spellCheckKeymap = [
       view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
       forceLinting(view);
 
-      void addWordsToDictionary(invalidWords).then(() => {
-        spellcheckState.refreshCustomDictionary();
+      void addWordsToDictionary(invalidWords).then((saved) => {
+        // A confirmed write already updated the backend and the optimistic set;
+        // a failed one is reported and reloading puts the UI back on disk state.
+        if (!saved) void spellcheckState.refreshCustomDictionary();
       });
 
       return true;
