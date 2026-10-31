@@ -2,16 +2,28 @@
 // functions work for POSIX and Windows paths without per-call normalization.
 
 /**
+ * Convert a native filesystem path (`\` on Windows) to the `/` form the store
+ * and tab paths use.
+ */
+export function normalizePath(path: string): string {
+  return path.replaceAll("\\", "/");
+}
+
+/**
  * Return the parent directory of `path`. `/` and an empty path are returned
  * unchanged (the filesystem root has no parent).
  */
 export function dirname(path: string): string {
   if (path === "") return path;
-  const normalized = path.replaceAll("\\", "/");
-  if (normalized === "/") return "/";
+  const normalized = normalizePath(path);
+  if (normalized === "/" || /^[A-Za-z]:\/$/.test(normalized) || /^\/\/[^/]+\/[^/]+$/.test(normalized)) {
+    return normalized;
+  }
   const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return normalized.slice(0, idx);
+  if (idx < 0) return normalized;
+  if (idx === 0) return "/";
+  const parent = normalized.slice(0, idx);
+  return /^[A-Za-z]:$/.test(parent) ? `${parent}/` : parent;
 }
 
 /**

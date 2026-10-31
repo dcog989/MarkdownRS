@@ -7,7 +7,7 @@ import {
 } from "$lib/stores/settingsState.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { MARKDOWN_EXTENSION_SET } from "$lib/utils/fileValidation";
-import { basename, dirname } from "$lib/utils/path";
+import { basename, dirname, normalizePath } from "$lib/utils/path";
 
 export { basename, dirname };
 
@@ -46,13 +46,14 @@ function invalidateLoads(): void {
 }
 
 export function setRoot(path: string): void {
-  fileTreeStore.root = path;
+  const root = normalizePath(path);
+  fileTreeStore.root = root;
   fileTreeStore.expanded.clear();
   fileTreeStore.children.clear();
   fileTreeStore.loading.clear();
   invalidateLoads();
-  fileTreeStore.expanded.set(path, true);
-  void loadChildren(path);
+  fileTreeStore.expanded.set(root, true);
+  void loadChildren(root);
 }
 
 // While suspended, the tree ignores changes of the active document. Batch
@@ -84,7 +85,12 @@ export function loadChildren(path: string): Promise<void> {
     try {
       const entries = await listDirectory(path, settingsState.fileTreeShowHidden);
       if (loadGeneration.get(path) !== generation) return;
-      fileTreeStore.children.set(path, entries);
+      // Rust reports native paths, so normalize `\` here: tab paths and the
+      // prefix checks in refresh/reveal all use `/`.
+      fileTreeStore.children.set(
+        path,
+        entries.map((entry) => ({ ...entry, path: normalizePath(entry.path) })),
+      );
       fileTreeStore.lastLoaded.set(path, Date.now());
     } catch {
       if (loadGeneration.get(path) !== generation) return;

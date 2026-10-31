@@ -244,12 +244,34 @@ describe("fileTreeStore", () => {
     expect(mockedListDirectory).toHaveBeenCalledTimes(2);
   });
 
+  it("normalizes Windows separators in the root and listing paths", async () => {
+    mockedListDirectory.mockResolvedValue([
+      { name: "a.md", path: "C:\\root\\a.md", is_dir: false, size: 1, modified: null },
+    ]);
+
+    setRoot("C:\\root");
+    await vi.waitFor(() => expect(fileTreeStore.children.has("C:/root")).toBe(true));
+
+    expect(fileTreeStore.root).toBe("C:/root");
+    expect(mockedListDirectory).toHaveBeenCalledWith("C:/root", false);
+    expect(fileTreeStore.children.get("C:/root")?.[0]?.path).toBe("C:/root/a.md");
+  });
+
   it("dirname returns the parent directory", () => {
     expect(dirname("/home/user/project")).toBe("/home/user");
     expect(dirname("/home/user/file.md")).toBe("/home/user");
     expect(dirname("/home")).toBe("/");
     expect(dirname("/")).toBe("/");
     expect(dirname("")).toBe("");
+  });
+
+  it("dirname keeps Windows drive roots and UNC share roots", () => {
+    expect(dirname("C:/")).toBe("C:/");
+    expect(dirname("C:/Users")).toBe("C:/");
+    expect(dirname("C:\\Users\\me")).toBe("C:/Users");
+    expect(dirname("C:")).toBe("C:");
+    expect(dirname("//server/share")).toBe("//server/share");
+    expect(dirname("//server/share/folder")).toBe("//server/share");
   });
 
   it("toggleMarkdownOnly flips the markdown-only flag", () => {
