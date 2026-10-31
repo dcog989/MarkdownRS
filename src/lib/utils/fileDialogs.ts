@@ -144,6 +144,15 @@ export async function openFileByPath(path: string): Promise<void> {
 
 const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;
 
+/** Hrefs are percent-encoded by the renderer (or written encoded by authors); the resolver wants a real path. */
+function decodeHref(href: string): string {
+  try {
+    return decodeURIComponent(href);
+  } catch {
+    return href;
+  }
+}
+
 export async function navigateToPath(clickedPath: string): Promise<void> {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
@@ -158,7 +167,10 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
       return;
     }
 
-    const resolvedPath = await resolveRelativePath(activeTab?.path || null, clickedPath.replace(/\\/g, "/"));
+    const resolvedPath = await resolveRelativePath(
+      activeTab?.path || null,
+      decodeHref(clickedPath).replace(/\\/g, "/"),
+    );
 
     if (!resolvedPath) {
       return;

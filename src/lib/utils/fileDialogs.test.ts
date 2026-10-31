@@ -182,4 +182,23 @@ describe("navigateToPath", () => {
     expect(openUrl).toHaveBeenNthCalledWith(2, "mailto:me@example.com");
     expect(openPath).not.toHaveBeenCalled();
   });
+
+  it("decodes percent-encoded hrefs before resolving them as paths", async () => {
+    appContext.app.activeTabId = null;
+    const { callBackend } = await import("$lib/utils/backend");
+
+    await navigateToPath("notes/my%20note.md");
+    expect(callBackend).toHaveBeenLastCalledWith(
+      "resolve_path_relative",
+      { basePath: null, clickPath: "notes/my note.md" },
+      "File:Read",
+    );
+
+    await navigateToPath("notes/50%off.md");
+    expect(callBackend).toHaveBeenLastCalledWith(
+      "resolve_path_relative",
+      { basePath: null, clickPath: "notes/50%off.md" },
+      "File:Read",
+    );
+  });
 });
