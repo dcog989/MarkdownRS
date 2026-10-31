@@ -84,7 +84,12 @@ pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Opt
 async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<PathBuf> {
     let keyed_name = keyed(theme_name);
     if !is_plain_name(theme_name) || !is_plain_name(&keyed_name) {
-        log::warn!("Rejected theme name with path components: {:?}", theme_name);
+        // Expected for the built-in "Auto (Light/Dark)" pseudo-theme, which has
+        // no CSS file: only a plain file stem can name one on disk.
+        log::debug!(
+            "Theme name is not a file name, using the built-in palette: {:?}",
+            theme_name
+        );
         return None;
     }
 
