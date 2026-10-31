@@ -17,7 +17,6 @@ export type PromptOptions = {
 };
 
 type DialogRequest = {
-  id: string;
   options: DialogOptions;
   resolve: (value: DialogResult) => void;
 };
@@ -30,7 +29,6 @@ type PromptRequest = {
 // Module-level private state
 const queue: DialogRequest[] = [];
 const promptQueue: PromptRequest[] = [];
-let idCounter = 0;
 
 // Public reactive state
 export const dialogStore = $state({
@@ -53,9 +51,7 @@ function showNext() {
 
 export function confirmDialog(options: DialogOptions): Promise<DialogResult> {
   return new Promise((resolve) => {
-    const id = `dialog-${++idCounter}`;
     queue.push({
-      id,
       options: {
         saveLabel: translate("common.save"),
         discardLabel: translate("common.discard"),
