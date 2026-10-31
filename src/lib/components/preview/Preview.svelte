@@ -110,18 +110,15 @@ onDestroy(() => {
   renderer.cleanup();
 });
 
-function injectHtml(node: HTMLElement, content: string) {
+function applyPreviewHtml(node: HTMLElement, content: string) {
   node.innerHTML = content;
   void renderMermaidDiagrams(node);
   void highlightCodeBlocks(node);
+}
 
-  return {
-    update(newContent: string) {
-      node.innerHTML = newContent;
-      void renderMermaidDiagrams(node);
-      void highlightCodeBlocks(node);
-    },
-  };
+function injectHtml(node: HTMLElement, content: string) {
+  applyPreviewHtml(node, content);
+  return { update: (newContent: string) => applyPreviewHtml(node, newContent) };
 }
 </script>
 
