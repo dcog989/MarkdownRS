@@ -161,10 +161,6 @@ export interface BackendCommands {
   };
 
   // Dictionary / Spellcheck
-  add_to_dictionary: {
-    args: { word: string };
-    return: boolean;
-  };
   add_words_to_dictionary: {
     args: { words: string[] };
     return: boolean;

@@ -7,6 +7,7 @@
 
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { SvelteMap, SvelteSet } from "svelte/reactivity";
+import { addWordsToDictionary } from "$lib/services/dictionaryService";
 import { settingsState } from "$lib/stores/settingsState.svelte";
 import { callBackend } from "./backend";
 import { logger } from "./logger";
@@ -57,6 +58,26 @@ export class SpellcheckManager {
     // (possibly empty) list replaces the set.
     if (!words) return;
     this.customDictionary = new SvelteSet(words.map((w) => w.toLowerCase()));
+  }
+
+  /**
+   * Adds words to the user dictionary: updates the in-memory set and the
+   * misspelled cache immediately, writes them in one call, and falls back to
+   * disk state when the write failed.
+   */
+  async addWords(words: string[]): Promise<boolean> {
+    if (words.length === 0) return true;
+
+    const updated = new SvelteSet(this.customDictionary);
+    for (const word of words) {
+      updated.add(word.toLowerCase());
+      this.misspelledCache.delete(stripPossessiveSuffix(word));
+    }
+    this.customDictionary = updated;
+
+    const saved = await addWordsToDictionary(words);
+    if (!saved) await this.loadCustomDictionary();
+    return saved;
   }
 
   async init(force = false): Promise<boolean | null> {
@@ -169,10 +190,6 @@ export class SpellcheckManager {
           );
         });
     });
-  }
-
-  async refreshCustomDictionary(): Promise<void> {
-    await this.loadCustomDictionary();
   }
 
   isWordValid(word: string): boolean {

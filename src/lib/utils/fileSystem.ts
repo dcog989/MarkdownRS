@@ -1,5 +1,4 @@
 import { translate } from "$lib/i18n";
-import { addToDictionary } from "$lib/services/dictionaryService";
 import {
   checkAndReloadIfChanged,
   checkFileExists,
@@ -32,7 +31,6 @@ import { navigateToPath, openFile, saveCurrentFile, saveCurrentFileAs } from "./
 import { renameFileOnDisk } from "./fileIO";
 
 export {
-  addToDictionary,
   checkAndReloadIfChanged,
   checkFileExists,
   loadSession,

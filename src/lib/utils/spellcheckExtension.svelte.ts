@@ -1,9 +1,6 @@
-import { forceLinting } from "@codemirror/lint";
 import type { EditorView } from "@codemirror/view";
-import { SvelteSet } from "svelte/reactivity";
-import { addWordsToDictionary } from "$lib/services/dictionaryService";
-import { SPELLCHECK_WORD_PATTERN, spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
-import { createSpellCheckLinter, spellcheckRefreshEffect, triggerImmediateLint } from "./spellcheckLinter";
+import { SPELLCHECK_WORD_PATTERN, spellcheckState } from "$lib/utils/spellcheck.svelte";
+import { createSpellCheckLinter, triggerImmediateLint } from "./spellcheckLinter";
 
 export { createSpellCheckLinter, triggerImmediateLint };
 
@@ -33,24 +30,12 @@ export const spellCheckKeymap = [
       const invalidWords = words.filter((w) => w.length > 1 && !spellcheckState.isWordValid(w));
       if (invalidWords.length === 0) return true;
 
-      const newDict = new SvelteSet(spellcheckState.customDictionary);
-      for (const w of invalidWords) {
-        newDict.add(w.toLowerCase());
-      }
-      spellcheckState.customDictionary = newDict;
-
-      for (const w of invalidWords) {
-        spellcheckState.misspelledCache.delete(stripPossessiveSuffix(w));
-      }
-
-      view.dispatch({ effects: spellcheckRefreshEffect.of(null) });
-      forceLinting(view);
-
-      void addWordsToDictionary(invalidWords).then((saved) => {
-        // A confirmed write already updated the backend and the optimistic set;
-        // a failed one is reported and reloading puts the UI back on disk state.
-        if (!saved) void spellcheckState.refreshCustomDictionary();
+      void spellcheckState.addWords(invalidWords).then((saved) => {
+        // The optimistic update is reverted on failure; re-lint so the markers
+        // match the dictionary on disk again.
+        if (!saved) triggerImmediateLint(view);
       });
+      triggerImmediateLint(view);
 
       return true;
     },

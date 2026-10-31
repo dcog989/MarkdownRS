@@ -11,10 +11,6 @@ use tokio::sync::Mutex;
 /// Serializes the read-modify-write of the shared dictionary file.
 static USER_DICT_WRITE: Mutex<()> = Mutex::const_new(());
 
-pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> Result<()> {
-    add_words_to_dictionary_inner(app_handle, vec![word]).await
-}
-
 pub async fn add_words_to_dictionary_inner(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<()> {
     let data_dir = utils::app_data_dir(&app_handle).map_err(|e| anyhow!("Failed to get app data directory: {}", e))?;
     let dict_path = utils::custom_dict_path(&data_dir);

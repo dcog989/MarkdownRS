@@ -14,17 +14,15 @@ import Sparkles from "lucide-svelte/icons/sparkles";
 import TextAlignStart from "lucide-svelte/icons/text-align-start";
 import WandSparkles from "lucide-svelte/icons/wand-sparkles";
 import { untrack } from "svelte";
-import { SvelteSet } from "svelte/reactivity";
 import { _ } from "svelte-i18n";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import type { OperationId } from "$lib/config/textOperationsRegistry";
 import { translate } from "$lib/i18n";
-import { addToDictionary, addWordsToDictionary } from "$lib/services/dictionaryService";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { SPELLCHECK_WORD_PATTERN, spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
+import { SPELLCHECK_WORD_PATTERN, spellcheckState } from "$lib/utils/spellcheck.svelte";
 
 function opShortcut(opId: string): string {
   return shortcutManager.getShortcutDisplay(`textop.${opId}`);
@@ -191,19 +189,9 @@ function findInvalidWords(text: string): string[] {
   return uniqueWords.filter((w) => !spellcheckState.isWordValid(w));
 }
 
-async function handleAddAll() {
-  const invalidWords = invalidWordsInSelection;
-
-  const newDict = new SvelteSet([...spellcheckState.customDictionary, ...invalidWords.map((w) => w.toLowerCase())]);
-  invalidWords.forEach((w) => {
-    spellcheckState.misspelledCache.delete(stripPossessiveSuffix(w));
-  });
-  spellcheckState.customDictionary = newDict;
-
-  onDictionaryUpdate?.();
+function handleAddAll() {
   onClose();
-
-  await addWordsToDictionary(invalidWords);
+  void spellcheckState.addWords(invalidWordsInSelection).then(() => onDictionaryUpdate?.());
 }
 
 function handleOp(type: OperationId | undefined) {
@@ -296,15 +284,9 @@ async function handleSendToBrowser() {
           <button
             type="button"
             class="text-ui menu-item"
-            onclick={async () => {
-              const newDict = new SvelteSet([...spellcheckState.customDictionary, targetWord.toLowerCase()]);
-              spellcheckState.customDictionary = newDict;
-
-              spellcheckState.misspelledCache.delete(stripPossessiveSuffix(targetWord));
-
-              onDictionaryUpdate?.();
+            onclick={() => {
               closeMenuAndReset();
-              await addToDictionary(targetWord);
+              void spellcheckState.addWords([targetWord]).then(() => onDictionaryUpdate?.());
             }}
           >
             <BookPlus size={14} />
