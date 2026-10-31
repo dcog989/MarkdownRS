@@ -3,7 +3,7 @@ import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import { togglePreferredExtension } from "$lib/stores/editorStore.svelte";
 import { refreshTree } from "$lib/stores/fileTreeStore.svelte";
 import { toggleOutline } from "$lib/stores/interfaceStore.svelte";
-import { toggleSplitPane } from "$lib/stores/paneStore.svelte";
+import { isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { setTheme, toggleFileTree, toggleSplitView, toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -14,7 +14,6 @@ import type { Command } from "./types";
 export const viewCommands: Command[] = [
   {
     id: "theme.dark",
-    label: "Dark",
     labelKey: "command.themeDark",
     category: "commandCategory.theme",
     handler: () => {
@@ -24,7 +23,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "theme.light",
-    label: "Light",
     labelKey: "command.themeLight",
     category: "commandCategory.theme",
     handler: () => {
@@ -34,8 +32,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleSplitView",
-    label: "Toggle Split Preview",
-    labelKey: "command.toggleSplitPreview",
+    labelKey: () => (appContext.settings.splitView ? "command.hideSplitPreview" : "command.showSplitPreview"),
     category: "commandCategory.view",
     defaultKey: "ctrl+\\",
     global: true,
@@ -52,8 +49,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleSplitPane",
-    label: "Toggle Split Editor",
-    labelKey: "command.toggleSplitPane",
+    labelKey: () => (isSplitPaneActive() ? "command.hideSplitEditor" : "command.showSplitEditor"),
     category: "commandCategory.view",
     global: true,
     handler: async () => {
@@ -62,8 +58,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleWriterMode",
-    label: "Toggle Writer Mode",
-    labelKey: "command.toggleWriterMode",
+    labelKey: () => (appContext.app.writerMode ? "command.exitWriterMode" : "command.enterWriterMode"),
     category: "commandCategory.view",
     defaultKey: "f9",
     global: true,
@@ -73,8 +68,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleFileTree",
-    label: "Toggle File Tree",
-    labelKey: "command.toggleFileTree",
+    labelKey: () => (appContext.settings.fileTreeVisible ? "command.hideFileTree" : "command.showFileTree"),
     category: "commandCategory.view",
     defaultKey: "ctrl+`",
     global: true,
@@ -85,8 +79,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleOutline",
-    label: "Document Outline",
-    labelKey: "command.toggleOutline",
+    labelKey: () => (appContext.interface.showOutline ? "command.hideOutline" : "command.showOutline"),
     category: "commandCategory.navigation",
     defaultKey: "ctrl+shift+o",
     global: true,
@@ -96,7 +89,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.refreshFileTree",
-    label: "Refresh File Tree",
     labelKey: "command.refreshFileTree",
     category: "commandCategory.view",
     defaultKey: "f5",
@@ -115,8 +107,8 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleViewMode",
-    label: "Toggle Raw/Rendered Mode",
-    labelKey: "command.toggleViewMode",
+    labelKey: () =>
+      appContext.settings.viewMode === "raw" ? "command.switchToRenderedMode" : "command.switchToRawMode",
     category: "commandCategory.view",
     defaultKey: "ctrl+shift+r",
     handler: () => {
@@ -125,8 +117,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleFileType",
-    label: "Toggle File Type (Markdown/Text)",
-    labelKey: "command.toggleFileType",
+    labelKey: () => (isCurrentFileMarkdown() ? "command.switchToTextFileType" : "command.switchToMarkdownFileType"),
     category: "commandCategory.view",
     handler: () => {
       const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
@@ -136,8 +127,7 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.toggleWhitespace",
-    label: "Toggle Whitespace",
-    labelKey: "command.toggleWhitespace",
+    labelKey: () => (appContext.settings.showWhitespace ? "command.hideWhitespace" : "command.showWhitespace"),
     category: "commandCategory.view",
     defaultKey: "ctrl+shift+8",
     handler: () => {
@@ -147,7 +137,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.zoomIn",
-    label: "Zoom In",
     labelKey: "command.zoomIn",
     category: "commandCategory.view",
     showInPalette: false,
@@ -159,7 +148,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.zoomOut",
-    label: "Zoom Out",
     labelKey: "command.zoomOut",
     category: "commandCategory.view",
     showInPalette: false,
@@ -171,7 +159,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "view.resetZoom",
-    label: "Reset Zoom",
     labelKey: "command.resetZoom",
     category: "commandCategory.view",
     showInPalette: false,
@@ -183,7 +170,6 @@ export const viewCommands: Command[] = [
   },
   {
     id: "escape",
-    label: "Escape / Exit Writer Mode",
     labelKey: "command.escapeWriterMode",
     category: "commandCategory.view",
     showInPalette: false,

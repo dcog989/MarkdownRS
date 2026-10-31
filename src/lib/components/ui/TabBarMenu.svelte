@@ -18,7 +18,7 @@ import {
   toggleFileHistory,
   toggleSettings,
 } from "$lib/stores/interfaceStore.svelte";
-import { toggleSplitPane } from "$lib/stores/paneStore.svelte";
+import { isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -137,7 +137,8 @@ function closeMenu() {
       {:else}
         <EyeOff size={14} class="opacity-50" />
       {/if}
-      <span class="flex-1">{$_("tabBarMenu.toggleSplitPreview")}</span
+      <span class="flex-1"
+        >{$_(appContext.settings.splitView ? "command.hideSplitPreview" : "command.showSplitPreview")}</span
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.splitView}</span>
     </button>
     <button
@@ -149,7 +150,7 @@ function closeMenu() {
       }}
     >
       <Columns2 size={14} class="opacity-70" />
-      <span class="flex-1">{$_("tabBarMenu.toggleSplitPane")}</span>
+      <span class="flex-1">{$_(isSplitPaneActive() ? "command.hideSplitEditor" : "command.showSplitEditor")}</span>
     </button>
     <button
       type="button"
@@ -161,7 +162,8 @@ function closeMenu() {
       }}
     >
       <FolderTree size={14} class="opacity-70" />
-      <span class="flex-1">{$_("tabBarMenu.toggleFileTree")}</span
+      <span class="flex-1"
+        >{$_(appContext.settings.fileTreeVisible ? "command.hideFileTree" : "command.showFileTree")}</span
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.fileTree}</span>
     </button>
     <button
@@ -173,7 +175,7 @@ function closeMenu() {
       }}
     >
       <Feather size={14} class="opacity-70" />
-      <span class="flex-1">{$_("tabBarMenu.writerMode")}</span
+      <span class="flex-1">{$_(appContext.app.writerMode ? "command.exitWriterMode" : "command.enterWriterMode")}</span
       ><span class="ml-auto text-ui-sm opacity-40">{shortcuts.writerMode}</span>
     </button>
 

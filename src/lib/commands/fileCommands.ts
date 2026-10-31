@@ -15,7 +15,6 @@ import type { Command } from "./types";
 export const fileCommands: Command[] = [
   {
     id: "file.new",
-    label: "New File",
     labelKey: "command.newFile",
     category: "commandCategory.file",
     defaultKey: "ctrl+n",
@@ -27,7 +26,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.open",
-    label: "Open File",
     labelKey: "command.openFile",
     category: "commandCategory.file",
     defaultKey: "ctrl+o",
@@ -36,7 +34,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.save",
-    label: "Save",
     labelKey: "command.save",
     category: "commandCategory.file",
     defaultKey: "ctrl+s",
@@ -45,7 +42,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.saveAs",
-    label: "Save As...",
     labelKey: "command.saveAs",
     category: "commandCategory.file",
     defaultKey: "ctrl+shift+s",
@@ -54,7 +50,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.saveAll",
-    label: "Save All",
     labelKey: "command.saveAll",
     category: "commandCategory.file",
     defaultKey: "ctrl+alt+s",
@@ -63,7 +58,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.closeTab",
-    label: "Close Tab",
     labelKey: "command.closeTab",
     category: "commandCategory.file",
     defaultKey: "ctrl+w",
@@ -76,7 +70,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.reopenClosedTab",
-    label: "Reopen Last Closed Tab",
     labelKey: "command.reopenClosedTab",
     category: "commandCategory.file",
     defaultKey: "ctrl+shift+t",
@@ -85,7 +78,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.addBookmark",
-    label: "Add to Bookmarks",
     labelKey: "command.addBookmark",
     category: "commandCategory.file",
     defaultKey: "ctrl+d",
@@ -93,7 +85,6 @@ export const fileCommands: Command[] = [
   },
   {
     id: "file.fileHistory",
-    label: "File History...",
     labelKey: "command.fileHistory",
     category: "commandCategory.file",
     defaultKey: "ctrl+p",

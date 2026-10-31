@@ -5,7 +5,6 @@ import type { Command } from "./types";
 export const editCommands: Command[] = [
   {
     id: "edit.undo",
-    label: "Undo",
     labelKey: "command.undo",
     category: "commandCategory.edit",
     defaultKey: "ctrl+z",
@@ -18,7 +17,6 @@ export const editCommands: Command[] = [
   },
   {
     id: "edit.redo",
-    label: "Redo",
     labelKey: "command.redo",
     category: "commandCategory.edit",
     defaultKey: "ctrl+y",
@@ -31,7 +29,6 @@ export const editCommands: Command[] = [
   },
   {
     id: "edit.gotoLine",
-    label: "Go to Line",
     labelKey: "command.gotoLine",
     category: "commandCategory.editor",
     showInPalette: false,

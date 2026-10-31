@@ -30,7 +30,6 @@ function tabSwitch(index: number): Command {
 export const navigationCommands: Command[] = [
   {
     id: "nav.nextTab",
-    label: "Next Tab",
     labelKey: "command.nextTab",
     category: "commandCategory.navigation",
     showInPalette: false,
@@ -40,7 +39,6 @@ export const navigationCommands: Command[] = [
   },
   {
     id: "nav.prevTab",
-    label: "Previous Tab",
     labelKey: "command.previousTab",
     category: "commandCategory.navigation",
     showInPalette: false,
@@ -51,7 +49,6 @@ export const navigationCommands: Command[] = [
   ...Array.from({ length: 5 }, (_, i) => tabSwitch(i)),
   {
     id: "nav.lastTab",
-    label: "Go to Last Tab",
     labelKey: "command.lastTab",
     category: "commandCategory.navigation",
     showInPalette: false,

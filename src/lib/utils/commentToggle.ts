@@ -1,6 +1,18 @@
 import { EditorSelection } from "@codemirror/state";
 import type { EditorView } from "@codemirror/view";
 
+export function isSelectionCommented(view: EditorView): boolean {
+  const range = view.state.selection.main;
+
+  if (range.empty) {
+    const content = view.state.doc.lineAt(range.from).text.trimStart();
+    return content.startsWith("<!--") && content.endsWith("-->");
+  }
+
+  const selectedText = view.state.sliceDoc(range.from, range.to);
+  return selectedText.startsWith("<!-- ") && selectedText.endsWith(" -->") && selectedText.length > 9;
+}
+
 export function toggleSelectionComment(view: EditorView): boolean {
   const result = view.state.changeByRange((range) => {
     const { from, to } = range;

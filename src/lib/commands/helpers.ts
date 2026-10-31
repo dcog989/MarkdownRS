@@ -18,7 +18,8 @@ export function runEditorCommand(command: Command): boolean {
 }
 
 export function commandLabel(command: CommandDefinition): string {
-  return command.labelKey ?? command.label;
+  if (typeof command.labelKey === "function") return command.labelKey();
+  return command.labelKey ?? command.label ?? command.id;
 }
 
 const LEGACY_CATEGORY_KEYS: Record<string, string> = {

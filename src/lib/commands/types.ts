@@ -1,7 +1,7 @@
 export interface Command {
   id: string;
-  label: string;
-  labelKey?: string;
+  label?: string;
+  labelKey?: string | (() => string);
   category: string;
   defaultKey?: string;
   global?: boolean;

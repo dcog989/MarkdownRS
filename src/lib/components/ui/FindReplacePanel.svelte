@@ -446,9 +446,9 @@ onMount(() => {
         type="button"
         class="btn-icon h-7 w-7"
         aria-pressed={isReplaceMode}
-        aria-label={$_("findReplace.toggleReplaceMode")}
+        aria-label={$_(isReplaceMode ? "findReplace.hideReplace" : "findReplace.showReplace")}
         onclick={() => (isReplaceMode = !isReplaceMode)}
-        use:tooltip={$_("findReplace.toggleReplaceMode")}
+        use:tooltip={$_(isReplaceMode ? "findReplace.hideReplace" : "findReplace.showReplace")}
       >
         <ArrowRightLeft size={16} />
       </button>

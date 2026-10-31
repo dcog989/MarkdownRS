@@ -31,14 +31,12 @@ function insertFrontmatter(): boolean {
 export const markdownCommands: Command[] = [
   {
     id: "markdown.insertFrontmatter",
-    label: "Insert Frontmatter",
     labelKey: "command.insertFrontmatter",
     category: "commandCategory.insert",
     handler: insertFrontmatter,
   },
   {
     id: "markdown.editRumdlConfig",
-    label: "Edit rumdl Config",
     labelKey: "command.editRumdlConfig",
     category: "commandCategory.markdown",
     handler: toggleRumdlConfig,

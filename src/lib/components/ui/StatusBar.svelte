@@ -167,7 +167,7 @@ async function copyAllStats() {
         type="button"
         class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
         onclick={toggleLineEnding}
-        use:tooltip={$_("statusBar.toggleLineEnding")}
+        use:tooltip={$_(lineEnding === "LF" ? "statusBar.switchToCRLF" : "statusBar.switchToLF")}
       >
         {lineEnding}
       </button>
@@ -184,7 +184,7 @@ async function copyAllStats() {
           ? "text-accent-secondary"
           : "text-inherit"}"
         onclick={toggleWhitespace}
-        use:tooltip={$_("statusBar.toggleWhitespace")}
+        use:tooltip={$_(appContext.settings.showWhitespace ? "command.hideWhitespace" : "command.showWhitespace")}
       >
         <Space size={14} />
       </button>
@@ -196,7 +196,7 @@ async function copyAllStats() {
           ? "text-accent-secondary"
           : "text-inherit"}"
         onclick={toggleWordWrap}
-        use:tooltip={$_("statusBar.toggleWordWrap")}
+        use:tooltip={$_(appContext.settings.wrapGuideColumn >= 0 ? "statusBar.hideWordWrap" : "statusBar.showWordWrap")}
       >
         <TextWrap size={14} />
       </button>
@@ -209,9 +209,9 @@ async function copyAllStats() {
             ? "text-accent-secondary"
             : "text-inherit"}"
           onclick={toggleViewMode}
-          use:tooltip={appContext.settings.viewMode === "rendered"
-            ? $_("statusBar.renderedMode")
-            : $_("statusBar.rawMode")}
+          use:tooltip={$_(
+            appContext.settings.viewMode === "rendered" ? "command.switchToRawMode" : "command.switchToRenderedMode",
+          )}
         >
           {#if appContext.settings.viewMode === "rendered"}
             <Eye size={14} />
@@ -226,7 +226,9 @@ async function copyAllStats() {
           type="button"
           class="text-accent-secondary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
           onclick={toggleFileType}
-          use:tooltip={$_("statusBar.toggleFileType")}
+          use:tooltip={$_(
+            fileType === "markdown" ? "command.switchToTextFileType" : "command.switchToMarkdownFileType",
+          )}
         >
           <span class="w-5 text-center font-bold">{fileType === "markdown" ? "M" : "T"}</span>
         </button>

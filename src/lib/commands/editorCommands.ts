@@ -12,22 +12,24 @@ import {
   selectLine,
 } from "@codemirror/commands";
 import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
-import { toggleSelectionComment } from "$lib/utils/commentToggle";
+import { isSelectionCommented, toggleSelectionComment } from "$lib/utils/commentToggle";
+import { getActiveEditorView } from "$lib/utils/editorCommands";
 import { runEditorCommand } from "./helpers";
 import type { Command } from "./types";
 
 export const editorCommands: Command[] = [
   {
     id: "editor.toggleComment",
-    label: "Toggle Line Comment",
-    labelKey: "command.toggleComment",
+    labelKey: () => {
+      const view = getActiveEditorView();
+      return view && isSelectionCommented(view) ? "command.uncommentLine" : "command.commentLine";
+    },
     category: "commandCategory.editor",
     defaultKey: "ctrl+/",
     handler: () => runEditorCommand(toggleSelectionComment),
   },
   {
     id: "editor.find",
-    label: "Find",
     labelKey: "command.find",
     category: "commandCategory.editor",
     defaultKey: "ctrl+f",
@@ -36,7 +38,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.replace",
-    label: "Replace",
     labelKey: "command.replace",
     category: "commandCategory.editor",
     defaultKey: "ctrl+h",
@@ -45,7 +46,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.duplicateLine",
-    label: "Duplicate Line/Selection",
     labelKey: "command.duplicateLine",
     category: "commandCategory.editor",
     defaultKey: "ctrl+shift+d",
@@ -53,7 +53,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.deleteLine",
-    label: "Delete Line",
     labelKey: "command.deleteLine",
     category: "commandCategory.editor",
     defaultKey: "ctrl+shift+k",
@@ -61,7 +60,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.moveLineUp",
-    label: "Move Line Up",
     labelKey: "command.moveLineUp",
     category: "commandCategory.editor",
     defaultKey: "alt+arrowup",
@@ -69,7 +67,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.moveLineDown",
-    label: "Move Line Down",
     labelKey: "command.moveLineDown",
     category: "commandCategory.editor",
     defaultKey: "alt+arrowdown",
@@ -77,7 +74,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.copyLineUp",
-    label: "Copy Line Up",
     labelKey: "command.copyLineUp",
     category: "commandCategory.editor",
     defaultKey: "shift+alt+arrowup",
@@ -85,7 +81,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.addCursorAbove",
-    label: "Add Cursor Above",
     labelKey: "command.addCursorAbove",
     category: "commandCategory.editor",
     defaultKey: "ctrl+alt+arrowup",
@@ -93,7 +88,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.addCursorBelow",
-    label: "Add Cursor Below",
     labelKey: "command.addCursorBelow",
     category: "commandCategory.editor",
     defaultKey: "ctrl+alt+arrowdown",
@@ -101,7 +95,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.selectLine",
-    label: "Select Line",
     labelKey: "command.selectLine",
     category: "commandCategory.editor",
     defaultKey: "ctrl+l",
@@ -109,7 +102,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.gotoMatchingBracket",
-    label: "Go to Matching Bracket",
     labelKey: "command.gotoMatchingBracket",
     category: "commandCategory.editor",
     defaultKey: "ctrl+shift+\\",
@@ -117,7 +109,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.indent",
-    label: "Indent",
     labelKey: "command.indent",
     category: "commandCategory.editor",
     defaultKey: "ctrl+]",
@@ -125,7 +116,6 @@ export const editorCommands: Command[] = [
   },
   {
     id: "editor.outdent",
-    label: "Outdent",
     labelKey: "command.outdent",
     category: "commandCategory.editor",
     defaultKey: "ctrl+[",

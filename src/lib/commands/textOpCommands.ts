@@ -8,7 +8,6 @@ export const textOpCommands: Command[] = Object.values(TEXT_OPERATIONS_REGISTRY)
   const categoryId = CATEGORY_IDS.has(op.category) ? op.category : "text";
   const cmd: Command = {
     id: `textop.${op.id}`,
-    label: op.label,
     labelKey: `textOps.op.${op.id}`,
     category: `textOps.category.${categoryId}`,
     handler: () => performTextTransform(op.id),

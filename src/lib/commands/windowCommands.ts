@@ -5,7 +5,6 @@ import type { Command } from "./types";
 export const windowCommands: Command[] = [
   {
     id: "window.commandPalette",
-    label: "Command Palette",
     labelKey: "command.commandPalette",
     category: "commandCategory.window",
     defaultKey: "ctrl+shift+p",
@@ -14,7 +13,6 @@ export const windowCommands: Command[] = [
   },
   {
     id: "window.bookmarks",
-    label: "Bookmarks",
     labelKey: "command.bookmarks",
     category: "commandCategory.window",
     defaultKey: "ctrl+shift+b",
@@ -23,7 +21,6 @@ export const windowCommands: Command[] = [
   },
   {
     id: "window.settings",
-    label: "Settings",
     labelKey: "command.settings",
     category: "commandCategory.window",
     defaultKey: "ctrl+,",
@@ -34,7 +31,6 @@ export const windowCommands: Command[] = [
   },
   {
     id: "window.shortcuts",
-    label: "Keyboard Shortcuts",
     labelKey: "command.keyboardShortcuts",
     category: "commandCategory.window",
     defaultKey: "f1",
@@ -43,7 +39,6 @@ export const windowCommands: Command[] = [
   },
   {
     id: "window.about",
-    label: "About",
     labelKey: "command.about",
     category: "commandCategory.window",
     handler: toggleAbout,
