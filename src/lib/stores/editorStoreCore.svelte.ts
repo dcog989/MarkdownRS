@@ -13,10 +13,6 @@ export const editorStore = $state({
   pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
 });
 
-export function tabsById(): Map<string, EditorTab> {
-  return new Map(editorStore.tabs.map((t) => [t.id, t]));
-}
-
 /**
  * Stable partition with pinned tabs first. Pinned tabs are always kept to the
  * left of unpinned tabs; relative order within each group is preserved.

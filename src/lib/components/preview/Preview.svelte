@@ -8,7 +8,7 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
 import Logo from "$lib/components/ui/Logo.svelte";
-import { getTransientState, tabsById, updateTransientState } from "$lib/stores/editorStore.svelte";
+import { getTransientState, updateTransientState } from "$lib/stores/editorStore.svelte";
 import { toggleOrientation, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -50,7 +50,7 @@ const renderer = new PreviewRenderer({
   },
 });
 
-let activeTab = $derived(tabsById().get(tabId));
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 
 let tabPath = $derived(activeTab?.path);
 let tabContent = $derived(activeTab?.content || "");

@@ -19,7 +19,6 @@ import {
   getLineChangeTracker,
   getTransientState,
   reopenClosedTab,
-  tabsById,
   updateContent,
   updateCursor,
   updateHistoryState,
@@ -64,7 +63,7 @@ let contextWordUnderCursor = $state("");
 let contextWordFrom = $state(0);
 let contextWordTo = $state(0);
 
-let activeTab = $derived(tabsById().get(tabId));
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === tabId));
 let pendingTransform = $derived(editorStore.pendingTransform);
 let isActiveEditor = $derived(appContext.app.activeTabId === tabId);
 

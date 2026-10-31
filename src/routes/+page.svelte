@@ -20,7 +20,7 @@ import TabDropdown from "$lib/components/ui/TabDropdown.svelte";
 import Toast from "$lib/components/ui/Toast.svelte";
 import { initializeTabFileState } from "$lib/services/tabFileStateInit";
 import { loadTabContentLazy } from "$lib/services/tabLoadStateMachine";
-import { pushToMru, tabsById } from "$lib/stores/editorStore.svelte";
+import { pushToMru } from "$lib/stores/editorStore.svelte";
 import { focusPane, isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte";
 import { toggleFileTree } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -53,7 +53,7 @@ let splitPaneActive = $derived(
 
 // Pane sync is suspended while a background tab is saved, so the visible
 // document must follow the pane, not activeTabId.
-let activeTab = $derived(tabsById().get(primaryTabId));
+let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === primaryTabId));
 
 let isMarkdown = $derived(isMarkdownTab(activeTab));
 
@@ -88,7 +88,7 @@ $effect(() => {
 // would otherwise stay unloaded.
 $effect(() => {
   for (const id of appContext.app.paneTabs) {
-    const tab = id ? tabsById().get(id) : undefined;
+    const tab = id ? appContext.editor.tabs.find((t) => t.id === id) : undefined;
     if (tab && !tab.contentLoaded) {
       void loadTabContentLazy(tab.id).then((fromDisk) => initializeTabFileState(tab, fromDisk));
     }
@@ -97,7 +97,7 @@ $effect(() => {
 
 function paneTitle(id: string | null): string {
   if (!id) return "";
-  const tab = tabsById().get(id);
+  const tab = appContext.editor.tabs.find((t) => t.id === id);
   return tab?.title || tab?.path || "";
 }
 
