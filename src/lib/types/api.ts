@@ -305,7 +305,7 @@ export interface BackendCommands {
 
   // Export
   export_to_pdf: {
-    args: { path: string; content: string; backgroundColor: string | null };
+    args: { path: string; content: string };
     return: undefined;
   };
   export_to_docx: {

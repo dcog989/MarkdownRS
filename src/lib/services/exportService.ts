@@ -128,12 +128,9 @@ export class ExportService {
 
       showToast("info", translate("export.generatingPdf"));
 
-      const computedStyle = getComputedStyle(document.documentElement);
-      const bgColor = computedStyle.getPropertyValue("--surface-1").trim() || null;
-
       await callBackend(
         "export_to_pdf",
-        { path, content: tab.content, backgroundColor: bgColor },
+        { path, content: tab.content },
         "Export:PDF",
         { path: tab?.path },
         { report: true, msg: translate("export.failedGeneratePdf") },
