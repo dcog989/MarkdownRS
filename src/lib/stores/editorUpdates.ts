@@ -94,11 +94,13 @@ export function updateMetadata(id: string, created?: string, modified?: string) 
   });
 }
 
-export function markAsSaved(id: string) {
+export function markAsSaved(id: string, savedContent: string) {
   const now = getCurrentTimestamp();
   updateTab(id, (tab) => ({
-    lastSavedHash: hashContent(tab.content),
-    isDirty: false,
+    // Baseline is the text that reached disk, not the live buffer: edits made
+    // while the write was in flight are still unsaved and must stay dirty.
+    lastSavedHash: hashContent(savedContent),
+    isDirty: tab.content !== savedContent,
     modified: now,
     formattedTimestamp: formatTimestampForDisplay(now),
   }));

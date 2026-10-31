@@ -380,7 +380,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         writeResult.has_bom,
         writeResult.bytes_written,
       );
-      markAsSaved(tabId);
+      markAsSaved(tabId, contentToSave);
       invalidateMetadataCache(sanitizedPath);
       await refreshMetadata(tabId, sanitizedPath);
 
