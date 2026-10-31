@@ -22,8 +22,14 @@ type DialogRequest = {
   resolve: (value: DialogResult) => void;
 };
 
+type PromptRequest = {
+  options: PromptOptions;
+  resolve: (value: string | null) => void;
+};
+
 // Module-level private state
 const queue: DialogRequest[] = [];
+const promptQueue: PromptRequest[] = [];
 let idCounter = 0;
 
 // Public reactive state
@@ -32,7 +38,6 @@ export const dialogStore = $state({
   options: { title: "", message: "" } as DialogOptions,
   promptIsOpen: false,
   promptOptions: { title: "", value: "" } as PromptOptions,
-  promptResolve: null as ((value: string | null) => void) | null,
 });
 
 function showNext() {
@@ -79,16 +84,29 @@ export function resolveDialog(result: DialogResult) {
   showNext();
 }
 
+function showNextPrompt() {
+  const next = promptQueue[0];
+  if (!next) {
+    dialogStore.promptIsOpen = false;
+    return;
+  }
+
+  dialogStore.promptOptions = next.options;
+  dialogStore.promptIsOpen = true;
+}
+
 export function promptDialog(options: PromptOptions): Promise<string | null> {
   return new Promise((resolve) => {
-    dialogStore.promptOptions = { value: "", ...options };
-    dialogStore.promptResolve = resolve;
-    dialogStore.promptIsOpen = true;
+    promptQueue.push({ options: { value: "", ...options }, resolve });
+    if (!dialogStore.promptIsOpen) {
+      showNextPrompt();
+    }
   });
 }
 
 export function resolvePrompt(value: string | null) {
-  dialogStore.promptResolve?.(value);
-  dialogStore.promptResolve = null;
-  dialogStore.promptIsOpen = false;
+  const current = promptQueue.shift();
+  current?.resolve(value);
+
+  showNextPrompt();
 }
