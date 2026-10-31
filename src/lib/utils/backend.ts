@@ -50,10 +50,15 @@ export async function callBackend<K extends CommandName>(
     const result = await invoke<BackendCommands[K]["return"]>(command, args);
     return result;
   } catch (err) {
+    // Never copy document text into the error log: `content` is the note body
+    // for the write, render, lint and export commands.
+    const loggableArgs = { ...(args as Record<string, unknown>) };
+    delete loggableArgs.content;
+
     const errorOpts = {
       additionalInfo: {
         command,
-        ...args,
+        ...loggableArgs,
         ...additionalInfo,
       } as Record<string, unknown>,
       severity: "error" as const,

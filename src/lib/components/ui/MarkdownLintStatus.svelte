@@ -13,6 +13,7 @@ import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { LINT_SOURCE_HARPER, type LintDiagnostic } from "$lib/types/api";
 import { callBackendSafe } from "$lib/utils/backend";
+import { getActiveEditorView } from "$lib/utils/editorCommands";
 import { markdownLintState } from "$lib/utils/markdownLint.svelte";
 import { syncLintStateForTab } from "$lib/utils/markdownLintExtension.svelte";
 
@@ -50,6 +51,15 @@ $effect(() => {
     fetchConfigPath();
   }
 });
+
+function jumpToDiagnostic(diag: LintDiagnostic): void {
+  const view = getActiveEditorView();
+  if (!view) return;
+  const line = view.state.doc.line(Math.min(Math.max(diag.line, 1), view.state.doc.lines));
+  view.dispatch({ selection: { anchor: line.from }, scrollIntoView: true });
+  view.focus();
+  showPopup = false;
+}
 
 async function fetchConfigPath() {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
@@ -95,6 +105,7 @@ async function copyConfigPath() {
     {@const Icon = entry.icon}
     <button
       type="button"
+      onclick={() => jumpToDiagnostic(diag)}
       class="hover-surface flex w-full items-start gap-2 px-3 py-1.5 text-left text-ui transition-colors"
     >
       <Icon size={14} class="mt-0.5 shrink-0 {entry.color}" />
