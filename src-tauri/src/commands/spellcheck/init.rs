@@ -12,21 +12,6 @@ use tauri::{Emitter, Manager};
 /// terminal state. Payload is the status string: "ready" or "failed".
 pub(crate) const SPELLCHECK_STATUS_EVENT: &str = "spellcheck-status";
 
-/// Name of the event emitted as spellcheck initialization downloads files.
-/// Payload is a [`SpellcheckProgress`].
-const SPELLCHECK_PROGRESS_EVENT: &str = "spellcheck-progress";
-
-#[derive(Clone, serde::Serialize)]
-pub struct SpellcheckProgress {
-    pub phase: &'static str,
-    pub done: usize,
-    pub total: usize,
-}
-
-fn emit_progress(app_handle: &tauri::AppHandle, phase: &'static str, done: usize, total: usize) {
-    let _ = app_handle.emit(SPELLCHECK_PROGRESS_EVENT, SpellcheckProgress { phase, done, total });
-}
-
 fn is_current_generation(state: &AppState, generation_id: u64) -> bool {
     state.spellcheck_init_gen.load(Ordering::SeqCst) == generation_id
 }
@@ -158,23 +143,11 @@ async fn run_spellcheck_init(
 
     let client = super::download::build_http_client();
     let state = app_handle.state::<AppState>();
-    let progress_handle = app_handle.clone();
-    let mut progress = move |done: usize, total: usize| {
-        emit_progress(&progress_handle, "download", done, total);
-    };
     let requested_language_count = dict_codes.len();
-    let (language_dicts, technical_words) = super::download::download_and_collect_words(
-        &client,
-        dict_codes,
-        &cache_dir,
-        &spec_codes,
-        &tech_cache_dir,
-        &mut progress,
-    )
-    .await;
+    let (language_dicts, technical_words) =
+        super::download::download_and_collect_words(&client, dict_codes, &cache_dir, &spec_codes, &tech_cache_dir)
+            .await;
     let downloaded_language_count = language_dicts.len();
-
-    emit_progress(&app_handle, "build", 0, 1);
 
     let supplemental_count = technical_words.len();
 
