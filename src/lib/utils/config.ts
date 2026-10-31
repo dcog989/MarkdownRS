@@ -6,7 +6,6 @@ const DEFAULT_CONFIG = {
   EDITOR: {
     CONTENT_DEBOUNCE_MS: 300,
     METRICS_DEBOUNCE_MS: 300,
-    SCROLL_DEBOUNCE_MS: 300,
     SEARCH_DEBOUNCE_MS: 300,
     CLOSED_TABS_HISTORY_LIMIT: 12,
     // Must cover the max recentChangesCount (99) so the count-based highlight
@@ -38,7 +37,6 @@ const DEFAULT_CONFIG = {
   FILETREE: {
     MIN_WIDTH: 160,
     MAX_WIDTH: 500,
-    DEFAULT_WIDTH: 240,
     ROW_HEIGHT: 26,
     OVERSCAN: 10,
     INDENT_STEP: 14,
@@ -51,9 +49,7 @@ const DEFAULT_CONFIG = {
   // Session & Auto-save
   SESSION: {
     AUTO_SAVE_INTERVAL_MS: 5000, // Main auto-save interval for session persistence
-    SETTINGS_SAVE_INTERVAL_MS: 5000, // Settings auto-save interval (same as session for consistency)
     SAVE_DEBOUNCE_MS: 500,
-    SAVE_ON_BLUR: true,
   },
 
   // Performance
@@ -78,31 +74,18 @@ const DEFAULT_CONFIG = {
 
     // Keyboard navigation
     MRU_POPUP_DELAY_MS: 200, // Delay before showing MRU popup during tab cycling (TabBar)
-    TAB_SWITCH_ANIMATION_MS: 50, // Animation delay for tab switching (Editor)
 
     // Scroll behavior
     TAB_SCROLL_SETTLE_MS: 300, // Wait for scroll to settle before centering active tab (TabBar)
-    MOUSE_MOVEMENT_IGNORE_MS: 50, // Ignore mouse movement after keyboard nav (TabDropdown)
 
     // Export & Cleanup
     EXPORT_RENDER_WAIT_MS: 150, // Wait for styles to apply before export (exportService)
-    EXPORT_CLEANUP_DELAY_MS: 500, // Delay before cleaning up export content (exportService)
 
     // State restoration
     RESTORE_STATE_DELAY_MS: 100, // Delay before marking restoration complete (EditorView)
 
     // Update status auto-hide
     UPDATE_STATUS_HIDE_MS: 3000, // Auto-hide update status message (AboutModal)
-
-    // Context menu
-    CONTEXT_MENU_UPDATE_DELAY_MS: 0, // Delay before updating context menu items (ContextMenu)
-    SUBMENU_HOVER_CLOSE_DELAY_MS: 300, // Delay before closing submenu on hover out (Submenu)
-
-    // Modal focus
-    MODAL_FOCUS_DELAY_MS: 0, // Delay before focusing modal elements (Modal)
-
-    // Find/Replace panel
-    FIND_PANEL_FOCUS_CHECK_MS: 0, // Delay before checking if find panel should focus (FindReplacePanel)
   },
 
   // UI Appearance
@@ -115,19 +98,5 @@ const DEFAULT_CONFIG = {
   },
 };
 
-export type AppConfig = typeof DEFAULT_CONFIG;
-
-function validateConfig(): AppConfig {
-  const merged = structuredClone(DEFAULT_CONFIG);
-
-  // Runtime Range Validation
-  merged.EDITOR.CONTENT_DEBOUNCE_MS = Math.max(10, merged.EDITOR.CONTENT_DEBOUNCE_MS);
-
-  merged.SPLIT.MIN_PERCENTAGE = Math.max(0, Math.min(0.45, merged.SPLIT.MIN_PERCENTAGE));
-  merged.SPLIT.MAX_PERCENTAGE = Math.max(0.55, Math.min(1, merged.SPLIT.MAX_PERCENTAGE));
-
-  return merged;
-}
-
-// Global immutable configuration instance
-export const CONFIG: AppConfig = Object.freeze(validateConfig());
+// Global configuration instance
+export const CONFIG = Object.freeze(DEFAULT_CONFIG);
