@@ -181,7 +181,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         type="button"
         class="text-ui menu-item {ctx.hasClosedTabs ? "" : "opacity-50"}"
         disabled={!ctx.hasClosedTabs}
-        onclick={() => ctx.handleReopenClosed(0)}
+        onclick={ctx.handleReopenLastClosed}
       >
         <History size={14} class="opacity-70" />
         <span class="flex-1">{$_("tabContextMenu.reopenLastClosed")}</span>
@@ -208,12 +208,12 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
       {/snippet}
 
       {#if ctx.hasClosedTabs}
-        {#each ctx.closedTabs as item, i (item.tab.id)}
+        {#each ctx.closedTabs as item (item.tab.id)}
           <button
             type="button"
             class="text-ui menu-item justify-between"
             use:tooltip={ctx.getHistoryTooltip(item.tab)}
-            onclick={() => ctx.handleReopenClosed(i)}
+            onclick={() => ctx.handleReopenClosed(item.tab.id)}
           >
             <span>{ctx.formatTitle(item.tab.customTitle || item.tab.title)}</span>
           </button>

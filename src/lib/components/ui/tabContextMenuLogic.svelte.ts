@@ -146,8 +146,15 @@ export class TabContextMenuLogic {
   };
 
   handleMoveTab = async (to: "start" | "end") => {
+    const index = this.tabIndex;
+    // A tab closed while the menu was open leaves no target; splice(-1) would
+    // move the last tab instead.
+    if (index === -1) {
+      this.onClose();
+      return;
+    }
     const newTabs = [...appContext.editor.tabs];
-    const [tab] = newTabs.splice(this.tabIndex, 1);
+    const [tab] = newTabs.splice(index, 1);
     if (to === "start") newTabs.unshift(tab);
     else newTabs.push(tab);
     reorderTabs(newTabs);
@@ -241,9 +248,18 @@ export class TabContextMenuLogic {
     }
   };
 
-  handleReopenClosed = async (index: number) => {
+  handleReopenClosed = async (tabId: string) => {
+    // Resolve at click time: tabs closed or reopened while the submenu is open
+    // shift the positions the list was rendered with.
+    const index = appContext.editor.closedTabsHistory.findIndex((entry) => entry.tab.id === tabId);
     void triggerReopenClosedTab(index);
     this.onClose();
+  };
+
+  handleReopenLastClosed = () => {
+    const latest = this.closedTabs[0];
+    if (latest) void this.handleReopenClosed(latest.tab.id);
+    else this.onClose();
   };
 
   // writeText rejects when the webview denies clipboard access; unawaited it
