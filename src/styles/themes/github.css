@@ -11,8 +11,6 @@
   --editor-selection-match-bg: rgba(88, 166, 255, 0.25);
   --editor-danger: #ff7b72;
   --editor-danger-fg: #ff7b72;
-  --editor-file: #d29922;
-  --editor-filepath: #3fb950;
   --editor-link: #58a6ff;
   --editor-url: #58a6ff;
   --editor-code-bg: rgba(88, 166, 255, 0.06);
@@ -46,8 +44,6 @@
   --editor-selection-match-bg: rgba(9, 105, 218, 0.2);
   --editor-danger: #cf222e;
   --editor-danger-fg: #cf222e;
-  --editor-file: #d4a72c;
-  --editor-filepath: #1a7f37;
   --editor-link: #0969da;
   --editor-url: #0969da;
   --editor-code-bg: rgba(31, 35, 40, 0.04);

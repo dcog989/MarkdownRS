@@ -77,26 +77,7 @@
   border-top-right-radius: 0.375rem;
 }
 
-/* Divide Classes */
-.divide-y > :not([hidden]) ~ :not([hidden]) {
-  border-top-width: 1px;
-  border-color: var(--border-primary);
-}
-
-.divide-border-primary > :not([hidden]) ~ :not([hidden]) {
-  border-color: var(--border-primary);
-}
-
-.divide-border-primary\/30 > :not([hidden]) ~ :not([hidden]) {
-  border-color: oklch(from var(--border-primary) l c h / 0.3);
-}
-
 /* Alternating Row Backgrounds */
 .bg-row-even {
   background-color: var(--surface-row);
-}
-
-/* Range Slider Accent */
-.range-slider-accent {
-  accent-color: var(--accent-primary);
 }

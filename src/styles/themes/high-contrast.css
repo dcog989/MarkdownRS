@@ -11,8 +11,6 @@
   --editor-selection-match-bg: rgba(93, 173, 226, 0.35);
   --editor-danger: #e67e22;
   --editor-danger-fg: #e67e22;
-  --editor-file: #f4d03f;
-  --editor-filepath: #58d68d;
   --editor-link: #a58ce0;
   --editor-link-hover: #c6adf2;
   --editor-url: #a58ce0;
@@ -48,8 +46,6 @@
   --editor-selection-match-bg: rgba(46, 134, 193, 0.25);
   --editor-danger: #ca6f1e;
   --editor-danger-fg: #ca6f1e;
-  --editor-file: #b7950b;
-  --editor-filepath: #1e8449;
   --editor-link: #13507f;
   --editor-link-hover: #0d3d66;
   --editor-url: #13507f;

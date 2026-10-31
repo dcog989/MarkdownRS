@@ -19,10 +19,6 @@
   gap: 1rem;
 }
 
-.gap-6 {
-  gap: 1.5rem;
-}
-
 /* Space Between Classes */
 .space-y-2 > :not([hidden]) ~ :not([hidden]) {
   margin-top: 0.5rem;
@@ -173,15 +169,6 @@
   margin-right: 0.5rem;
 }
 
-.-mx-2 {
-  margin-left: -0.5rem;
-  margin-right: -0.5rem;
-}
-
-.-ml-1 {
-  margin-left: -0.25rem;
-}
-
 .mx-4 {
   margin-left: 1rem;
   margin-right: 1rem;
@@ -203,10 +190,6 @@
 
 .mt-1 {
   margin-top: 0.25rem;
-}
-
-.mt-2 {
-  margin-top: 0.5rem;
 }
 
 .mt-4 {

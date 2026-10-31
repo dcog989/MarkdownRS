@@ -51,7 +51,6 @@
   --surface-3: #111111;
   --surface-active: #373737;
   --surface-backdrop: oklch(0 0 0 / 0.6);
-  --surface-gutter: color-mix(in srgb, var(--surface-1) 50%, var(--surface-2) 50%);
   --surface-hover: #282828;
   --surface-input: #232323;
   --surface-preview: #1e1e1e;
@@ -69,46 +68,31 @@
   /* Border System */
   --border-primary: #343434;
   --border-secondary: #4b4b4b;
-  --border-focus: #9c658f;
 
   /* Accent System - derived from Brand, pinned to the content lightness scale */
   --accent-file: oklch(from var(--color-brand-file) var(--l-content) c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) var(--l-content-hover) c h);
   --accent-filepath: oklch(from var(--color-brand-filepath) var(--l-content) c h);
   --accent-link-hover: oklch(from var(--color-brand-link) var(--l-content-hover) c h);
   --accent-link: oklch(from var(--color-brand-link) var(--l-content) c h);
   --accent-primary: oklch(from var(--color-brand-accent) 0.55 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.75 c h);
-  --content-accent: oklch(from var(--color-brand-accent) 0.75 c h);
-  --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
   --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
   /* Functional System (status colors pinned to the content lightness scale) */
   --active-line-bg: rgba(255, 255, 255, 0.06);
   --danger: oklch(from var(--color-status-danger) var(--l-content) c h);
-  --danger-hover: oklch(from var(--color-status-danger) var(--l-content-hover) c h);
   --danger-text: var(--danger);
   --dirty-indicator: var(--success);
-  --highlight-line: #e5c07b;
   --selection-bg: #4c3947;
-  --selection-match-bg: oklch(0.68 0.1 60 / 0.35);
   --success: oklch(from var(--color-status-success) var(--l-content) c h);
-  --success-hover: oklch(from var(--color-status-success) var(--l-content-hover) c h);
   --warning: oklch(from var(--color-status-warning) var(--l-content) c h);
 
   /* Animation & Transitions */
-  --transition-fast: 100ms;
   --transition-normal: 150ms;
-  --transition-slow: 200ms;
 
   /* Editor & Content Colors */
   --code-bg: oklch(0.72 0.1 145 / 0.06);
   --code-fg: oklch(from var(--color-content-code) var(--l-content) c h);
-  --highlight-bg: oklch(0.8 0.12 85 / 0.3);
-  --hr-color: #666666;
-  --pre-bg: #171b21;
-  --pre-fg: #d4d4d4;
-  --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.08);
   --quote-fg: oklch(from var(--color-brand-quote) var(--l-content) c h);
 
   /* Syntax Colors - OKLCH content scale (equal perceptual lightness) */
@@ -145,14 +129,10 @@
   --editor-highlight-line: #e5c07b;
   --editor-danger: var(--danger);
   --editor-danger-fg: var(--danger-text);
-  --editor-accent: var(--accent-secondary);
   --editor-link: var(--accent-link);
-  --editor-link-hover: var(--accent-link-hover);
+  --editor-link-hover: color-mix(in oklab, var(--editor-link) 75%, var(--editor-fg));
   --editor-url: var(--accent-url);
-  --editor-url-hover: var(--accent-url-hover);
-  --editor-file: var(--accent-file);
-  --editor-filepath: var(--accent-filepath);
-  --editor-filepath-hover: var(--accent-filepath-hover);
+  --editor-url-hover: color-mix(in oklab, var(--editor-url) 75%, var(--editor-fg));
   --editor-syntax-heading: var(--syntax-heading);
   --editor-syntax-keyword: var(--syntax-keyword);
   --editor-syntax-atom: var(--syntax-atom);
@@ -207,14 +187,12 @@
   --surface-2: #f2f2f2;
   --surface-3: #e8e8e8;
   --surface-active: #d4d4d4;
-  --surface-gutter: color-mix(in srgb, var(--surface-1) 50%, var(--surface-2) 50%);
   --surface-hover: #d6d6d6;
   --surface-input: #ffffff;
   --surface-preview: #ffffff;
   --surface-row: #f6f6f6;
 
   /* Text System - Light Theme */
-  --text-inverse: #ffffff;
   --text-primary: #111111;
   --text-secondary: #4d4d4d;
   --text-tertiary: #7a7a7a;
@@ -223,32 +201,18 @@
   --border-primary: #c7c7c7;
   --border-secondary: #a8a8a8;
 
-  /* Accent System - Light Theme (pinned to the light content lightness scale) */
-  --accent-file: oklch(from var(--color-brand-file) var(--l-content) c h);
-  --accent-filepath-hover: oklch(from var(--color-brand-filepath) var(--l-content-hover) c h);
-  --accent-filepath: oklch(from var(--color-brand-filepath) var(--l-content) c h);
-  --accent-link-hover: oklch(from var(--color-brand-link) var(--l-content-hover) c h);
-  --accent-link: oklch(from var(--color-brand-link) var(--l-content) c h);
+  /* Accent System - Light Theme (only the pinned lightness changes) */
   --accent-primary: oklch(from var(--color-brand-accent) 0.45 c h);
   --accent-secondary: oklch(from var(--color-brand-accent) 0.35 c h);
-  --content-accent: oklch(from var(--color-brand-accent) 0.35 c h);
-  --accent-url-hover: oklch(from var(--color-brand-url) var(--l-content-hover) c h);
-  --accent-url: oklch(from var(--color-brand-url) var(--l-content) c h);
 
   /* Functional System - Light Theme (status colors derive from the light
      content scale; only the selection tints differ) */
   --active-line-bg: rgba(0, 0, 0, 0.04);
   --selection-bg: oklch(from var(--color-brand-accent) 0.6 0.08 h / 0.2);
-  --selection-match-bg: oklch(0.68 0.12 62 / 0.35);
 
   /* Editor & Content Colors - Light Theme (codes/quote derive from the
      light content scale; only the tinted backgrounds differ) */
   --code-bg: oklch(0.76 0.14 70 / 0.15);
-  --highlight-bg: oklch(0.8 0.12 85 / 0.4);
-  --hr-color: #6c6c6c;
-  --pre-bg: #f0f0f0;
-  --pre-fg: #1a1a1a;
-  --quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
 
   /* Editor Content (theme-scoped) - Light Theme */
   --editor-bg: #fcfcfc;
@@ -258,35 +222,14 @@
   --editor-surface-2: #f2f2f2;
   --editor-surface-active: #d4d4d4;
   --editor-surface-hover: #e0e0e0;
-  --editor-gutter-bg: color-mix(in srgb, var(--editor-bg) 50%, var(--editor-surface-2) 50%);
   --editor-border: #c7c7c7;
   --editor-border-secondary: #a8a8a8;
-  --editor-tooltip-accent: var(--accent-primary);
-  --editor-tooltip-accent-fg: var(--text-inverse);
-  --editor-selection-bg: var(--selection-bg);
   --editor-selection-match-bg: oklch(0.68 0.12 62 / 0.35);
-  --editor-accent: var(--accent-secondary);
-  --editor-link: var(--accent-link);
-  --editor-link-hover: var(--accent-link-hover);
-  --editor-url: var(--accent-url);
-  --editor-url-hover: var(--accent-url-hover);
-  --editor-file: var(--accent-file);
-  --editor-filepath: var(--accent-filepath);
-  --editor-filepath-hover: var(--accent-filepath-hover);
   --editor-code-bg: oklch(0.76 0.14 70 / 0.15);
   --editor-pre-bg: #f0f0f0;
   --editor-pre-fg: #1a1a1a;
   --editor-quote-bg: oklch(from var(--color-brand-quote) l c h / 0.05);
   --editor-hr-color: #6c6c6c;
   --editor-preview-bg: #ffffff;
-  --editor-preview-fg-body: var(--editor-fg);
-  --editor-preview-fg-code: var(--editor-code-fg);
-  --editor-preview-fg-pre: var(--editor-pre-fg);
   --editor-preview-fg-quote: var(--editor-fg-secondary);
-  --editor-preview-bg-code: var(--editor-code-bg);
-  --editor-preview-bg-pre: var(--editor-pre-bg);
-  --editor-preview-bg-quote: var(--editor-quote-bg);
-  --editor-preview-border-primary: var(--editor-border);
-  --editor-preview-border-quote: var(--editor-quote-fg);
-  --editor-preview-surface-2: var(--editor-surface-2);
 }

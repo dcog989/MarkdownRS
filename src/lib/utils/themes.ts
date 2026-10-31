@@ -69,12 +69,10 @@ export function buildCustomAccentCss(color: string): string {
 :root {
   --accent-primary: ${safe} !important;
   --accent-secondary: color-mix(in oklab, ${safe} ${100 - ACCENT_DARK_SECONDARY_MIX * 100}%, white) !important;
-  --border-focus: ${safe} !important;
 }
 [data-theme="light"] {
   --accent-primary: color-mix(in oklab, ${safe} ${100 - ACCENT_LIGHT_PRIMARY_MIX * 100}%, black) !important;
   --accent-secondary: color-mix(in oklab, ${safe} ${100 - ACCENT_LIGHT_SECONDARY_MIX * 100}%, white) !important;
-  --border-focus: ${safe} !important;
 }
 `;
 }

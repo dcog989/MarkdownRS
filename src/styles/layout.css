@@ -12,18 +12,6 @@
   display: inline-block;
 }
 
-.block {
-  display: block;
-}
-
-.grid {
-  display: grid;
-}
-
-.hidden {
-  display: none;
-}
-
 .flex-col {
   flex-direction: column;
 }
@@ -102,10 +90,6 @@
   top: 0;
 }
 
-.top-0\.5 {
-  top: 0.125rem;
-}
-
 .top-2 {
   top: 0.5rem;
 }
@@ -120,10 +104,6 @@
 
 .bottom-0 {
   bottom: 0;
-}
-
-.bottom-0\.5 {
-  bottom: 0.125rem;
 }
 
 .left-0 {
@@ -160,10 +140,6 @@
 
 .z-50 {
   z-index: 50;
-}
-
-.z-60 {
-  z-index: 60;
 }
 
 .z-200 {

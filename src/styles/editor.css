@@ -81,7 +81,7 @@
   inset: 0;
   z-index: -10;
   pointer-events: none;
-  background-color: hsl(from var(--editor-bg) h s calc(l + 8));
+  background-color: var(--active-line-bg);
 }
 
 /* Drop the current-line tint while text is selected so the selection
@@ -330,7 +330,9 @@
 }
 
 /* Hover color for .cm-url — always active, applies to all spans in the line,
-   but not inside code blocks (fenced + inline) */
+   but not inside code blocks (fenced + inline). The `:has()` cost is bounded by
+   the rendered lines (CodeMirror only keeps the viewport), so it stays CSS
+   instead of a mouseover-maintained class. */
 .markdown-mode .cm-editor .cm-line:has(.cm-url:hover) .cm-url {
   color: var(--editor-url-hover);
 }

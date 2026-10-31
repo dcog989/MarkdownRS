@@ -80,15 +80,6 @@
   -moz-appearance: none;
 }
 
-/* Utility Classes - Visibility */
-.invisible {
-  visibility: hidden;
-}
-
-.visible {
-  visibility: visible;
-}
-
 /* Resize handle */
 .resize-handle {
   background-color: var(--border-secondary);

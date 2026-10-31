@@ -7,10 +7,6 @@
   background-color: var(--surface-input);
 }
 
-.bg-fg-muted {
-  background-color: var(--text-secondary);
-}
-
 .bg-accent-primary {
   background-color: var(--accent-primary);
 }
