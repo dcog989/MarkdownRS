@@ -352,16 +352,28 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     wordUnderCursor={contextWordUnderCursor}
     onClose={() => (showContextMenu = false)}
     onDictionaryUpdate={handleDictionaryUpdate}
-    onCut={() => {
+    onCut={async () => {
       if (!cmView) return;
+      const doc = cmView.state.doc;
       const { from, to } = cmView.state.selection.main;
-      navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
+      try {
+        await navigator.clipboard.writeText(doc.sliceString(from, to));
+      } catch {
+        showToast("error", translate("editor.copyFailed"));
+        return;
+      }
+      // The write can outlive the edit; never delete from a changed document.
+      if (cmView.state.doc !== doc) return;
       cmView.dispatch({ changes: { from, to, insert: "" } });
     }}
-    onCopy={() => {
+    onCopy={async () => {
       if (!cmView) return;
       const { from, to } = cmView.state.selection.main;
-      navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
+      try {
+        await navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
+      } catch {
+        showToast("error", translate("editor.copyFailed"));
+      }
     }}
     onPaste={async () => {
       if (!cmView) return;
