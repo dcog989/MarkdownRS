@@ -113,7 +113,7 @@ $effect(() => {
 $effect(() => {
   const view = cmView;
   if (isOpen && view) {
-    untrack(() => executeSearch(view, false));
+    untrack(() => executeSearch(view));
   }
 });
 
@@ -134,18 +134,10 @@ function close() {
   cmView?.focus();
 }
 
-function executeSearch(view: EditorView, incremental: boolean) {
+function executeSearch(view: EditorView) {
   if (searchScope === "current") {
     if (searchState.findText) {
-      if (incremental) {
-        selectNearestMatch(view);
-      } else {
-        updateSearchEditor(view);
-        if (searchState.currentMatches > 0) {
-          findNext(view);
-          updateSearchEditor(view);
-        }
-      }
+      selectNearestMatch(view);
     } else {
       updateSearchEditor(view);
     }
@@ -156,7 +148,7 @@ function executeSearch(view: EditorView, incremental: boolean) {
 }
 
 const debouncedSearch = debounce((view: EditorView) => {
-  executeSearch(view, true);
+  executeSearch(view);
 }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
 
 const debouncedReplace = debounce((view: EditorView) => {
@@ -169,22 +161,22 @@ function onInput() {
 }
 
 function onScopeChange() {
-  if (cmView) executeSearch(cmView, false);
+  if (cmView) executeSearch(cmView);
 }
 
 function toggleMatchCase() {
   searchState.matchCase = !searchState.matchCase;
-  if (cmView) executeSearch(cmView, false);
+  if (cmView) executeSearch(cmView);
 }
 
 function toggleWholeWord() {
   searchState.matchWholeWord = !searchState.matchWholeWord;
-  if (cmView) executeSearch(cmView, false);
+  if (cmView) executeSearch(cmView);
 }
 
 function toggleRegex() {
   searchState.useRegex = !searchState.useRegex;
-  if (cmView) executeSearch(cmView, false);
+  if (cmView) executeSearch(cmView);
 }
 
 function toggleScope() {
