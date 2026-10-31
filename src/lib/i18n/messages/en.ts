@@ -586,8 +586,6 @@ export const en = {
     aria: "Find and Replace",
     showReplace: "Show Replace",
     hideReplace: "Hide Replace",
-    findAndReplace: "Find & Replace",
-    andReplace: "& Replace",
     closeEsc: "Close (Esc)",
     find: "Find",
     replace: "Replace",

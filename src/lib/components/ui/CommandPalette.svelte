@@ -5,7 +5,7 @@ import Zap from "lucide-svelte/icons/zap";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import type { Command } from "$lib/commands/commands";
-import { commandCategoryKey, commandLabel } from "$lib/commands/helpers";
+import { commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { translate } from "$lib/i18n";
@@ -29,7 +29,7 @@ let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
 function categoryLabel(category: string): string {
-  return translate(commandCategoryKey(category));
+  return translate(category);
 }
 
 let filteredCommands = $derived(

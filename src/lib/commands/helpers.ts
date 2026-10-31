@@ -21,23 +21,3 @@ export function commandLabel(command: CommandDefinition): string {
   if (typeof command.labelKey === "function") return command.labelKey();
   return command.labelKey ?? command.label ?? command.id;
 }
-
-const LEGACY_CATEGORY_KEYS: Record<string, string> = {
-  Edit: "commandCategory.edit",
-  Editor: "commandCategory.editor",
-  Export: "commandCategory.export",
-  File: "commandCategory.file",
-  Insert: "commandCategory.insert",
-  Markdown: "commandCategory.markdown",
-  Navigation: "commandCategory.navigation",
-  Theme: "commandCategory.theme",
-  View: "commandCategory.view",
-  Window: "commandCategory.window",
-};
-
-export function commandCategoryKey(category: string): string {
-  if (category.startsWith("commandCategory.") || category.startsWith("textOps.")) {
-    return category;
-  }
-  return LEGACY_CATEGORY_KEYS[category] ?? category;
-}
