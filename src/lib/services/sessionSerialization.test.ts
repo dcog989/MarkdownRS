@@ -100,8 +100,8 @@ describe("persistSession", () => {
     let resolveSave: () => void = () => {};
     mockedCallBackend.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          resolveSave = resolve;
+        new Promise<undefined>((resolve) => {
+          resolveSave = () => resolve(undefined);
         }),
     );
 
@@ -133,8 +133,8 @@ describe("persistSession", () => {
     let resolveSave: () => void = () => {};
     mockedCallBackend.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          resolveSave = resolve;
+        new Promise<undefined>((resolve) => {
+          resolveSave = () => resolve(undefined);
         }),
     );
     editorStore.tabs = [makeTab({ id: "t1", content: "text", contentLoaded: true })];
@@ -152,8 +152,8 @@ describe("persistSession", () => {
     let resolveSave: () => void = () => {};
     mockedCallBackend.mockImplementationOnce(
       () =>
-        new Promise<void>((resolve) => {
-          resolveSave = resolve;
+        new Promise<undefined>((resolve) => {
+          resolveSave = () => resolve(undefined);
         }),
     );
     editorStore.tabs = [makeTab({ id: "t1", content: "before", contentLoaded: true })];
