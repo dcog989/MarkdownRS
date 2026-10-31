@@ -173,26 +173,25 @@ export class FileTreeContextMenuLogic {
     );
 
     try {
+      // Close the tabs before trashing: the close prompt can be cancelled (or
+      // its save can fail), and the file must not already be gone when it is.
+      // requestCloseTab also drops each tab's watcher.
       for (const t of affected) {
-        if (t.path) fileWatcher.unwatch(t.id);
-      }
-
-      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
-      invalidateMetadataCache(targetPath);
-
-      for (const t of affected) {
-        // Closing prompts for unsaved changes and can be cancelled, so check
-        // the tab is still open before closing it.
         if (appContext.editor.tabs.some((tab) => tab.id === t.id)) {
           await requestCloseTab(t.id, true);
         }
       }
+      const stillOpen = appContext.editor.tabs.some(
+        (t) => t.path === targetPath || t.path?.startsWith(`${targetPath}/`),
+      );
+      if (stillOpen) return;
+
+      await callBackend("send_to_recycle_bin", { path: targetPath }, "File:Write");
+      invalidateMetadataCache(targetPath);
       forgetSubtree(targetPath);
       refreshDirectoryIfInTree(dirname(targetPath));
-    } catch (_err) {
-      for (const t of affected) {
-        if (t.path) await fileWatcher.watch(t.id, t.path);
-      }
+    } catch {
+      // The failure has already been reported.
     } finally {
       this.onClose();
     }
