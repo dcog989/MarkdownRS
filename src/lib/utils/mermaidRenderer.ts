@@ -96,7 +96,10 @@ export async function renderMermaidDiagrams(container: HTMLElement): Promise<voi
     try {
       const id = `mermaid-${key}-${renderSeq++}`;
       const { svg } = await mermaid.render(id, source);
-      if (svgCache.size >= MAX_CACHE_ENTRIES) svgCache.clear();
+      if (svgCache.size >= MAX_CACHE_ENTRIES) {
+        const oldest = svgCache.keys().next().value;
+        if (oldest !== undefined) svgCache.delete(oldest);
+      }
       svgCache.set(key, svg);
       if (!pre.isConnected) continue;
       insertDiagram(pre, svg, key);

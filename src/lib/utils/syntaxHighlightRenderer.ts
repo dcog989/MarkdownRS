@@ -57,7 +57,10 @@ export async function highlightCodeBlocks(container: HTMLElement): Promise<void>
     let highlighted = highlightCache.get(key);
     if (highlighted === undefined) {
       const result = hljs.highlight(source, { language, ignoreIllegals: true });
-      if (highlightCache.size >= MAX_CACHE_ENTRIES) highlightCache.clear();
+      if (highlightCache.size >= MAX_CACHE_ENTRIES) {
+        const oldest = highlightCache.keys().next().value;
+        if (oldest !== undefined) highlightCache.delete(oldest);
+      }
       highlighted = result.value;
       highlightCache.set(key, highlighted);
     }

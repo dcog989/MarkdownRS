@@ -44,7 +44,8 @@ function renderMathToString(katex: Katex, tex: string, displayMode: boolean): st
   const rendered = katex.renderToString(tex, { ...BASE_OPTIONS, displayMode });
 
   if (mathCache.size >= MAX_CACHE_ENTRIES) {
-    mathCache.clear();
+    const oldest = mathCache.keys().next().value;
+    if (oldest !== undefined) mathCache.delete(oldest);
   }
   mathCache.set(key, rendered);
   return rendered;
