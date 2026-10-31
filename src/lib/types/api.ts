@@ -313,11 +313,11 @@ export interface BackendCommands {
     return: undefined;
   };
   export_to_epub: {
-    args: { path: string; content: string; title: string };
+    args: { path: string; content: string; title: string; flavor: string | null };
     return: undefined;
   };
   export_to_latex: {
-    args: { path: string; content: string };
+    args: { path: string; content: string; flavor: string | null };
     return: undefined;
   };
   // Data Management

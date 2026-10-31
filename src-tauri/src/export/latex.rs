@@ -16,12 +16,12 @@ const PREAMBLE: &str = r"\documentclass[11pt]{article}
 \usepackage[normalem]{ulem}
 ";
 
-pub fn markdown_to_latex(content: &str) -> String {
+pub fn markdown_to_latex(content: &str, flavor: MarkdownFlavor) -> String {
     let body = frontmatter::extract_frontmatter(content)
         .map(|fm| frontmatter::blank_out(content, &fm))
         .unwrap_or_else(|| content.to_string());
 
-    let options = MarkdownFlavor::Gfm.to_comrak_options();
+    let options = flavor.to_comrak_options();
     let arena = Arena::new();
     let root = parse_document(&arena, &body, &options);
     let mut out = String::with_capacity(body.len() * 2);
@@ -286,6 +286,7 @@ mod tests {
     fn converts_core_markdown_constructs() {
         let latex = markdown_to_latex(
             "# Title\n\nSome **bold** and `code` with 50% & more.\n\n- one\n- two\n\n```rust\nfn main() {}\n```\n\n[site](https://example.com/a_b)\n",
+            MarkdownFlavor::Gfm,
         );
 
         assert!(latex.contains("\\section{Title}"));
@@ -301,7 +302,10 @@ mod tests {
 
     #[test]
     fn keeps_url_tilde_and_query_intact() {
-        let latex = markdown_to_latex("[home](https://example.com/~user/?a=1&b=two%20words)\n");
+        let latex = markdown_to_latex(
+            "[home](https://example.com/~user/?a=1&b=two%20words)\n",
+            MarkdownFlavor::Gfm,
+        );
 
         assert!(
             latex.contains("\\href{https://example.com/~user/?a=1\\&b=two\\%20words}{home}"),
@@ -311,7 +315,7 @@ mod tests {
 
     #[test]
     fn renders_footnotes_at_the_reference() {
-        let latex = markdown_to_latex("Hello[^1] world.\n\n[^1]: A note.\n");
+        let latex = markdown_to_latex("Hello[^1] world.\n\n[^1]: A note.\n", MarkdownFlavor::Gfm);
 
         assert!(latex.contains("Hello\\footnote{A note.}"), "latex was: {latex}");
         assert!(!latex.contains("textsuperscript{1}"), "latex was: {latex}");
@@ -320,7 +324,7 @@ mod tests {
 
     #[test]
     fn renders_table_alignment_and_header_rule() {
-        let latex = markdown_to_latex("| a | b | c |\n|:--|:-:|--:|\n| 1 | 2 | 3 |\n");
+        let latex = markdown_to_latex("| a | b | c |\n|:--|:-:|--:|\n| 1 | 2 | 3 |\n", MarkdownFlavor::Gfm);
 
         assert!(latex.contains("\\begin{tabular}{lcr}"), "latex was: {latex}");
         assert!(latex.contains("a & b & c \\\\"), "latex was: {latex}");
@@ -329,7 +333,7 @@ mod tests {
 
     #[test]
     fn escapes_prose_specials_in_code_spans() {
-        let latex = markdown_to_latex("`\\ { } ~ ^ & % $ #`\n");
+        let latex = markdown_to_latex("`\\ { } ~ ^ & % $ #`\n", MarkdownFlavor::Gfm);
 
         assert!(
             latex

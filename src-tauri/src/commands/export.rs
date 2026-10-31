@@ -92,17 +92,24 @@ pub async fn export_to_docx(path: String, content: String) -> Result<(), String>
 }
 
 #[tauri::command]
-pub async fn export_to_epub(path: String, content: String, title: String) -> Result<(), String> {
+pub async fn export_to_epub(
+    path: String,
+    content: String,
+    title: String,
+    flavor: Option<String>,
+) -> Result<(), String> {
+    let flavor = crate::markdown::config::MarkdownFlavor::from_option_str(flavor);
     write_export(path, "export_to_epub", "EPUB", move || {
-        crate::export::epub::markdown_to_epub(&content, &title)
+        crate::export::epub::markdown_to_epub(&content, &title, flavor)
     })
     .await
 }
 
 #[tauri::command]
-pub async fn export_to_latex(path: String, content: String) -> Result<(), String> {
+pub async fn export_to_latex(path: String, content: String, flavor: Option<String>) -> Result<(), String> {
+    let flavor = crate::markdown::config::MarkdownFlavor::from_option_str(flavor);
     write_export(path, "export_to_latex", "LaTeX", move || {
-        Ok(crate::export::latex::markdown_to_latex(&content).into_bytes())
+        Ok(crate::export::latex::markdown_to_latex(&content, flavor).into_bytes())
     })
     .await
 }

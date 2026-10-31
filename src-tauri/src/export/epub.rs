@@ -33,11 +33,11 @@ th, td { border: 1px solid #ccc; padding: 0.25em 0.5em; }
 img { max-width: 100%; }
 "#;
 
-pub fn markdown_to_epub(content: &str, title: &str) -> Result<Vec<u8>, String> {
+pub fn markdown_to_epub(content: &str, title: &str, flavor: MarkdownFlavor) -> Result<Vec<u8>, String> {
     let rendered = renderer::render_markdown(
         content,
         MarkdownOptions {
-            flavor: MarkdownFlavor::Gfm,
+            flavor,
             safe_html: true,
         },
     )
@@ -156,7 +156,8 @@ mod tests {
 
     #[test]
     fn packages_mimetype_first_and_content() {
-        let bytes = markdown_to_epub("# Title\n\nHello & goodbye.", "Title").expect("epub should build");
+        let bytes =
+            markdown_to_epub("# Title\n\nHello & goodbye.", "Title", MarkdownFlavor::Gfm).expect("epub should build");
         let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
 
         assert_eq!(
@@ -188,7 +189,7 @@ mod tests {
 
     #[test]
     fn drops_raw_html_that_would_break_xhtml() {
-        let bytes = markdown_to_epub("Hello <br> world", "Title").expect("epub should build");
+        let bytes = markdown_to_epub("Hello <br> world", "Title", MarkdownFlavor::Gfm).expect("epub should build");
         let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
 
         let mut content = String::new();
@@ -202,7 +203,8 @@ mod tests {
 
     #[test]
     fn builds_a_toc_from_headings() {
-        let bytes = markdown_to_epub("# One\n\nText\n\n## Two\n", "Book").expect("epub should build");
+        let bytes =
+            markdown_to_epub("# One\n\nText\n\n## Two\n", "Book", MarkdownFlavor::Gfm).expect("epub should build");
         let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
 
         let mut nav = String::new();
@@ -223,7 +225,7 @@ mod tests {
 
     #[test]
     fn escapes_the_document_title_in_metadata() {
-        let bytes = markdown_to_epub("Body", "A & B <C>").expect("epub should build");
+        let bytes = markdown_to_epub("Body", "A & B <C>", MarkdownFlavor::Gfm).expect("epub should build");
         let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
 
         let mut package = String::new();

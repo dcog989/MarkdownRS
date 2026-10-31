@@ -187,7 +187,12 @@ export class ExportService {
       showToast("info", translate("export.generatingDocument"));
       await callBackend(
         "export_to_epub",
-        { path, content: tab.content, title: tab.title.replace(/\.[^/.]+$/, "") },
+        {
+          path,
+          content: tab.content,
+          title: tab.title.replace(/\.[^/.]+$/, ""),
+          flavor: appContext.settings.markdownFlavor,
+        },
         "Export:Document",
         { path: tab.path },
         { report: true, msg: translate("export.failedGenerateDocument") },
@@ -212,7 +217,7 @@ export class ExportService {
       showToast("info", translate("export.generatingDocument"));
       await callBackend(
         "export_to_latex",
-        { path, content: tab.content },
+        { path, content: tab.content, flavor: appContext.settings.markdownFlavor },
         "Export:Document",
         { path: tab.path },
         { report: true, msg: translate("export.failedGenerateDocument") },
