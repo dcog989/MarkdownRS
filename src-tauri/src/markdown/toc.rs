@@ -240,16 +240,29 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
                 Some(end_match) => {
                     let before = &content[..start_match.end()];
                     let after = &content[end_match.start()..];
-                    format!("{}\n\n{}\n\n{}", before, toc_markdown, after)
+                    if toc_markdown.is_empty() {
+                        format!("{}\n\n{}", before, after)
+                    } else {
+                        format!("{}\n\n{}\n\n{}", before, toc_markdown, after)
+                    }
                 },
                 None => {
                     let before = &content[..start_match.end()];
                     let after = &content[start_match.end()..].trim_start_matches(['\n', '\r']);
-                    format!("{}\n\n{}\n\n<!-- tocstop -->\n\n{}", before, toc_markdown, after)
+                    if toc_markdown.is_empty() {
+                        format!("{}\n\n<!-- tocstop -->\n\n{}", before, after)
+                    } else {
+                        format!("{}\n\n{}\n\n<!-- tocstop -->\n\n{}", before, toc_markdown, after)
+                    }
                 },
             }
         },
         None => {
+            // Without headings there is nothing to insert; only an existing
+            // region (handled above) is cleared.
+            if toc_markdown.is_empty() {
+                return content.to_string();
+            }
             let insert_at = find_after_first_h1(content, &lines);
             let (before, after) = content.split_at(insert_at);
             let before = before.trim_end_matches(['\n', '\r']);
@@ -264,13 +277,9 @@ fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
 /// Inserts a TOC generated from the given headings into `content`.
 /// No markdown parsing happens here; the caller supplies headings already
 /// extracted (e.g. by `render_markdown`), so no redundant comrak parse occurs.
+/// With no headings an existing region is emptied instead of left stale.
 fn insert_toc(content: &str, entries: &[HeadingEntry]) -> String {
-    if entries.is_empty() {
-        return content.to_string();
-    }
-
-    let toc_markdown = generate_toc_markdown(entries);
-    replace_toc_region(content, &toc_markdown)
+    replace_toc_region(content, &generate_toc_markdown(entries))
 }
 
 /// Runs `insert` on `content` with any leading frontmatter blanked out, then
@@ -489,6 +498,26 @@ mod tests {
             generate_document_toc_with_headings(content, None),
             generate_document_toc(content)
         );
+    }
+
+    #[test]
+    fn stale_toc_region_is_emptied_when_headings_are_gone() {
+        let content = "Intro.\n\n<!-- toc -->\n\n- [Gone](#gone)\n\n<!-- tocstop -->\n\nOutro.";
+        let result = generate_document_toc(content);
+
+        assert!(!result.contains("Gone"), "stale entry must be removed: {result}");
+        assert!(
+            result.contains("<!-- toc -->\n\n<!-- tocstop -->"),
+            "region must be left empty: {result}"
+        );
+        assert!(result.starts_with("Intro.\n\n<!-- toc -->"), "result was: {result}");
+        assert!(result.ends_with("<!-- tocstop -->\n\nOutro."), "result was: {result}");
+    }
+
+    #[test]
+    fn toc_markers_in_code_are_not_cleared_without_headings() {
+        let content = "```\n<!-- toc -->\n<!-- tocstop -->\n```\n\nNo headings.";
+        assert_eq!(generate_document_toc(content), content);
     }
 
     #[test]
