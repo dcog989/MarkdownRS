@@ -77,7 +77,7 @@ export async function writeTextFile(
   path: string,
   content: string,
   options?: { encoding?: string; hasBom?: boolean },
-): Promise<WriteFileResult | null> {
+): Promise<WriteFileResult> {
   const result = await callBackend("write_text_file", { path, content, ...options }, "File:Write");
   return result;
 }

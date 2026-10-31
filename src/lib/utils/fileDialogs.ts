@@ -354,11 +354,6 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         encoding: tab.encoding,
         hasBom: tab.hasBom,
       });
-      if (!writeResult) {
-        fileWatcher.setWriteLock(sanitizedPath, false);
-        AppError.handle("File:Write", new Error(translate("fileOps.failedSave")), { showToast: true });
-        return false;
-      }
 
       if (oldPath && oldPath !== sanitizedPath) {
         fileWatcher.unwatch(tabId);
