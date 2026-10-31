@@ -13,14 +13,8 @@ pub struct Bookmark {
     pub last_accessed: Option<String>,
 }
 
-const UPSERT_SQL: &str = "INSERT INTO bookmarks (id, path, title, tags, created, last_accessed)
-     VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-     ON CONFLICT(path) DO UPDATE SET
-        id            = excluded.id,
-        title         = excluded.title,
-        tags          = excluded.tags,
-        created       = excluded.created,
-        last_accessed = excluded.last_accessed";
+const UPSERT_SQL: &str = "INSERT OR REPLACE INTO bookmarks (id, path, title, tags, created, last_accessed)
+     VALUES (?1, ?2, ?3, ?4, ?5, ?6)";
 
 fn bind_bookmark(bookmark: &Bookmark) -> Result<[Box<dyn rusqlite::types::ToSql + '_>; 6]> {
     let tags_json = serde_json::to_string(&bookmark.tags)?;
@@ -106,5 +100,64 @@ impl BookmarkStore {
         }
         tx.commit()?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Database;
+    use crate::utils::test_util::make_temp_dir;
+    use std::fs;
+
+    fn bookmark(id: &str, path: &str) -> Bookmark {
+        Bookmark {
+            id: id.to_string(),
+            path: path.to_string(),
+            title: "Title".to_string(),
+            tags: Vec::new(),
+            created: "20260101 / 000000".to_string(),
+            last_accessed: None,
+        }
+    }
+
+    #[test]
+    fn re_bookmarking_a_renamed_path_updates_the_existing_row() {
+        let dir = make_temp_dir("bookmark-rename");
+        let db = Database::new(dir.join("bookmarks.db")).unwrap();
+        let store = db.bookmarks();
+
+        // Renaming a bookmarked file keeps the id and changes the path.
+        store.add_bookmark(&bookmark("b1", "/old.md")).unwrap();
+        store.add_bookmark(&bookmark("b1", "/new.md")).unwrap();
+
+        let all = store.get_all_bookmarks().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, "b1");
+        assert_eq!(all[0].path, "/new.md");
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn import_keeps_one_row_per_id_and_per_path() {
+        let dir = make_temp_dir("bookmark-import-dupes");
+        let db = Database::new(dir.join("bookmarks.db")).unwrap();
+        let store = db.bookmarks();
+
+        // Repeated id, then a different id taking a path the first rows used.
+        let imported = vec![
+            bookmark("b1", "/a.md"),
+            bookmark("b1", "/b.md"),
+            bookmark("b3", "/b.md"),
+        ];
+        store.import_bookmarks(&imported).unwrap();
+
+        let all = store.get_all_bookmarks().unwrap();
+        assert_eq!(all.len(), 1);
+        assert_eq!(all[0].id, "b3");
+        assert_eq!(all[0].path, "/b.md");
+
+        fs::remove_dir_all(&dir).unwrap();
     }
 }
