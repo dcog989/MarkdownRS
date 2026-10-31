@@ -14,7 +14,7 @@ import { CONFIG } from "$lib/utils/config";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
 import { saveSettings } from "$lib/utils/settings";
-import { shortcutManager } from "$lib/utils/shortcuts";
+import { shortcutManager, UNBOUND } from "$lib/utils/shortcuts";
 
 interface Props {
   isOpen: boolean;
@@ -90,7 +90,7 @@ function assignShortcut(commandId: string, key: string) {
 
 function handleReassign() {
   if (!conflictCommand) return;
-  delete appContext.settings.customShortcuts[conflictCommand.command.id];
+  appContext.settings.customShortcuts[conflictCommand.command.id] = UNBOUND;
   assignShortcut(conflictCommand.targetId, conflictCommand.key);
   conflictCommand = null;
 }

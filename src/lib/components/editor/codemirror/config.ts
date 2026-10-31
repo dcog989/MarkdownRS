@@ -16,6 +16,7 @@ import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { emojiAutocompleteKeymap, emojiCompletion } from "$lib/utils/emojiCompletion";
 import { fenceCursorPlugin, fenceLanguageCompletion } from "$lib/utils/fenceLanguageCompletion";
+import { resolveShortcut } from "$lib/utils/shortcuts";
 
 // CodeMirror compares key names case-sensitively against `event.key` ("ArrowUp",
 // "PageDown", ...), so title-casing only works for single-word names.
@@ -175,7 +176,13 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
   for (const def of cmHandlerMap) {
     const customKey = appContext.settings.customShortcuts[def.registryKey];
     const defaultKey = commandDefaultKeys.get(def.registryKey);
-    const cmKey = customKey ? toCmKey(customKey) : toCmKey(defaultKey ?? "");
+    const key = resolveShortcut(customKey, defaultKey);
+    if (!key) {
+      // Still free the default chord, or CodeMirror's default map keeps running it.
+      if (defaultKey) addFilteredKey(filteredKeys, toCmKey(defaultKey));
+      continue;
+    }
+    const cmKey = toCmKey(key);
 
     cmBindings.push({
       key: cmKey,

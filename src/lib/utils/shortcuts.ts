@@ -7,6 +7,14 @@ import { appContext } from "$lib/stores/state.svelte";
 // ctrl-prefixed default keys match.
 const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
+// Stored when another command takes this one's key; "" would fall back to the default.
+export const UNBOUND = "none";
+
+export function resolveShortcut(custom: string | undefined, defaultKey: string | undefined): string | undefined {
+  if (custom === UNBOUND) return undefined;
+  return custom || defaultKey;
+}
+
 export class KeyboardShortcutManager {
   private commands: Map<string, Command> = new Map();
   private enabled: boolean = true;
@@ -18,7 +26,7 @@ export class KeyboardShortcutManager {
   getShortcutDisplay(id: string): string {
     const cmd = this.commands.get(id);
     const customShortcuts = appContext.settings.customShortcuts;
-    const key = customShortcuts[id] || cmd?.defaultKey;
+    const key = resolveShortcut(customShortcuts[id], cmd?.defaultKey);
     return this.formatKeyDisplay(key);
   }
 
@@ -42,7 +50,7 @@ export class KeyboardShortcutManager {
     const normalizedKey = key.toLowerCase();
     for (const cmd of this.commands.values()) {
       if (cmd.id === excludeId) continue;
-      const mappedKey = customShortcuts[cmd.id] || cmd.defaultKey;
+      const mappedKey = resolveShortcut(customShortcuts[cmd.id], cmd.defaultKey);
       if (mappedKey && mappedKey.toLowerCase() === normalizedKey) {
         return cmd;
       }
@@ -73,7 +81,7 @@ export class KeyboardShortcutManager {
     const customShortcuts = appContext.settings.customShortcuts;
 
     for (const cmd of this.commands.values()) {
-      const mappedKey = customShortcuts[cmd.id] || cmd.defaultKey;
+      const mappedKey = resolveShortcut(customShortcuts[cmd.id], cmd.defaultKey);
       if (!mappedKey || !cmd.handler) continue;
       if (pressedKey === mappedKey.toLowerCase()) {
         if (isInput && !(cmd.id in customShortcuts) && !cmd.global) {
