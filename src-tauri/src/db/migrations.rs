@@ -41,8 +41,8 @@ pub(super) fn setup_schema(conn: &mut Connection) -> Result<()> {
     tx.execute_batch(&base_schema_ddl())?;
     // Existing databases can predate a column addition; `CREATE TABLE IF NOT
     // EXISTS` won't add it, so converge tabs/closed_tabs on TAB_COLUMNS.
-    // This also auto-migrates any future column added to the single source of
-    // truth without a hand-written migration.
+    // This also auto-migrates any future nullable or defaulted column added to
+    // the single source of truth, with no hand-written migration.
     ensure_tab_columns(&tx, "tabs")?;
     ensure_tab_columns(&tx, "closed_tabs")?;
     tx.commit()?;
@@ -64,6 +64,8 @@ fn ensure_tab_columns(tx: &rusqlite::Transaction, table: &str) -> Result<()> {
             // database already has it from the initial schema.
             continue;
         }
+        // SQLite rejects ADD COLUMN for a NOT NULL column without a DEFAULT on a
+        // table that has rows; `every_tab_column_can_be_added_to_a_non_empty_table` enforces that.
         log::info!("Adding missing column {} to {}", col.name, table);
         tx.execute_batch(&format!("ALTER TABLE {table} ADD COLUMN {} {};", col.name, col.ddl))?;
     }
@@ -132,6 +134,24 @@ mod tests {
             actual.sort();
             expected.sort();
             assert_eq!(actual, expected);
+        }
+    }
+
+    #[test]
+    fn every_tab_column_can_be_added_to_a_non_empty_table() {
+        // Reproduces the upgrade ALTER: SQLite refuses a NOT NULL column without
+        // a DEFAULT on a table that already has rows, so such a column in
+        // TAB_COLUMNS would break every existing database at startup.
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch("CREATE TABLE tabs (id TEXT PRIMARY KEY); INSERT INTO tabs VALUES ('x');")
+            .unwrap();
+
+        for col in schema::TAB_COLUMNS {
+            if col.ddl.contains("PRIMARY KEY") {
+                continue;
+            }
+            conn.execute_batch(&format!("ALTER TABLE tabs ADD COLUMN {} {};", col.name, col.ddl))
+                .unwrap_or_else(|e| panic!("column `{}` cannot be retrofitted: {e}", col.name));
         }
     }
 }

@@ -16,7 +16,7 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
     },
     TabColumn {
         name: "title",
-        ddl: "TEXT NOT NULL",
+        ddl: "TEXT NOT NULL DEFAULT ''",
         preserve_old_on_null: false,
     },
     TabColumn {
@@ -26,7 +26,7 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
     },
     TabColumn {
         name: "is_dirty",
-        ddl: "INTEGER NOT NULL",
+        ddl: "INTEGER NOT NULL DEFAULT 0",
         preserve_old_on_null: false,
     },
     TabColumn {
@@ -36,7 +36,7 @@ pub(super) const TAB_COLUMNS: &[TabColumn] = &[
     },
     TabColumn {
         name: "scroll_percentage",
-        ddl: "REAL NOT NULL",
+        ddl: "REAL NOT NULL DEFAULT 0",
         preserve_old_on_null: false,
     },
     TabColumn {
