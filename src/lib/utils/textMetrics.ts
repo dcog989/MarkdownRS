@@ -36,12 +36,48 @@ export function countWords(text: string): number {
   return countWordsRegex(text);
 }
 
+// The cursor word position only changes by the text between the old and the new
+// cursor, so a cursor move can adjust the cached count instead of re-scanning
+// the whole prefix. CodeMirror keeps the same Text object while only the
+// selection moves.
+// shortcut: CJK text still re-counts the whole prefix (Intl.Segmenter counts
+// are not a sum of slices); revisit if large CJK documents feel slow.
+const WORD_CHAR_RE = /[\p{L}\p{N}_']/u;
+let wordIndexCache: { doc: Text; offset: number; count: number; hasCjk: boolean } | null = null;
+
+function countWordsUpTo(doc: Text, offset: number): number {
+  if (offset <= 0) return 0;
+
+  const cached = wordIndexCache;
+  if (cached && cached.doc === doc) {
+    if (cached.offset === offset) return cached.count;
+
+    const from = Math.min(cached.offset, offset);
+    const to = Math.max(cached.offset, offset);
+    const between = doc.sliceString(from, to);
+
+    if (!cached.hasCjk && !CJK_RANGE_RE.test(between)) {
+      const merged =
+        from > 0 && WORD_CHAR_RE.test(doc.sliceString(from - 1, from)) && WORD_CHAR_RE.test(between[0] ?? "");
+      const delta = countWords(between) - (merged ? 1 : 0);
+      const count = cached.count + (offset > cached.offset ? delta : -delta);
+      wordIndexCache = { doc, offset, count, hasCjk: false };
+      return count;
+    }
+  }
+
+  const prefix = doc.sliceString(0, offset);
+  const count = countWords(prefix);
+  wordIndexCache = { doc, offset, count, hasCjk: CJK_RANGE_RE.test(prefix) };
+  return count;
+}
+
 export function calculateCursorMetrics(
   doc: Text,
   cursorOffset: number,
   line: { number: number; from: number; text: string },
 ): CursorMetrics {
-  const currentWordIndex = countWords(doc.sliceString(0, cursorOffset));
+  const currentWordIndex = countWordsUpTo(doc, cursorOffset);
 
   return {
     cursorOffset,

@@ -36,6 +36,17 @@ describe("calculateCursorMetrics", () => {
     expect(metrics.currentWordIndex).toBe(3);
     expect(metrics.cursorOffset).toBe(doc.line(2).from + 2);
   });
+
+  it("keeps the word index correct across cursor moves in one document", () => {
+    const doc = Text.of(["one two three, four! five_six don't stop."]);
+    const line = { number: 1, from: 0, text: doc.line(1).text };
+    const offsets = [0, 24, 4, 20, 8, 13, 3, 33, doc.length, 1, 17];
+
+    for (const offset of offsets) {
+      const metrics = calculateCursorMetrics(doc, offset, line);
+      expect(metrics.currentWordIndex).toBe(countWords(doc.sliceString(0, offset)));
+    }
+  });
 });
 
 describe("computeLineStats", () => {
