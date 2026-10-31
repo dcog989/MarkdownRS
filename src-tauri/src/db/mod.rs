@@ -1,4 +1,5 @@
 use crate::utils::MutexExt;
+use std::collections::HashSet;
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -35,6 +36,10 @@ const DELETE_BATCH_SIZE: usize = 500;
 /// also what an unmounted drive looks like, so a preview is the only safe way
 /// to tell the two apart.
 ///
+/// `only` limits the deletion to paths the user was actually shown. Without it
+/// the second pass decides again, and a drive that drops between the preview
+/// and the confirm loses every row under it.
+///
 /// Takes the connection handle rather than a lock guard: statting user paths
 /// happens between two short lock windows, so an unreachable mount cannot stall
 /// every other query.
@@ -43,6 +48,7 @@ fn delete_orphans(
     table_name: &str,
     id_column: &str,
     dry_run: bool,
+    only: Option<&[String]>,
 ) -> anyhow::Result<Vec<String>> {
     let entries: Vec<(String, String)> = {
         let conn = conn.lock_or_recover();
@@ -52,9 +58,12 @@ fn delete_orphans(
             .collect::<rusqlite::Result<Vec<(String, String)>>>()?
     };
 
+    let allowed: Option<HashSet<&str>> = only.map(|paths| paths.iter().map(String::as_str).collect());
+
     let dead: Vec<(String, String)> = entries
         .into_iter()
         .filter(|(_, path)| is_missing(Path::new(path)))
+        .filter(|(_, path)| allowed.as_ref().is_none_or(|allowed| allowed.contains(path.as_str())))
         .collect();
 
     if dead.is_empty() {
@@ -122,7 +131,7 @@ mod tests {
             .add_bookmark(&bookmark("gone", &gone.to_string_lossy()))
             .unwrap();
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false, None).unwrap();
 
         assert_eq!(deleted, vec![gone.to_string_lossy().to_string()]);
         let left = db.bookmarks().get_all_bookmarks().unwrap();
@@ -146,7 +155,7 @@ mod tests {
             .add_bookmark(&bookmark("gone", &gone.to_string_lossy()))
             .unwrap();
 
-        let listed = db.bookmarks().delete_orphan_bookmarks(true).unwrap();
+        let listed = db.bookmarks().delete_orphan_bookmarks(true, None).unwrap();
 
         assert_eq!(listed, vec![gone.to_string_lossy().to_string()]);
         assert_eq!(
@@ -154,6 +163,30 @@ mod tests {
             2,
             "a dry run must not delete rows"
         );
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn deletes_only_the_paths_the_user_was_shown() {
+        let dir = make_temp_dir("orphans-previewed");
+        let db = Database::new(dir.join("db.sqlite")).unwrap();
+        let shown = dir.join("shown.md");
+        let hidden = dir.join("hidden.md");
+
+        db.bookmarks()
+            .add_bookmark(&bookmark("shown", &shown.to_string_lossy()))
+            .unwrap();
+        db.bookmarks()
+            .add_bookmark(&bookmark("hidden", &hidden.to_string_lossy()))
+            .unwrap();
+
+        let previewed = vec![shown.to_string_lossy().to_string()];
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false, Some(&previewed)).unwrap();
+
+        assert_eq!(deleted, previewed);
+        let left = db.bookmarks().get_all_bookmarks().unwrap();
+        assert_eq!(left.len(), 1, "a path the user never saw must survive");
+        assert_eq!(left[0].path, hidden.to_string_lossy().to_string());
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -182,7 +215,7 @@ mod tests {
             return;
         }
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false, None).unwrap();
 
         fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
         assert!(
@@ -207,7 +240,7 @@ mod tests {
                 .unwrap();
         }
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false, None).unwrap();
 
         assert_eq!(deleted.len(), total);
         assert!(db.bookmarks().get_all_bookmarks().unwrap().is_empty());

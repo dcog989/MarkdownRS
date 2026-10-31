@@ -154,7 +154,11 @@ async function deleteOrphans() {
     });
     if (result !== "discard") return;
 
-    const deletedPaths = await callBackend("delete_orphan_files", { dryRun: false }, "Data:DeleteOrphans");
+    const deletedPaths = await callBackend(
+      "delete_orphan_files",
+      { dryRun: false, paths: orphans },
+      "Data:DeleteOrphans",
+    );
     if (!deletedPaths) return;
     pruneFileHistory(deletedPaths);
     pruneBookmarks(deletedPaths);

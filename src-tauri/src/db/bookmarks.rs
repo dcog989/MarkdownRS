@@ -85,8 +85,8 @@ impl BookmarkStore {
         Ok(())
     }
 
-    pub fn delete_orphan_bookmarks(&self, dry_run: bool) -> Result<Vec<String>> {
-        crate::db::delete_orphans(&self.conn, "bookmarks", "id", dry_run)
+    pub fn delete_orphan_bookmarks(&self, dry_run: bool, only: Option<&[String]>) -> Result<Vec<String>> {
+        crate::db::delete_orphans(&self.conn, "bookmarks", "id", dry_run, only)
     }
 
     pub fn import_bookmarks(&self, bookmarks: &[Bookmark]) -> Result<()> {

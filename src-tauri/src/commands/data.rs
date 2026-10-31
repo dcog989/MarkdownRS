@@ -30,21 +30,28 @@ pub async fn import_file_history(state: State<'_, AppState>, paths: Vec<String>)
 }
 
 #[tauri::command]
-pub async fn delete_orphan_files(state: State<'_, AppState>, dry_run: bool) -> Result<Vec<String>, String> {
+pub async fn delete_orphan_files(
+    state: State<'_, AppState>,
+    dry_run: bool,
+    paths: Option<Vec<String>>,
+) -> Result<Vec<String>, String> {
     let db = state.db.clone();
     run_blocking("delete orphan files", move || {
-        let mut paths = db
+        // The previewed paths, so a drive that drops after the confirm cannot
+        // widen the deletion beyond what the user agreed to.
+        let only = paths.as_deref();
+        let mut deleted = db
             .file_history()
-            .delete_orphan_file_history(dry_run)
+            .delete_orphan_file_history(dry_run, only)
             .map_err(|e| handle_error(Some("file history"), "delete orphan file history", e))?;
-        paths.extend(
+        deleted.extend(
             db.bookmarks()
-                .delete_orphan_bookmarks(dry_run)
+                .delete_orphan_bookmarks(dry_run, only)
                 .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?,
         );
-        paths.sort();
-        paths.dedup();
-        Ok(paths)
+        deleted.sort();
+        deleted.dedup();
+        Ok(deleted)
     })
     .await
 }
