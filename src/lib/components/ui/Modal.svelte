@@ -148,7 +148,6 @@ $effect(() => {
       style:max-width={MODAL_CONSTRAINTS.MAX_WIDTH}
       style:max-height="calc(100vh - 5rem)"
       style:width={width}
-      onkeydown={() => {}}
     >
       <!-- Header Strategy: Snippet First, then Title+Close Default -->
       {#if header}
