@@ -361,6 +361,7 @@ describe("FileTree", () => {
   });
 
   it("filters to matching files within their containing folder while typing", async () => {
+    mockedListDirectory.mockResolvedValue([{ ...entry("deep.md"), path: "/root/sub/deep.md" }]);
     fileTreeStore.root = "/root";
     fileTreeStore.expanded.set("/root", true);
     fileTreeStore.children.set("/root", [entry("notes.md"), entry("sub", true)]);
@@ -378,7 +379,7 @@ describe("FileTree", () => {
   });
 
   it("opens a folder on click while filtering instead of toggling hidden expansion", async () => {
-    mockedListDirectory.mockResolvedValue([]);
+    mockedListDirectory.mockResolvedValue([{ ...entry("match.md"), path: "/root/sub/match.md" }]);
     fileTreeStore.root = "/root";
     fileTreeStore.expanded.set("/root", true);
     fileTreeStore.children.set("/root", [entry("sub", true)]);

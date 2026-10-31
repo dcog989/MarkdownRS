@@ -9,7 +9,7 @@ import FileText from "lucide-svelte/icons/file-text";
 import Folder from "lucide-svelte/icons/folder";
 import FolderOpen from "lucide-svelte/icons/folder-open";
 import LoaderCircle from "lucide-svelte/icons/loader-circle";
-import { onMount, tick } from "svelte";
+import { onMount, tick, untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import {
   canNavigateUp,
@@ -164,9 +164,14 @@ let filterActive = $derived(effectiveFilterQuery.trim() !== "");
 // the hidden-files toggle changes so stale results are dropped and new matches
 // appear.
 $effect(() => {
+  const query = effectiveFilterQuery;
+  const markdownOnly = settingsState.fileTreeShowMarkdownOnly;
   settingsState.fileTreeShowHidden;
   treeRevision.value;
-  void applyFilter(effectiveFilterQuery, settingsState.fileTreeShowMarkdownOnly);
+  // `applyFilter` walks the cached listings, so calling it untracked keeps this
+  // effect on the four values above instead of re-running on every listing the
+  // search loads.
+  untrack(() => void applyFilter(query, markdownOnly));
 });
 
 let scrollEl = $state<HTMLDivElement>();
