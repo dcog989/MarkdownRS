@@ -2,6 +2,44 @@ use crate::utils::{atomic_write, handle_error, run_blocking};
 #[cfg(feature = "pdf-export")]
 use pdf_oxide::api::Pdf;
 
+/// First system font that covers CJK and other scripts the bundled Latin
+/// fallback cannot draw.
+#[cfg(feature = "pdf-export")]
+const UNICODE_FONT_PATHS: &[&str] = &[
+    "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/noto/NotoSansCJK-Regular.ttc",
+    "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    "/System/Library/Fonts/PingFang.ttc",
+    "C:\\Windows\\Fonts\\msyh.ttc",
+];
+
+/// Fonts to register over pdf_oxide's bundled DejaVu. The markdown renderer asks
+/// for these names on the Unicode path, and a later registration wins.
+/// shortcut: fixed candidate paths, use fontconfig when more scripts matter.
+#[cfg(feature = "pdf-export")]
+fn unicode_fonts(content: &str) -> Vec<(String, Vec<u8>)> {
+    if !content.chars().any(|character| character as u32 > 0xFF) {
+        return Vec::new();
+    }
+
+    let Some((path, regular)) = UNICODE_FONT_PATHS
+        .iter()
+        .find_map(|path| std::fs::read(path).ok().map(|bytes| (*path, bytes)))
+    else {
+        return Vec::new();
+    };
+
+    // Headings and bold spans ask for the bold name; a regular face is better
+    // than missing glyphs when no bold file exists next to it.
+    let bold = std::fs::read(path.replace("-Regular", "-Bold")).unwrap_or_else(|_| regular.clone());
+
+    vec![
+        ("DejaVuSans".to_string(), regular),
+        ("DejaVuSans-Bold".to_string(), bold),
+    ]
+}
+
 #[cfg(feature = "pdf-export")]
 #[tauri::command]
 pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> {
@@ -9,7 +47,9 @@ pub async fn export_to_pdf(path: String, content: String) -> Result<(), String> 
 
     let (pdf_bytes, duration) = crate::timed!({
         run_blocking("export PDF", move || {
-            let mut pdf = Pdf::from_markdown(&content).map_err(|e| format!("Failed to create PDF: {}", e))?;
+            let fonts = unicode_fonts(&content);
+            let mut pdf =
+                Pdf::from_markdown_with_fonts(&content, &fonts).map_err(|e| format!("Failed to create PDF: {}", e))?;
             pdf.to_bytes()
                 .map_err(|e| format!("Failed to generate PDF bytes: {}", e))
         })
@@ -119,4 +159,29 @@ pub async fn export_to_latex(path: String, content: String) -> Result<(), String
     );
 
     Ok(())
+}
+
+#[cfg(all(test, feature = "pdf-export"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn skips_unicode_font_for_latin_content() {
+        assert!(unicode_fonts("Hello world").is_empty());
+    }
+
+    #[test]
+    fn registers_a_system_font_for_cjk_content() {
+        if !UNICODE_FONT_PATHS
+            .iter()
+            .any(|path| std::path::Path::new(path).exists())
+        {
+            return;
+        }
+
+        let fonts = unicode_fonts("日本語");
+        assert_eq!(fonts.len(), 2, "regular and bold must be registered");
+        assert_eq!(fonts[0].0, "DejaVuSans");
+        assert_eq!(fonts[1].0, "DejaVuSans-Bold");
+    }
 }
