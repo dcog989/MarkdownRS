@@ -35,16 +35,13 @@
       "identifier": "opener:allow-open-path",
       "allow": [
         {
-          "path": "$HOME/**"
+          "path": "**"
         },
         {
-          "path": "$APPLOCALDATA/**"
+          "path": "**/.*"
         },
         {
-          "path": "$APPDATA/**"
-        },
-        {
-          "path": "$TEMP/**"
+          "path": "**/.*/**"
         }
       ]
     },
