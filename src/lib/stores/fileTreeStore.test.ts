@@ -232,13 +232,16 @@ describe("fileTreeStore", () => {
     expect(isDirLoading("/root")).toBe(false);
   });
 
-  it("handles a failed listing by storing an empty child list", async () => {
-    mockedListDirectory.mockRejectedValue(new Error("permission denied"));
+  it("does not cache a failed listing, so the next expand retries", async () => {
+    mockedListDirectory.mockRejectedValueOnce(new Error("permission denied")).mockResolvedValueOnce([entry("a.md")]);
 
     await loadChildren("/root");
-
-    expect(fileTreeStore.children.get("/root")).toEqual([]);
+    expect(fileTreeStore.children.has("/root")).toBe(false);
     expect(isDirLoading("/root")).toBe(false);
+
+    await loadChildren("/root");
+    expect(fileTreeStore.children.get("/root")).toEqual([entry("a.md")]);
+    expect(mockedListDirectory).toHaveBeenCalledTimes(2);
   });
 
   it("dirname returns the parent directory", () => {

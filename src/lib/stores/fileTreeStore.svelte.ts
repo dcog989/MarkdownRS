@@ -88,7 +88,9 @@ export function loadChildren(path: string): Promise<void> {
       fileTreeStore.lastLoaded.set(path, Date.now());
     } catch {
       if (loadGeneration.get(path) !== generation) return;
-      fileTreeStore.children.set(path, []);
+      // Don't cache a failure as an empty folder: that hides the real contents
+      // until a manual refresh. Leaving the key absent lets the next expand retry.
+      fileTreeStore.children.delete(path);
     } finally {
       if (loadGeneration.get(path) === generation) {
         fileTreeStore.loading.set(path, false);
