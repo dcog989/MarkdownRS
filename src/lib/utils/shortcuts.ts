@@ -7,6 +7,15 @@ import { appContext } from "$lib/stores/state.svelte";
 // ctrl-prefixed default keys match.
 const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
+// A dialog is modal for the keyboard too: nothing may run behind it. The find bar is
+// not a modal and must keep its shortcuts.
+function isModalOpen(): boolean {
+  if (appContext.ui.dialog.isOpen || appContext.ui.dialog.promptIsOpen) return true;
+  return Object.entries(appContext.interface).some(
+    ([key, open]) => key.startsWith("show") && key !== "showFind" && open === true,
+  );
+}
+
 // Stored when another command takes this one's key; "" would fall back to the default.
 export const UNBOUND = "none";
 
@@ -74,7 +83,7 @@ export class KeyboardShortcutManager {
   }
 
   async handleKeyEvent(e: KeyboardEvent): Promise<boolean> {
-    if (!this.enabled || e.repeat) return false;
+    if (!this.enabled || e.repeat || isModalOpen()) return false;
 
     const pressedKey = this.getEventKey(e);
     const isInput = this.isInputElement(e.target);
