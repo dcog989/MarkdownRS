@@ -151,9 +151,27 @@ pub async fn preserved_settings_from_path(path: &Path) -> Result<toml::Value, St
 
 #[cfg(test)]
 mod tests {
-    use super::{preserved_settings_from_path, quarantine_invalid};
+    use super::{
+        DEFAULT_MAX_FILE_SIZE_MB, MAX_FILE_SIZE_MAX_MB, MAX_FILE_SIZE_MIN_MB, normalize_max_file_size,
+        preserved_settings_from_path, quarantine_invalid,
+    };
     use crate::utils::test_util::make_temp_dir;
     use std::fs;
+
+    #[test]
+    fn normalizes_max_file_size_to_the_supported_range() {
+        let mut above = serde_json::json!({ "maxFileSizeMB": MAX_FILE_SIZE_MAX_MB + 1 });
+        normalize_max_file_size(&mut above);
+        assert_eq!(above["maxFileSizeMB"], MAX_FILE_SIZE_MAX_MB);
+
+        let mut below = serde_json::json!({ "maxFileSizeMB": 1 });
+        normalize_max_file_size(&mut below);
+        assert_eq!(below["maxFileSizeMB"], MAX_FILE_SIZE_MIN_MB);
+
+        let mut missing = serde_json::json!({});
+        normalize_max_file_size(&mut missing);
+        assert_eq!(missing["maxFileSizeMB"], DEFAULT_MAX_FILE_SIZE_MB);
+    }
 
     #[tokio::test]
     async fn preserved_settings_keep_only_backend_managed_keys() {

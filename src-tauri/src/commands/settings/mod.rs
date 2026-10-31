@@ -57,6 +57,10 @@ pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::V
 
     let mut json_val = serde_json::to_value(toml_val).map_err(|e| handle_error(None, "convert settings to JSON", e))?;
 
+    // The backend clamps this on read; clamp the copy the frontend checks
+    // against too, so its "file too large" check matches the real limit.
+    io::normalize_max_file_size(&mut json_val);
+
     if let Some(state) = app_handle.try_state::<AppState>() {
         let mut pr = state.project_root.lock_or_recover();
         *pr = json_val
