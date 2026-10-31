@@ -44,7 +44,7 @@ describe("Modal focus handling", () => {
 
     await rerender({ isOpen: false, onClose: () => {}, children });
 
-    expect(document.activeElement).toBe(opener);
+    await waitFor(() => expect(document.activeElement).toBe(opener));
     opener.remove();
   });
 });
