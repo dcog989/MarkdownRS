@@ -19,6 +19,7 @@ import { tooltip } from "$lib/actions/tooltip";
 import Input from "$lib/components/ui/Input.svelte";
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import {
   clearSearch,
@@ -213,7 +214,7 @@ function onReplaceAll() {
     cmView.flushPendingContent?.();
     const count = replaceAllInTabs();
     if (count > 0) {
-      alert(translate("findReplace.replacedCount", { values: { count } }));
+      showToast("success", translate("findReplace.replacedCount", { values: { count } }));
     }
   }
 }
