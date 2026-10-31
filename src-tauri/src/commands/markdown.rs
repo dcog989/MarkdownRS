@@ -6,6 +6,7 @@ use crate::markdown::toc;
 use crate::state::AppState;
 use crate::utils::{IntoTauriError, run_blocking};
 use serde::Serialize;
+use std::path::Path;
 use tauri::State;
 
 #[tauri::command]
@@ -125,6 +126,21 @@ pub struct RumdlConfigRead {
     pub loaded_path: Option<String>,
 }
 
+/// Project scope needs a directory to anchor to: the document's own directory or
+/// the workspace root. Without either, the target silently becomes
+/// `$HOME/.rumdl.toml`, which then applies as a user-level config to every
+/// project.
+fn ensure_project_scope_anchor(
+    scope: config::RumdlConfigScope,
+    file_path: Option<&Path>,
+    project_root: Option<&Path>,
+) -> Result<(), String> {
+    if scope == config::RumdlConfigScope::Project && file_path.is_none() && project_root.is_none() {
+        return Err("Project config needs an open folder or a saved file".to_string());
+    }
+    Ok(())
+}
+
 #[tauri::command]
 pub async fn read_rumdl_config(
     file_path: Option<String>,
@@ -136,6 +152,7 @@ pub async fn read_rumdl_config(
         project_root: pr,
     } = config::resolve_paths(file_path.as_deref(), &state);
     let scope = config::RumdlConfigScope::from_str(target.as_deref());
+    ensure_project_scope_anchor(scope, fp.as_deref(), pr.as_deref())?;
 
     crate::timed_info!("[Markdown]", "read_rumdl_config", {
         run_blocking("read rumdl config", move || {
@@ -171,17 +188,18 @@ pub async fn write_rumdl_config(
         project_root: pr,
     } = config::resolve_paths(file_path.as_deref(), &state);
     let scope = config::RumdlConfigScope::from_str(target.as_deref());
+    ensure_project_scope_anchor(scope, fp.as_deref(), pr.as_deref())?;
 
     crate::timed_info!("[Markdown]", "write_rumdl_config", {
         let (resolved, content) = run_blocking("validate rumdl config", move || {
-            let pr = pr.unwrap_or_else(|| dirs::home_dir().unwrap_or_default());
-            let resolved = config::resolve_config_target(fp.as_deref(), Some(&pr), scope);
+            let resolved = config::resolve_config_target(fp.as_deref(), pr.as_deref(), scope);
+            let validation_root = pr.as_deref().or_else(|| resolved.parent()).unwrap_or(Path::new("."));
 
             if let Some(dir) = resolved.parent() {
                 std::fs::create_dir_all(dir).map_err(|e| format!("Failed to create config directory: {}", e))?;
             }
 
-            config::validate_config_content(&content, &pr, &resolved)?;
+            config::validate_config_content(&content, validation_root, &resolved)?;
 
             Ok((resolved, content))
         })
@@ -193,4 +211,23 @@ pub async fn write_rumdl_config(
 
         Ok(resolved.to_string_lossy().to_string())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ensure_project_scope_anchor;
+    use crate::markdown::config::RumdlConfigScope;
+    use std::path::Path;
+
+    #[test]
+    fn project_scope_needs_a_file_or_a_workspace_root() {
+        assert!(ensure_project_scope_anchor(RumdlConfigScope::Project, None, None).is_err());
+        assert!(ensure_project_scope_anchor(RumdlConfigScope::Project, Some(Path::new("/a/b.md")), None).is_ok());
+        assert!(ensure_project_scope_anchor(RumdlConfigScope::Project, None, Some(Path::new("/work"))).is_ok());
+    }
+
+    #[test]
+    fn user_scope_needs_no_anchor() {
+        assert!(ensure_project_scope_anchor(RumdlConfigScope::User, None, None).is_ok());
+    }
 }
