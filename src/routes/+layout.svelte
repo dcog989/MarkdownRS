@@ -47,7 +47,9 @@ $effect(() => {
   if (isThemeApplied(themeName)) return;
 
   getThemeCss(themeName).then((css) => {
-    if (css) applyThemeCss(themeName, css);
+    // The user may have picked another theme while this request was in flight;
+    // the newer request's result is the one that must win.
+    if (css && appContext.settings.activeTheme === themeName) applyThemeCss(themeName, css);
   });
 });
 
