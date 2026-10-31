@@ -47,6 +47,14 @@ $effect(() => {
     });
 });
 
+const paths = $derived([
+  { labelKey: "common.install", value: appInfo.install_path },
+  { labelKey: "about.data", value: appInfo.data_path },
+  { labelKey: "about.config", value: appInfo.config_path },
+  { labelKey: "about.cache", value: appInfo.cache_path },
+  { labelKey: "about.logs", value: appInfo.logs_path },
+] as const);
+
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text);
 }
@@ -115,75 +123,21 @@ async function checkForUpdates() {
         </button>
       </div>
 
-      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("common.install")}</span>
-        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.install_path}
-          >{appInfo.install_path}</span
-        >
-        <button
-          type="button"
-          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
-          onclick={() => copyToClipboard(appInfo.install_path)}
-        >
-          {$_("common.copy")}
-        </button>
-      </div>
-
-      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.data")}</span>
-        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.data_path}
-          >{appInfo.data_path}</span
-        >
-        <button
-          type="button"
-          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
-          onclick={() => copyToClipboard(appInfo.data_path)}
-        >
-          {$_("common.copy")}
-        </button>
-      </div>
-
-      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.config")}</span>
-        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.config_path}
-          >{appInfo.config_path}</span
-        >
-        <button
-          type="button"
-          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
-          onclick={() => copyToClipboard(appInfo.config_path)}
-        >
-          {$_("common.copy")}
-        </button>
-      </div>
-
-      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.cache")}</span>
-        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.cache_path}
-          >{appInfo.cache_path}</span
-        >
-        <button
-          type="button"
-          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
-          onclick={() => copyToClipboard(appInfo.cache_path)}
-        >
-          {$_("common.copy")}
-        </button>
-      </div>
-
-      <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
-        <span class="text-fg-muted w-16 shrink-0 font-medium">{$_("about.logs")}</span>
-        <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={appInfo.logs_path}
-          >{appInfo.logs_path}</span
-        >
-        <button
-          type="button"
-          class="btn-ghost btn-ghost--accent btn-sm shrink-0"
-          onclick={() => copyToClipboard(appInfo.logs_path)}
-        >
-          {$_("common.copy")}
-        </button>
-      </div>
+      {#each paths as path (path.labelKey)}
+        <div class="bg-bg-panel flex items-center gap-3 rounded-lg px-3 py-2.5">
+          <span class="text-fg-muted w-16 shrink-0 font-medium">{$_(path.labelKey)}</span>
+          <span class="text-ui text-fg-default flex-1 truncate text-left font-mono" title={path.value}
+            >{path.value}</span
+          >
+          <button
+            type="button"
+            class="btn-ghost btn-ghost--accent btn-sm shrink-0"
+            onclick={() => copyToClipboard(path.value)}
+          >
+            {$_("common.copy")}
+          </button>
+        </div>
+      {/each}
     </div>
 
     <button type="button" class="btn-ghost btn-ghost--link btn-sm hover:underline" onclick={openLogFile}>
