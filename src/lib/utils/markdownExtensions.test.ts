@@ -44,6 +44,11 @@ describe("frontmatterExtension", () => {
     const names = parseDoc("Before\n---\nAfter\n");
     expect(names).not.toContain("Frontmatter");
   });
+
+  it("parses an unclosed frontmatter block to the end of the document", () => {
+    const names = parseDoc("---\ntitle: Test\n# Body\n");
+    expect(names).toContain("Frontmatter");
+  });
 });
 
 describe("matchCalloutLine", () => {

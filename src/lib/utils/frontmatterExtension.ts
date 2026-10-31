@@ -42,7 +42,11 @@ export const frontmatterExtension: MarkdownExtension = {
           }
         }
 
-        if (to < 0) return false;
+        // A block parser must not return false after consuming lines, and the
+        // context cannot rewind. Like an unclosed fence, an unclosed delimiter
+        // runs to the end of the document; anything else drops the rest of the
+        // file's syntax tree.
+        if (to < 0) to = cx.prevLineEnd();
         cx.addElement(cx.elt("Frontmatter", from, to));
         return true;
       },
