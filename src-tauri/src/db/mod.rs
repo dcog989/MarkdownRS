@@ -30,6 +30,11 @@ const DELETE_BATCH_SIZE: usize = 500;
 /// Returns the paths of the deleted rows (may contain duplicates when several
 /// rows share one path).
 ///
+/// With `dry_run` the same paths are returned but nothing is deleted, so the
+/// caller can show the user what would go before committing. A missing path is
+/// also what an unmounted drive looks like, so a preview is the only safe way
+/// to tell the two apart.
+///
 /// Takes the connection handle rather than a lock guard: statting user paths
 /// happens between two short lock windows, so an unreachable mount cannot stall
 /// every other query.
@@ -37,6 +42,7 @@ fn delete_orphans(
     conn: &Mutex<rusqlite::Connection>,
     table_name: &str,
     id_column: &str,
+    dry_run: bool,
 ) -> anyhow::Result<Vec<String>> {
     let entries: Vec<(String, String)> = {
         let conn = conn.lock_or_recover();
@@ -53,6 +59,9 @@ fn delete_orphans(
 
     if dead.is_empty() {
         return Ok(Vec::new());
+    }
+    if dry_run {
+        return Ok(dead.into_iter().map(|(_, path)| path).collect());
     }
 
     let conn = conn.lock_or_recover();
@@ -113,12 +122,38 @@ mod tests {
             .add_bookmark(&bookmark("gone", &gone.to_string_lossy()))
             .unwrap();
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks().unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
 
         assert_eq!(deleted, vec![gone.to_string_lossy().to_string()]);
         let left = db.bookmarks().get_all_bookmarks().unwrap();
         assert_eq!(left.len(), 1);
         assert_eq!(left[0].path, live.to_string_lossy().to_string());
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn dry_run_lists_orphans_without_deleting_them() {
+        let dir = make_temp_dir("orphans-dry-run");
+        let db = Database::new(dir.join("db.sqlite")).unwrap();
+        let live = dir.join("live.md");
+        let gone = dir.join("gone.md");
+        fs::write(&live, "x").unwrap();
+
+        db.bookmarks()
+            .add_bookmark(&bookmark("live", &live.to_string_lossy()))
+            .unwrap();
+        db.bookmarks()
+            .add_bookmark(&bookmark("gone", &gone.to_string_lossy()))
+            .unwrap();
+
+        let listed = db.bookmarks().delete_orphan_bookmarks(true).unwrap();
+
+        assert_eq!(listed, vec![gone.to_string_lossy().to_string()]);
+        assert_eq!(
+            db.bookmarks().get_all_bookmarks().unwrap().len(),
+            2,
+            "a dry run must not delete rows"
+        );
         fs::remove_dir_all(&dir).unwrap();
     }
 
@@ -147,7 +182,7 @@ mod tests {
             return;
         }
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks().unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
 
         fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).unwrap();
         assert!(
@@ -172,7 +207,7 @@ mod tests {
                 .unwrap();
         }
 
-        let deleted = db.bookmarks().delete_orphan_bookmarks().unwrap();
+        let deleted = db.bookmarks().delete_orphan_bookmarks(false).unwrap();
 
         assert_eq!(deleted.len(), total);
         assert!(db.bookmarks().get_all_bookmarks().unwrap().is_empty());

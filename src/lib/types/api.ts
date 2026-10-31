@@ -326,7 +326,7 @@ export interface BackendCommands {
     return: number;
   };
   delete_orphan_files: {
-    args: Record<string, never>;
+    args: { dryRun: boolean };
     return: string[];
   };
 

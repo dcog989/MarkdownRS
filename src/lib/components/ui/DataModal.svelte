@@ -8,6 +8,7 @@ import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";
 import { pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
+import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import { clearFileHistory, pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
@@ -22,6 +23,8 @@ interface Props {
 let { isOpen = $bindable(false), onClose, onBack }: Props = $props();
 
 let busy = $state(false);
+
+const MAX_ORPHAN_PATHS_SHOWN = 10;
 
 async function exportBookmarks() {
   if (busy) return;
@@ -127,7 +130,31 @@ async function deleteOrphans() {
   if (busy) return;
   busy = true;
   try {
-    const deletedPaths = await callBackend("delete_orphan_files", {}, "Data:DeleteOrphans");
+    // A missing file and an unmounted drive look identical on disk, so preview
+    // the list and let the user spot paths that are only temporarily away.
+    const orphans = await callBackend("delete_orphan_files", { dryRun: true }, "Data:DeleteOrphans");
+    if (!orphans) return;
+    if (orphans.length === 0) {
+      showToast("info", translate("data.noOrphans"));
+      return;
+    }
+
+    const more = orphans.length - MAX_ORPHAN_PATHS_SHOWN;
+    const message = [
+      translate("data.confirmDeleteOrphans", { values: { count: orphans.length } }),
+      orphans.slice(0, MAX_ORPHAN_PATHS_SHOWN).join("\n"),
+      ...(more > 0 ? [translate("data.confirmDeleteOrphansMore", { values: { count: more } })] : []),
+    ].join("\n\n");
+
+    const result = await confirmDialog({
+      title: translate("data.deleteOrphans"),
+      message,
+      saveLabel: undefined,
+      discardLabel: translate("common.delete"),
+    });
+    if (result !== "discard") return;
+
+    const deletedPaths = await callBackend("delete_orphan_files", { dryRun: false }, "Data:DeleteOrphans");
     if (!deletedPaths) return;
     pruneFileHistory(deletedPaths);
     pruneBookmarks(deletedPaths);

@@ -52,8 +52,8 @@ impl FileHistoryStore {
         Ok(())
     }
 
-    pub fn delete_orphan_file_history(&self) -> Result<Vec<String>> {
-        crate::db::delete_orphans(&self.conn, "file_history", "path")
+    pub fn delete_orphan_file_history(&self, dry_run: bool) -> Result<Vec<String>> {
+        crate::db::delete_orphans(&self.conn, "file_history", "path", dry_run)
     }
 
     pub fn import_file_history(&self, paths: &[String]) -> Result<()> {

@@ -30,16 +30,16 @@ pub async fn import_file_history(state: State<'_, AppState>, paths: Vec<String>)
 }
 
 #[tauri::command]
-pub async fn delete_orphan_files(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+pub async fn delete_orphan_files(state: State<'_, AppState>, dry_run: bool) -> Result<Vec<String>, String> {
     let db = state.db.clone();
     run_blocking("delete orphan files", move || {
         let mut paths = db
             .file_history()
-            .delete_orphan_file_history()
+            .delete_orphan_file_history(dry_run)
             .map_err(|e| handle_error(Some("file history"), "delete orphan file history", e))?;
         paths.extend(
             db.bookmarks()
-                .delete_orphan_bookmarks()
+                .delete_orphan_bookmarks(dry_run)
                 .map_err(|e| handle_error(Some("bookmarks"), "delete orphan bookmarks", e))?,
         );
         paths.sort();

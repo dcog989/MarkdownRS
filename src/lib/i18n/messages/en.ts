@@ -524,7 +524,11 @@ export const en = {
     clearFileHistory: "Clear File History",
     clearFileHistoryDesc: "Delete every entry from recently opened files.",
     deleteOrphans: "Delete Orphans",
-    deleteOrphansDesc: "Remove files from history that are no longer on disk.",
+    deleteOrphansDesc: "Remove bookmarks and history entries for files that are no longer on disk.",
+    confirmDeleteOrphans:
+      "Permanently remove {count, plural, one {# orphan entry} other {# orphan entries}}? Files on an unmounted drive or network share also look missing, so check the list.",
+    confirmDeleteOrphansMore: "…and {count} more.",
+    noOrphans: "No orphan entries found.",
     exportedBookmarks: "Exported {count, plural, one {# bookmark} other {# bookmarks}}",
     importedBookmarks: "Imported {count, plural, one {# bookmark} other {# bookmarks}}",
     exportedFiles: "Exported {count, plural, one {# file} other {# files}}",
