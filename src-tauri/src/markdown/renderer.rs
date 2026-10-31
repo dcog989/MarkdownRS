@@ -5,6 +5,7 @@ use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_fro
 use anyhow::{Result, anyhow};
 use comrak::{Anchorizer, Arena, format_html_with_plugins, options::Plugins, parse_document};
 use serde::{Deserialize, Serialize};
+use std::borrow::Cow;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct MarkdownOptions {
@@ -24,9 +25,10 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     // Strip any leading frontmatter block by blanking it out: the block is
     // excluded from the rendered output while preserving the document's line
     // numbering so `data-sourcepos` (scroll sync) stays aligned.
-    let body = frontmatter::extract_frontmatter(content)
-        .map(|fm| frontmatter::blank_out(content, &fm))
-        .unwrap_or_else(|| content.to_string());
+    let body = match frontmatter::extract_frontmatter(content) {
+        Some(fm) => Cow::Owned(frontmatter::blank_out(content, &fm)),
+        None => Cow::Borrowed(content),
+    };
 
     let arena = Arena::new();
     let root = parse_document(&arena, &body, &comrak_options);
@@ -40,7 +42,11 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
-    let html = transform_callouts(&html);
+    let html = if html.contains("<blockquote") {
+        transform_callouts(&html)
+    } else {
+        html
+    };
 
     Ok(RenderResult { html, headings })
 }
