@@ -257,7 +257,12 @@ export class TabContextMenuLogic {
 
   handleCopyTitle = async () => {
     const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
-    if (tab) await this.copyToClipboard(tab.title);
+    if (tab) {
+      // tab.title can be the document's first heading (tabNameFromContent); the
+      // menu promises the file name, so read it off the path when there is one.
+      const name = tab.path ? getFilename(tab.path) : tab.customTitle || tab.title;
+      await this.copyToClipboard(name);
+    }
     this.onClose();
   };
 
