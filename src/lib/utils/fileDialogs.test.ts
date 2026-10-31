@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeDisk = vi.hoisted(() => {
   const files = new Map<string, { content: string; mtime: string; size: number; encoding: string; has_bom: boolean }>();
@@ -89,10 +89,16 @@ vi.mock("@tauri-apps/plugin-opener", () => ({
 }));
 
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { initI18n } from "$lib/i18n";
 import { dialogStore } from "$lib/stores/dialogStore.svelte";
 import { editorStore } from "$lib/stores/editorStoreCore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { navigateToPath, openFile, saveCurrentFile } from "$lib/utils/fileDialogs";
+
+// Toasts are translated, so i18n must be initialised before any test runs.
+beforeAll(() => {
+  initI18n("en");
+});
 
 const SCRATCH = "/tmp/scratch.md";
 const ORIGINAL = "# Scratch\n\nHello world\n";
@@ -245,5 +251,16 @@ describe("navigateToPath", () => {
       { basePath: null, clickPath: "notes/50%off.md" },
       "File:Read",
     );
+  });
+
+  it("reports a link it will not follow instead of failing silently", async () => {
+    const { toastStore } = await import("$lib/stores/toastStore.svelte");
+    const toastsBefore = toastStore.toasts.length;
+    const opensBefore = vi.mocked(openUrl).mock.calls.length;
+
+    await navigateToPath(`https://example.com/${"a".repeat(2000)}`);
+
+    expect(vi.mocked(openUrl).mock.calls.length).toBe(opensBefore);
+    expect(toastStore.toasts.length).toBe(toastsBefore + 1);
   });
 });

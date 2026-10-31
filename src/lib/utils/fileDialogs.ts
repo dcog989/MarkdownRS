@@ -146,6 +146,8 @@ export async function openFile(path?: string): Promise<void> {
 }
 
 const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;
+/** Anything longer is a paste accident, not a link. */
+const MAX_LINK_LENGTH = 1024;
 
 /** Hrefs are percent-encoded by the renderer (or written encoded by authors); the resolver wants a real path. */
 function decodeHref(href: string): string {
@@ -159,7 +161,9 @@ function decodeHref(href: string): string {
 export async function navigateToPath(clickedPath: string): Promise<void> {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
-  if (!clickedPath || clickedPath.length > 1024 || clickedPath.includes("\n")) {
+  if (!clickedPath) return;
+  if (clickedPath.length > MAX_LINK_LENGTH || clickedPath.includes("\n")) {
+    showToast("error", translate("fileOps.invalidLink"));
     return;
   }
 
