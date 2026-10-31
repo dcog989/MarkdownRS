@@ -5,12 +5,24 @@ export function clampSplit(ratio: number): number {
   return Math.max(CONFIG.SPLIT.MIN_PERCENTAGE, Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, ratio));
 }
 
-export function createSplitResize() {
+interface SplitResizeOptions {
+  getValue?: () => number;
+  setValue?: (ratio: number) => void;
+  getIsVertical?: () => boolean;
+}
+
+export function createSplitResize({
+  getValue = () => appContext.settings.splitPercentage,
+  setValue = (ratio) => {
+    appContext.settings.splitPercentage = ratio;
+  },
+  getIsVertical = () => appContext.settings.splitOrientation === "vertical",
+}: SplitResizeOptions = {}) {
   let isDragging = $state(false);
   let dragStart = 0;
   let initialSplit = 0;
 
-  let isVertical = $derived(appContext.settings.splitOrientation === "vertical");
+  let isVertical = $derived(getIsVertical());
   let resizeCursor = $derived(isVertical ? "col-resize" : "row-resize");
   let clientAxis = $derived.by(() => (isVertical ? "clientX" : "clientY") as "clientX" | "clientY");
   let sizeAxis = $derived.by(() => (isVertical ? "width" : "height") as "width" | "height");
@@ -28,7 +40,7 @@ export function createSplitResize() {
     e.preventDefault();
     isDragging = true;
     dragStart = e[clientAxis];
-    initialSplit = appContext.settings.splitPercentage;
+    initialSplit = getValue();
 
     // Capture the pointer so releasing outside the window still ends the drag.
     (e.currentTarget as HTMLElement | null)?.setPointerCapture?.(e.pointerId);
@@ -48,7 +60,7 @@ export function createSplitResize() {
     const currentPos = e[clientAxis];
     const deltaPixels = currentPos - dragStart;
     const deltaPercent = deltaPixels / totalSize;
-    appContext.settings.splitPercentage = clampSplit(initialSplit + deltaPercent);
+    setValue(clampSplit(initialSplit + deltaPercent));
   }
 
   function stopResize() {
@@ -62,7 +74,7 @@ export function createSplitResize() {
   }
 
   function resetSplit() {
-    appContext.settings.splitPercentage = CONFIG.SPLIT.DEFAULT_PERCENTAGE;
+    setValue(CONFIG.SPLIT.DEFAULT_PERCENTAGE);
   }
 
   function keyboardDelta(key: string): number {
@@ -86,7 +98,7 @@ export function createSplitResize() {
     const delta = keyboardDelta(e.key);
     if (delta === 0) return;
     e.preventDefault();
-    appContext.settings.splitPercentage = clampSplit(appContext.settings.splitPercentage + delta);
+    setValue(clampSplit(getValue() + delta));
   }
 
   function cleanup() {

@@ -9,7 +9,7 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import AppLifecycle from "$lib/components/app/AppLifecycle.svelte";
 import Editor from "$lib/components/editor/Editor.svelte";
-import { clampSplit, createSplitResize } from "$lib/components/editor/logic/splitResize.svelte";
+import { createSplitResize } from "$lib/components/editor/logic/splitResize.svelte";
 import FileTree from "$lib/components/filetree/FileTree.svelte";
 import Preview from "$lib/components/preview/Preview.svelte";
 import Logo from "$lib/components/ui/Logo.svelte";
@@ -30,9 +30,15 @@ import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 
 const splitResize = createSplitResize();
+const paneResize = createSplitResize({
+  getValue: () => appContext.settings.paneSplitPercentage,
+  setValue: (ratio) => {
+    appContext.settings.paneSplitPercentage = ratio;
+  },
+  getIsVertical: () => true,
+});
 
 let mainContainer = $state<HTMLDivElement>();
-let stopPaneResize: (() => void) | null = null;
 
 function handleToggleFileTree() {
   toggleFileTree();
@@ -112,7 +118,7 @@ $effect(() => {
 });
 
 onDestroy(() => {
-  stopPaneResize?.();
+  paneResize.cleanup();
   splitResize.cleanup();
 });
 
@@ -121,50 +127,9 @@ function onResizePointerDown(e: PointerEvent) {
   splitResize.startResize(e);
 }
 
-function resetPaneSplit() {
-  appContext.settings.paneSplitPercentage = CONFIG.SPLIT.DEFAULT_PERCENTAGE;
-}
-
-function onPaneResizeKeyDown(e: KeyboardEvent) {
-  if (e.key === "Home") {
-    e.preventDefault();
-    resetPaneSplit();
-    return;
-  }
-
-  let delta = 0;
-  if (e.key === "ArrowLeft") delta = -CONFIG.SPLIT.KEYBOARD_STEP;
-  else if (e.key === "ArrowRight") delta = CONFIG.SPLIT.KEYBOARD_STEP;
-  if (delta === 0) return;
-
-  e.preventDefault();
-  appContext.settings.paneSplitPercentage = clampSplit(appContext.settings.paneSplitPercentage + delta);
-}
-
 function onPaneResizePointerDown(e: PointerEvent) {
-  if (!mainContainer) return;
-  e.preventDefault();
-  (e.currentTarget as HTMLElement | null)?.setPointerCapture?.(e.pointerId);
-
-  const onMove = (ev: PointerEvent) => {
-    if (!mainContainer) return;
-    const rect = mainContainer.getBoundingClientRect();
-    if (rect.width <= 0) return;
-    const ratio = (ev.clientX - rect.left) / rect.width;
-    appContext.settings.paneSplitPercentage = clampSplit(ratio);
-  };
-
-  const onUp = () => {
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    document.body.style.cursor = "default";
-    stopPaneResize = null;
-  };
-
-  stopPaneResize = onUp;
-  window.addEventListener("pointermove", onMove);
-  window.addEventListener("pointerup", onUp);
-  document.body.style.cursor = "col-resize";
+  if (mainContainer) paneResize.registerContainer(mainContainer);
+  paneResize.startResize(e);
 }
 </script>
 
@@ -272,8 +237,8 @@ function onPaneResizePointerDown(e: PointerEvent) {
                 class="resize-handle"
                 style:cursor="col-resize"
                 onpointerdown={onPaneResizePointerDown}
-                ondblclick={resetPaneSplit}
-                onkeydown={onPaneResizeKeyDown}
+                ondblclick={paneResize.resetSplit}
+                onkeydown={paneResize.handleKeyDown}
               ></div>
 
               <div role="group" class="flex min-h-0 min-w-0 flex-1 flex-col" onfocusin={() => focusPane(1)}>
