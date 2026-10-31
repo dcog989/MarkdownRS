@@ -2,8 +2,7 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { translate } from "$lib/i18n";
 import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
-import { addTab, editorStore } from "$lib/stores/editorStore.svelte";
-import { appContext } from "$lib/stores/state.svelte";
+import { editorStore } from "$lib/stores/editorStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -39,11 +38,6 @@ export function createAppInit() {
       const sessionStart = performance.now();
       await Promise.all([loadSession(), bookmarks]);
       logger.session.info("SessionRestored", { duration: formatDuration(sessionStart) });
-
-      if (editorStore.tabs.length === 0) {
-        const id = addTab();
-        appContext.app.activeTabId = id;
-      }
 
       logger.editor.info("AppInitialized", { duration: formatDuration(appStartTime) });
 
