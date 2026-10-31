@@ -77,3 +77,63 @@ impl FileHistoryStore {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::Database;
+    use crate::utils::test_util::make_temp_dir;
+    use std::fs;
+
+    fn open_store(name: &str) -> (Database, std::path::PathBuf) {
+        let dir = make_temp_dir(name);
+        let db = Database::new(dir.join("history.db")).unwrap();
+        (db, dir)
+    }
+
+    #[test]
+    fn insert_keeps_only_the_newest_entries() {
+        let (db, dir) = open_store("file-history-cap");
+        let store = db.file_history();
+        let limit = schema::FILE_HISTORY_LIMIT as usize;
+
+        for i in 0..limit + 2 {
+            store
+                .add_file_history_entry(&format!("/f{i:04}.md"), &format!("20260101 / {i:06}"))
+                .unwrap();
+        }
+
+        let files = store.get_file_history().unwrap();
+        assert_eq!(files.len(), limit);
+        let newest = format!("/f{:04}.md", limit + 1);
+        assert_eq!(files.first().map(String::as_str), Some(newest.as_str()));
+        assert!(
+            !files.contains(&"/f0000.md".to_string()),
+            "oldest entry survived the prune"
+        );
+        assert!(
+            !files.contains(&"/f0001.md".to_string()),
+            "second oldest entry survived the prune"
+        );
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn import_prunes_to_the_limit_and_restores_the_trigger() {
+        let (db, dir) = open_store("file-history-import");
+        let store = db.file_history();
+        let limit = schema::FILE_HISTORY_LIMIT as usize;
+
+        let paths: Vec<String> = (0..limit + 5).map(|i| format!("/f{i:04}.md")).collect();
+        store.import_file_history(&paths).unwrap();
+        assert_eq!(store.get_file_history().unwrap().len(), limit);
+
+        // The trigger is dropped for the bulk insert; if it is not reinstalled,
+        // the next entry pushes the table past the cap again.
+        store.add_file_history_entry("/later.md", "99999999 / 999999").unwrap();
+        assert_eq!(store.get_file_history().unwrap().len(), limit);
+
+        fs::remove_dir_all(&dir).unwrap();
+    }
+}
