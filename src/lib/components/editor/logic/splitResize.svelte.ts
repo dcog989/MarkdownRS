@@ -105,9 +105,6 @@ export function createSplitResize() {
     get resizeCursor() {
       return resizeCursor;
     },
-    get isDragging() {
-      return isDragging;
-    },
     registerContainer,
     startResize,
     resetSplit,
