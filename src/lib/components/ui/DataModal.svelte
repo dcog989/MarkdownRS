@@ -7,9 +7,9 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { translate } from "$lib/i18n";
-import { pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
+import { loadBookmarks, pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { confirmDialog } from "$lib/stores/dialogStore.svelte";
-import { clearFileHistory, pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
+import { clearFileHistory, loadFileHistory, pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { AppError } from "$lib/utils/errorHandling";
@@ -60,6 +60,7 @@ async function importBookmarks() {
     const bookmarks = JSON.parse(result.content);
     if (!Array.isArray(bookmarks)) throw new Error(translate("data.invalidFormatArray"));
     const count = await callBackend("import_bookmarks", { bookmarks }, "Data:ImportBookmarks");
+    await loadBookmarks();
     showToast("success", translate("data.importedBookmarks", { values: { count } }));
   } catch (err) {
     AppError.handle("Data:ImportBookmarks", err, { showToast: true });
@@ -104,6 +105,7 @@ async function importFileHistory() {
       throw new Error(translate("data.invalidFormatStrings"));
     }
     const count = await callBackend("import_file_history", { paths }, "Data:ImportFileHistory");
+    await loadFileHistory(true);
     showToast("success", translate("data.importedFiles", { values: { count } }));
   } catch (err) {
     AppError.handle("Data:ImportFileHistory", err, { showToast: true });

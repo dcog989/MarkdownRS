@@ -7,8 +7,8 @@ export const fileHistoryStore = $state({
   isLoaded: false,
 });
 
-export async function loadFileHistory() {
-  if (fileHistoryStore.isLoaded) return;
+export async function loadFileHistory(force = false) {
+  if (fileHistoryStore.isLoaded && !force) return;
 
   const files = await callBackend("get_file_history", {}, "Database:Init", undefined, {
     ignore: true,

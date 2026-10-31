@@ -25,4 +25,14 @@ describe("loadFileHistory", () => {
 
     expect(fileHistoryStore.files).toEqual(["/a.md", "/b.md"]);
   });
+
+  it("reloads a forced call even though the history is already loaded", async () => {
+    mockedCallBackend.mockResolvedValue(["/a.md"] as never);
+    await loadFileHistory();
+
+    mockedCallBackend.mockResolvedValue(["/b.md"] as never);
+    await loadFileHistory(true);
+
+    expect(fileHistoryStore.files).toEqual(["/b.md"]);
+  });
 });
