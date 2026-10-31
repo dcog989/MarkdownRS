@@ -13,7 +13,10 @@ import { dirname } from "./path";
 
 const IMAGE_ASSET_DIR = "assets";
 const MAX_NAME_DEDUPE_ATTEMPTS = 99;
-const MAX_IMAGE_PIXELS = 25_000_000;
+// The RGBA buffer alone is 4 bytes per pixel, and the PNG path also holds a
+// canvas plus a base64 copy on the UI thread. 12 MP keeps a 4K screenshot
+// (8.3 MP) working while refusing the phone photos that caused the spike.
+const MAX_IMAGE_PIXELS = 12_000_000;
 
 let pasteQueue: Promise<unknown> = Promise.resolve();
 
