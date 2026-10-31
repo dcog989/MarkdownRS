@@ -36,7 +36,7 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     paths::ensure_directories(&paths);
     logging::log_runtime_info(&paths);
     desktop::install_appimage_integration();
-    themes::seed_default_themes(paths.themes_dir);
+    themes::seed_default_themes(&paths.themes_dir);
     paths::ensure_dictionary_file(&paths.dict_path);
 
     let db = database::init(paths.db_dir.join("session.db"), &paths.db_dir)?;
