@@ -6,13 +6,14 @@ import { pruneBookmarksUnder } from "$lib/stores/bookmarkStore.svelte";
 import { confirmDialog, promptDialog } from "$lib/stores/dialogStore.svelte";
 import { updateTabFields } from "$lib/stores/editorStore.svelte";
 import { pruneFileHistoryUnder } from "$lib/stores/fileHistoryStore.svelte";
-import { dirname, forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
+import { forgetSubtree, refreshDirectoryIfInTree } from "$lib/stores/fileTreeStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import type { FileEntry } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { createDirOnDisk, createFileOnDisk, renameFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
 import { resolveRenamedName } from "$lib/utils/fileValidation";
+import { dirname } from "$lib/utils/path";
 
 // Open tabs at or inside a renamed path keep the old path; rewrite it so the
 // next save lands in the new location, and move the watchers along with them

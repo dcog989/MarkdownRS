@@ -286,33 +286,6 @@ class FileWatcherService {
       this.pendingChecks.delete(path);
     }
   }
-
-  cleanup(): void {
-    for (const unwatch of this.watchers.values()) {
-      try {
-        unwatch();
-      } catch (err) {
-        AppError.handle("FileWatcher:Unwatch", err, {
-          showToast: false,
-          severity: "warning",
-          additionalInfo: { path: "unknown" },
-        });
-      }
-    }
-    this.watchers.clear();
-    this.tabPaths.clear();
-    this.pathTabs.clear();
-    this.watchPromises.clear();
-    this.writeLocks.clear();
-    this.lastToastTime.clear();
-    this.pendingChecks.clear();
-    this.renewInFlight.clear();
-    this.renewQueued.clear();
-    for (const timer of this.retryTimers.values()) {
-      window.clearTimeout(timer);
-    }
-    this.retryTimers.clear();
-  }
 }
 
 export const fileWatcher = new FileWatcherService();

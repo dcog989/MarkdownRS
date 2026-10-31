@@ -8,10 +8,10 @@ vi.mock("$lib/commands/directory", () => ({
 }));
 
 import { getDirectoryMtime, listDirectory } from "$lib/commands/directory";
+import { dirname } from "$lib/utils/path";
 import {
   canNavigateUp,
   collapseAll,
-  dirname,
   fileTreeStore,
   isDirLoading,
   isExpanded,

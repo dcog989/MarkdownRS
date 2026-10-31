@@ -66,14 +66,14 @@ function tab(id: string, path: string): EditorTab {
 
 describe("fileWatcher external change", () => {
   beforeEach(() => {
-    fileWatcher.cleanup();
     vi.clearAllMocks();
     watchState.handler = null;
     appContext.editor.tabs = [];
   });
 
   afterEach(() => {
-    fileWatcher.cleanup();
+    fileWatcher.unwatch("t1");
+    fileWatcher.unwatch("t2");
   });
 
   it("reloads every clean tab that shares the file through the guarded reload", async () => {

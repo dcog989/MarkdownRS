@@ -12,9 +12,7 @@ import LoaderCircle from "lucide-svelte/icons/loader-circle";
 import { onMount, tick } from "svelte";
 import { _ } from "svelte-i18n";
 import {
-  basename,
   canNavigateUp,
-  dirname,
   fileTreeStore,
   navigateInto,
   navigateToParent,
@@ -34,6 +32,7 @@ import type { FileEntry } from "$lib/types/api";
 import { CONFIG } from "$lib/utils/config";
 import { openFile } from "$lib/utils/fileSystem";
 import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from "$lib/utils/fileValidation";
+import { basename, dirname } from "$lib/utils/path";
 import { debounce } from "$lib/utils/timing";
 import FileTreeContextMenu from "./FileTreeContextMenu.svelte";
 import FileTreeFilter from "./FileTreeFilter.svelte";

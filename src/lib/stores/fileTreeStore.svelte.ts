@@ -6,10 +6,8 @@ import {
   toggleFileTreeShowMarkdownOnly,
 } from "$lib/stores/settingsState.svelte";
 import type { FileEntry } from "$lib/types/api";
-import { MARKDOWN_EXTENSION_SET } from "$lib/utils/fileValidation";
-import { basename, dirname, normalizePath } from "$lib/utils/path";
-
-export { basename, dirname };
+import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { dirname, normalizePath } from "$lib/utils/path";
 
 export const fileTreeStore = $state({
   root: "",
@@ -27,7 +25,7 @@ export const fileTreeStore = $state({
 // navigating, switching tabs, saving) rather than on a timer. When a directory
 // mtime is unavailable this freshness threshold prevents re-listing on every
 // expand, so a directory is only re-listed once per interval at most.
-export const STALE_REFRESH_MS = 30_000;
+const STALE_REFRESH_MS = 30_000;
 
 // Tracks the latest in-flight listing generation per directory so stale results
 // from an outdated request (e.g. after toggling hidden files) are discarded.
@@ -302,18 +300,10 @@ export async function refreshTree(): Promise<void> {
   }
 }
 
-function isMarkdownName(name: string): boolean {
-  const idx = name.lastIndexOf(".");
-  if (idx === -1) return false;
-  return MARKDOWN_EXTENSION_SET.has(name.slice(idx + 1).toLowerCase());
-}
-
-// The markdown-only rule is shared by the regular tree builder and the
-// whole-tree search so the filtering semantics cannot drift between them.
-// Directories are always shown; non-markdown files are pruned.
+// Shared by the tree builder and the whole-tree search so the rule cannot drift.
 export function passesMarkdownOnly(entry: FileEntry, markdownOnly: boolean): boolean {
   if (!markdownOnly) return true;
-  return entry.is_dir || isMarkdownName(entry.name);
+  return entry.is_dir || isMarkdownFile(entry.name);
 }
 
 export function canNavigateUp(): boolean {
