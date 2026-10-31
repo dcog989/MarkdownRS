@@ -67,6 +67,11 @@ function escapeHtml(text: string): string {
 const PLACEHOLDER_START = "\uE000";
 const PLACEHOLDER_END = "\uE001";
 
+// shortcut: cells render a small markdown subset — code, strike, emphasis, links
+// and autolinks; images, inline HTML, bare URLs, math, footnotes, reference
+// links, backslash escapes and nested emphasis do not match the preview.
+// Upgrade when a divergence reaches a user: render cells through the preview
+// pipeline rather than adding more patterns here.
 export function renderCell(cell: string): string {
   const codeSpans: string[] = [];
   const escaped = escapeHtml(cell);
