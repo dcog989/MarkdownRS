@@ -16,11 +16,17 @@ export async function performTextOperation(
   try {
     onStateChange?.(true);
 
+    const docAtStart = view.state.doc;
     const selection = view.state.selection.main;
     const hasSelection = selection.from !== selection.to;
-    const targetText = hasSelection ? view.state.sliceDoc(selection.from, selection.to) : view.state.doc.toString();
+    const targetText = hasSelection ? view.state.sliceDoc(selection.from, selection.to) : docAtStart.toString();
 
     const newText = await textProcessor.process(operationId, targetText);
+
+    // Typing or a tab switch while awaiting the backend makes every captured
+    // offset stale; applying the result would cut the wrong text or write it
+    // into another tab. Drop it and leave the buffer as the user left it.
+    if (view.state.doc !== docAtStart || !view.dom.isConnected) return;
 
     if (newText !== targetText) {
       view.focus();
@@ -30,7 +36,7 @@ export async function performTextOperation(
       const transaction: TransactionSpec = {
         changes: {
           from: hasSelection ? selection.from : 0,
-          to: hasSelection ? selection.to : view.state.doc.length,
+          to: hasSelection ? selection.to : docAtStart.length,
           insert: newText,
         },
         userEvent: userEvent,
