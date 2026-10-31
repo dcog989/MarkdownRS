@@ -22,8 +22,6 @@ export interface FileMetadata {
 
 /** Value of `LintDiagnostic.source` for grammar (Harper) diagnostics. */
 export const LINT_SOURCE_HARPER = "harper";
-/** Value of `LintDiagnostic.source` for style (rumdl) diagnostics. */
-export const LINT_SOURCE_RUMDL = "rumdl";
 
 export interface LintDiagnostic {
   message: string;
