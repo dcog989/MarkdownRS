@@ -341,12 +341,16 @@ $effect(() => {
 </div>
 
 {#if contextMenuTabId}
-  <TabContextMenu
-    tabId={contextMenuTabId}
-    x={contextMenuX}
-    y={contextMenuY}
-    onClose={() => (contextMenuTabId = null)}
-  />
+  <!-- Keyed: TabContextMenu copies tabId into its logic once, and a right-click
+       on another tab reuses the same block without remounting it. -->
+  {#key contextMenuTabId}
+    <TabContextMenu
+      tabId={contextMenuTabId}
+      x={contextMenuX}
+      y={contextMenuY}
+      onClose={() => (contextMenuTabId = null)}
+    />
+  {/key}
 {/if}
 
 {#if showTabBarContextMenu}
