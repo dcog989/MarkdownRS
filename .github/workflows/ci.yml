@@ -80,6 +80,9 @@ jobs:
       - name: Check frontend format & lint
         run: bun run check:frontend
 
+      - name: Build frontend
+        run: bunx --bun vite build
+
       - name: Check backend
         working-directory: src-tauri
         run: cargo clippy --all-targets --all-features -- -D warnings
