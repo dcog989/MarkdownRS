@@ -1,5 +1,4 @@
 import { markdownLintState } from "$lib/utils/markdownLint.svelte";
-import { scrollSync } from "$lib/utils/scrollSync.svelte";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import { appState } from "./appState.svelte";
 import { bookmarkStore } from "./bookmarkStore.svelte";
@@ -23,7 +22,6 @@ export const appContext = {
   metrics: editorMetrics,
   bookmarks: bookmarkStore,
   interface: interfaceStore,
-  scrollSync: scrollSync,
   spellcheck: spellcheckState,
   markdownLint: markdownLintState,
   ui: {

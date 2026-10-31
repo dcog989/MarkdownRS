@@ -64,12 +64,4 @@ export class SmoothScroller {
 
     this.raf = requestAnimationFrame(animate);
   }
-
-  stop() {
-    if (this.raf) {
-      cancelAnimationFrame(this.raf);
-      this.raf = null;
-    }
-    this.target = null;
-  }
 }

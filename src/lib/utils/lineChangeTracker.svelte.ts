@@ -1,4 +1,3 @@
-import { SvelteSet } from "svelte/reactivity";
 import { CONFIG } from "$lib/utils/config";
 
 export type LineChange = {
@@ -16,7 +15,7 @@ export class LineChangeTracker {
    */
   recordChanges(lineNumbers: number[]): void {
     const timestamp = Date.now();
-    const lineSet = new SvelteSet(lineNumbers);
+    const lineSet = new Set(lineNumbers);
     this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
 
     for (const lineNumber of lineNumbers) {
@@ -113,7 +112,7 @@ export class LineChangeTracker {
    * Remove specific lines from tracking (both changes and deletions)
    */
   removeLines(lineNumbers: number[]): void {
-    const lineSet = new SvelteSet(lineNumbers);
+    const lineSet = new Set(lineNumbers);
     this.changes = this.changes.filter((c) => !lineSet.has(c.lineNumber));
     this.deletions = this.deletions.filter((d) => !lineSet.has(d.lineNumber));
   }
@@ -125,8 +124,8 @@ export class LineChangeTracker {
   mapLines(mapper: (line: number) => number | null): void {
     const newChanges: LineChange[] = [];
     const newDeletions: LineChange[] = [];
-    const seenChanges = new SvelteSet<number>();
-    const seenDeletions = new SvelteSet<number>();
+    const seenChanges = new Set<number>();
+    const seenDeletions = new Set<number>();
 
     for (const change of this.changes) {
       const newLine = mapper(change.lineNumber);
