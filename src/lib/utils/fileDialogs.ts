@@ -206,14 +206,6 @@ export async function saveCurrentFileAs(): Promise<boolean> {
   return saveFile(true, false);
 }
 
-export async function autoSaveCurrentFile(): Promise<boolean> {
-  const tabId = appContext.app.activeTabId;
-  if (!tabId) return false;
-  const tab = appContext.editor.tabs.find((t) => t.id === tabId);
-  if (!tab?.isDirty || !tab.path) return false;
-  return saveCurrentFile();
-}
-
 async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<boolean> {
   const start = performance.now();
   const tabId = appContext.app.activeTabId;

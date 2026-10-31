@@ -27,12 +27,11 @@ import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
 import { normalizePath } from "$lib/utils/path";
-import { autoSaveCurrentFile, navigateToPath, openFile, saveCurrentFile, saveCurrentFileAs } from "./fileDialogs";
+import { navigateToPath, openFile, saveCurrentFile, saveCurrentFileAs } from "./fileDialogs";
 import { renameFileOnDisk } from "./fileIO";
 
 export {
   addToDictionary,
-  autoSaveCurrentFile,
   checkAndReloadIfChanged,
   checkFileExists,
   loadSession,
@@ -99,7 +98,10 @@ export async function withActiveTab<T>(tabId: string, operation: () => Promise<T
     try {
       return await operation();
     } finally {
-      appContext.app.activeTabId = prevActive;
+      // A background save must not undo a tab switch made while it ran.
+      if (appContext.app.activeTabId === tabId) {
+        appContext.app.activeTabId = prevActive;
+      }
       appContext.app.paneSyncSuspended = false;
     }
   });

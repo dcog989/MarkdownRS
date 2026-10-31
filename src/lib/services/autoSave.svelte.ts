@@ -1,58 +1,63 @@
 import { appContext } from "$lib/stores/state.svelte";
-import { autoSaveCurrentFile } from "$lib/utils/fileSystem";
+import { saveCurrentFile, withActiveTab } from "$lib/utils/fileSystem";
 import { logger } from "$lib/utils/logger";
 
 export function setupAutoSave() {
-  let timerId: number | null = null;
+  const timers = new Map<string, number>();
   let disposeRoot: (() => void) | null = null;
 
-  function saveIfNeeded() {
-    const tabId = appContext.app.activeTabId;
-    if (!tabId) return;
+  async function saveIfNeeded(tabId: string) {
     const tab = appContext.editor.tabs.find((t) => t.id === tabId);
     if (!tab?.isDirty || !tab.path) return;
-    autoSaveCurrentFile().then((saved) => {
-      if (saved) {
-        logger.file.debug("AutoSaved", { path: tab.path });
-      }
-    });
+    const saved = await withActiveTab(tabId, saveCurrentFile);
+    if (saved) {
+      logger.file.debug("AutoSaved", { path: tab.path });
+    }
   }
 
-  function scheduleSave() {
-    if (timerId !== null) {
-      clearTimeout(timerId);
-      timerId = null;
+  function clearTimers() {
+    for (const timerId of timers.values()) clearTimeout(timerId);
+    timers.clear();
+  }
+
+  function scheduleSave(tabId: string) {
+    const existing = timers.get(tabId);
+    if (existing !== undefined) {
+      clearTimeout(existing);
+      timers.delete(tabId);
     }
 
     const interval = appContext.settings.autoSaveInterval;
-    if (interval <= 0) return;
-
-    timerId = window.setTimeout(() => {
-      timerId = null;
-      saveIfNeeded();
+    const timeout = window.setTimeout(() => {
+      timers.delete(tabId);
+      void saveIfNeeded(tabId);
     }, interval * 1000);
+    timers.set(tabId, timeout);
   }
 
   function start() {
     if (disposeRoot) return;
-    // Debounce on content: reset the timer whenever the active tab's content
-    // changes, so the file is saved a fixed delay after the last edit instead
-    // of on a fixed cadence.
+    // One timer per tab: switching away must not cancel the save the old tab is
+    // already waiting for. Each timer restarts on that tab's own edits.
     disposeRoot = $effect.root(() => {
       $effect(() => {
+        if (appContext.app.paneSyncSuspended) return;
+
         const activeTabId = appContext.app.activeTabId;
         const content = appContext.editor.tabs.find((t) => t.id === activeTabId)?.content;
         void content;
-        scheduleSave();
+
+        if (appContext.settings.autoSaveInterval <= 0) {
+          clearTimers();
+        } else if (activeTabId) {
+          scheduleSave(activeTabId);
+        }
       });
     });
   }
 
   function stop() {
-    if (timerId !== null) {
-      clearTimeout(timerId);
-      timerId = null;
-    }
+    clearTimers();
     disposeRoot?.();
     disposeRoot = null;
   }
