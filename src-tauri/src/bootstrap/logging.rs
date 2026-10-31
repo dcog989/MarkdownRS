@@ -92,7 +92,7 @@ pub fn init(settings: Option<&toml::Value>, log_dir: &std::path::Path) -> Result
         .basename(LOG_FILE_BASENAME)
         .suffix(LOG_FILE_SUFFIX);
 
-    let handle = Logger::with(build_log_spec(&settings_level))
+    let handle = match Logger::with(build_log_spec(&settings_level))
         .log_to_file(file_spec)
         .duplicate_to_stdout(Duplicate::All)
         .format_for_files(timestamped_format)
@@ -107,7 +107,17 @@ pub fn init(settings: Option<&toml::Value>, log_dir: &std::path::Path) -> Result
             Cleanup::KeepLogFiles(KEPT_LOG_FILES),
         )
         .append()
-        .start()?;
+        .start()
+    {
+        Ok(handle) => handle,
+        Err(e) => {
+            // The log directory may be unwritable; stderr logging is better than no app.
+            eprintln!("[WARN] File logging disabled ({}), falling back to stderr", e);
+            Logger::with(build_log_spec(&settings_level))
+                .adaptive_format_for_stderr(AdaptiveFormat::Custom(timestamped_format, timestamped_colored_format))
+                .start()?
+        },
+    };
 
     let _ = LOGGER_HANDLE.set(handle);
 

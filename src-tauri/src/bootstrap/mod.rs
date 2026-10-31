@@ -26,8 +26,13 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     // Before anything slow: the window is already visible, so the theme colour
     // should replace the static fallback as early as possible.
     window::apply_saved_background(&window, saved_settings.as_ref());
-    fs::create_dir_all(&paths.log_dir)?;
-    logging::init(saved_settings.as_ref(), &paths.log_dir)?;
+    // Logging is optional: a read-only or full disk must not block startup.
+    if let Err(e) = fs::create_dir_all(&paths.log_dir) {
+        eprintln!("[WARN] Failed to create log directory {:?}: {}", paths.log_dir, e);
+    }
+    if let Err(e) = logging::init(saved_settings.as_ref(), &paths.log_dir) {
+        eprintln!("[WARN] Logging initialization failed: {}", e);
+    }
     paths::ensure_directories(&paths);
     logging::log_runtime_info(&paths);
     desktop::install_appimage_integration();
