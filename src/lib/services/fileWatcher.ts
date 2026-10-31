@@ -1,7 +1,7 @@
 import { type WatchEvent, watchImmediate } from "@tauri-apps/plugin-fs";
 import { translate } from "$lib/i18n";
 import { hasFileChanged, reloadFileContent, sanitizePath } from "$lib/services/fileMetadata";
-import { reloadTabContent, updateTransientState } from "$lib/stores/editorStore.svelte";
+import { updateTransientState } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -223,26 +223,12 @@ class FileWatcherService {
       }
 
       if (cleanTabs.length > 0) {
-        if (!appContext.editor.tabs.some((t) => t.id === cleanTabs[0].id)) return;
-
-        await reloadFileContent(cleanTabs[0].id);
-
-        if (cleanTabs.length > 1) {
-          const reloadedTab = appContext.editor.tabs.find((t) => t.id === cleanTabs[0].id);
-          if (reloadedTab) {
-            for (let i = 1; i < cleanTabs.length; i++) {
-              if (!appContext.editor.tabs.some((t) => t.id === cleanTabs[i].id)) continue;
-
-              reloadTabContent(
-                cleanTabs[i].id,
-                reloadedTab.content,
-                reloadedTab.lineEnding,
-                reloadedTab.encoding,
-                reloadedTab.sizeBytes,
-                reloadedTab.hasBom,
-              );
-            }
-          }
+        // Reload each tab instead of copying the first tab's text into the
+        // rest: reloadFileContent re-checks per tab, so a tab the user edited
+        // while an earlier reload was in flight keeps its buffer.
+        for (const tab of cleanTabs) {
+          if (!appContext.editor.tabs.some((t) => t.id === tab.id)) continue;
+          await reloadFileContent(tab.id);
         }
 
         const now = Date.now();
