@@ -67,4 +67,7 @@ export function onClosedTabHistoryChange(newValue: unknown) {
     clearTabCaches(entry.tab.id);
   }
   editorStore.closedTabsHistory = [];
+  // Without this the persist below would skip (nothing else is dirty), leaving
+  // the closed-tab text in session.db even though the setting is off.
+  editorStore.sessionDirty = true;
 }
