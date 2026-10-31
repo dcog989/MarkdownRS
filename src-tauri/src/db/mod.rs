@@ -20,6 +20,11 @@ pub use database::Database;
 pub use file_history::FileHistoryStore;
 pub use session::{SessionData, SessionStore, TabData, TabState};
 
+/// Ids deleted per `DELETE … IN (…)` statement. SQLite rejects more than 32766
+/// bound parameters per statement, so a large orphan set must be deleted in
+/// batches or the cleanup fails outright.
+const DELETE_BATCH_SIZE: usize = 500;
+
 /// Removes rows whose `path` column no longer exists on disk.
 /// `id_column` is the column used to identify rows for deletion (e.g. `id` or `path`).
 /// Returns the paths of the deleted rows (may contain duplicates when several
@@ -51,14 +56,16 @@ fn delete_orphans(
     }
 
     let conn = conn.lock_or_recover();
-    let placeholders = (1..=dead.len())
-        .map(|i| format!("?{}", i))
-        .collect::<Vec<_>>()
-        .join(",");
-    let sql = format!("DELETE FROM {} WHERE {} IN ({})", table_name, id_column, placeholders);
-    let params: Vec<&dyn rusqlite::types::ToSql> =
-        dead.iter().map(|(id, _)| id as &dyn rusqlite::types::ToSql).collect();
-    conn.execute(&sql, params.as_slice())?;
+    for batch in dead.chunks(DELETE_BATCH_SIZE) {
+        let placeholders = (1..=batch.len())
+            .map(|i| format!("?{}", i))
+            .collect::<Vec<_>>()
+            .join(",");
+        let sql = format!("DELETE FROM {} WHERE {} IN ({})", table_name, id_column, placeholders);
+        let params: Vec<&dyn rusqlite::types::ToSql> =
+            batch.iter().map(|(id, _)| id as &dyn rusqlite::types::ToSql).collect();
+        conn.execute(&sql, params.as_slice())?;
+    }
 
     Ok(dead.into_iter().map(|(_, path)| path).collect())
 }
@@ -149,6 +156,26 @@ mod tests {
             deleted
         );
         assert_eq!(db.bookmarks().get_all_bookmarks().unwrap().len(), 1);
+        fs::remove_dir_all(&dir).unwrap();
+    }
+
+    #[test]
+    fn deletes_orphans_that_span_more_than_one_delete_batch() {
+        let dir = make_temp_dir("orphans-batches");
+        let db = Database::new(dir.join("db.sqlite")).unwrap();
+        let total = DELETE_BATCH_SIZE + 1;
+
+        for i in 0..total {
+            let path = dir.join(format!("gone-{i}.md"));
+            db.bookmarks()
+                .add_bookmark(&bookmark(&format!("gone-{i}"), &path.to_string_lossy()))
+                .unwrap();
+        }
+
+        let deleted = db.bookmarks().delete_orphan_bookmarks().unwrap();
+
+        assert_eq!(deleted.len(), total);
+        assert!(db.bookmarks().get_all_bookmarks().unwrap().is_empty());
         fs::remove_dir_all(&dir).unwrap();
     }
 }
