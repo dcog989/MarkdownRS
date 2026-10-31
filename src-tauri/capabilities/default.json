@@ -30,7 +30,6 @@
         }
       ]
     },
-    "shell:allow-open",
     "opener:allow-reveal-item-in-dir",
     {
       "identifier": "opener:allow-open-path",
@@ -61,7 +60,6 @@
       ]
     },
     "dialog:default",
-    "store:default",
     "window-state:default",
     "clipboard-manager:allow-read-text",
     "clipboard-manager:allow-write-text",
