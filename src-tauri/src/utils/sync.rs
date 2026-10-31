@@ -3,18 +3,24 @@ pub trait MutexExt<T> {
 }
 
 /// A poisoned lock is a single fault that every later access would otherwise
-/// re-report, flooding the log; warn once per process instead.
-fn warn_poisoned_once(message: &str) {
-    static WARNED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
-    if WARNED.set(()).is_ok() {
+/// re-report, flooding the log; warn once per lock kind instead.
+fn warn_poisoned_once(warned: &'static std::sync::OnceLock<()>, message: &str) {
+    if warned.set(()).is_ok() {
         log::warn!("{}", message);
     }
 }
 
+static MUTEX_POISON_WARNED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+#[cfg(feature = "spellcheck")]
+static RWLOCK_POISON_WARNED: std::sync::OnceLock<()> = std::sync::OnceLock::new();
+
 impl<T> MutexExt<T> for std::sync::Mutex<T> {
     fn lock_or_recover(&self) -> std::sync::MutexGuard<'_, T> {
         self.lock().unwrap_or_else(|e| {
-            warn_poisoned_once("Mutex poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once(
+                &MUTEX_POISON_WARNED,
+                "Mutex poisoned, continuing with potentially corrupt state",
+            );
             e.into_inner()
         })
     }
@@ -30,14 +36,20 @@ pub trait RwLockExt<T> {
 impl<T> RwLockExt<T> for std::sync::RwLock<T> {
     fn read_or_recover(&self) -> std::sync::RwLockReadGuard<'_, T> {
         self.read().unwrap_or_else(|e| {
-            warn_poisoned_once("RwLock poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once(
+                &RWLOCK_POISON_WARNED,
+                "RwLock poisoned, continuing with potentially corrupt state",
+            );
             e.into_inner()
         })
     }
 
     fn write_or_recover(&self) -> std::sync::RwLockWriteGuard<'_, T> {
         self.write().unwrap_or_else(|e| {
-            warn_poisoned_once("RwLock poisoned, continuing with potentially corrupt state");
+            warn_poisoned_once(
+                &RWLOCK_POISON_WARNED,
+                "RwLock poisoned, continuing with potentially corrupt state",
+            );
             e.into_inner()
         })
     }
