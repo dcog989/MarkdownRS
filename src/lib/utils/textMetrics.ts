@@ -105,6 +105,8 @@ export function byteLength(text: string): number {
   return new TextEncoder().encode(text).length;
 }
 
+const NUMBER_FORMAT = new Intl.NumberFormat();
+
 export function formatNumber(num: number): string {
-  return new Intl.NumberFormat().format(num);
+  return NUMBER_FORMAT.format(num);
 }
