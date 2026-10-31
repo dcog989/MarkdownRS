@@ -6,7 +6,6 @@ import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { translate } from "$lib/i18n";
 import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -55,10 +54,10 @@ async function setScope(next: "project" | "user") {
 async function confirmDiscard(): Promise<boolean> {
   if (!hasChanges) return true;
   const result = await confirmDialog({
-    title: translate("rumdlConfig.discardTitle"),
-    message: translate("rumdlConfig.discardMessage"),
+    title: $_("rumdlConfig.discardTitle"),
+    message: $_("rumdlConfig.discardMessage"),
     saveLabel: undefined,
-    discardLabel: translate("common.discard"),
+    discardLabel: $_("common.discard"),
   });
   return result === "discard";
 }
@@ -108,7 +107,7 @@ async function saveConfig() {
     );
     if (written === null) return;
     hasChanges = false;
-    showToast("success", translate("rumdlConfig.saved", { values: { path: written } }));
+    showToast("success", $_("rumdlConfig.saved", { values: { path: written } }));
     const tab = activeTab();
     const view = tab?.id ? getEditorInstance(tab.id) : undefined;
     if (view) forceMarkdownRelint(view);
@@ -144,7 +143,7 @@ async function saveConfig() {
         onclick={() => setScope("project")}
         disabled={busy || !loaded}
       >
-        {translate("rumdlConfig.scopeProject")}
+        {$_("rumdlConfig.scopeProject")}
       </button>
       <button
         type="button"
@@ -153,12 +152,12 @@ async function saveConfig() {
         onclick={() => setScope("user")}
         disabled={busy || !loaded}
       >
-        {translate("rumdlConfig.scopeUser")}
+        {$_("rumdlConfig.scopeUser")}
       </button>
     </div>
 
     <div class="flex items-center gap-2">
-      <span class="text-ui text-fg-muted shrink-0">{translate("rumdlConfig.targetLabel")}</span>
+      <span class="text-ui text-fg-muted shrink-0">{$_("rumdlConfig.targetLabel")}</span>
       <span
         class="bg-bg-panel border-border-secondary text-ui-sm text-fg-default min-w-0 flex-1 truncate rounded border px-2 py-1 font-mono"
       >
@@ -168,11 +167,11 @@ async function saveConfig() {
 
     {#if loadedPath && loadedPath !== targetPath}
       <p class="text-ui-sm text-fg-muted">
-        {translate("rumdlConfig.currentlyLoaded", { values: { path: loadedPath } })}
+        {$_("rumdlConfig.currentlyLoaded", { values: { path: loadedPath } })}
       </p>
     {:else if !exists}
       <p class="text-ui-sm text-accent-secondary">
-        {translate("rumdlConfig.willCreate")}
+        {$_("rumdlConfig.willCreate")}
       </p>
     {/if}
 
@@ -187,7 +186,7 @@ async function saveConfig() {
       }}
       spellcheck="false"
       disabled={busy || !loaded}
-      placeholder={translate("rumdlConfig.placeholder")}
+      placeholder={$_("rumdlConfig.placeholder")}
       class="bg-bg-input text-fg-default text-ui font-mono w-full rounded border p-4 leading-relaxed outline-none disabled:opacity-50 rumdl-config-textarea"
     ></textarea>
   </div>

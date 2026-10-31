@@ -7,7 +7,6 @@ import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { searchEmojis } from "$lib/config/emojiData";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { translate } from "$lib/i18n";
 import { getActiveEditorView } from "$lib/utils/editorCommands";
 
 let {
@@ -54,11 +53,11 @@ function insertEmoji(char: string) {
 <Modal bind:isOpen {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
     <ModalSearchHeader
-      title={translate("emojiPicker.title")}
+      title={$_("emojiPicker.title")}
       icon={SmilePlus}
       bind:searchValue={query}
       bind:inputRef
-      searchPlaceholder={translate("emojiPicker.placeholder")}
+      searchPlaceholder={$_("emojiPicker.placeholder")}
       onClose={() => (isOpen = false)}
     />
   {/snippet}

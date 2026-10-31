@@ -7,7 +7,6 @@ import TriangleAlert from "lucide-svelte/icons/triangle-alert";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { translate } from "$lib/i18n";
 import { toggleData, toggleRumdlConfig, toggleShortcuts } from "$lib/stores/interfaceStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -81,7 +80,7 @@ async function toggleContextMenu(enable: boolean) {
   try {
     await callBackend("set_context_menu_item", { enable }, "Settings:Save");
     isContextMenuEnabled = enable;
-    showToast("info", enable ? translate("settings.addedToContextMenu") : translate("settings.removedFromContextMenu"));
+    showToast("info", enable ? $_("settings.addedToContextMenu") : $_("settings.removedFromContextMenu"));
   } catch {
     isContextMenuEnabled = !enable;
   }
@@ -93,14 +92,14 @@ let sortedSettings = $derived(
   (settingsDefinitions as SettingDef[])
     .filter((s) => {
       if (searchQuery.length < 2) return true;
-      const fullString = `${translate(s.category)}: ${translate(s.label)}`;
+      const fullString = `${$_(s.category)}: ${$_(s.label)}`;
       return fullString.toLowerCase().includes(searchQuery.toLowerCase());
     })
     .sort((a, b) => {
       if (a.category !== b.category) {
-        return translate(a.category).localeCompare(translate(b.category));
+        return $_(a.category).localeCompare($_(b.category));
       }
-      return translate(a.label).localeCompare(translate(b.label));
+      return $_(a.label).localeCompare($_(b.label));
     }),
 );
 
@@ -180,16 +179,16 @@ function updateSetting(setting: SettingDef, value: unknown) {
         {#each sortedSettings as setting (setting.key)}
           <div class="settings-row hover-surface">
             <div class="settings-category text-ui py-2.5 pl-3">
-              {translate(setting.category)}
+              {$_(setting.category)}
             </div>
             <label for={setting.key} class="text-ui text-fg-default font-medium py-2.5 pl-8">
-              {translate(setting.label)}
+              {$_(setting.label)}
               {#if setting.labelWarning}
                 <span
-                  use:tooltip={{ content: translate(setting.labelWarning), instant: true }}
+                  use:tooltip={{ content: $_(setting.labelWarning), instant: true }}
                   class="text-warning ml-2 inline-flex cursor-help align-middle"
                 >
-                  <TriangleAlert size={15} aria-label={translate(setting.labelWarning)} />
+                  <TriangleAlert size={15} aria-label={$_(setting.labelWarning)} />
                 </span>
               {/if}
             </label>

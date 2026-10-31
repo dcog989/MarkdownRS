@@ -7,7 +7,6 @@ import TextWrap from "lucide-svelte/icons/text-wrap";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import MarkdownLintStatus from "$lib/components/ui/MarkdownLintStatus.svelte";
-import { translate } from "$lib/i18n";
 import { togglePreferredExtension, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -65,14 +64,14 @@ async function copyAllStats() {
   if (!activeTab) return;
 
   const stats = [
-    `${translate("statusBar.filePath")}: ${activeTab.path || translate("statusBar.unsaved")}`,
-    `${translate("statusBar.fileSize")}: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} ${translate("statusBar.bytes")})`,
-    `${translate("statusBar.totalLines")}: ${totalLines.toLocaleString()}`,
-    `${translate("statusBar.widestColumn")}: ${widestColumn.toLocaleString()}`,
-    `${translate("statusBar.totalCharacters")}: ${totalChars.toLocaleString()}`,
-    `${translate("statusBar.totalWords")}: ${totalWords.toLocaleString()}`,
-    `${translate("statusBar.lineEnding")}: ${lineEnding}`,
-    `${translate("statusBar.encoding")}: ${encoding}`,
+    `${$_("statusBar.filePath")}: ${activeTab.path || $_("statusBar.unsaved")}`,
+    `${$_("statusBar.fileSize")}: ${formatFileSize(sizeBytes)} (${sizeBytes.toLocaleString()} ${$_("statusBar.bytes")})`,
+    `${$_("statusBar.totalLines")}: ${totalLines.toLocaleString()}`,
+    `${$_("statusBar.widestColumn")}: ${widestColumn.toLocaleString()}`,
+    `${$_("statusBar.totalCharacters")}: ${totalChars.toLocaleString()}`,
+    `${$_("statusBar.totalWords")}: ${totalWords.toLocaleString()}`,
+    `${$_("statusBar.lineEnding")}: ${lineEnding}`,
+    `${$_("statusBar.encoding")}: ${encoding}`,
   ].join("\n");
 
   await navigator.clipboard.writeText(stats);

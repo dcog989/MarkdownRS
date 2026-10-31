@@ -8,7 +8,7 @@ import type { Command } from "$lib/commands/commands";
 import { commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
-import { type MessageKey, translate } from "$lib/i18n";
+import type { MessageKey } from "$lib/i18n";
 import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
 import { SORT_LABEL_KEYS, SORT_MODES, sortCommands } from "$lib/utils/commandPaletteSort";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
@@ -29,7 +29,7 @@ let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
 function categoryLabel(category: MessageKey): string {
-  return translate(category);
+  return $_(category);
 }
 
 let filteredCommands = $derived(
@@ -124,7 +124,7 @@ function toggleSortDirection() {
         <div class="flex shrink-0 items-center gap-1">
           <select bind:value={settingsState.commandPaletteSort} class="w-auto" title={$_("commandPalette.sortBy")}>
             {#each SORT_MODES as mode (mode)}
-              <option value={mode}>{translate(SORT_LABEL_KEYS[mode])}</option>
+              <option value={mode}>{$_(SORT_LABEL_KEYS[mode])}</option>
             {/each}
           </select>
           <button

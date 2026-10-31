@@ -11,7 +11,6 @@ import Input from "$lib/components/ui/Input.svelte";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import SortSelect from "$lib/components/ui/SortSelect.svelte";
-import { translate } from "$lib/i18n";
 import {
   addBookmark,
   deleteBookmark,
@@ -178,7 +177,7 @@ async function handleBrowse() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate("bookmarks.markdownFilter"), extensions: ["md", "markdown", "txt"] }],
+      filters: [{ name: $_("bookmarks.markdownFilter"), extensions: ["md", "markdown", "txt"] }],
     });
     if (selected && typeof selected === "string") {
       addPath = selected;
@@ -188,7 +187,7 @@ async function handleBrowse() {
       if (!addTitle) addTitle = titleWithoutExt;
     }
   } catch (_error) {
-    browseError = translate("bookmarks.browseError");
+    browseError = $_("bookmarks.browseError");
   }
 }
 
@@ -197,11 +196,11 @@ async function handleAddBookmark() {
   try {
     await callBackend("get_file_metadata", { path: addPath }, "File:Metadata");
   } catch (_error) {
-    browseError = translate("bookmarks.missingFile");
+    browseError = $_("bookmarks.missingFile");
     return;
   }
   if (isBookmarked(addPath)) {
-    browseError = translate("bookmarks.alreadyBookmarked");
+    browseError = $_("bookmarks.alreadyBookmarked");
     return;
   }
   const tags = addTags
@@ -218,7 +217,7 @@ async function handleAddBookmark() {
 
 // Created timestamps are "YYYYMMDD / HHMMSS"; imported files may carry any string.
 function formatDate(timestamp: string | null): string {
-  if (!timestamp) return translate("bookmarks.never");
+  if (!timestamp) return $_("bookmarks.never");
   return formatTimestampAsDate(timestamp) ?? timestamp;
 }
 

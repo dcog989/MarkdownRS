@@ -7,7 +7,6 @@ import LoaderCircle from "lucide-svelte/icons/loader-circle";
 import RefreshCw from "lucide-svelte/icons/refresh-cw";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
-import { translate } from "$lib/i18n";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import type { AppInfo } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
@@ -58,8 +57,8 @@ const paths = $derived([
 
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text).then(
-    () => showToast("success", translate("common.copied")),
-    () => showToast("error", translate("common.copyFailed")),
+    () => showToast("success", $_("common.copied")),
+    () => showToast("error", $_("common.copyFailed")),
   );
 }
 
@@ -75,24 +74,24 @@ async function openLogFile() {
 async function checkForUpdates() {
   if (isChecking) return;
   isChecking = true;
-  updateStatus = translate("about.checking");
+  updateStatus = $_("about.checking");
 
   try {
     const update = await check();
 
     if (update) {
-      updateStatus = translate("about.downloading", { values: { version: update.version } });
+      updateStatus = $_("about.downloading", { values: { version: update.version } });
       await update.downloadAndInstall();
-      updateStatus = translate("about.restarting");
+      updateStatus = $_("about.restarting");
       await relaunch();
     } else {
-      updateStatus = translate("about.upToDate");
+      updateStatus = $_("about.upToDate");
     }
   } catch (_err) {
-    updateStatus = translate("about.checkFailed");
+    updateStatus = $_("about.checkFailed");
   } finally {
     isChecking = false;
-    if (updateStatus !== translate("about.restarting")) {
+    if (updateStatus !== $_("about.restarting")) {
       setTimeout(() => {
         updateStatus = null;
       }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);

@@ -8,7 +8,7 @@ import { commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { type MessageKey, translate } from "$lib/i18n";
+import type { MessageKey } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
@@ -129,7 +129,7 @@ const categories = $derived.by(() => {
             ? defs
             : defs.filter((def) => {
                 const descriptionMatch = commandLabel(def).toLowerCase().includes(query);
-                const categoryMatch = translate(def.category).toLowerCase().includes(query);
+                const categoryMatch = $_(def.category).toLowerCase().includes(query);
                 const commandMatch = def.id.toLowerCase().includes(query);
                 const shortcutMatch = shortcutManager.getShortcutDisplay(def.id).toLowerCase().includes(query);
                 return descriptionMatch || categoryMatch || commandMatch || shortcutMatch;
@@ -219,7 +219,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
             <h3
               class="text-ui text-accent-secondary border-t-accent-secondary mb-2 border-b pb-1 font-bold tracking-widest uppercase"
             >
-              {translate(category)}
+              {$_(category)}
             </h3>
             <div class="flex flex-col gap-2">
               {#each defs as def (def.id)}

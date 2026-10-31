@@ -3,7 +3,6 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
-import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { MARKDOWN_EXTENSIONS } from "$lib/utils/fileValidation";
 import type { SettingDef } from "$lib/utils/settingsDefinitions";
@@ -31,7 +30,7 @@ let path = $derived(value ? String(value) : "");
 let pathContainer = $state<HTMLDivElement>();
 let pathSpan = $state<HTMLSpanElement>();
 let displayPath = $state($_("settings.noTemplateSelected"));
-let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
+let tooltipText = $derived(setting.tooltip ? $_(setting.tooltip) : null);
 let resolvedDefaultAccent = $state("#000000");
 // The native spinner uses `min` as its step base, so an off-grid min (e.g. -1
 // with step 50) shifts the step grid and makes it jump by one. Align the input's
@@ -149,7 +148,7 @@ $effect(() => {
       />
       {#if setting.unit}
         <span class="text-ui-sm text-fg-muted shrink-0 font-mono opacity-80">
-          {translate(setting.unit)}
+          {$_(setting.unit)}
         </span>
       {/if}
     </div>
@@ -207,7 +206,7 @@ $effect(() => {
     >
       {#each setting.options || [] as option, idx (option)}
         <option value={option}>
-          {setting.optionLabels?.[idx] ? translate(setting.optionLabels[idx]) : option}
+          {setting.optionLabels?.[idx] ? $_(setting.optionLabels[idx]) : option}
         </option>
       {/each}
     </select>
@@ -233,7 +232,7 @@ $effect(() => {
           onclick={async () => {
             const selected = await open({
               multiple: false,
-              filters: [{ name: translate("fileOps.markdownFilter"), extensions: MARKDOWN_EXTENSIONS }],
+              filters: [{ name: $_("fileOps.markdownFilter"), extensions: MARKDOWN_EXTENSIONS }],
             });
             if (selected && typeof selected === "string") {
               onChange(selected);

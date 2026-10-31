@@ -17,7 +17,6 @@ import { onMount, tick, untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Input from "$lib/components/ui/Input.svelte";
-import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -215,7 +214,7 @@ function onReplaceAll() {
     cmView?.flushPendingContent?.();
     const count = replaceAllInTabs();
     if (count > 0) {
-      showToast("success", translate("findReplace.replacedCount", { values: { count } }));
+      showToast("success", $_("findReplace.replacedCount", { values: { count } }));
     }
   }
 }

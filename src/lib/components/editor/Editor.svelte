@@ -11,7 +11,6 @@ import EditorContextMenu from "$lib/components/ui/EditorContextMenu.svelte";
 import FindReplacePanel from "$lib/components/ui/FindReplacePanel.svelte";
 import Logo from "$lib/components/ui/Logo.svelte";
 import Minimap from "$lib/components/ui/Minimap.svelte";
-import { translate } from "$lib/i18n";
 import { type EditorMetrics, updateMetrics } from "$lib/stores/editorMetrics.svelte";
 import {
   editorStore,
@@ -136,8 +135,8 @@ $effect(() => {
   const ts = getTransientState(tab.id);
   if (ts?.forceFullFeatures) return;
 
-  showToast("info", translate("editor.largeFileSimpleMode"), CONFIG.UI.TOAST_DURATION_MS, {
-    label: translate("editor.enableFullFeatures"),
+  showToast("info", $_("editor.largeFileSimpleMode"), CONFIG.UI.TOAST_DURATION_MS, {
+    label: $_("editor.enableFullFeatures"),
     onClick: () => {
       updateTransientState(tab.id, { forceFullFeatures: true });
       forceFullFeatures = true;
@@ -356,7 +355,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
       try {
         await navigator.clipboard.writeText(doc.sliceString(from, to));
       } catch {
-        showToast("error", translate("editor.copyFailed"));
+        showToast("error", $_("editor.copyFailed"));
         return;
       }
       // The write can outlive the edit; never delete from a changed document.
@@ -369,7 +368,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
       try {
         await navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
       } catch {
-        showToast("error", translate("editor.copyFailed"));
+        showToast("error", $_("editor.copyFailed"));
       }
     }}
     onPaste={async () => {

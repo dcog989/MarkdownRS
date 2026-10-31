@@ -6,7 +6,6 @@ import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
-import { translate } from "$lib/i18n";
 import { loadBookmarks, pruneBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { confirmDialog } from "$lib/stores/dialogStore.svelte";
 import { clearFileHistory, loadFileHistory, pruneFileHistory } from "$lib/stores/fileHistoryStore.svelte";
@@ -34,11 +33,11 @@ async function exportBookmarks() {
     if (!bookmarks) return;
     const path = await save({
       defaultPath: "markdownrs-bookmarks.json",
-      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
+      filters: [{ name: $_("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!path) return;
     await callBackend("write_text_file", { path, content: JSON.stringify(bookmarks, null, 2) }, "File:Write");
-    showToast("success", translate("data.exportedBookmarks", { values: { count: bookmarks.length } }));
+    showToast("success", $_("data.exportedBookmarks", { values: { count: bookmarks.length } }));
   } catch (err) {
     AppError.handle("Data:ExportBookmarks", err, { showToast: true });
   } finally {
@@ -52,16 +51,16 @@ async function importBookmarks() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
+      filters: [{ name: $_("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!selected) return;
     const result = await callBackend("read_text_file", { path: selected as string }, "File:Read");
-    if (!result) throw new Error(translate("data.failedToRead"));
+    if (!result) throw new Error($_("data.failedToRead"));
     const bookmarks = JSON.parse(result.content);
-    if (!Array.isArray(bookmarks)) throw new Error(translate("data.invalidFormatArray"));
+    if (!Array.isArray(bookmarks)) throw new Error($_("data.invalidFormatArray"));
     const count = await callBackend("import_bookmarks", { bookmarks }, "Data:ImportBookmarks");
     await loadBookmarks();
-    showToast("success", translate("data.importedBookmarks", { values: { count } }));
+    showToast("success", $_("data.importedBookmarks", { values: { count } }));
   } catch (err) {
     AppError.handle("Data:ImportBookmarks", err, { showToast: true });
   } finally {
@@ -77,11 +76,11 @@ async function exportFileHistory() {
     if (!paths) return;
     const dest = await save({
       defaultPath: "markdownrs-file-history.json",
-      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
+      filters: [{ name: $_("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!dest) return;
     await callBackend("write_text_file", { path: dest, content: JSON.stringify(paths, null, 2) }, "File:Write");
-    showToast("success", translate("data.exportedFiles", { values: { count: paths.length } }));
+    showToast("success", $_("data.exportedFiles", { values: { count: paths.length } }));
   } catch (err) {
     AppError.handle("Data:ExportFileHistory", err, { showToast: true });
   } finally {
@@ -95,18 +94,18 @@ async function importFileHistory() {
   try {
     const selected = await open({
       multiple: false,
-      filters: [{ name: translate("data.jsonFilter"), extensions: ["json"] }],
+      filters: [{ name: $_("data.jsonFilter"), extensions: ["json"] }],
     });
     if (!selected) return;
     const result = await callBackend("read_text_file", { path: selected as string }, "File:Read");
-    if (!result) throw new Error(translate("data.failedToRead"));
+    if (!result) throw new Error($_("data.failedToRead"));
     const paths = JSON.parse(result.content);
     if (!Array.isArray(paths) || paths.some((p) => typeof p !== "string")) {
-      throw new Error(translate("data.invalidFormatStrings"));
+      throw new Error($_("data.invalidFormatStrings"));
     }
     const count = await callBackend("import_file_history", { paths }, "Data:ImportFileHistory");
     await loadFileHistory(true);
-    showToast("success", translate("data.importedFiles", { values: { count } }));
+    showToast("success", $_("data.importedFiles", { values: { count } }));
   } catch (err) {
     AppError.handle("Data:ImportFileHistory", err, { showToast: true });
   } finally {
@@ -117,16 +116,16 @@ async function importFileHistory() {
 async function clearHistory() {
   if (busy) return;
   const result = await confirmDialog({
-    title: translate("data.clearFileHistory"),
-    message: translate("data.confirmClearFileHistory"),
+    title: $_("data.clearFileHistory"),
+    message: $_("data.confirmClearFileHistory"),
     saveLabel: undefined,
-    discardLabel: translate("common.clear"),
+    discardLabel: $_("common.clear"),
   });
   if (result !== "discard") return;
   busy = true;
   try {
     await clearFileHistory();
-    showToast("success", translate("data.clearedFileHistory"));
+    showToast("success", $_("data.clearedFileHistory"));
   } catch (err) {
     AppError.handle("Data:ClearFileHistory", err, { showToast: true });
   } finally {
@@ -143,22 +142,22 @@ async function deleteOrphans() {
     const orphans = await callBackend("delete_orphan_files", { dryRun: true }, "Data:DeleteOrphans");
     if (!orphans) return;
     if (orphans.length === 0) {
-      showToast("info", translate("data.noOrphans"));
+      showToast("info", $_("data.noOrphans"));
       return;
     }
 
     const more = orphans.length - MAX_ORPHAN_PATHS_SHOWN;
     const message = [
-      translate("data.confirmDeleteOrphans", { values: { count: orphans.length } }),
+      $_("data.confirmDeleteOrphans", { values: { count: orphans.length } }),
       orphans.slice(0, MAX_ORPHAN_PATHS_SHOWN).join("\n"),
-      ...(more > 0 ? [translate("data.confirmDeleteOrphansMore", { values: { count: more } })] : []),
+      ...(more > 0 ? [$_("data.confirmDeleteOrphansMore", { values: { count: more } })] : []),
     ].join("\n\n");
 
     const result = await confirmDialog({
-      title: translate("data.deleteOrphans"),
+      title: $_("data.deleteOrphans"),
       message,
       saveLabel: undefined,
-      discardLabel: translate("common.delete"),
+      discardLabel: $_("common.delete"),
     });
     if (result !== "discard") return;
 
@@ -170,7 +169,7 @@ async function deleteOrphans() {
     if (!deletedPaths) return;
     pruneFileHistory(deletedPaths);
     pruneBookmarks(deletedPaths);
-    showToast("success", translate("data.removedOrphans", { values: { count: deletedPaths.length } }));
+    showToast("success", $_("data.removedOrphans", { values: { count: deletedPaths.length } }));
   } catch (err) {
     AppError.handle("Data:DeleteOrphans", err, { showToast: true });
   } finally {
@@ -187,34 +186,34 @@ type Action = {
 
 const actions = $derived<Action[]>([
   {
-    label: translate("data.exportBookmarks"),
-    description: translate("data.exportBookmarksDesc"),
+    label: $_("data.exportBookmarks"),
+    description: $_("data.exportBookmarksDesc"),
     handler: exportBookmarks,
   },
   {
-    label: translate("data.importBookmarks"),
-    description: translate("data.importBookmarksDesc"),
+    label: $_("data.importBookmarks"),
+    description: $_("data.importBookmarksDesc"),
     handler: importBookmarks,
   },
   {
-    label: translate("data.exportFileHistory"),
-    description: translate("data.exportFileHistoryDesc"),
+    label: $_("data.exportFileHistory"),
+    description: $_("data.exportFileHistoryDesc"),
     handler: exportFileHistory,
   },
   {
-    label: translate("data.importFileHistory"),
-    description: translate("data.importFileHistoryDesc"),
+    label: $_("data.importFileHistory"),
+    description: $_("data.importFileHistoryDesc"),
     handler: importFileHistory,
   },
   {
-    label: translate("data.clearFileHistory"),
-    description: translate("data.clearFileHistoryDesc"),
+    label: $_("data.clearFileHistory"),
+    description: $_("data.clearFileHistoryDesc"),
     handler: clearHistory,
     danger: true,
   },
   {
-    label: translate("data.deleteOrphans"),
-    description: translate("data.deleteOrphansDesc"),
+    label: $_("data.deleteOrphans"),
+    description: $_("data.deleteOrphansDesc"),
     handler: deleteOrphans,
     danger: true,
   },
