@@ -7,34 +7,40 @@ pub async fn resolve_path_relative(base_path: Option<String>, click_path: String
 
     let click_is_absolute = Path::new(&click_path).is_absolute();
 
-    // Get the base directory for path traversal protection
-    let base_dir = base_path
-        .as_ref()
-        .and_then(|base| PathBuf::from(base).parent().map(|p| p.to_path_buf()));
+    // The base is either a document (anchor on its directory) or already a
+    // directory; a trailing separator or an existing dir must not move the
+    // containment root one level up.
+    let base_dir = base_path.as_ref().map(PathBuf::from).map(|base| {
+        if base.is_dir() {
+            base
+        } else {
+            match base.parent() {
+                Some(parent) => parent.to_path_buf(),
+                None => base,
+            }
+        }
+    });
 
-    let path_buf = if let Some(base) = base_path {
-        let mut p = PathBuf::from(base);
-        p.pop();
-        p.push(click_path);
-        p
-    } else {
-        PathBuf::from(click_path)
+    // Without a base directory (unsaved buffer) there is nothing to contain a
+    // relative path against, and resolving against the process CWD would escape
+    // any reasonable scope.
+    if !click_is_absolute && base_dir.is_none() {
+        return Err("Cannot resolve a relative path without a base directory".to_string());
+    }
+
+    let path_buf = match (&base_dir, click_is_absolute) {
+        (Some(dir), false) => dir.join(&click_path),
+        _ => PathBuf::from(&click_path),
     };
 
-    // Canonicalize the path to resolve any symlinks and get absolute path
+    // shortcut: the target must exist; a link to a not-yet-created file fails. Resolve lexically if that ever matters.
     let canonicalized = dunce::canonicalize(&path_buf).map_err(|e| {
         let path_str = path_buf.to_string_lossy();
         handle_error(Some(&path_str), "canonicalize path", e)
     })?;
 
     // Absolute paths are explicit user navigation; no containment is applied.
-    // Relative paths must stay within the base directory. Without a base
-    // directory (unsaved buffer) there is nothing to contain against, so
-    // resolving against the process CWD would escape any reasonable scope.
-    if !click_is_absolute {
-        let Some(ref base) = base_dir else {
-            return Err("Cannot resolve a relative path without a base directory".to_string());
-        };
+    if !click_is_absolute && let Some(base) = base_dir.as_deref() {
         let canonical_base = dunce::canonicalize(base).map_err(|e| {
             let base_str = base.to_string_lossy();
             handle_error(Some(&base_str), "canonicalize base path", e)
@@ -102,6 +108,32 @@ mod tests {
         let result = resolve_path_relative(Some(base.to_string_lossy().into_owned()), "notes.md".to_string()).await;
 
         assert_eq!(result.unwrap(), dunce::canonicalize(&target).unwrap().to_string_lossy());
+        fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn treats_a_directory_base_as_the_containment_root() {
+        let root = make_temp_dir("resolve-dir-base");
+        let subdir = root.join("subdir");
+        fs::create_dir(&subdir).unwrap();
+        let inside = subdir.join("notes.md");
+        let outside = root.join("outside.md");
+        fs::write(&inside, "x").unwrap();
+        fs::write(&outside, "x").unwrap();
+
+        let base = subdir.to_string_lossy().into_owned();
+
+        let resolved = resolve_path_relative(Some(base.clone()), "notes.md".to_string()).await;
+        assert_eq!(
+            resolved.unwrap(),
+            dunce::canonicalize(&inside).unwrap().to_string_lossy()
+        );
+
+        let escaped = resolve_path_relative(Some(base), "../outside.md".to_string()).await;
+        assert!(
+            escaped.is_err(),
+            "a directory base must not allow escaping to its parent"
+        );
         fs::remove_dir_all(&root).unwrap();
     }
 
