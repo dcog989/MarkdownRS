@@ -32,6 +32,7 @@ export class TabSyncManager {
   ) {
     if (!this.timerRefs.content) return;
     clearTimeout(this.timerRefs.content);
+    this.timerRefs.content = null;
     if (view._currentTabId) {
       updateContent(view._currentTabId, view.state.doc.toString(), view.state.doc.lines);
     } else {
