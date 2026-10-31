@@ -84,7 +84,9 @@ export class KeyboardShortcutManager {
       const mappedKey = resolveShortcut(customShortcuts[cmd.id], cmd.defaultKey);
       if (!mappedKey || !cmd.handler) continue;
       if (pressedKey === mappedKey.toLowerCase()) {
-        if (isInput && !(cmd.id in customShortcuts) && !cmd.global) {
+        // Custom keys obey the same input guard as defaults; the editor's own keymap
+        // covers commands that must fire while the editor (a contenteditable) has focus.
+        if (isInput && !cmd.global) {
           continue;
         }
         const result = await cmd.handler(e);

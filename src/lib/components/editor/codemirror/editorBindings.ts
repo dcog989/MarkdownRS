@@ -37,18 +37,6 @@ function runRegistryCommand(registryKey: string): CmHandler {
   };
 }
 
-// App-level keys the window handler skips while the editor (a contenteditable) has focus.
-const appBindings: CmBindingDef[] = [
-  "view.toggleViewMode",
-  "view.toggleWhitespace",
-  "nav.tab1",
-  "nav.tab2",
-  "nav.tab3",
-  "nav.tab4",
-  "nav.tab5",
-  "nav.lastTab",
-].map((registryKey) => ({ registryKey, handler: runRegistryCommand(registryKey) }));
-
 const textOpBindings: CmBindingDef[] = Object.values(TEXT_OPERATIONS_REGISTRY)
   .filter((op) => op.defaultKey)
   .map((op) => ({
@@ -59,7 +47,7 @@ const textOpBindings: CmBindingDef[] = Object.values(TEXT_OPERATIONS_REGISTRY)
     },
   }));
 
-export const cmHandlerMap: CmBindingDef[] = [
+const viewBindings: CmBindingDef[] = [
   {
     registryKey: "editor.toggleComment",
     handler: (view) => toggleSelectionComment(view),
@@ -109,7 +97,6 @@ export const cmHandlerMap: CmBindingDef[] = [
     handler: (view) => indentLess(view),
   },
   ...textOpBindings,
-  ...appBindings,
   {
     registryKey: "edit.undo",
     handler: (view) => undo(view),
@@ -130,3 +117,13 @@ export const cmHandlerMap: CmBindingDef[] = [
     handler: () => addBookmarkForActiveTab(),
   },
 ];
+
+const viewCommandIds = new Set(viewBindings.map((binding) => binding.registryKey));
+
+// Global commands are handled window-wide. Every other command needs a key path here
+// because the window handler skips inputs and the editor is a contenteditable.
+const appBindings: CmBindingDef[] = commands
+  .filter((cmd) => !cmd.global && !viewCommandIds.has(cmd.id))
+  .map((cmd) => ({ registryKey: cmd.id, handler: runRegistryCommand(cmd.id) }));
+
+export const cmHandlerMap: CmBindingDef[] = [...viewBindings, ...appBindings];
