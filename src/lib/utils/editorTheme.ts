@@ -6,9 +6,21 @@ const UI_FONT_FAMILY =
   'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Droid Sans", sans-serif';
 const UI_FONT_SIZE = "0.8125rem";
 
+const MIN_FONT_SIZE_PX = 8;
+const MAX_FONT_SIZE_PX = 32;
+const DEFAULT_FONT_SIZE_PX = 14;
+
+// Bounds match the editorFontSize setting. A hand-edited settings file can hold
+// 0 or NaN here, which makes the document invisible with no obvious way back.
+function clampFontSize(fontSize: number): number {
+  if (!Number.isFinite(fontSize)) return DEFAULT_FONT_SIZE_PX;
+  return Math.min(MAX_FONT_SIZE_PX, Math.max(MIN_FONT_SIZE_PX, fontSize));
+}
+
 export function generateDynamicTheme(fontSize: number, fontFamily: string) {
+  const fontSizePx = clampFontSize(fontSize);
   return EditorView.theme({
-    "&": { height: "100%", fontSize: `${fontSize}px` },
+    "&": { height: "100%", fontSize: `${fontSizePx}px` },
     ".cm-cursor": {
       borderLeftColor: "var(--editor-fg)",
       borderLeftWidth: "2px",

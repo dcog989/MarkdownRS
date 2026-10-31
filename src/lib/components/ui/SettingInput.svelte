@@ -35,7 +35,7 @@ let tooltipText = $derived(setting.tooltip ? translate(setting.tooltip) : null);
 let resolvedDefaultAccent = $state("#000000");
 // The native spinner uses `min` as its step base, so an off-grid min (e.g. -1
 // with step 50) shifts the step grid and makes it jump by one. Align the input's
-// min down to a step multiple; `normalizeNumber` re-clamps to the true minimum.
+// min down to a step multiple; handleNumberBlur re-clamps to the true minimum.
 let numberInputMin = $derived(
   setting.min === undefined ? undefined : Math.floor(setting.min / (setting.step ?? 1)) * (setting.step ?? 1),
 );
@@ -48,26 +48,40 @@ $effect(() => {
   resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : "#7c5a73";
 });
 
-function normalizeNumber(raw: string, inputMin: number | undefined): number {
+function parseNumber(raw: string): number | null {
   const parsed = Number(raw);
-  const min = setting.min;
-  if (min !== undefined && inputMin !== undefined && inputMin < min && parsed < min) {
-    return min;
-  }
-  return parsed;
+  return raw.trim() !== "" && Number.isFinite(parsed) ? parsed : null;
 }
 
-async function handleNumberInput(e: Event) {
+function clampNumber(number: number): number {
+  const min = setting.min ?? Number.NEGATIVE_INFINITY;
+  const max = setting.max ?? Number.POSITIVE_INFINITY;
+  return Math.min(max, Math.max(min, number));
+}
+
+function handleNumberInput(e: Event) {
+  const parsed = parseNumber((e.currentTarget as HTMLInputElement).value);
+  // Leave incomplete ("-", "") and out-of-range values alone while typing:
+  // clamping the first digit of "14" to 8 would make the rest untypable.
+  if (parsed === null) return;
+  if (setting.min !== undefined && parsed < setting.min) return;
+  if (setting.max !== undefined && parsed > setting.max) return;
+  onChange(parsed);
+}
+
+function handleNumberBlur(e: Event) {
   const el = e.currentTarget as HTMLInputElement;
-  const normalized = normalizeNumber(el.value, numberInputMin);
+  const parsed = parseNumber(el.value);
+  const defaultValue = Number(setting.defaultValue);
+  const fallback = Number.isFinite(defaultValue) ? defaultValue : 0;
+  const current = typeof value === "number" && Number.isFinite(value) ? value : fallback;
+  const normalized = clampNumber(parsed ?? current);
   onChange(normalized);
-  await tick();
-  // When the spinner hits the aligned grid min (e.g. -50) it may clamp back to a
-  // value the model already holds, so Svelte won't push it down and the field
-  // would keep showing the out-of-range number.
-  if (el.value !== String(normalized)) {
-    el.value = String(normalized);
-  }
+  // The spinner's aligned minimum can differ from the real one, so write the
+  // clamped value back after Svelte has applied it.
+  void tick().then(() => {
+    if (el.value !== String(normalized)) el.value = String(normalized);
+  });
 }
 
 function measureCharWidth(el: HTMLElement): number {
@@ -130,6 +144,7 @@ $effect(() => {
         max={setting.max}
         step={setting.step}
         oninput={handleNumberInput}
+        onblur={handleNumberBlur}
         class={setting.unit ? "min-w-0 flex-1" : ""}
       />
       {#if setting.unit}

@@ -23,6 +23,18 @@ let { tabId }: { tabId: string } = $props();
 let container = $state<HTMLDivElement>();
 let previewHtmlWasEmpty = true;
 
+const MIN_PREVIEW_FONT_SIZE_PX = 10;
+const MAX_PREVIEW_FONT_SIZE_PX = 32;
+const DEFAULT_PREVIEW_FONT_SIZE_PX = 16;
+
+// Bounds match the previewFontSize setting. A hand-edited settings file can
+// hold 0 or NaN here, which hides all text.
+let previewFontSize = $derived.by(() => {
+  const size = appContext.settings.previewFontSize;
+  if (!Number.isFinite(size)) return DEFAULT_PREVIEW_FONT_SIZE_PX;
+  return Math.min(MAX_PREVIEW_FONT_SIZE_PX, Math.max(MIN_PREVIEW_FONT_SIZE_PX, size));
+});
+
 const renderer = new PreviewRenderer({
   onContentRendered: () => {
     if (!container) return;
@@ -169,7 +181,7 @@ function injectHtml(node: HTMLElement, content: string) {
     }}
     role="none"
     class="preview-root no-scrollbar bg-bg-preview relative z-0 h-full w-full max-w-none overflow-y-auto p-8 pb-40"
-    style="font-family: {appContext.settings.previewFontFamily}; font-size: {appContext.settings.previewFontSize}px;"
+    style="font-family: {appContext.settings.previewFontFamily}; font-size: {previewFontSize}px;"
     spellcheck="false"
   >
     {#if !isMarkdown}
