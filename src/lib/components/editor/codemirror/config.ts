@@ -16,6 +16,22 @@ import { appContext } from "$lib/stores/state.svelte";
 import { emojiAutocompleteKeymap, emojiCompletion } from "$lib/utils/emojiCompletion";
 import { fenceCursorPlugin, fenceLanguageCompletion } from "$lib/utils/fenceLanguageCompletion";
 
+// CodeMirror compares key names case-sensitively against `event.key` ("ArrowUp",
+// "PageDown", ...), so title-casing only works for single-word names.
+const CM_KEY_NAMES: Record<string, string> = {
+  arrowup: "ArrowUp",
+  arrowdown: "ArrowDown",
+  arrowleft: "ArrowLeft",
+  arrowright: "ArrowRight",
+  pageup: "PageUp",
+  pagedown: "PageDown",
+  capslock: "CapsLock",
+  numlock: "NumLock",
+  scrolllock: "ScrollLock",
+  printscreen: "PrintScreen",
+  contextmenu: "ContextMenu",
+};
+
 function toCmKey(registryKey: string): string {
   const parts = registryKey.split("+").map((p) => p.toLowerCase());
   const mods: string[] = [];
@@ -28,7 +44,7 @@ function toCmKey(registryKey: string): string {
     } else if (p === "alt") {
       mods.push("Alt");
     } else {
-      keyPart = p.length === 1 ? p : p[0].toUpperCase() + p.slice(1);
+      keyPart = p.length === 1 ? p : (CM_KEY_NAMES[p] ?? p[0].toUpperCase() + p.slice(1));
     }
   }
   return [...mods, keyPart].join("-");
