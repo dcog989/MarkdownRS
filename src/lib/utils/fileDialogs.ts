@@ -68,9 +68,9 @@ export async function openFile(path?: string): Promise<void> {
     const sanitizedPath = normalizePath(targetPath);
     const existingTab = appContext.editor.tabs.find((t) => t.path === sanitizedPath);
 
-    addToFileHistory(sanitizedPath);
-
     if (existingTab) {
+      // Re-opening an already-open file still bumps its history entry.
+      addToFileHistory(sanitizedPath);
       appContext.app.activeTabId = existingTab.id;
       pushToMru(existingTab.id);
       return;
@@ -148,6 +148,10 @@ async function openNewTab(sanitizedPath: string, start: number): Promise<void> {
   // The stat above already carries created/modified, so opening a file costs
   // one metadata call instead of three.
   updateMetadata(id, metadata.created, metadata.modified);
+
+  // Only after the read succeeded: a file that failed to open must not push
+  // out real history entries.
+  addToFileHistory(sanitizedPath);
 
   await fileWatcher.watch(id, sanitizedPath);
   appContext.app.activeTabId = id;
