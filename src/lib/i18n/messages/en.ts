@@ -346,6 +346,7 @@ export const en = {
     logLevel: "Log Level",
     logLevelTooltip: "Controls the verbosity of application logs.",
     newFileTemplate: "New File Template",
+    // Literal {{date}}/{{time}} placeholders: translate without values or IntlMessageFormat rejects the text.
     newFileTemplateTooltip:
       "Specify a Markdown file as a template for new files. Use {{date}} and {{time}} for creation-time placeholders. Leave empty to create blank files.",
     theme: "Theme",
