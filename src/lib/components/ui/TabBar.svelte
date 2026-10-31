@@ -23,7 +23,7 @@ import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { asHTMLElement, assertHTMLElement } from "$lib/utils/dom";
 import { persistSessionDebounced, requestCloseTab } from "$lib/utils/fileSystem";
-import { createMruCycling } from "$lib/utils/mruCycling.svelte";
+import { mruCycling as mru } from "$lib/utils/mruCycling.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
 
 let scrollContainer = $state<HTMLElement>();
@@ -43,8 +43,6 @@ let contextMenuY = $state(0);
 let showTabBarContextMenu = $state(false);
 let tabBarContextMenuX = $state(0);
 let tabBarContextMenuY = $state(0);
-
-let mru = createMruCycling();
 
 const sortController = new SortableController<EditorTab>({
   items: [],
@@ -103,9 +101,6 @@ $effect(() => {
 });
 
 onMount(() => {
-  window.addEventListener("keydown", mru.onKeyDown);
-  window.addEventListener("keyup", mru.onKeyUp);
-
   if (scrollContainer) {
     resizeObserver = new ResizeObserver(() => updateFadeIndicators());
     resizeObserver.observe(scrollContainer);
@@ -113,9 +108,6 @@ onMount(() => {
 
   return () => {
     resizeObserver?.disconnect();
-    mru.cleanup();
-    window.removeEventListener("keydown", mru.onKeyDown);
-    window.removeEventListener("keyup", mru.onKeyUp);
   };
 });
 

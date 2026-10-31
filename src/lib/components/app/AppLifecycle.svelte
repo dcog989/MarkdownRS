@@ -10,6 +10,7 @@ import { loadTabContentLazy } from "$lib/services/tabLoadStateMachine";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { logger } from "$lib/utils/logger";
+import { mruCycling } from "$lib/utils/mruCycling.svelte";
 import { formatDuration } from "$lib/utils/timing";
 
 let { children } = $props();
@@ -89,10 +90,15 @@ onMount(() => {
 
   window.addEventListener("blur", handleBlur);
   window.addEventListener("beforeunload", handleBeforeUnload);
+  window.addEventListener("keydown", mruCycling.onKeyDown);
+  window.addEventListener("keyup", mruCycling.onKeyUp);
 
   return () => {
     window.removeEventListener("blur", handleBlur);
     window.removeEventListener("beforeunload", handleBeforeUnload);
+    window.removeEventListener("keydown", mruCycling.onKeyDown);
+    window.removeEventListener("keyup", mruCycling.onKeyUp);
+    mruCycling.cleanup();
     if (unlistenEvents) unlistenEvents();
   };
 });

@@ -1,6 +1,7 @@
 import { pushToMru } from "$lib/stores/editorLifecycle";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
+import { isModalOpen } from "$lib/utils/shortcuts";
 
 export function createMruCycling() {
   let showPopup = $state(false);
@@ -9,7 +10,9 @@ export function createMruCycling() {
   let timer: number | null = null;
 
   function onKeyDown(e: KeyboardEvent) {
-    if (e.ctrlKey && e.key === "Tab") {
+    // A dialog owns the keyboard; cycling tabs behind it would switch the
+    // document under a modal that is showing the old one.
+    if (e.ctrlKey && e.key === "Tab" && !isModalOpen()) {
       e.preventDefault();
       if (!isCycling) {
         isCycling = true;
@@ -66,3 +69,7 @@ export function createMruCycling() {
     cleanup,
   };
 }
+
+// Owned by the app shell, not the tab bar: the bar is unmounted in writer mode
+// and the keys must keep working there.
+export const mruCycling = createMruCycling();
