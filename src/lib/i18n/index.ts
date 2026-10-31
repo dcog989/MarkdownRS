@@ -32,7 +32,7 @@ export function initI18n(preferredLocale: string): void {
   locale.set(resolveLocale(preferredLocale));
 }
 
-export function detectSystemLocale(): string {
+function detectSystemLocale(): string {
   const detected = getLocaleFromNavigator();
   if (detected && SUPPORTED_LOCALES.includes(detected as AppLocale)) {
     return detected;
