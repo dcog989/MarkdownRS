@@ -29,7 +29,6 @@ function rootEntry(root: string): FileEntry {
     name: basename(root) || root,
     path: root,
     is_dir: true,
-    is_symlink: false,
     size: 0,
     modified: null,
   };

@@ -9,7 +9,6 @@ function entry(path: string, isDir: boolean): FileEntry {
     name: parts[parts.length - 1] || path,
     path,
     is_dir: isDir,
-    is_symlink: false,
     size: isDir ? 0 : 10,
     modified: null,
   };

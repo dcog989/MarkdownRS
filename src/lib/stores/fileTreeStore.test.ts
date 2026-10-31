@@ -36,7 +36,6 @@ function entry(name: string, isDir = false): FileEntry {
     name,
     path: `/root/${name}`,
     is_dir: isDir,
-    is_symlink: false,
     size: isDir ? 0 : 10,
     modified: null,
   };

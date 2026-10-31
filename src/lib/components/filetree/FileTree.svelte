@@ -108,7 +108,6 @@ let allRows = $derived.by(() => {
         name: "..",
         path: dirname(fileTreeStore.root),
         is_dir: true,
-        is_symlink: false,
         size: 0,
         modified: null,
       },

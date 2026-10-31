@@ -19,7 +19,6 @@ function entry(name: string, isDir = false): FileEntry {
     name,
     path: `/root/${name}`,
     is_dir: isDir,
-    is_symlink: false,
     size: isDir ? 0 : 10,
     modified: null,
   };
@@ -47,12 +46,10 @@ describe("treeViewStore", () => {
     fileTreeStore.root = "/root";
     fileTreeStore.expanded.set("/root", true);
     fileTreeStore.expanded.set("/root/sub", true);
-    fileTreeStore.children.set("/root", [
-      { name: "sub", path: "/root/sub", is_dir: true, is_symlink: false, size: 0, modified: null },
-    ]);
+    fileTreeStore.children.set("/root", [{ name: "sub", path: "/root/sub", is_dir: true, size: 0, modified: null }]);
     fileTreeStore.children.set("/root/sub", [
-      { name: "root", path: "/root", is_dir: true, is_symlink: true, size: 0, modified: null },
-      { name: "file.md", path: "/root/sub/file.md", is_dir: false, is_symlink: false, size: 1, modified: null },
+      { name: "root", path: "/root", is_dir: true, size: 0, modified: null },
+      { name: "file.md", path: "/root/sub/file.md", is_dir: false, size: 1, modified: null },
     ]);
 
     const rows = computeTreeRows();

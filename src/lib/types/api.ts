@@ -53,14 +53,12 @@ export interface FileEntry {
   name: string;
   path: string;
   is_dir: boolean;
-  is_symlink: boolean;
   size: number;
   modified: string | null;
 }
 
 export interface TabData {
   content: string | null;
-  history_state: unknown;
 }
 
 // Server-side operations are handled via dedicated backend commands, not client-side transform

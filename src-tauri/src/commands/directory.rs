@@ -6,7 +6,6 @@ pub struct FileEntry {
     pub name: String,
     pub path: String,
     pub is_dir: bool,
-    pub is_symlink: bool,
     pub size: u64,
     pub modified: Option<String>,
 }
@@ -52,7 +51,6 @@ pub fn list_directory_sync(path: &str, show_hidden: bool) -> Result<Vec<FileEntr
             name,
             path: entry.path().to_string_lossy().to_string(),
             is_dir,
-            is_symlink,
             size,
             modified,
         });
@@ -172,7 +170,6 @@ mod tests {
         let dir_entry = entries.iter().find(|e| e.name == "sub").unwrap();
 
         assert!(!file_entry.is_dir);
-        assert!(!file_entry.is_symlink);
         assert_eq!(file_entry.size, 7);
         assert!(file_entry.modified.is_some());
         assert!(file_entry.path.ends_with("data.txt"));
@@ -217,7 +214,6 @@ mod tests {
         let entries = list_directory_sync(&dir.to_string_lossy(), false).unwrap();
         let link = entries.iter().find(|e| e.name == "link").unwrap();
 
-        assert!(link.is_symlink);
         assert!(link.is_dir, "a symlinked directory must stay expandable");
         fs::remove_dir_all(&dir).unwrap();
     }
