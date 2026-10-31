@@ -29,11 +29,6 @@ pub fn run(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     fs::create_dir_all(&paths.log_dir)?;
     logging::init(saved_settings.as_ref(), &paths.log_dir)?;
     paths::ensure_directories(&paths);
-    paths::schedule_temp_cleanup(vec![
-        paths.local_dir.clone(),
-        paths.config_dir.clone(),
-        paths.cache_dir.clone(),
-    ]);
     logging::log_runtime_info(&paths);
     desktop::install_appimage_integration();
     themes::seed_default_themes(paths.themes_dir);

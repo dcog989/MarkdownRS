@@ -19,6 +19,7 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid path"))?
         .to_string_lossy();
     let temp_path = target.with_file_name(format!("{}.{}.tmp", file_name, uuid::Uuid::new_v4()));
+    // shortcut: a crash before the rename leaves this .tmp next to the target, with no startup sweep; add one if leftovers show up.
     let permissions = fs::metadata(&target).await.ok().map(|meta| meta.permissions());
 
     {
@@ -37,45 +38,10 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
     Ok(())
 }
 
-pub async fn cleanup_stale_temp_files(dir: &Path, max_age: std::time::Duration) -> std::io::Result<()> {
-    let mut entries = fs::read_dir(dir).await?;
-    let now = std::time::SystemTime::now();
-
-    while let Some(entry) = entries.next_entry().await? {
-        let path = entry.path();
-        if path.extension().and_then(|ext| ext.to_str()) != Some("tmp") {
-            continue;
-        }
-
-        let Ok(metadata) = entry.metadata().await else {
-            continue;
-        };
-
-        let Ok(modified) = metadata.modified() else {
-            continue;
-        };
-
-        let Ok(age) = now.duration_since(modified) else {
-            continue;
-        };
-
-        if age > max_age {
-            if let Err(e) = fs::remove_file(&path).await {
-                log::warn!("Failed to remove stale temp file {:?}: {}", path, e);
-            } else {
-                log::info!("Cleaned up stale temp file: {:?}", path);
-            }
-        }
-    }
-
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::utils::test_util::make_temp_dir;
-    use std::time::Duration;
 
     #[tokio::test(flavor = "current_thread")]
     async fn atomic_write_writes_content_to_target_path() {
@@ -140,31 +106,6 @@ mod tests {
 
         assert!(std::fs::symlink_metadata(&link).unwrap().file_type().is_symlink());
         assert_eq!(std::fs::read_to_string(&real).unwrap(), "new");
-        std::fs::remove_dir_all(&dir).unwrap();
-    }
-
-    #[tokio::test(flavor = "current_thread")]
-    async fn cleanup_stale_temp_files_removes_old_tmp_files_only() {
-        let dir = make_temp_dir("stale");
-        let old = dir.join("old.tmp");
-        let fresh = dir.join("fresh.tmp");
-        let keep = dir.join("keep.md");
-        std::fs::write(&old, "old").unwrap();
-        std::fs::write(&fresh, "fresh").unwrap();
-        std::fs::write(&keep, "keep").unwrap();
-
-        let past = std::time::SystemTime::now() - Duration::from_secs(3600);
-        std::fs::File::open(&old).unwrap().set_modified(past).unwrap();
-        std::fs::File::open(&fresh)
-            .unwrap()
-            .set_modified(std::time::SystemTime::now())
-            .unwrap();
-
-        cleanup_stale_temp_files(&dir, Duration::from_secs(60)).await.unwrap();
-
-        assert!(!old.exists(), "old .tmp should be removed");
-        assert!(fresh.exists(), "fresh .tmp should be kept");
-        assert!(keep.exists(), "non-tmp files should be kept");
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

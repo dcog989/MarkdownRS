@@ -52,17 +52,6 @@ pub fn ensure_directories(paths: &AppPaths) {
     }
 }
 
-pub fn schedule_temp_cleanup(dirs: Vec<PathBuf>) {
-    tauri::async_runtime::spawn(async move {
-        let one_hour = std::time::Duration::from_secs(3600);
-        for dir in dirs {
-            if let Err(e) = utils::cleanup_stale_temp_files(&dir, one_hour).await {
-                log::warn!("Failed to cleanup temp files in {:?}: {}", dir, e);
-            }
-        }
-    });
-}
-
 pub fn ensure_dictionary_file(dict_path: &Path) {
     if !dict_path.exists()
         && let Err(e) = fs::write(dict_path, "")
