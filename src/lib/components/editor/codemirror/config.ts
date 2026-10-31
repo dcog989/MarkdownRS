@@ -203,7 +203,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...customKeymap,
     ...cmBindings,
     ...(completionKeymap as KeyBinding[]),
-    ...(historyKeymap as KeyBinding[]),
+    ...(historyKeymap.filter((binding) => !filteredKeys.has(canonicalKey(binding.key ?? ""))) as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),
     { key: "Mod-Delete", mac: "Alt-Delete", run: deleteGroupForwardWin, preventDefault: true },
     ...(defaultKeymap.filter(

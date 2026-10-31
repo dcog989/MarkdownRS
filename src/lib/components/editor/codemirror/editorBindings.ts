@@ -9,7 +9,9 @@ import {
   indentMore,
   moveLineDown,
   moveLineUp,
+  redo,
   selectLine,
+  undo,
 } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
 import { TEXT_OPERATIONS_REGISTRY } from "$lib/config/textOperationsRegistry";
@@ -85,6 +87,14 @@ export const cmHandlerMap: CmBindingDef[] = [
     handler: (view) => indentLess(view),
   },
   ...textOpBindings,
+  {
+    registryKey: "edit.undo",
+    handler: (view) => undo(view),
+  },
+  {
+    registryKey: "edit.redo",
+    handler: (view) => redo(view),
+  },
   {
     registryKey: "edit.gotoLine",
     handler: (view) => {
