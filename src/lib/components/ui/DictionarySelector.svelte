@@ -17,16 +17,13 @@ let buttonEl = $state<HTMLDivElement>();
 let dropdownPosition = $state<"below" | "above">("below");
 let dropdownMaxHeight = $state(256); // Default 256px (max-h-64)
 
-// Complete list from wooorm/dictionaries (filtered for distinct/major variants)
+// Every code here must resolve to a real dictionary: the backend pins some
+// (resolve_language_urls) and falls back to wooorm/dictionaries for the rest.
 const availableDictionaries = [
-  { code: "af", name: "Afrikaans" },
-  { code: "sq", name: "Albanian" },
-  { code: "ar", name: "Arabic" },
   { code: "hy", name: "Armenian" },
   { code: "eu", name: "Basque" },
   { code: "bg", name: "Bulgarian" },
   { code: "ca", name: "Catalan" },
-  { code: "zh", name: "Chinese" },
   { code: "hr", name: "Croatian" },
   { code: "cs", name: "Czech" },
   { code: "da", name: "Danish" },
@@ -46,12 +43,10 @@ const availableDictionaries = [
   { code: "de-CH", name: "German (Switzerland)" },
   { code: "el", name: "Greek" },
   { code: "he", name: "Hebrew" },
-  { code: "hi", name: "Hindi" },
   { code: "hu", name: "Hungarian" },
   { code: "is", name: "Icelandic" },
   { code: "id", name: "Indonesian" },
   { code: "it", name: "Italian" },
-  { code: "ja", name: "Japanese" },
   { code: "ko", name: "Korean" },
   { code: "la", name: "Latin" },
   { code: "lv", name: "Latvian" },

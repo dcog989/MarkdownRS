@@ -127,6 +127,18 @@ pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static 
                 "/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic"
             ),
         )),
+        "fi" => Some((
+            cspell_url!("main", "/fi_FI/src/hunspell/fi_FI.aff"),
+            cspell_url!("main", "/fi_FI/src/hunspell/fi_FI.dic"),
+        )),
+        "id" => Some((
+            cspell_url!("main", "/id_ID/src/hunspell/id_ID.aff"),
+            cspell_url!("main", "/id_ID/src/hunspell/id_ID.dic"),
+        )),
+        "pt-BR" => Some((
+            cspell_url!("main", "/pt_BR/src/hunspell/index.aff"),
+            cspell_url!("main", "/pt_BR/src/hunspell/index.dic"),
+        )),
         _ => None,
     }
 }
@@ -159,7 +171,7 @@ mod tests {
 
     #[test]
     fn all_language_urls_are_valid() {
-        for code in &["en-US", "en-AU", "en-CA", "en-GB", "en-ZA"] {
+        for code in &["en-US", "en-AU", "en-CA", "en-GB", "en-ZA", "fi", "id", "pt-BR"] {
             let urls = resolve_language_urls(code);
             assert!(urls.is_some(), "Language '{}' has no URLs", code);
             let (aff_url, dic_url) = urls.unwrap();
