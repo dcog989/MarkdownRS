@@ -55,11 +55,7 @@ export function createRecentChangesHighlighter(
   tracker: LineChangeTracker | undefined,
   onContextMenu?: ContextMenuCallback,
 ) {
-  const hasTracking = !!(
-    tracker &&
-    appContext.settings.recentChangesCount > 0 &&
-    appContext.settings.recentChangesTimespan > 0
-  );
+  const hasTracking = !!(tracker && appContext.settings.recentChangesCount > 0);
 
   const result: Extension[] = [];
 
@@ -87,6 +83,7 @@ export function createRecentChangesHighlighter(
           private scheduleFade(view: EditorView) {
             if (this.fadeTimer !== null || !tracker) return;
             const timespan = appContext.settings.recentChangesTimespan;
+            // 0 means unlimited: nothing ages out, so no re-render timer is needed.
             if (timespan <= 0 || !tracker.hasActiveHighlights(timespan)) return;
 
             const tick = () => {
