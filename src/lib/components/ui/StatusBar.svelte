@@ -233,7 +233,10 @@ async function copyAllStats() {
           <span class="w-5 text-center font-bold">{fileType === "markdown" ? "M" : "T"}</span>
         </button>
       {:else}
-        <span class="flex cursor-default items-center px-1 opacity-70" use:tooltip={$_("statusBar.fileType")}>
+        <span
+          class="flex cursor-default items-center px-1 opacity-70"
+          use:tooltip={$_(fileType === "markdown" ? "statusBar.markdownFileType" : "statusBar.textFileType")}
+        >
           <span class="w-5 text-center font-bold">{fileType === "markdown" ? "M" : "T"}</span>
         </span>
       {/if}
