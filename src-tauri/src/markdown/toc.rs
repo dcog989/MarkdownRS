@@ -113,6 +113,11 @@ fn extract_headings(content: &str) -> Vec<HeadingEntry> {
     parse_headings(content, MarkdownFlavor::default())
 }
 
+/// Escapes the characters that would otherwise break a `[label](#anchor)` link.
+fn escape_link_label(text: &str) -> String {
+    text.replace('\\', "\\\\").replace('[', "\\[").replace(']', "\\]")
+}
+
 fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {
     if entries.is_empty() {
         return String::new();
@@ -121,7 +126,12 @@ fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {
     let mut lines: Vec<String> = Vec::new();
     for entry in entries {
         let indent = "  ".repeat((entry.level as usize).saturating_sub(1));
-        lines.push(format!("{}- [{}](#{})", indent, entry.text, entry.anchor_id));
+        lines.push(format!(
+            "{}- [{}](#{})",
+            indent,
+            escape_link_label(&entry.text),
+            entry.anchor_id
+        ));
     }
     lines.join("\n")
 }
@@ -523,6 +533,29 @@ mod tests {
         assert!(
             result.starts_with("# Title\n\n<!-- toc -->\n\n- [Title](#title)"),
             "TOC must be inserted after the H1: {result}"
+        );
+    }
+
+    #[test]
+    fn escapes_markdown_metacharacters_in_toc_labels() {
+        let headings = vec![
+            HeadingEntry {
+                level: 1,
+                text: "a]b".to_string(),
+                anchor_id: "ab".to_string(),
+            },
+            HeadingEntry {
+                level: 2,
+                text: r"C:\temp\file[1]".to_string(),
+                anchor_id: "ctempfile1".to_string(),
+            },
+        ];
+        let result = generate_document_toc_with_headings("# a]b\n\nBody.", Some(headings));
+
+        assert!(result.contains(r"- [a\]b](#ab)"), "result was: {result}");
+        assert!(
+            result.contains(r"  - [C:\\temp\\file\[1\]](#ctempfile1)"),
+            "result was: {result}"
         );
     }
 
