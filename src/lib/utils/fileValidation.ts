@@ -70,6 +70,9 @@ export const SUPPORTED_TEXT_EXTENSIONS = [
   "tsv",
 ];
 
+/** Extensions shown as an image: image pasting and the file tree icon share one list. */
+export const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif", "ico"]);
+
 /**
  * Format file size for display with smart rounding:
  * - Below 1 KB: round up to nearest tenth (e.g., 0.1 KB, 0.5 KB)

@@ -7,13 +7,13 @@ import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
 import { AppError } from "$lib/utils/errorHandling";
+import { IMAGE_EXTENSIONS } from "$lib/utils/fileValidation";
 import type { AppEditorView } from "../../global";
 import { dirname } from "./path";
 
 const IMAGE_ASSET_DIR = "assets";
 const MAX_NAME_DEDUPE_ATTEMPTS = 99;
 const MAX_IMAGE_PIXELS = 25_000_000;
-const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "avif"]);
 
 let pasteQueue: Promise<unknown> = Promise.resolve();
 

@@ -16,7 +16,8 @@ export const fileTreeStore = $state({
   loading: new SvelteMap<string, boolean>(),
   refreshing: false,
   // Tracks when each directory's children were last fetched and the directory
-  // mtime seen at that point, so the background poll can skip unchanged dirs.
+  // mtime seen at that point, so reopening a folder can skip a re-listing when
+  // nothing changed.
   lastLoaded: new Map<string, number>(),
   dirMtimes: new Map<string, number>(),
 });
@@ -215,7 +216,7 @@ export function refreshDirectoryIfInTree(dir: string): void {
 }
 
 // Hook called after a file is written so the tree reflects new/renamed files
-// and size changes without waiting for the next poll.
+// and size changes without a full tree refresh.
 export function notifyFileSaved(path: string): void {
   refreshDirectoryIfInTree(dirname(path));
 }

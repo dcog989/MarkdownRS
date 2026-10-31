@@ -31,7 +31,7 @@ import { applyFilter, computeTreeRows, treeViewStore } from "$lib/stores/treeVie
 import type { FileEntry } from "$lib/types/api";
 import { CONFIG } from "$lib/utils/config";
 import { openFile } from "$lib/utils/fileSystem";
-import { MARKDOWN_EXTENSION_SET as MARKDOWN_EXT } from "$lib/utils/fileValidation";
+import { IMAGE_EXTENSIONS, isMarkdownFile } from "$lib/utils/fileValidation";
 import { basename, dirname } from "$lib/utils/path";
 import { debounce } from "$lib/utils/timing";
 import FileTreeContextMenu from "./FileTreeContextMenu.svelte";
@@ -340,7 +340,6 @@ function ext(name: string): string {
   return idx === -1 ? "" : name.slice(idx + 1).toLowerCase();
 }
 
-const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "svg", "webp", "ico", "bmp", "avif"]);
 const CODE_EXT = new Set([
   "ts",
   "tsx",
@@ -477,9 +476,9 @@ let contextMenuY = $state(0);
                   <Folder size={14} class="text-accent-secondary shrink-0" />
                 {/if}
               {:else}
-                {#if MARKDOWN_EXT.has(ext(row.entry.name))}
+                {#if isMarkdownFile(row.entry.name)}
                   <FileText size={14} class="text-accent-file shrink-0" />
-                {:else if IMAGE_EXT.has(ext(row.entry.name))}
+                {:else if IMAGE_EXTENSIONS.has(ext(row.entry.name))}
                   <FileImage size={14} class="text-accent-filepath shrink-0" />
                 {:else if CODE_EXT.has(ext(row.entry.name))}
                   <FileCode size={14} class="text-accent-link shrink-0" />
