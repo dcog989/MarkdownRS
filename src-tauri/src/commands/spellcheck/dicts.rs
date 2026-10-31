@@ -1,11 +1,11 @@
 use DictCategory::*;
 
+/// Replaces the `main` branch with a commit: an upstream push must not change
+/// what the app parses. Bump this (and `DICT_CACHE_VERSION`) to take updates.
 macro_rules! cspell_url {
-    ($branch:literal, $path:literal) => {
+    ($path:literal) => {
         concat!(
-            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/",
-            $branch,
-            "/dictionaries",
+            "https://raw.githubusercontent.com/streetsidesoftware/cspell-dicts/ae9c8d4dc15024377cc64b21d77ce863a35e0c9d/dictionaries",
             $path
         )
     };
@@ -25,32 +25,32 @@ struct DictEntry {
 static ALL_EXTRA_DICTS: &[DictEntry] = &[
     DictEntry {
         id: "medical-terms",
-        url: cspell_url!("main", "/medicalterms/dict/medicalterms-en.txt"),
+        url: cspell_url!("/medicalterms/dict/medicalterms-en.txt"),
         category: Scientific,
     },
     DictEntry {
         id: "scientific-terms-us",
-        url: cspell_url!("main", "/scientific_terms_US/src/custom_scientific_US.dic.txt"),
+        url: cspell_url!("/scientific_terms_US/src/custom_scientific_US.dic.txt"),
         category: Scientific,
     },
     DictEntry {
         id: "software-terms",
-        url: cspell_url!("main", "/software-terms/dict/softwareTerms.txt"),
+        url: cspell_url!("/software-terms/dict/softwareTerms.txt"),
         category: Technical,
     },
     DictEntry {
         id: "companies",
-        url: cspell_url!("main", "/companies/dict/companies.txt"),
+        url: cspell_url!("/companies/dict/companies.txt"),
         category: Technical,
     },
     DictEntry {
         id: "fullstack",
-        url: cspell_url!("main", "/fullstack/dict/fullstack.txt"),
+        url: cspell_url!("/fullstack/dict/fullstack.txt"),
         category: Technical,
     },
     DictEntry {
         id: "filetypes",
-        url: cspell_url!("main", "/filetypes/src/filetypes.txt"),
+        url: cspell_url!("/filetypes/src/filetypes.txt"),
         category: Technical,
     },
 ];
@@ -78,66 +78,36 @@ pub fn list_scientific_ids() -> Vec<String> {
 pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
     match dict_code {
         "en-US" => Some((
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff"
-            ),
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic"
-            ),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff"),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.dic"),
         )),
         "en-AU" => Some((
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.aff"
-            ),
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic"
-            ),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.aff"),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_AU%20(Marco%20Pinto)%20(-ise)%20(alt)/en_AU.dic"),
         )),
         "en-CA" => Some((
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff"
-            ),
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic"
-            ),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.aff"),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_CA%20(Kevin%20Atkinson)/en_CA.dic"),
         )),
         "en-GB" => Some((
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff"
-            ),
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.dic"
-            ),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.aff"),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_GB%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_GB.dic"),
         )),
         "en-ZA" => Some((
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.aff"
-            ),
-            cspell_url!(
-                "main",
-                "/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic"
-            ),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.aff"),
+            cspell_url!("/aoo-mozilla-en-dict/dicts/en_ZA%20(Marco%20Pinto)%20(-ise)%20(2025%2B)/en_ZA.dic"),
         )),
         "fi" => Some((
-            cspell_url!("main", "/fi_FI/src/hunspell/fi_FI.aff"),
-            cspell_url!("main", "/fi_FI/src/hunspell/fi_FI.dic"),
+            cspell_url!("/fi_FI/src/hunspell/fi_FI.aff"),
+            cspell_url!("/fi_FI/src/hunspell/fi_FI.dic"),
         )),
         "id" => Some((
-            cspell_url!("main", "/id_ID/src/hunspell/id_ID.aff"),
-            cspell_url!("main", "/id_ID/src/hunspell/id_ID.dic"),
+            cspell_url!("/id_ID/src/hunspell/id_ID.aff"),
+            cspell_url!("/id_ID/src/hunspell/id_ID.dic"),
         )),
         "pt-BR" => Some((
-            cspell_url!("main", "/pt_BR/src/hunspell/index.aff"),
-            cspell_url!("main", "/pt_BR/src/hunspell/index.dic"),
+            cspell_url!("/pt_BR/src/hunspell/index.aff"),
+            cspell_url!("/pt_BR/src/hunspell/index.dic"),
         )),
         _ => None,
     }

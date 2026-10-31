@@ -14,6 +14,9 @@ const SPELL_CHECK_MAX_ATTEMPTS: u32 = 2;
 /// upstream wordlist changes); older files are ignored by the versioned name.
 const DICT_CACHE_VERSION: &str = "v1";
 
+/// Pinned commit so an upstream push cannot change what the app parses.
+const WOOORM_COMMIT: &str = "8cfea406b505e4d7df52d5a19bce525df98c54ab";
+
 /// Hunspell `.dic` files start with a word count and `.aff` files start with a
 /// directive. A proxy or captive portal can answer HTTP 200 with an HTML page,
 /// which must not stay in the cache or every retry parses it again.
@@ -122,12 +125,10 @@ pub async fn load_language_dictionary(
     } else {
         (
             format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.aff",
-                dict_code
+                "https://raw.githubusercontent.com/wooorm/dictionaries/{WOOORM_COMMIT}/dictionaries/{dict_code}/index.aff"
             ),
             format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/{}/index.dic",
-                dict_code
+                "https://raw.githubusercontent.com/wooorm/dictionaries/{WOOORM_COMMIT}/dictionaries/{dict_code}/index.dic"
             ),
         )
     };
