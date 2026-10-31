@@ -1,5 +1,5 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath } from "@tauri-apps/plugin-opener";
+import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { translate } from "$lib/i18n";
 import {
   checkFileExists,
@@ -142,6 +142,8 @@ export async function openFileByPath(path: string): Promise<void> {
   await openFile(path);
 }
 
+const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;
+
 export async function navigateToPath(clickedPath: string): Promise<void> {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
@@ -150,6 +152,12 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
   }
 
   try {
+    if (EXTERNAL_LINK_RE.test(clickedPath)) {
+      const url = /^www\./i.test(clickedPath) ? `https://${clickedPath}` : clickedPath;
+      await openUrl(url);
+      return;
+    }
+
     const resolvedPath = await resolveRelativePath(activeTab?.path || null, clickedPath.replace(/\\/g, "/"));
 
     if (!resolvedPath) {

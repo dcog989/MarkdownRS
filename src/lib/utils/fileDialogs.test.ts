@@ -79,12 +79,14 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
 
 vi.mock("@tauri-apps/plugin-opener", () => ({
   openPath: vi.fn(),
+  openUrl: vi.fn(),
 }));
 
+import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { dialogStore } from "$lib/stores/dialogStore.svelte";
 import { editorStore } from "$lib/stores/editorStoreCore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { openFile, saveCurrentFile } from "$lib/utils/fileDialogs";
+import { navigateToPath, openFile, saveCurrentFile } from "$lib/utils/fileDialogs";
 
 const SCRATCH = "/tmp/scratch.md";
 const ORIGINAL = "# Scratch\n\nHello world\n";
@@ -168,5 +170,16 @@ describe("save overwrite guard", () => {
     expect(await saveCurrentFile()).toBe(true);
     expect(dialogStore.isOpen).toBe(false);
     expect(fakeDisk.files.get(SCRATCH)?.mtime).toBe(mtimeBefore);
+  });
+});
+
+describe("navigateToPath", () => {
+  it("opens web and mail links externally instead of resolving them as file paths", async () => {
+    await navigateToPath("https://example.com/docs");
+    await navigateToPath("mailto:me@example.com");
+
+    expect(openUrl).toHaveBeenNthCalledWith(1, "https://example.com/docs");
+    expect(openUrl).toHaveBeenNthCalledWith(2, "mailto:me@example.com");
+    expect(openPath).not.toHaveBeenCalled();
   });
 });

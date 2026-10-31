@@ -1,9 +1,7 @@
 import { syntaxTree } from "@codemirror/language";
 import { EditorView } from "@codemirror/view";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { extractPathAtPos, extractWikilinkAtPos } from "$lib/utils/filePathExtension";
 import { navigateToPath } from "$lib/utils/fileSystem";
-import { logger } from "$lib/utils/logger";
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -75,12 +73,7 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
           event.preventDefault();
           event.stopImmediatePropagation();
 
-          if (/^(https?:\/\/|www\.)/i.test(targetString)) {
-            const url = targetString.startsWith("www.") ? `https://${targetString}` : targetString;
-            openUrl(url).catch((err) => logger.editor.warn("OpenUrlFailed", { error: String(err) }));
-          } else {
-            navigateToPath(targetString);
-          }
+          navigateToPath(targetString);
           return true;
         }
       }
