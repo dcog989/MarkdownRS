@@ -27,6 +27,7 @@ import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
 import { normalizePath } from "$lib/utils/path";
+import { type CloseManyMode, selectTabsToClose } from "./closeTabs";
 import { navigateToPath, openFile, saveCurrentFile, saveCurrentFileAs } from "./fileDialogs";
 import { renameFileOnDisk } from "./fileIO";
 
@@ -44,42 +45,9 @@ export {
   saveCurrentFileAs,
 };
 
-export type CloseManyMode = "right" | "left" | "others" | "saved" | "unsaved" | "all" | "unpinned";
-
 export async function closeManyTabs(mode: CloseManyMode, tabId?: string): Promise<void> {
-  const tabs = appContext.editor.tabs;
-  const tabIndex = tabId != null ? tabs.findIndex((t) => t.id === tabId) : -1;
-
-  let targets: (typeof tabs)[number][] = [];
-
-  switch (mode) {
-    case "right":
-    case "left":
-      // Right/left are relative to a specific tab. Without one, the -1 fallback
-      // index would silently close the wrong tabs (slice(0) / slice(0, -1)).
-      if (tabIndex === -1) return;
-      targets = mode === "right" ? tabs.slice(tabIndex + 1) : tabs.slice(0, tabIndex);
-      break;
-    case "others":
-      targets = tabs.filter((t) => t.id !== tabId);
-      break;
-    case "saved":
-      targets = tabId != null ? tabs.filter((t) => !t.isDirty && t.id !== tabId) : tabs.filter((t) => !t.isDirty);
-      break;
-    case "unsaved":
-      targets = tabId != null ? tabs.filter((t) => t.isDirty && t.id !== tabId) : tabs.filter((t) => t.isDirty);
-      break;
-    case "unpinned":
-      targets = tabs.filter((t) => !t.isPinned);
-      break;
-    case "all":
-      targets = tabs;
-      break;
-  }
-
-  for (const t of targets) {
-    if (t.isPinned && mode !== "all") continue;
-    await requestCloseTab(t.id, mode === "all");
+  for (const tab of selectTabsToClose(appContext.editor.tabs, mode, tabId)) {
+    await requestCloseTab(tab.id, mode === "all");
   }
 }
 
