@@ -60,28 +60,24 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
     Ok(themes)
 }
 
-pub async fn read_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Result<String, String> {
-    let theme_path = match resolve_path(app_handle, theme_name).await {
-        Some(path) => path,
-        None => {
-            log::warn!("Theme '{}' not found", theme_name);
-            return Err(format!("Custom theme '{}' not found", theme_name));
-        },
-    };
-
-    read_css_file(theme_path).await
-}
-
-/// CSS for the theme saved in settings, if it resolves to a bundled template or
-/// an existing file. Silent on a miss: the built-in theme has no CSS file.
-pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<String> {
+/// CSS for a theme, or `None` when no file and no bundled template match.
+/// A bundled name always wins, so shipped theme fixes reach existing installs;
+/// custom themes are new file names.
+pub async fn resolve_css(themes_dir: &Path, theme_name: &str) -> Option<String> {
     if let Some(css) = default_css(theme_name) {
         return Some(css.to_string());
     }
-    read_css_file(resolve_path(app_handle, theme_name).await?).await.ok()
+    read_css_file(resolve_path(themes_dir, theme_name).await?).await.ok()
 }
 
-async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<PathBuf> {
+/// CSS for the theme saved in settings. Silent on a miss: the built-in theme
+/// has no CSS file.
+pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Option<String> {
+    let data_dir = super::app_data_path(app_handle).ok()?;
+    resolve_css(&crate::utils::themes_dir(&data_dir), theme_name).await
+}
+
+async fn resolve_path(themes_dir: &Path, theme_name: &str) -> Option<PathBuf> {
     let keyed_name = keyed(theme_name);
     if !is_plain_name(theme_name) || !is_plain_name(&keyed_name) {
         // Expected for the built-in "Auto (Light/Dark)" pseudo-theme, which has
@@ -92,15 +88,6 @@ async fn resolve_path(app_handle: &tauri::AppHandle, theme_name: &str) -> Option
         );
         return None;
     }
-
-    let data_dir = match super::app_data_path(app_handle) {
-        Ok(dir) => dir,
-        Err(e) => {
-            log::warn!("Cannot resolve themes directory: {}", e);
-            return None;
-        },
-    };
-    let themes_dir = crate::utils::themes_dir(&data_dir);
 
     let exact = themes_dir.join(format!("{}.css", theme_name));
     if fs::try_exists(&exact).await.unwrap_or(false) {
@@ -152,7 +139,41 @@ async fn read_css_file(theme_path: PathBuf) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::is_plain_name;
+    use super::{default_css, is_plain_name, resolve_css};
+
+    fn test_dir(suffix: &str) -> std::path::PathBuf {
+        std::env::temp_dir().join(format!("markdownrs-theme-test-{suffix}-{}", std::process::id()))
+    }
+
+    #[tokio::test]
+    async fn bundled_template_wins_over_stale_file() {
+        let dir = test_dir("stale");
+        tokio::fs::create_dir_all(&dir).await.unwrap();
+        tokio::fs::write(dir.join("catppuccin.css"), ":root { --editor-bg: #123456; }")
+            .await
+            .unwrap();
+
+        let css = resolve_css(&dir, "Catppuccin").await.unwrap();
+
+        assert_eq!(css, default_css("Catppuccin").unwrap());
+        tokio::fs::remove_dir_all(&dir).await.ok();
+    }
+
+    #[tokio::test]
+    async fn custom_theme_file_is_used() {
+        let dir = test_dir("custom");
+        tokio::fs::create_dir_all(&dir).await.unwrap();
+        tokio::fs::write(dir.join("my-theme.css"), ":root { --editor-bg: #123456; }")
+            .await
+            .unwrap();
+
+        assert_eq!(
+            resolve_css(&dir, "My Theme").await.unwrap(),
+            ":root { --editor-bg: #123456; }"
+        );
+        assert_eq!(resolve_css(&dir, "Not A Theme").await, None);
+        tokio::fs::remove_dir_all(&dir).await.ok();
+    }
 
     #[test]
     fn rejects_names_with_path_components() {

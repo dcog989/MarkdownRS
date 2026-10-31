@@ -23,18 +23,6 @@ fn main() {
     let out_dir = std::env::var("OUT_DIR").unwrap();
     let dest_path = std::path::Path::new(&out_dir).join("generated_themes.rs");
 
-    let mut theme_entries = String::new();
-    for name in &entries {
-        theme_entries.push_str(r#"    (""#);
-        theme_entries.push_str(name);
-        theme_entries.push_str(r#"", include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/styles/themes/"#);
-        theme_entries.push_str(name);
-        theme_entries.push_str(
-            r#".css"))),
-"#,
-        );
-    }
-
     let mut lookup_arms = String::new();
     for name in &entries {
         lookup_arms.push_str(r#"        ""#);
@@ -48,16 +36,12 @@ fn main() {
     }
 
     let code = format!(
-        r#"pub const TEMPLATE_THEMES: &[(&str, &str)] = &[
-{theme_entries}];
-
-pub fn lookup_template_css(theme: &str) -> Option<&'static str> {{
+        r#"pub fn lookup_template_css(theme: &str) -> Option<&'static str> {{
     match theme {{
 {lookup_arms}        _ => None,
     }}
 }}
 "#,
-        theme_entries = theme_entries,
         lookup_arms = lookup_arms,
     );
 

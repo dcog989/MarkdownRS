@@ -31,12 +31,10 @@ pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<St
 
 #[tauri::command]
 pub async fn get_theme_css(app_handle: tauri::AppHandle, theme_name: String) -> Result<String, String> {
-    let css = if let Some(css) = themes::default_css(&theme_name) {
-        css.to_string()
-    } else {
-        themes::read_css(&app_handle, &theme_name).await?
-    };
-    Ok(css)
+    let data_dir = app_data_path(&app_handle)?;
+    themes::resolve_css(&crate::utils::themes_dir(&data_dir), &theme_name)
+        .await
+        .ok_or_else(|| format!("Theme '{theme_name}' not found"))
 }
 
 #[tauri::command]
