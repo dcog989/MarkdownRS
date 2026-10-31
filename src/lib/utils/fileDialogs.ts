@@ -2,7 +2,6 @@ import { open, save } from "@tauri-apps/plugin-dialog";
 import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { translate } from "$lib/i18n";
 import {
-  checkFileExists,
   hasFileChanged,
   invalidateMetadataCache,
   normalizeLineEndings,
@@ -18,8 +17,8 @@ import {
   pushToMru,
   saveTabComplete,
   updateContentOnly,
+  updateMetadata,
   updateTabFields,
-  updateTransientState,
 } from "$lib/stores/editorStore.svelte";
 import { addToFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { notifyFileSaved } from "$lib/stores/fileTreeStore.svelte";
@@ -114,7 +113,6 @@ export async function openFile(path?: string): Promise<void> {
 
     const initialWordCount = computeWordCount(result.content);
 
-    updateTransientState(id, { fileCheckPerformed: false });
     updateTabFields(id, {
       path: sanitizedPath,
       isDirty: false,
@@ -126,9 +124,10 @@ export async function openFile(path?: string): Promise<void> {
       lineCount,
       widestColumn,
     });
+    // The stat above already carries created/modified, so opening a file costs
+    // one metadata call instead of three.
+    updateMetadata(id, metadata.created, metadata.modified);
 
-    await refreshMetadata(id, sanitizedPath);
-    await checkFileExists(id);
     await fileWatcher.watch(id, sanitizedPath);
     appContext.app.activeTabId = id;
 

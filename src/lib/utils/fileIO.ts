@@ -1,5 +1,5 @@
 import { translate } from "$lib/i18n";
-import type { WriteFileResult } from "$lib/types/api";
+import type { FileMetadata, WriteFileResult } from "$lib/types/api";
 import { callBackend } from "./backend";
 import { AppError } from "./errorHandling";
 import { getFilename } from "./fileValidation";
@@ -10,7 +10,7 @@ export async function readTextFile(
   return callBackend("read_text_file", { path }, "File:Read");
 }
 
-export async function getFileMetadata(path: string): Promise<{ size: number } | null> {
+export async function getFileMetadata(path: string): Promise<FileMetadata | null> {
   return callBackend("get_file_metadata", { path }, "File:Metadata");
 }
 
