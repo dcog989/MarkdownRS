@@ -36,6 +36,9 @@ import { getFileMetadata, readTextFile, resolveRelativePath, writeTextFile } fro
 import { getFilename, isMarkdownFile, isTextFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
 import { formatMarkdown } from "./formatterRust";
 
+/** Paths with an open in flight; a double-click must not create two tabs. */
+const openingPaths = new Set<string>();
+
 export async function openFile(path?: string): Promise<void> {
   const start = performance.now();
 
@@ -73,76 +76,88 @@ export async function openFile(path?: string): Promise<void> {
       return;
     }
 
-    const metadata = await getFileMetadata(sanitizedPath);
-
-    const maxFileSizeMB = settingsState.maxFileSizeMB;
-    const BYTES_PER_MB = 1024 * 1024;
-    const maxBytes = maxFileSizeMB * BYTES_PER_MB;
-
-    if (!metadata) {
-      throw new Error(translate("fileOps.failedMetadata"));
+    // A double-click fires two clicks before the first open adds its tab; the
+    // second one joins the first instead of reading the file again.
+    if (openingPaths.has(sanitizedPath)) return;
+    openingPaths.add(sanitizedPath);
+    try {
+      await openNewTab(sanitizedPath, start);
+    } finally {
+      openingPaths.delete(sanitizedPath);
     }
-
-    if (metadata.size > maxBytes) {
-      throw new Error(
-        translate("fileOps.tooLarge", {
-          values: { size: (metadata.size / BYTES_PER_MB).toFixed(2), max: maxFileSizeMB },
-        }),
-      );
-    }
-
-    const result = await readTextFile(sanitizedPath);
-
-    if (!result) {
-      throw new Error(translate("fileOps.failedReadNull"));
-    }
-
-    const fileName = getFilename(sanitizedPath) || translate("fileOps.untitled");
-
-    const detectedLineEnding = detectLineEnding(result.content);
-
-    let initialTitle = fileName;
-    if (appContext.settings.tabNameFromContent) {
-      const smartTitle = extractSmartTitle(result.content);
-      if (smartTitle) initialTitle = smartTitle;
-    }
-
-    const id = addTab(initialTitle, result.content);
-
-    const { lineCount, widestColumn } = computeLineStats(result.content);
-
-    const initialWordCount = computeWordCount(result.content);
-
-    updateTabFields(id, {
-      path: sanitizedPath,
-      isDirty: false,
-      lineEnding: detectedLineEnding,
-      encoding: result.encoding.toUpperCase(),
-      hasBom: result.has_bom,
-      sizeBytes: metadata.size,
-      wordCount: initialWordCount,
-      lineCount,
-      widestColumn,
-    });
-    // The stat above already carries created/modified, so opening a file costs
-    // one metadata call instead of three.
-    updateMetadata(id, metadata.created, metadata.modified);
-
-    await fileWatcher.watch(id, sanitizedPath);
-    appContext.app.activeTabId = id;
-
-    logger.file.debug("FileOpened", {
-      duration: formatDuration(start),
-      path: sanitizedPath,
-      size: metadata.size,
-      encoding: result.encoding,
-    });
   } catch (_err) {
     AppError.handle("File:Read", _err, {
       showToast: true,
       additionalInfo: { path },
     });
   }
+}
+
+async function openNewTab(sanitizedPath: string, start: number): Promise<void> {
+  const metadata = await getFileMetadata(sanitizedPath);
+
+  const maxFileSizeMB = settingsState.maxFileSizeMB;
+  const BYTES_PER_MB = 1024 * 1024;
+  const maxBytes = maxFileSizeMB * BYTES_PER_MB;
+
+  if (!metadata) {
+    throw new Error(translate("fileOps.failedMetadata"));
+  }
+
+  if (metadata.size > maxBytes) {
+    throw new Error(
+      translate("fileOps.tooLarge", {
+        values: { size: (metadata.size / BYTES_PER_MB).toFixed(2), max: maxFileSizeMB },
+      }),
+    );
+  }
+
+  const result = await readTextFile(sanitizedPath);
+
+  if (!result) {
+    throw new Error(translate("fileOps.failedReadNull"));
+  }
+
+  const fileName = getFilename(sanitizedPath) || translate("fileOps.untitled");
+
+  const detectedLineEnding = detectLineEnding(result.content);
+
+  let initialTitle = fileName;
+  if (appContext.settings.tabNameFromContent) {
+    const smartTitle = extractSmartTitle(result.content);
+    if (smartTitle) initialTitle = smartTitle;
+  }
+
+  const id = addTab(initialTitle, result.content);
+
+  const { lineCount, widestColumn } = computeLineStats(result.content);
+
+  const initialWordCount = computeWordCount(result.content);
+
+  updateTabFields(id, {
+    path: sanitizedPath,
+    isDirty: false,
+    lineEnding: detectedLineEnding,
+    encoding: result.encoding.toUpperCase(),
+    hasBom: result.has_bom,
+    sizeBytes: metadata.size,
+    wordCount: initialWordCount,
+    lineCount,
+    widestColumn,
+  });
+  // The stat above already carries created/modified, so opening a file costs
+  // one metadata call instead of three.
+  updateMetadata(id, metadata.created, metadata.modified);
+
+  await fileWatcher.watch(id, sanitizedPath);
+  appContext.app.activeTabId = id;
+
+  logger.file.debug("FileOpened", {
+    duration: formatDuration(start),
+    path: sanitizedPath,
+    size: metadata.size,
+    encoding: result.encoding,
+  });
 }
 
 const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;

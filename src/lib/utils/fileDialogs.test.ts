@@ -222,6 +222,20 @@ describe("openFile", () => {
 
     expect(editorStore.tabs).toHaveLength(0);
   });
+
+  it("opens one tab when the same file is opened twice at once", async () => {
+    fakeDisk.files.set("/tmp/note.md", {
+      content: "# Note\n",
+      mtime: fakeDisk.nextMtime(),
+      size: 7,
+      encoding: "UTF-8",
+      has_bom: false,
+    });
+
+    await Promise.all([openFile("/tmp/note.md"), openFile("/tmp/note.md")]);
+
+    expect(editorStore.tabs).toHaveLength(1);
+  });
 });
 
 describe("navigateToPath", () => {
