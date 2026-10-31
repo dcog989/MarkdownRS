@@ -1,25 +1,19 @@
 <script lang="ts">
-import Bookmark from "lucide-svelte/icons/bookmark";
-import CircleAlert from "lucide-svelte/icons/circle-alert";
-import FileText from "lucide-svelte/icons/file-text";
-import Pencil from "lucide-svelte/icons/pencil";
-import PencilLine from "lucide-svelte/icons/pencil-line";
 import Pin from "lucide-svelte/icons/pin";
-import SquarePen from "lucide-svelte/icons/square-pen";
 import X from "lucide-svelte/icons/x";
 import { untrack } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import CustomScrollbar from "$lib/components/ui/CustomScrollbar.svelte";
-import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
+import TabIcon from "$lib/components/ui/TabIcon.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { focusOnMount } from "$lib/utils/dom";
 import { requestCloseTab } from "$lib/utils/fileSystem";
-import { formatFileSize } from "$lib/utils/fileValidation";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
+import { tabTooltip } from "$lib/utils/tabDisplay";
 
 let {
   isOpen = false,
@@ -64,19 +58,7 @@ function getDropdownTitle(tab: EditorTab): string {
 }
 
 function getTooltipContent(tab: EditorTab): string {
-  const parts: string[] = [];
-  const sizeStr = formatFileSize(tab.sizeBytes || 0);
-  const formattedTime = tab.formattedTimestamp || "";
-  const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
-
-  if (tab.fileCheckFailed) {
-    parts.push($_("tabButton.missingFile"));
-    if (tab.path) parts.push(tab.path);
-  } else {
-    parts.push(tab.path || $_("tabButton.unsaved"));
-  }
-  parts.push(bottomLine);
-  return parts.join("\n");
+  return tabTooltip(tab, { missing: $_("tabButton.missingFile"), unsaved: $_("tabButton.unsaved") });
 }
 
 $effect(() => {
@@ -154,21 +136,7 @@ function handleKeydown(e: KeyboardEvent) {
               role="menuitem"
               use:tooltip={getTooltipContent(tab)}
             >
-              {#if tab.fileCheckFailed}
-                <CircleAlert size={14} class="row-icon shrink-0" style="--icon-color: var(--danger);" />
-              {:else if !tab.path}
-                {#if tab.content.length > 0}
-                  <PencilLine size={14} class="row-icon shrink-0" />
-                {:else}
-                  <Pencil size={14} class="row-icon shrink-0" />
-                {/if}
-              {:else if tab.isDirty}
-                <SquarePen size={14} class="row-icon shrink-0" style="--icon-color: var(--dirty-indicator);" />
-              {:else if tab.path && isBookmarked(tab.path)}
-                <Bookmark size={14} class="row-icon shrink-0" />
-              {:else}
-                <FileText size={14} class="row-icon shrink-0" />
-              {/if}
+              <TabIcon {tab} variant="row" />
 
               <span class="flex-1 truncate">{getDropdownTitle(tab)}</span>
             </button>

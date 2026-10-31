@@ -1,15 +1,10 @@
 <script lang="ts">
-import Bookmark from "lucide-svelte/icons/bookmark";
-import CircleAlert from "lucide-svelte/icons/circle-alert";
-import FileText from "lucide-svelte/icons/file-text";
-import PencilLine from "lucide-svelte/icons/pencil-line";
-import SquarePen from "lucide-svelte/icons/square-pen";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import Modal from "$lib/components/ui/Modal.svelte";
+import TabIcon from "$lib/components/ui/TabIcon.svelte";
 import { MODAL_CONSTRAINTS } from "$lib/config/modalSizes";
-import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 
 interface Props {
@@ -85,27 +80,7 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
           {index + 1}
         </div>
 
-        {#if tab.fileCheckFailed}
-          <div class="row-icon">
-            <CircleAlert size={14} class="shrink-0" />
-          </div>
-        {:else if tab.path && tab.isDirty}
-          <div class="row-icon mru-icon--dirty">
-            <SquarePen size={14} class="shrink-0" />
-          </div>
-        {:else if !tab.path}
-          <div class="row-icon">
-            <PencilLine size={14} class="shrink-0" />
-          </div>
-        {:else if isBookmarked(tab.path)}
-          <div class="row-icon">
-            <Bookmark size={14} class="shrink-0" />
-          </div>
-        {:else}
-          <div class="row-icon">
-            <FileText size={14} class="shrink-0" />
-          </div>
-        {/if}
+        <TabIcon {tab} variant="row" />
 
         <div class="min-w-0 flex-1">
           <div class="truncate font-medium">{tab.title}</div>
@@ -121,9 +96,3 @@ function scrollIntoView(node: HTMLElement, isSelected: boolean) {
     {/each}
   </div>
 </Modal>
-
-<style>
-.mru-icon--dirty {
-  --icon-color: var(--dirty-indicator);
-}
-</style>

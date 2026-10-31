@@ -1,18 +1,12 @@
 <script lang="ts">
-import Bookmark from "lucide-svelte/icons/bookmark";
-import CircleAlert from "lucide-svelte/icons/circle-alert";
-import FileText from "lucide-svelte/icons/file-text";
-import Pencil from "lucide-svelte/icons/pencil";
-import PencilLine from "lucide-svelte/icons/pencil-line";
 import Pin from "lucide-svelte/icons/pin";
-import SquarePen from "lucide-svelte/icons/square-pen";
 import X from "lucide-svelte/icons/x";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
-import { isBookmarked } from "$lib/stores/bookmarkStore.svelte";
+import TabIcon from "$lib/components/ui/TabIcon.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { formatFileSize } from "$lib/utils/fileValidation";
+import { tabTooltip } from "$lib/utils/tabDisplay";
 
 interface Props {
   tab: EditorTab;
@@ -24,30 +18,11 @@ interface Props {
 
 let { tab, isActive, onclick, onclose, oncontextmenu }: Props = $props();
 
-let isFileMissing = $derived(tab.fileCheckFailed === true);
 let isCollapsed = $derived(appContext.settings.collapsePinnedTabs && tab.isPinned);
 
-let tooltipContent = $derived.by(() => {
-  const parts: string[] = [];
-  const sizeStr = formatFileSize(tab.sizeBytes || 0);
-  const formattedTime = tab.formattedTimestamp || "";
-
-  const bottomLine = formattedTime ? `${formattedTime}, ${sizeStr}` : sizeStr;
-
-  if (tab.fileCheckFailed) {
-    parts.push($_("tabButton.missingFile"));
-    if (tab.path) parts.push(tab.path);
-  } else {
-    parts.push(tab.path || $_("tabButton.unsaved"));
-  }
-  parts.push(bottomLine);
-
-  if (isCollapsed) {
-    return `${tab.customTitle || tab.title}\n${parts.join("\n")}`;
-  }
-
-  return parts.join("\n");
-});
+let tooltipContent = $derived.by(() =>
+  tabTooltip(tab, { missing: $_("tabButton.missingFile"), unsaved: $_("tabButton.unsaved") }, isCollapsed),
+);
 </script>
 
 <div
@@ -74,35 +49,7 @@ let tooltipContent = $derived.by(() => {
   onkeydown={(e) => e.key === "Enter" && onclick?.(tab.id)}
   use:tooltip={isCollapsed ? tooltipContent : null}
 >
-  {#if isFileMissing}
-    <CircleAlert size={14} class="text-danger shrink-0" />
-  {:else if !tab.path}
-    {#if tab.content.length > 0}
-      <PencilLine
-        size={14}
-        class="shrink-0 {isActive && tab.isDirty
-          ? "text-dirty-active"
-          : isActive
-            ? "text-fg-inverse"
-            : "text-fg-muted"}"
-      />
-    {:else}
-      <Pencil size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
-    {/if}
-  {:else if tab.isDirty}
-    <SquarePen
-      size={14}
-      class="shrink-0 {isActive && tab.isDirty
-        ? "text-dirty-active"
-        : isActive
-          ? "text-fg-inverse"
-          : "text-accent-secondary"}"
-    />
-  {:else if tab.path && isBookmarked(tab.path)}
-    <Bookmark size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
-  {:else}
-    <FileText size={14} class="shrink-0 {isActive ? "text-fg-inverse" : "text-fg-muted"}" />
-  {/if}
+  <TabIcon {tab} {isActive} />
 
   {#if !isCollapsed}
     <div class="flex-1 truncate" use:tooltip={tooltipContent}>
