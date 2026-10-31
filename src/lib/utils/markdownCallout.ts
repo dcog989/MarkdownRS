@@ -1,7 +1,7 @@
-import { syntaxTree } from "@codemirror/language";
-import type { Line, Range } from "@codemirror/state";
-import { Decoration, type EditorView, WidgetType } from "@codemirror/view";
-import { type CalloutInfo, type DecorationWalk, isRevealed } from "./markdownDecorationCore";
+import type { Line } from "@codemirror/state";
+import { Decoration, WidgetType } from "@codemirror/view";
+import type { SyntaxNodeRef } from "@lezer/common";
+import { type DecorationWalk, isRevealed } from "./markdownDecorationCore";
 
 const CALLOUT_STYLES: Record<string, { title: string; icon: string }> = {
   note: {
@@ -59,42 +59,28 @@ class CalloutTitleWidget extends WidgetType {
 }
 
 /**
- * Finds callout blockquotes in the visible ranges. Returns the marker text
- * spans (for coloring/replacement) and the map of callout line numbers to
- * their type. Callouts are always decorated (even under the cursor) so they
- * keep their styled appearance while being edited.
+ * Collects the marker span and line range of one callout blockquote. Called
+ * from the decoration walk's single tree pass, so callouts do not need a tree
+ * walk of their own. Callouts are always decorated (even under the cursor) so
+ * they keep their styled appearance while being edited.
  */
-export function collectCallouts(view: EditorView): CalloutInfo {
-  const markers: { from: number; to: number; kind: string; active: boolean }[] = [];
-  const lines = new Map<number, string>();
-  const tree = syntaxTree(view.state);
+export function collectCalloutNode(walk: DecorationWalk, node: SyntaxNodeRef): void {
+  const fromLine = walk.view.state.doc.lineAt(node.from);
+  const callout = matchCalloutLine(fromLine.text);
+  if (!callout) return;
 
-  for (const { from, to } of view.visibleRanges) {
-    tree.iterate({
-      from,
-      to,
-      enter: (node) => {
-        if (node.name !== "Blockquote") return;
-        const fromLine = view.state.doc.lineAt(node.from);
-        const callout = matchCalloutLine(fromLine.text);
-        if (!callout) return;
-        const markerStart = fromLine.from + callout.start;
-        const active = isRevealed(view, node.from, node.to);
-        markers.push({
-          from: markerStart,
-          to: markerStart + callout.raw.length,
-          kind: callout.kind,
-          active,
-        });
-        const toLine = view.state.doc.lineAt(node.to);
-        for (let i = fromLine.number; i <= toLine.number; i++) {
-          lines.set(i, callout.kind);
-        }
-      },
-    });
+  const markerStart = fromLine.from + callout.start;
+  walk.calloutMarkers.push({
+    from: markerStart,
+    to: markerStart + callout.raw.length,
+    kind: callout.kind,
+    active: isRevealed(walk.view, node.from, node.to),
+  });
+
+  const toLine = walk.view.state.doc.lineAt(node.to);
+  for (let i = fromLine.number; i <= toLine.number; i++) {
+    walk.calloutLines.set(i, callout.kind);
   }
-
-  return { markers, lines };
 }
 
 export function collectCalloutLine(walk: DecorationWalk, line: Line): void {
@@ -119,15 +105,13 @@ export function collectCalloutDecorations(walk: DecorationWalk): void {
   }
 }
 
-export function collectRawCalloutDecorations(
-  view: EditorView,
-  callouts: CalloutInfo,
-  ranges: Range<Decoration>[],
-): void {
-  for (const m of callouts.markers) {
-    ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
+export function collectRawCalloutDecorations(walk: DecorationWalk): void {
+  for (const m of walk.calloutMarkers) {
+    walk.ranges.push(Decoration.mark({ class: `cm-callout-marker cm-callout-${m.kind}` }).range(m.from, m.to));
   }
-  for (const [lineNo, kind] of callouts.lines) {
-    ranges.push(Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(view.state.doc.line(lineNo).from));
+  for (const [lineNo, kind] of walk.calloutLines) {
+    walk.ranges.push(
+      Decoration.line({ class: `cm-callout cm-callout-${kind}` }).range(walk.view.state.doc.line(lineNo).from),
+    );
   }
 }

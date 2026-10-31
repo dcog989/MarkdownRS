@@ -5,12 +5,11 @@ import type { SyntaxNodeRef } from "@lezer/common";
 import {
   collectCalloutDecorations,
   collectCalloutLine,
-  collectCallouts,
+  collectCalloutNode,
   collectRawCalloutDecorations,
 } from "./markdownCallout";
 import { collectColorSwatches } from "./markdownColorSwatch";
 import {
-  type CalloutInfo,
   type DecorationWalk,
   type GetTabDirectory,
   isHrLineRevealed,
@@ -45,6 +44,10 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
 ];
 
 const HIDE_TRAILING_SPACE = new Set(["HeaderMark", "QuoteMark"]);
+
+// Derived once: findHiddenMarkers runs on every decoration rebuild.
+const MARKER_BY_NAME = new Map(MARKER_CONFIG.map((cfg) => [cfg.marker, cfg]));
+const MARKER_PARENTS = new Set(MARKER_CONFIG.flatMap((cfg) => [...cfg.parents]));
 
 const strikethroughDeco = Decoration.mark({ class: "cm-strikethrough" });
 const blockquoteQuoteDeco = Decoration.line({ class: "cm-blockquote-quote" });
@@ -112,14 +115,6 @@ function findHiddenMarkers(
   ranges: Range<Decoration>[],
   tableSpans: Array<{ from: number; to: number }>,
 ) {
-  const usedParents = new Set<string>();
-  const markerCfg = new Map<string, { marker: string; parents: ReadonlySet<string> }>();
-
-  for (const cfg of MARKER_CONFIG) {
-    for (const p of cfg.parents) usedParents.add(p);
-    markerCfg.set(cfg.marker, cfg);
-  }
-
   const hiddenStack: Array<{ from: number; to: number }> = [];
   const isInTable = (from: number, to: number) => tableSpans.some((span) => from >= span.from && to <= span.to);
 
@@ -128,13 +123,13 @@ function findHiddenMarkers(
       from,
       to,
       enter: (node) => {
-        if (usedParents.has(node.name)) {
+        if (MARKER_PARENTS.has(node.name)) {
           if (isRevealed(view, node.from, node.to)) return false;
           hiddenStack.push({ from: node.from, to: node.to });
           return;
         }
         if (hiddenStack.length === 0) return;
-        const cfg = markerCfg.get(node.name);
+        const cfg = MARKER_BY_NAME.get(node.name);
         if (!cfg) return;
         const parent = hiddenStack[hiddenStack.length - 1];
         if (node.from < parent.from || node.to > parent.to) return;
@@ -154,7 +149,7 @@ function findHiddenMarkers(
         }
       },
       leave: (node) => {
-        if (usedParents.has(node.name) && hiddenStack.length > 0) {
+        if (MARKER_PARENTS.has(node.name) && hiddenStack.length > 0) {
           const top = hiddenStack[hiddenStack.length - 1];
           if (top.from === node.from && top.to === node.to) {
             hiddenStack.pop();
@@ -272,6 +267,7 @@ function visitDecorationNode(walk: DecorationWalk, node: SyntaxNodeRef, rangeFro
       return false;
     case "Blockquote":
       collectBlockquoteLines(walk, node);
+      collectCalloutNode(walk, node);
       return false;
     case "Image":
       return collectImageWidget(walk, node);
@@ -373,21 +369,14 @@ function collectRawHorizontalRule(walk: DecorationWalk, line: Line): void {
  * while remaining fully literal and WYSIWYG-free. Inline constructs rely on
  * syntax highlighting alone.
  */
-function buildRawDecorations(
-  view: EditorView,
-  tree: ReturnType<typeof syntaxTree>,
-  callouts: CalloutInfo,
-  ranges: Range<Decoration>[],
-): void {
-  collectRawCalloutDecorations(view, callouts, ranges);
-
+function buildRawDecorations(view: EditorView, tree: ReturnType<typeof syntaxTree>, ranges: Range<Decoration>[]): void {
   const walk: DecorationWalk = {
     view,
     tree,
     ranges,
     getTabDirectory: () => "",
-    calloutMarkers: callouts.markers,
-    calloutLines: callouts.lines,
+    calloutMarkers: [],
+    calloutLines: new Map<number, string>(),
     tableSpans: [],
     cursorHeadingLines: new Set<number>(),
     tableLines: new Set<number>(),
@@ -413,6 +402,9 @@ function buildRawDecorations(
           case "HorizontalRule":
             walk.parserHrs.add(node.from);
             return false;
+          case "Blockquote":
+            collectCalloutNode(walk, node);
+            return;
         }
       },
     });
@@ -434,6 +426,8 @@ function buildRawDecorations(
       pos = line.to + 1;
     }
   }
+
+  collectRawCalloutDecorations(walk);
 }
 
 /**
@@ -448,22 +442,21 @@ function buildDecorations(
   getTabDirectory: GetTabDirectory,
   colorSwatches: boolean,
 ): DecorationSet {
-  const callouts = collectCallouts(view);
   const ranges: Range<Decoration>[] = [];
+  const tree = syntaxTree(view.state);
 
   if (!rendered) {
-    buildRawDecorations(view, syntaxTree(view.state), callouts, ranges);
+    buildRawDecorations(view, tree, ranges);
     return Decoration.set(ranges, true);
   }
 
-  const tree = syntaxTree(view.state);
   const walk: DecorationWalk = {
     view,
     tree,
     ranges,
     getTabDirectory,
-    calloutMarkers: callouts.markers,
-    calloutLines: callouts.lines,
+    calloutMarkers: [],
+    calloutLines: new Map<number, string>(),
     tableSpans: collectTableSpans(view.state, view.visibleRanges),
     cursorHeadingLines: findCursorHeadingLines(view),
     tableLines: new Set<number>(),
@@ -474,7 +467,6 @@ function buildDecorations(
     colorSwatches,
   };
 
-  collectCalloutDecorations(walk);
   findHiddenMarkers(view, tree, ranges, walk.tableSpans);
   collectTableLines(walk);
 
@@ -487,6 +479,10 @@ function buildDecorations(
       },
     });
   }
+
+  // Callout nodes were collected by the node pass above; the marker spans are
+  // painted once that pass knows every callout line.
+  collectCalloutDecorations(walk);
 
   for (const { from, to } of view.visibleRanges) {
     for (let pos = from; pos <= to; ) {
