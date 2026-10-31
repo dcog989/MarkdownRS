@@ -11,6 +11,18 @@ macro_rules! cspell_url {
     };
 }
 
+/// Pinned commit of the fallback dictionary repository.
+const WOOORM_COMMIT: &str = "8cfea406b505e4d7df52d5a19bce525df98c54ab";
+
+/// Languages served from wooorm/dictionaries. Every code offered in
+/// `DictionarySelector.svelte` must be pinned below or listed here; the test at
+/// the bottom of this file enforces it.
+const WOOORM_LANGUAGES: &[&str] = &[
+    "bg", "ca", "cs", "cy", "da", "de", "de-AT", "de-CH", "el", "en", "eo", "es", "et", "eu", "fa", "fr", "gd", "gl",
+    "he", "hr", "hu", "hy", "is", "it", "ko", "la", "lt", "lv", "mk", "mn", "nb", "nl", "nn", "pl", "pt", "ro", "ru",
+    "sk", "sl", "sr", "sv", "tr", "uk", "vi",
+];
+
 enum DictCategory {
     Technical,
     Scientific,
@@ -75,7 +87,7 @@ pub fn list_scientific_ids() -> Vec<String> {
         .collect()
 }
 
-pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
+fn pinned_language_urls(dict_code: &str) -> Option<(&'static str, &'static str)> {
     match dict_code {
         "en-US" => Some((
             cspell_url!("/aoo-mozilla-en-dict/dicts/en_US%20(Marco%20Pinto)%20(-ize)%20(alt)/en_US.aff"),
@@ -113,6 +125,17 @@ pub fn resolve_language_urls(dict_code: &str) -> Option<(&'static str, &'static 
     }
 }
 
+pub fn resolve_language_urls(dict_code: &str) -> Option<(String, String)> {
+    if let Some((aff, dic)) = pinned_language_urls(dict_code) {
+        return Some((aff.to_string(), dic.to_string()));
+    }
+    WOOORM_LANGUAGES.contains(&dict_code).then(|| {
+        let base =
+            format!("https://raw.githubusercontent.com/wooorm/dictionaries/{WOOORM_COMMIT}/dictionaries/{dict_code}");
+        (format!("{base}/index.aff"), format!("{base}/index.dic"))
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -145,8 +168,40 @@ mod tests {
             let urls = resolve_language_urls(code);
             assert!(urls.is_some(), "Language '{}' has no URLs", code);
             let (aff_url, dic_url) = urls.unwrap();
-            assert!(is_valid_url(aff_url), "Language {} aff URL invalid", code);
-            assert!(is_valid_url(dic_url), "Language {} dic URL invalid", code);
+            assert!(is_valid_url(&aff_url), "Language {} aff URL invalid", code);
+            assert!(is_valid_url(&dic_url), "Language {} dic URL invalid", code);
+        }
+    }
+
+    #[test]
+    fn unknown_language_has_no_urls() {
+        assert!(resolve_language_urls("zz").is_none());
+    }
+
+    /// The picker is the user-facing list; the resolver is the URL source. A
+    /// language added to the picker without a source used to fail only at
+    /// download time, after the user selected it.
+    #[test]
+    fn every_picker_language_resolves() {
+        const PICKER: &str = include_str!("../../../../src/lib/components/ui/DictionarySelector.svelte");
+        let codes: Vec<&str> = PICKER
+            .match_indices("code: \"")
+            .map(|(start, found)| {
+                let rest = &PICKER[start + found.len()..];
+                &rest[..rest.find('"').expect("unterminated dictionary code")]
+            })
+            .collect();
+
+        assert!(
+            !codes.is_empty(),
+            "no dictionary codes found in DictionarySelector.svelte"
+        );
+        for code in codes {
+            assert!(
+                resolve_language_urls(code).is_some(),
+                "language '{}' is offered in the picker but has no dictionary source",
+                code
+            );
         }
     }
 }

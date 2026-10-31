@@ -14,9 +14,6 @@ const SPELL_CHECK_MAX_ATTEMPTS: u32 = 2;
 /// upstream wordlist changes); older files are ignored by the versioned name.
 const DICT_CACHE_VERSION: &str = "v1";
 
-/// Pinned commit so an upstream push cannot change what the app parses.
-const WOOORM_COMMIT: &str = "8cfea406b505e4d7df52d5a19bce525df98c54ab";
-
 /// Hunspell `.dic` files start with a word count and `.aff` files start with a
 /// directive. A proxy or captive portal can answer HTTP 200 with an HTML page,
 /// which must not stay in the cache or every retry parses it again.
@@ -120,18 +117,8 @@ pub async fn load_language_dictionary(
     let aff_path = cache_dir.join(format!("{}.{}.aff", dict_code, DICT_CACHE_VERSION));
     let dic_path = cache_dir.join(format!("{}.{}.dic", dict_code, DICT_CACHE_VERSION));
 
-    let (aff_url, dic_url) = if let Some((aff, dic)) = dicts::resolve_language_urls(&dict_code) {
-        (aff.to_string(), dic.to_string())
-    } else {
-        (
-            format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/{WOOORM_COMMIT}/dictionaries/{dict_code}/index.aff"
-            ),
-            format!(
-                "https://raw.githubusercontent.com/wooorm/dictionaries/{WOOORM_COMMIT}/dictionaries/{dict_code}/index.dic"
-            ),
-        )
-    };
+    let (aff_url, dic_url) = dicts::resolve_language_urls(&dict_code)
+        .ok_or_else(|| anyhow!("Unknown language dictionary: {}", dict_code))?;
 
     let aff_label = format!("{}.aff", dict_code);
     let dic_label = format!("{}.dic", dict_code);
@@ -272,7 +259,8 @@ pub fn build_combined_dic_string(words: &HashSet<String>) -> Option<(String, usi
 
 #[cfg(test)]
 mod tests {
-    use super::cache_content_is_usable;
+    use super::{build_combined_dic_string, cache_content_is_usable, read_cache_or_delete};
+    use std::collections::HashSet;
 
     #[test]
     fn rejects_html_saved_as_a_dictionary() {
@@ -298,5 +286,28 @@ mod tests {
     fn accepts_technical_word_lists() {
         assert!(cache_content_is_usable("software-terms", "A-Bomb\ncdylib"));
         assert!(cache_content_is_usable("software-terms", "# comment\nword"));
+    }
+
+    #[test]
+    fn technical_words_build_a_usable_dictionary() {
+        let words: HashSet<String> = ["cdylib", "async"].iter().map(|w| w.to_string()).collect();
+        let (combined, total) = build_combined_dic_string(&words).expect("non-empty word set");
+        assert_eq!(total, 2);
+
+        let dictionary = spellbook::Dictionary::new("", &combined).expect("combined dic should parse");
+        assert!(dictionary.check("cdylib"));
+        assert!(!dictionary.check("cdylibb"));
+    }
+
+    #[tokio::test(flavor = "current_thread")]
+    async fn unusable_cached_file_is_deleted() {
+        let dir = crate::utils::test_util::make_temp_dir("dict-cache");
+        let path = dir.join("en.v1.dic");
+        tokio::fs::write(&path, "<!doctype html>").await.unwrap();
+
+        assert!(read_cache_or_delete(&path, "en.dic").await.is_err());
+        assert!(!path.exists(), "unusable cache file should be removed");
+
+        std::fs::remove_dir_all(&dir).unwrap();
     }
 }
