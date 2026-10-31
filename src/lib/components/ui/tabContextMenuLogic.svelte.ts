@@ -47,8 +47,9 @@ export class TabContextMenuLogic {
   isBookmarked = $derived(this.tab?.path ? isBookmarkedSelector(this.tab.path) : false);
   tabIndex = $derived(appContext.editor.tabs.findIndex((t) => t.id === this.tabId));
 
-  hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && t.id !== this.tabId));
-  hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && t.id !== this.tabId));
+  // Pinned tabs are skipped by these close modes, so they must not enable them.
+  hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && !t.isPinned && t.id !== this.tabId));
+  hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && !t.isPinned && t.id !== this.tabId));
   hasCloseableTabsToRight = $derived(
     this.tabIndex < appContext.editor.tabs.length - 1 &&
       appContext.editor.tabs.slice(this.tabIndex + 1).some((t) => !t.isPinned),

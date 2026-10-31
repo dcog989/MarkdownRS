@@ -24,8 +24,12 @@ let activeSubmenu = $state<"close" | null>(null);
 let newTabShortcut = $derived(shortcutManager.getShortcutDisplay("file.new"));
 let saveAllShortcut = $derived(shortcutManager.getShortcutDisplay("file.saveAll"));
 
-let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty));
+// Save All writes pinned tabs too, so it keeps the plain dirty check.
 let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
+// closeManyTabs never closes a pinned tab in these modes, so a pinned tab must
+// not enable the item either — it would close nothing.
+let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && !t.isPinned));
+let hasCloseableUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && !t.isPinned));
 let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
 let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
 
@@ -90,7 +94,7 @@ async function handleNewTab() {
       <button
         type="button"
         class="text-ui menu-item"
-        disabled={!hasUnsavedTabs}
+        disabled={!hasCloseableUnsavedTabs}
         onclick={() => handleCloseMany("unsaved")}
       >
         {$_("tabBarContextMenu.closeNotSaved")}
