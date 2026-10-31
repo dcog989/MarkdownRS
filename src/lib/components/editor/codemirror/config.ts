@@ -187,8 +187,9 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     cmBindings.push({
       key: cmKey,
       run: (view) => {
-        recordCommandUsage(def.registryKey);
-        return def.handler(view);
+        const handled = def.handler(view);
+        if (handled) recordCommandUsage(def.registryKey);
+        return handled;
       },
       preventDefault: true,
     });

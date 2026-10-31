@@ -125,8 +125,8 @@ export class KeyboardShortcutManager {
         // still consume it. Prevent before the handler can await, or the default
         // action of the key has already run.
         const result = cmd.handler(e);
-        recordCommandUsage(cmd.id);
         if (result === false) return false;
+        recordCommandUsage(cmd.id);
         e.preventDefault();
         e.stopPropagation();
         await result;
