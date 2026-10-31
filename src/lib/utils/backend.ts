@@ -19,16 +19,16 @@ export async function callBackend<K extends CommandName>(
   command: K,
   args: BackendCommands[K]["args"],
   context: ErrorContext,
-  additionalInfo?: Record<string, unknown>,
-  options?: BackendCallOptions & { ignore: true },
+  additionalInfo: Record<string, unknown> | undefined,
+  options: BackendCallOptions & { ignore: true },
 ): Promise<BackendCommands[K]["return"] | null>;
 
 export async function callBackend<K extends CommandName>(
   command: K,
   args: BackendCommands[K]["args"],
   context: ErrorContext,
-  additionalInfo?: Record<string, unknown>,
-  options?: BackendCallOptions & { report: true },
+  additionalInfo: Record<string, unknown> | undefined,
+  options: BackendCallOptions & { report: true },
 ): Promise<BackendCommands[K]["return"] | null>;
 
 export async function callBackend<K extends CommandName>(
