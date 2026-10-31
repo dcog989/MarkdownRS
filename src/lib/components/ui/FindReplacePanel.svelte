@@ -37,7 +37,7 @@ let {
 }: {
   isOpen?: boolean;
   barHeight?: number;
-  cmView: EditorView | undefined;
+  cmView: (EditorView & { flushPendingContent?: () => void }) | undefined;
 } = $props();
 
 let searchScope = $state<"current" | "all">("current");
@@ -229,6 +229,7 @@ function onReplaceAll() {
       updateSearchEditor(cmView);
     }
   } else {
+    cmView.flushPendingContent?.();
     const count = replaceAllInTabs();
     if (count > 0) {
       alert(translate("findReplace.replacedCount", { values: { count } }));

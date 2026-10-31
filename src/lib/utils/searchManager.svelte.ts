@@ -2,7 +2,7 @@ import { SearchQuery, setSearchQuery } from "@codemirror/search";
 import type { EditorView } from "@codemirror/view";
 import { SvelteMap } from "svelte/reactivity";
 import { translate } from "$lib/i18n";
-import { updateContent } from "$lib/stores/editorStore.svelte";
+import { updateContent, updateContentOnly } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { searchState } from "./searchState.svelte";
 
@@ -165,6 +165,8 @@ export function replaceAllInTabs(): number {
     if (matches.length > 0) {
       const newContent = tab.content.replace(regex, searchState.replaceText);
       updateContent(tab.id, newContent, newContent.split("\n").length);
+      // Mounted editors only pick up store content when forceSync advances.
+      updateContentOnly(tab.id, newContent, true);
       total += matches.length;
     }
   });
