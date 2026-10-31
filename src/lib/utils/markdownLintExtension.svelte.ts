@@ -10,6 +10,9 @@ import { markdownLintState, resetMarkdownLintState } from "$lib/utils/markdownLi
 import type { AppEditorView } from "../../global";
 
 const lintCache = new Map<string, { content: string; diagnostics: LintDiagnostic[] }>();
+// A failing lint re-runs after every typing pause, so only the first failure of
+// a streak is reported; the next success re-arms it.
+let lintFailedNotified = false;
 
 export const markdownLintRefreshEffect = StateEffect.define<null>();
 
@@ -122,7 +125,9 @@ export const createMarkdownLinter = () => {
           harperLinters: settingsState.harperLinters,
         },
         "Markdown:Lint",
+        { showToast: !lintFailedNotified },
       );
+      lintFailedNotified = result === null;
 
       // The document may have changed while awaiting the backend (tab switch,
       // sync), so the line numbers in the result no longer apply. Discard the
