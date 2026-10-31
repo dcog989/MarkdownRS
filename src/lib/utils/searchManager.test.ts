@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { buildSearchRegex, countMatches, searchState } from "./searchManager.svelte";
+import { buildSearchRegex, countMatches, searchAllTabs, searchState } from "./searchManager.svelte";
 
 function requireRegex(): RegExp {
   const regex = buildSearchRegex();
@@ -55,5 +55,17 @@ describe("countMatches", () => {
 
   it("advances past zero-length matches instead of looping", () => {
     expect(countMatches("a\nb\nc", /^/gm)).toBe(3);
+  });
+});
+
+describe("searchAllTabs", () => {
+  it("drops the previous result list when the regex is invalid", () => {
+    searchState.findText = "(";
+    searchState.useRegex = true;
+    searchState.allTabsResults.set("t1", 3);
+
+    searchAllTabs();
+
+    expect(searchState.allTabsResults.size).toBe(0);
   });
 });

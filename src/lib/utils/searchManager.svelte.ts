@@ -149,7 +149,10 @@ export function searchAllTabs() {
   }
 
   const regex = buildSearchRegex();
-  if (!regex) return;
+  if (!regex) {
+    searchState.allTabsResults.clear();
+    return;
+  }
 
   searchState.allTabsResults.clear();
   appContext.editor.tabs.forEach((tab) => {
