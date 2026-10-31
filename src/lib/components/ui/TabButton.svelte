@@ -35,7 +35,6 @@ let tooltipContent = $derived.by(() =>
   class:bg-editor-active={isActive}
   class:bg-bg-panel={!isActive}
   class:hover:bg-bg-hover={!isActive}
-  class:text-fg-default={isActive}
   class:text-fg-muted={!isActive}
   class:border-r={true}
   class:justify-center={isCollapsed}

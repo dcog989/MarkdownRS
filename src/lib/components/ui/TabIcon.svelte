@@ -18,14 +18,14 @@ interface Props {
 let { tab, variant = "tab", isActive = false }: Props = $props();
 
 type TabIconState = "missing" | "untitledEdited" | "untitled" | "dirty" | "bookmarked" | "plain";
-type Tone = "danger" | "dirty" | "accent" | "muted" | "inverse";
+type Tone = "danger" | "dirty" | "accent" | "muted" | "tab";
 
 const TONE_CLASS: Record<Tone, string> = {
   danger: "text-danger",
   dirty: "text-dirty-active",
   accent: "text-accent-secondary",
   muted: "text-fg-muted",
-  inverse: "text-fg-inverse",
+  tab: "",
 };
 
 const TONE_VAR: Partial<Record<Tone, string>> = {
@@ -46,7 +46,7 @@ let tone = $derived.by<Tone>(() => {
   if (variant === "row") return state === "dirty" ? "dirty" : "muted";
   if (!isActive) return state === "dirty" ? "accent" : "muted";
   if (state === "dirty" || (state === "untitledEdited" && tab.isDirty)) return "dirty";
-  return "inverse";
+  return "tab";
 });
 
 let cls = $derived(variant === "row" ? "row-icon shrink-0" : `shrink-0 ${TONE_CLASS[tone]}`);

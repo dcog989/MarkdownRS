@@ -62,17 +62,13 @@
   border-color: var(--accent-primary);
 }
 
-/* Focus Visible Styling */
-*:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+/* Reveal controls that are transparent until hovered or focused. */
+.focus-visible\:opacity-100:focus-visible {
+  opacity: 1;
 }
 
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
+/* Focus Visible Styling */
+*:focus-visible {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }

@@ -45,15 +45,15 @@ export function generateDynamicTheme(fontSize: number, fontFamily: string) {
     ".cm-selectionMatch": { backgroundColor: "var(--editor-selection-match-bg)" },
     ".cm-searchMatch": {
       backgroundColor: "oklch(0.59 0.14 336)",
-      color: "#fff !important",
+      color: "#0b0b0b !important",
       borderRadius: "2px",
     },
     ".cm-searchMatch *": {
-      color: "#fff !important",
+      color: "#0b0b0b !important",
     },
     ".cm-searchMatch.cm-searchMatch-selected": {
       backgroundColor: "oklch(0.68382 0.13417 149.00934) !important",
-      color: "#fff !important",
+      color: "#0b0b0b !important",
       zIndex: "10",
       position: "relative",
     },

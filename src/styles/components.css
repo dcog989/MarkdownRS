@@ -212,10 +212,6 @@ textarea::placeholder {
   opacity: 0.6;
 }
 
-select:focus {
-  border-color: var(--accent-primary);
-}
-
 option {
   background-color: var(--surface-2);
   color: var(--text-primary);
@@ -330,8 +326,6 @@ select {
   box-shadow: 0 25px 50px -12px oklch(0 0 0 / 0.25);
   background-color: var(--surface-2);
   color: var(--text-primary);
-  transform: translateZ(0);
-  will-change: transform;
   isolation: isolate;
 }
 
@@ -574,26 +568,9 @@ select {
 
 .bg-editor-active {
   background-color: var(--editor-bg);
+  color: var(--editor-fg);
   border-top: 2px solid var(--accent-primary);
   border-bottom: 1px solid transparent;
-}
-
-/* Tooltip Styling */
-.tooltip {
-  position: absolute;
-  background-color: var(--surface-3);
-  color: var(--text-primary);
-  padding: 0.375rem 0.625rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 9999;
-  box-shadow:
-    0 4px 6px -1px oklch(0 0 0 / 0.1),
-    0 2px 4px -2px oklch(0 0 0 / 0.1);
-  border: 1px solid var(--border-primary);
-  animation: tooltip-fade-in 150ms ease-out;
 }
 
 /* Accent-color utility */
