@@ -196,7 +196,9 @@ async function copyAllStats() {
           ? "text-accent-secondary"
           : "text-inherit"}"
         onclick={toggleWordWrap}
-        use:tooltip={$_(appContext.settings.wrapGuideColumn >= 0 ? "statusBar.hideWordWrap" : "statusBar.showWordWrap")}
+        use:tooltip={$_(
+          appContext.settings.wrapGuideColumn >= 0 ? "statusBar.switchWordWrapOff" : "statusBar.switchWordWrapOn",
+        )}
       >
         <TextWrap size={14} />
       </button>
