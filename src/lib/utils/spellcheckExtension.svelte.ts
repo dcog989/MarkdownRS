@@ -3,14 +3,9 @@ import type { EditorView } from "@codemirror/view";
 import { SvelteSet } from "svelte/reactivity";
 import { addWordsToDictionary } from "$lib/services/dictionaryService";
 import { spellcheckState, stripPossessiveSuffix } from "$lib/utils/spellcheck.svelte";
-import {
-  applyImmediateSpellcheck,
-  createSpellCheckLinter,
-  spellcheckRefreshEffect,
-  triggerImmediateLint,
-} from "./spellcheckLinter";
+import { createSpellCheckLinter, spellcheckRefreshEffect, triggerImmediateLint } from "./spellcheckLinter";
 
-export { applyImmediateSpellcheck, createSpellCheckLinter, triggerImmediateLint };
+export { createSpellCheckLinter, triggerImmediateLint };
 
 export function invalidateSpellcheckCache() {
   spellcheckState.validCache.clear();

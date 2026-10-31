@@ -12,7 +12,7 @@ import { setActiveEditorView } from "$lib/utils/editorCommands";
 import { logger } from "$lib/utils/logger";
 import { scrollSync } from "$lib/utils/scrollSync.svelte";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
-import { applyImmediateSpellcheck } from "$lib/utils/spellcheckExtension.svelte";
+import { triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte";
 import { calculateCursorMetrics } from "$lib/utils/textMetrics";
 import type { AppEditorView } from "../../../../global";
 
@@ -144,7 +144,7 @@ export class TabSyncManager {
     const largeFileMode = storeTab.sizeBytes > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES;
 
     if (!largeFileMode && spellcheckState.dictionaryLoaded) {
-      applyImmediateSpellcheck(view);
+      triggerImmediateLint(view);
     }
 
     if (!largeFileMode) {
