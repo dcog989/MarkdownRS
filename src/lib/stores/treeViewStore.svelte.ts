@@ -1,7 +1,13 @@
 import type { FileEntry } from "$lib/types/api";
 import { fuzzyMatches } from "$lib/utils/fuzzyMatch";
 import { basename, dirname } from "$lib/utils/path";
-import { fileTreeStore, loadChildren, passesMarkdownOnly, treeRevision } from "./fileTreeStore.svelte";
+import {
+  fileTreeStore,
+  loadChildren,
+  passesMarkdownOnly,
+  pruneUnopenedListings,
+  treeRevision,
+} from "./fileTreeStore.svelte";
 import { settingsState } from "./settingsState.svelte";
 
 export const treeViewStore = $state({
@@ -104,6 +110,8 @@ export async function applyFilter(query: string, markdownOnly: boolean): Promise
   if (!q || !root) {
     treeViewStore.filterRows = [];
     treeViewStore.filterLoading = false;
+    // The search cache has no consumer once no query is active.
+    pruneUnopenedListings();
     return;
   }
 

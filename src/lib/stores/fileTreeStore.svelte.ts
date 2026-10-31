@@ -31,7 +31,15 @@ export const STALE_REFRESH_MS = 30_000;
 
 // Tracks the latest in-flight listing generation per directory so stale results
 // from an outdated request (e.g. after toggling hidden files) are discarded.
+// The counter only grows, so a dropped entry can never collide with a later load.
+let lastLoadGeneration = 0;
 const loadGeneration = new Map<string, number>();
+
+function nextLoadGeneration(path: string): number {
+  const generation = ++lastLoadGeneration;
+  loadGeneration.set(path, generation);
+  return generation;
+}
 
 // In-flight listing promises, shared so callers awaiting an already-running
 // load (e.g. revealPath right after a follow-mode root change) actually wait
@@ -39,9 +47,10 @@ const loadGeneration = new Map<string, number>();
 const inFlightLoads = new Map<string, Promise<void>>();
 
 function invalidateLoads(): void {
-  for (const path of loadGeneration.keys()) {
-    loadGeneration.set(path, (loadGeneration.get(path) ?? 0) + 1);
-  }
+  // Absent keys are enough to discard in-flight results: each load carries a
+  // number that can never be issued again. Callers clear the loading flags.
+  loadGeneration.clear();
+  fileTreeStore.lastLoaded.clear();
   fileTreeStore.dirMtimes.clear();
 }
 
@@ -82,8 +91,7 @@ export function loadChildren(path: string, force = false): Promise<void> {
   }
   if (!force && fileTreeStore.children.has(path)) return Promise.resolve();
 
-  const generation = (loadGeneration.get(path) ?? 0) + 1;
-  loadGeneration.set(path, generation);
+  const generation = nextLoadGeneration(path);
   fileTreeStore.loading.set(path, true);
 
   const promise = (async () => {
@@ -234,10 +242,44 @@ export function forgetSubtree(path: string): void {
   for (const key of [...fileTreeStore.children.keys()]) {
     if (key === path || key.startsWith(prefix)) fileTreeStore.children.delete(key);
   }
+  forgetLoadState(path, prefix);
   if (fileTreeStore.root === path || fileTreeStore.root.startsWith(prefix)) {
     setRoot(dirname(path));
   }
   treeRevision.value++;
+}
+
+// Drop the load bookkeeping for a directory subtree and cancel any listing
+// still in flight for it, so a late result cannot resurrect a deleted path.
+function forgetLoadState(path: string, prefix: string): void {
+  const inSubtree = (key: string) => key === path || key.startsWith(prefix);
+  for (const key of [...loadGeneration.keys()]) {
+    if (!inSubtree(key)) continue;
+    loadGeneration.delete(key);
+    fileTreeStore.loading.delete(key);
+    inFlightLoads.delete(key);
+  }
+  for (const key of [...fileTreeStore.lastLoaded.keys()]) {
+    if (inSubtree(key)) fileTreeStore.lastLoaded.delete(key);
+  }
+  for (const key of [...fileTreeStore.dirMtimes.keys()]) {
+    if (inSubtree(key)) fileTreeStore.dirMtimes.delete(key);
+  }
+}
+
+// Free the listings the whole-tree filter loaded once it is cleared. The rows
+// it returned already carry their entries, and the plain tree renders only
+// expanded folders, so these caches are dead weight until a folder is opened
+// (which lists it again). Kept while a query is active so repeat searches are
+// served from the cache.
+export function pruneUnopenedListings(): void {
+  for (const path of [...fileTreeStore.children.keys()]) {
+    if (fileTreeStore.expanded.get(path) || fileTreeStore.loading.get(path)) continue;
+    fileTreeStore.children.delete(path);
+    fileTreeStore.lastLoaded.delete(path);
+    fileTreeStore.dirMtimes.delete(path);
+    loadGeneration.delete(path);
+  }
 }
 
 const REFRESH_SPIN_MIN_MS = 400;

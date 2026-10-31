@@ -244,6 +244,20 @@ describe("treeViewStore", () => {
     expect(treeViewStore.filterRows).toEqual([]);
   });
 
+  it("clearing the filter frees the listings the search loaded", async () => {
+    mockedListDirectory.mockResolvedValue([{ ...entry("deep.md"), path: "/root/sub/deep.md" }]);
+    fileTreeStore.root = "/root";
+    fileTreeStore.children.set("/root", [entry("sub", true)]);
+
+    await applyFilter("deep", false);
+    expect(fileTreeStore.children.has("/root/sub")).toBe(true);
+
+    await applyFilter("", false);
+
+    expect(fileTreeStore.children.has("/root/sub")).toBe(false);
+    expect(treeViewStore.filterRows).toEqual([]);
+  });
+
   it("applyFilter clears results for an empty or whitespace query", async () => {
     fileTreeStore.root = "/root";
     fileTreeStore.children.set("/root", [entry("notes.md")]);
