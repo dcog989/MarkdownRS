@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildLineMap } from "./scrollInterpolation";
+import { buildLineMap, interpolate, type LineMapEntry } from "./scrollInterpolation";
 
 function block(line: number, top: number): HTMLElement {
   const el = document.createElement("p");
@@ -37,5 +37,44 @@ describe("buildLineMap", () => {
       { line: 5, y: 100 },
       { line: 6, y: 300 },
     ]);
+  });
+});
+
+describe("interpolate", () => {
+  const map: LineMapEntry[] = [
+    { line: 1, y: 0 },
+    { line: 3, y: 100 },
+    { line: 5, y: 200 },
+  ];
+
+  it("maps a value between two points in either direction", () => {
+    expect(interpolate(4, "line", "y", map)).toBe(150);
+    expect(interpolate(150, "y", "line", map)).toBe(4);
+  });
+
+  it("returns the first value at the top of the map", () => {
+    expect(interpolate(1, "line", "y", map)).toBe(0);
+  });
+
+  it("returns the only value for a single-entry map", () => {
+    expect(interpolate(42, "line", "y", [{ line: 1, y: 0 }])).toBe(0);
+  });
+
+  it("does not divide by a zero span", () => {
+    const flatY: LineMapEntry[] = [
+      { line: 1, y: 0 },
+      { line: 2, y: 50 },
+      { line: 3, y: 50 },
+    ];
+
+    expect(interpolate(60, "y", "line", flatY)).toBe(2);
+  });
+
+  it("extrapolates past the last entry, the caller clamps the result", () => {
+    const map2: LineMapEntry[] = [
+      { line: 1, y: 0 },
+      { line: 5, y: 200 },
+    ];
+    expect(interpolate(10, "line", "y", map2)).toBe(450);
   });
 });
