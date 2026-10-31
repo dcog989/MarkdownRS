@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { hashContent } from "$lib/utils/contentHash";
+import { clearTabCaches } from "./editorCache";
 import { editorStore } from "./editorStoreCore.svelte";
 import type { EditorTab } from "./editorTypes";
-import { markAsSaved, reloadTabContent } from "./editorUpdates";
+import { markAsSaved, reloadTabContent, updateContent } from "./editorUpdates";
 
 function tab(overrides: Partial<EditorTab> = {}): EditorTab {
   return {
@@ -62,5 +63,35 @@ describe("reloadTabContent", () => {
 
     expect(editorStore.tabs[0].content).toBe("# disk\n");
     expect(editorStore.tabs[0].contentLoaded).toBe(true);
+  });
+});
+
+describe("updateContent", () => {
+  beforeEach(() => {
+    clearTabCaches("t1");
+    editorStore.tabs = [];
+    editorStore.sessionDirty = false;
+  });
+
+  it("keeps the last known size for a large tab instead of re-encoding it", () => {
+    editorStore.tabs = [
+      tab({ content: "before", lastSavedHash: hashContent("before"), sizeBytes: 3_000_000, path: "/big.md" }),
+    ];
+
+    updateContent("t1", "after", 1);
+
+    expect(editorStore.tabs[0].content).toBe("after");
+    expect(editorStore.tabs[0].sizeBytes).toBe(3_000_000);
+    expect(editorStore.tabs[0].isDirty).toBe(true);
+  });
+
+  it("still clears dirty when a small tab returns to its saved text", () => {
+    editorStore.tabs = [tab({ content: "saved", lastSavedHash: hashContent("saved"), sizeBytes: 5, path: "/note.md" })];
+
+    updateContent("t1", "changed", 1);
+    expect(editorStore.tabs[0].isDirty).toBe(true);
+
+    updateContent("t1", "saved", 1);
+    expect(editorStore.tabs[0].isDirty).toBe(false);
   });
 });
