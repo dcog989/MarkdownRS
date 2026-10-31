@@ -13,6 +13,7 @@ import {
   type DecorationWalk,
   type GetTabDirectory,
   isHrLineRevealed,
+  isInsideNode,
   isRevealed,
   isVisibleInCodeBlock,
 } from "./markdownDecorationCore";
@@ -44,6 +45,9 @@ const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
 ];
 
 const HIDE_TRAILING_SPACE = new Set(["HeaderMark", "QuoteMark"]);
+
+/** Not markdown prose: raw HTML, link targets and image alt text. */
+const STRIKETHROUGH_SKIP_ANCESTORS = new Set(["URL", "Autolink", "Image", "HTMLBlock", "HTMLTag", "Comment"]);
 
 // Derived once: findHiddenMarkers runs on every decoration rebuild.
 const MARKER_BY_NAME = new Map(MARKER_CONFIG.map((cfg) => [cfg.marker, cfg]));
@@ -338,6 +342,9 @@ function collectStrikethrough(walk: DecorationWalk, line: Line): void {
     const start = line.from + match.index;
     const end = start + match[0].length;
     if (isVisibleInCodeBlock(walk.tree, start)) continue;
+    // Raw HTML text, image alt text and link destinations are not markdown
+    // prose: `~~` there is literal and must stay visible.
+    if (isInsideNode(walk.tree, start, STRIKETHROUGH_SKIP_ANCESTORS)) continue;
     walk.ranges.push(strikethroughDeco.range(start, end));
     if (!isRevealed(walk.view, start, end)) {
       walk.ranges.push(formattingMaskDeco.range(start, start + 2));

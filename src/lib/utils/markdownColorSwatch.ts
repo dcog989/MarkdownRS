@@ -1,7 +1,6 @@
 import type { Line } from "@codemirror/state";
 import { Decoration, WidgetType } from "@codemirror/view";
-import type { SyntaxNode } from "@lezer/common";
-import { type DecorationWalk, isVisibleInCodeBlock } from "./markdownDecorationCore";
+import { type DecorationWalk, isInsideNode, isVisibleInCodeBlock } from "./markdownDecorationCore";
 
 /**
  * Color literals surfaced as an inline swatch in rendered mode. Matches the CSS
@@ -49,15 +48,6 @@ function hasValidBoundary(text: string, index: number, isHex: boolean): boolean 
   return isHex ? !/[0-9a-zA-Z#]/.test(prev) : !/[0-9a-zA-Z-]/.test(prev);
 }
 
-function isInSkippedConstruct(tree: DecorationWalk["tree"], pos: number): boolean {
-  let node: SyntaxNode | null = tree.resolveInner(pos, 1);
-  while (node) {
-    if (SKIP_ANCESTORS.has(node.name)) return true;
-    node = node.parent;
-  }
-  return false;
-}
-
 /**
  * Appends a prefix swatch decoration for every color literal on the line. Skips
  * code, links, and raw HTML so swatches only decorate prose color values.
@@ -69,7 +59,7 @@ export function collectColorSwatches(walk: DecorationWalk, line: Line): void {
   for (const { literal, index } of findColorLiterals(line.text)) {
     const start = line.from + index;
     if (isVisibleInCodeBlock(walk.tree, start)) continue;
-    if (isInSkippedConstruct(walk.tree, start)) continue;
+    if (isInsideNode(walk.tree, start, SKIP_ANCESTORS)) continue;
     walk.ranges.push(Decoration.widget({ widget: new ColorSwatchWidget(literal), side: -1 }).range(start));
   }
 }

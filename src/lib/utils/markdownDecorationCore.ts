@@ -1,6 +1,7 @@
 import type { syntaxTree } from "@codemirror/language";
 import type { Range } from "@codemirror/state";
 import type { Decoration, EditorView } from "@codemirror/view";
+import type { SyntaxNode } from "@lezer/common";
 
 /** Resolves the base directory of the tab a view belongs to (for image sources). */
 export type GetTabDirectory = (view: EditorView) => string;
@@ -67,4 +68,17 @@ export function isVisibleInCodeBlock(tree: ReturnType<typeof syntaxTree>, pos: n
   return (
     node.name === "FencedCode" || node.name === "CodeText" || node.name === "CodeBlock" || node.name === "InlineCode"
   );
+}
+
+/**
+ * Walks up from a position and reports whether an ancestor's text is not
+ * markdown prose, using the caller's set of node names (raw HTML, link targets).
+ */
+export function isInsideNode(tree: ReturnType<typeof syntaxTree>, pos: number, skip: ReadonlySet<string>): boolean {
+  let node: SyntaxNode | null = tree.resolveInner(pos, 1);
+  while (node) {
+    if (skip.has(node.name)) return true;
+    node = node.parent;
+  }
+  return false;
 }

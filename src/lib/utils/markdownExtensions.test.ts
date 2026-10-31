@@ -213,6 +213,29 @@ describe("bullet widgets", () => {
   });
 });
 
+describe("strikethrough", () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = "";
+  });
+
+  it("does not strike through text inside raw HTML", async () => {
+    const { view, parent } = createCalloutView('<span title="~~draft~~">x</span>\n', true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-strikethrough")).toBeNull();
+    expect(parent.textContent).toContain("~~draft~~");
+    view.destroy();
+  });
+
+  it("strikes through prose and link text", async () => {
+    const { view, parent } = createCalloutView("before ~~gone~~ and [~~linked~~](https://example.com)\n", true);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelectorAll(".cm-strikethrough")).toHaveLength(2);
+    view.destroy();
+  });
+});
+
 describe("heading reveal", () => {
   beforeEach(mockLayout);
   afterEach(() => {
