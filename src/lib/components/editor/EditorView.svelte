@@ -336,7 +336,9 @@ onMount(() => {
   typedView.flushPendingContent = () => tabSync.flushPending(typedView, onContentChange, onHistoryUpdate);
 
   view = typedView;
-  setActiveEditorView(view);
+  // A second pane's editor mounts while the first one keeps focus; it must not
+  // claim the commands routed to the active document.
+  if (appContext.app.activeTabId === tabId) setActiveEditorView(view);
 
   scrollSync.registerEditor(
     viewInstance,
@@ -360,7 +362,7 @@ onMount(() => {
   if (searchState.findText) updateSearchEditor(viewInstance);
 
   // A second pane's editor mounts while the first one keeps focus; it must not
-  // steal focus (and the commands routed to the active document).
+  // steal focus.
   if (appContext.app.activeTabId === tabId) viewInstance.focus();
 
   const onWindowFocus = () => {
