@@ -36,7 +36,7 @@ import {
   unregisterEditorInstance,
   unregisterFlushFn,
 } from "$lib/utils/editorCommands";
-import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { pasteFromClipboard } from "$lib/utils/imagePaste";
 import { searchState, updateSearchEditor } from "$lib/utils/searchManager.svelte";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
@@ -234,16 +234,7 @@ function handleDictionaryUpdate() {
 }
 
 let initialContent = $derived(activeTab?.content || "");
-let filename = $derived.by(() => {
-  if (activeTab?.path) return activeTab.path;
-  return activeTab?.preferredExtension === "txt" ? "unsaved.txt" : "unsaved.md";
-});
-let isMarkdown = $derived.by(() => {
-  if (activeTab?.preferredExtension) {
-    return activeTab.preferredExtension === "md";
-  }
-  return isMarkdownFile(filename);
-});
+let isMarkdown = $derived(isMarkdownTab(activeTab));
 let initialSelection = $derived(activeTab?.cursor || { anchor: 0, head: 0 });
 let initialHistoryState = $derived(activeTab ? getHistoryState(activeTab.id) : undefined);
 let lineChangeTracker = $derived(activeTab ? getLineChangeTracker(activeTab.id) : undefined);

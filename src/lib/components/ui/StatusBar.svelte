@@ -11,7 +11,7 @@ import { translate } from "$lib/i18n";
 import { togglePreferredExtension, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { toggleViewMode } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { formatFileSize, isMarkdownFile } from "$lib/utils/fileValidation";
+import { formatFileSize, isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 import { formatNumber } from "$lib/utils/textMetrics";
 
@@ -27,7 +27,6 @@ let totalChars = $derived(activeTab?.content.length || 0);
 let totalLines = $derived(activeTab?.lineCount || 1);
 let widestColumn = $derived(activeTab?.widestColumn || 0);
 
-let preferredExtension = $derived(activeTab?.preferredExtension);
 let path = $derived(activeTab?.path);
 let tabId = $derived(activeTab?.id);
 
@@ -35,12 +34,7 @@ let textOpacity = $derived(appContext.settings.statusBarOpacity / 100);
 let backgroundTransparency = $derived(`${100 - appContext.settings.statusBarOpacity}%`);
 let fileSizeDisplay = $derived(formatFileSize(sizeBytes));
 
-let fileType = $derived.by(() => {
-  if (!tabId) return "markdown";
-  if (preferredExtension) return preferredExtension === "txt" ? "text" : "markdown";
-  if (path) return isMarkdownFile(path) ? "markdown" : "text";
-  return "markdown";
-});
+let fileType = $derived(isMarkdownTab(activeTab) ? "markdown" : "text");
 
 // Markdown files can only be markdown, other text files (txt, css, cpp, py, ...)
 // can only be text: only unsaved documents get the text/markdown toggle.

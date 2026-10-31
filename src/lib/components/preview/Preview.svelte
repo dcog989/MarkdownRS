@@ -13,7 +13,7 @@ import { toggleOrientation, toggleSplitView } from "$lib/stores/settingsState.sv
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { navigateToPath } from "$lib/utils/fileSystem";
-import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { renderMermaidDiagrams } from "$lib/utils/mermaidRenderer";
 import { PreviewRenderer } from "$lib/utils/previewRenderer.svelte";
 import { scrollSync } from "$lib/utils/scrollSync.svelte";
@@ -43,7 +43,7 @@ let activeTab = $derived(tabsById().get(tabId));
 let tabPath = $derived(activeTab?.path);
 let tabContent = $derived(activeTab?.content || "");
 
-let isMarkdown = $derived(tabPath ? isMarkdownFile(tabPath) : true);
+let isMarkdown = $derived(isMarkdownTab(activeTab));
 let flavor = $derived(appContext.settings.markdownFlavor);
 
 $effect(() => {

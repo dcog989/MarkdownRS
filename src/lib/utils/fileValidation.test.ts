@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatFileSize, getFilename, isMarkdownFile, isTextFile } from "./fileValidation";
+import { formatFileSize, getFilename, isMarkdownFile, isMarkdownTab, isTextFile } from "./fileValidation";
 
 describe("getFilename", () => {
   it("extracts the trailing path segment on both separators", () => {
@@ -68,5 +68,19 @@ describe("isMarkdownFile", () => {
   it("rejects non-markdown extensions", () => {
     expect(isMarkdownFile("a.txt")).toBe(false);
     expect(isMarkdownFile("a.md.js")).toBe(false);
+  });
+});
+
+describe("isMarkdownTab", () => {
+  it("prefers the explicit file type over the path", () => {
+    expect(isMarkdownTab({ path: "/home/user/notes.txt", preferredExtension: "md" })).toBe(true);
+    expect(isMarkdownTab({ path: "/home/user/notes.md", preferredExtension: "txt" })).toBe(false);
+  });
+
+  it("falls back to the path, and treats an untitled tab as Markdown", () => {
+    expect(isMarkdownTab({ path: "/home/user/notes.txt" })).toBe(false);
+    expect(isMarkdownTab({ path: "/home/user/notes.md" })).toBe(true);
+    expect(isMarkdownTab({ path: null })).toBe(true);
+    expect(isMarkdownTab(undefined)).toBe(true);
   });
 });

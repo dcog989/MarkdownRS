@@ -1,3 +1,4 @@
+import type { EditorTab } from "$lib/stores/editorTypes";
 import { basename as getFilename } from "./path";
 
 export { getFilename };
@@ -123,4 +124,14 @@ export function isMarkdownFile(path: string): boolean {
   const filename = getFilename(path);
   const extension = filename.split(".").pop()?.toLowerCase();
   return extension ? MARKDOWN_EXTENSIONS.includes(extension) : false;
+}
+
+/**
+ * The single answer to "is this tab Markdown?": an explicit type choice wins,
+ * then the path, and an untitled tab is Markdown.
+ */
+export function isMarkdownTab(tab: Pick<EditorTab, "path" | "preferredExtension"> | undefined): boolean {
+  if (!tab) return true;
+  if (tab.preferredExtension) return tab.preferredExtension === "md";
+  return tab.path ? isMarkdownFile(tab.path) : true;
 }

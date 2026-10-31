@@ -25,7 +25,7 @@ import { focusPane, isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneS
 import { toggleFileTree } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { getEditorInstance } from "$lib/utils/editorCommands";
-import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 
 const splitResize = createSplitResize();
@@ -52,11 +52,7 @@ let splitPaneActive = $derived(
 // document must follow the pane, not activeTabId.
 let activeTab = $derived(tabsById().get(primaryTabId));
 
-let isMarkdown = $derived.by(() => {
-  if (!activeTab) return true;
-  if (activeTab.path) return isMarkdownFile(activeTab.path);
-  return activeTab.preferredExtension !== "txt";
-});
+let isMarkdown = $derived(isMarkdownTab(activeTab));
 
 let showPreview = $derived(appContext.settings.splitView && isMarkdown && !splitPaneActive);
 let showWriterTabDropdown = $state(false);

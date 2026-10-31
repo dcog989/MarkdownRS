@@ -22,7 +22,7 @@ import { isSplitPaneActive, toggleSplitPane } from "$lib/stores/paneStore.svelte
 import { toggleFileTree, toggleSplitView } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
-import { isMarkdownFile } from "$lib/utils/fileValidation";
+import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 import { shortcutManager } from "$lib/utils/shortcuts";
 
@@ -33,7 +33,7 @@ let {
 } = $props();
 
 let activeTab = $derived(appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId));
-let isPreviewAvailable = $derived(activeTab ? (activeTab.path ? isMarkdownFile(activeTab.path) : true) : true);
+let isPreviewAvailable = $derived(isMarkdownTab(activeTab));
 
 let shortcuts = $derived({
   settings: shortcutManager.getShortcutDisplay("window.settings"),
