@@ -93,7 +93,7 @@ function toRustTabState(
 }
 
 export async function persistSession(): Promise<void> {
-  if (!editorStore.sessionDirty || saveInProgress) {
+  if (!editorStore.sessionRestored || !editorStore.sessionDirty || saveInProgress) {
     return;
   }
 
@@ -341,6 +341,10 @@ export async function loadSession(): Promise<void> {
 
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
+
+    // Only a completed restore makes this list authoritative. The catch below
+    // leaves the flag false, so a fallback tab never overwrites the stored session.
+    editorStore.sessionRestored = true;
 
     logger.session.debug("SessionLoaded", {
       duration: formatDuration(start),

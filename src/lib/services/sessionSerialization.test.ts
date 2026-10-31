@@ -41,6 +41,16 @@ describe("persistSession", () => {
     editorStore.closedTabsHistory = [];
     editorStore.mruStack = [];
     editorStore.sessionDirty = true;
+    editorStore.sessionRestored = true;
+  });
+
+  it("does not save until the session has been restored", async () => {
+    editorStore.sessionRestored = false;
+    editorStore.tabs = [makeTab({ id: "fallback", title: "Untitled", content: "", isDirty: false, path: null })];
+
+    await persistSession();
+
+    expect(mockedCallBackend).not.toHaveBeenCalled();
   });
 
   it("does not write the empty placeholder of a restored-but-unloaded tab", async () => {

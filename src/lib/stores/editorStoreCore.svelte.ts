@@ -5,6 +5,9 @@ import type { ClosedTab, EditorTab } from "./editorTypes";
 export const editorStore = $state({
   tabs: [] as EditorTab[],
   sessionDirty: false,
+  /** False until `loadSession` has installed the full saved tab list; saves delete
+   *  every stored row missing from that list, so they must stay off until then. */
+  sessionRestored: false,
   mruStack: [] as string[],
   closedTabsHistory: [] as ClosedTab[],
   pendingTransform: null as { tabId: string; op: OperationId; timestamp: number } | null,
