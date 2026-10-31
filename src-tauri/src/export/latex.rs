@@ -108,7 +108,7 @@ fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push_str("\n\n");
         },
         NodeValue::DescriptionDetails => render_blocks(node, out),
-        NodeValue::HtmlBlock(_) | NodeValue::FrontMatter(_) => {},
+        NodeValue::HtmlBlock(_) | NodeValue::FrontMatter(_) | NodeValue::FootnoteDefinition(_) => {},
         _ => render_blocks(node, out),
     }
 }
@@ -199,14 +199,41 @@ fn render_inline<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push_str(&math.literal);
             out.push('$');
         },
-        NodeValue::FootnoteReference(reference) => {
-            out.push_str("\\textsuperscript{");
-            out.push_str(&escape_text(&reference.name));
-            out.push('}');
+        NodeValue::FootnoteReference(reference) => match footnote_body(node, &reference.name) {
+            Some(body) => {
+                out.push_str("\\footnote{");
+                out.push_str(&body);
+                out.push('}');
+            },
+            None => {
+                out.push_str("\\textsuperscript{");
+                out.push_str(&escape_text(&reference.name));
+                out.push('}');
+            },
         },
         NodeValue::HtmlInline(_) | NodeValue::Raw(_) | NodeValue::ShortCode(_) => {},
         _ => render_inlines(node, out),
     }
+}
+
+/// Renders the definition of a footnote reference as LaTeX, so it can be emitted
+/// inline as `\footnote{}` at the reference (LaTeX has no separate footnote body).
+fn footnote_body<'a>(node: &'a AstNode<'a>, name: &str) -> Option<String> {
+    let mut root = node;
+    while let Some(parent) = root.parent() {
+        root = parent;
+    }
+
+    let definition = root.descendants().find(|candidate| {
+        matches!(
+            &candidate.data.borrow().value,
+            NodeValue::FootnoteDefinition(definition) if definition.name == name
+        )
+    })?;
+
+    let mut body = String::new();
+    render_blocks(definition, &mut body);
+    Some(body.trim().to_string())
 }
 
 fn wrap<'a>(node: &'a AstNode<'a>, out: &mut String, open: &str) {
@@ -280,5 +307,14 @@ mod tests {
             latex.contains("\\href{https://example.com/~user/?a=1\\&b=two\\%20words}{home}"),
             "latex was: {latex}"
         );
+    }
+
+    #[test]
+    fn renders_footnotes_at_the_reference() {
+        let latex = markdown_to_latex("Hello[^1] world.\n\n[^1]: A note.\n");
+
+        assert!(latex.contains("Hello\\footnote{A note.}"), "latex was: {latex}");
+        assert!(!latex.contains("textsuperscript{1}"), "latex was: {latex}");
+        assert_eq!(latex.matches("A note.").count(), 1, "definition repeated: {latex}");
     }
 }
