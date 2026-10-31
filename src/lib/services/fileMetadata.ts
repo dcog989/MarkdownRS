@@ -1,6 +1,7 @@
 import { translate } from "$lib/i18n";
 import { reloadTabContent, setFileCheckStatus, updateMetadata, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import type { FileMetadata } from "$lib/types/api";
 import { callBackendSafe } from "$lib/utils/backend";
 import { hashContent } from "$lib/utils/contentHash";
 import { getEditorInstance } from "$lib/utils/editorCommands";
@@ -8,17 +9,6 @@ import { logger } from "$lib/utils/logger";
 import { normalizePath } from "$lib/utils/path";
 import { byteLength, detectLineEnding } from "$lib/utils/textMetrics";
 import type { AppEditorView } from "../../global";
-
-export type FileContent = {
-  content: string;
-  encoding: string;
-};
-
-type FileMetadata = {
-  created?: string;
-  modified?: string;
-  size: number;
-};
 
 const metadataCache = new Map<string, { expires: number; promise: Promise<FileMetadata> }>();
 const CACHE_TTL_MS = 500;

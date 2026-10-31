@@ -12,6 +12,7 @@ import {
   updateTransientState,
 } from "$lib/stores/editorStore.svelte";
 import { settingsState } from "$lib/stores/settingsState.svelte";
+import type { RustTabState } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
 import { updateSavedHash } from "$lib/utils/contentHash";
@@ -25,30 +26,6 @@ import { debounce, formatDuration } from "$lib/utils/timing";
 import { normalizeLineEndings } from "./fileMetadata";
 import { initializeTabFileState } from "./tabFileStateInit";
 import { loadTabContentLazy } from "./tabLoadStateMachine";
-
-type RustTabState = {
-  id: string;
-  title: string;
-  content: string | null;
-  is_dirty: boolean;
-  path: string | null;
-  scroll_percentage: number;
-  scroll_top: number;
-  top_line: number;
-  created: string | null;
-  modified: string | null;
-  is_pinned: boolean;
-  custom_title: string | null;
-  file_check_failed?: boolean;
-  file_check_performed?: boolean;
-  mru_position?: number | null;
-  sort_index?: number;
-  original_index?: number | null;
-  line_ending?: string | null;
-  encoding?: string | null;
-  has_bom?: boolean;
-  preferred_extension?: string | null;
-};
 
 let saveInProgress: Promise<void> | null = null;
 

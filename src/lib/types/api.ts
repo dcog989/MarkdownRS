@@ -1,4 +1,3 @@
-import type { OperationId } from "$lib/config/textOperationsRegistry";
 import type { Bookmark } from "$lib/stores/bookmarkStore.svelte";
 import type { HeadingEntry, RenderResult } from "./markdown";
 
@@ -59,19 +58,41 @@ export interface TabData {
   content: string | null;
 }
 
-// Server-side operations are handled via dedicated backend commands, not client-side transform
-export type TextTransformId = Exclude<OperationId, "format-document" | "generate-toc">;
+/** One tab as stored in the session database and sent over IPC. */
+export interface RustTabState {
+  id: string;
+  title: string;
+  content: string | null;
+  is_dirty: boolean;
+  path: string | null;
+  scroll_percentage: number;
+  scroll_top: number;
+  top_line: number;
+  created: string | null;
+  modified: string | null;
+  is_pinned: boolean;
+  custom_title: string | null;
+  file_check_failed?: boolean;
+  file_check_performed?: boolean;
+  mru_position?: number | null;
+  sort_index?: number;
+  original_index?: number | null;
+  line_ending?: string | null;
+  encoding?: string | null;
+  has_bom?: boolean;
+  preferred_extension?: string | null;
+}
 
 // Maps Rust command names to their Argument and Return types
 export interface BackendCommands {
   // Session
   save_session: {
-    args: { activeTabs: unknown[]; closedTabs: unknown[] };
+    args: { activeTabs: RustTabState[]; closedTabs: RustTabState[] };
     return: undefined;
   };
   restore_session: {
     args: Record<string, never>;
-    return: { active_tabs: unknown[]; closed_tabs: unknown[] } | unknown[];
+    return: { active_tabs: RustTabState[]; closed_tabs: RustTabState[] } | RustTabState[];
   };
   load_tab_content: {
     args: { tabId: string };

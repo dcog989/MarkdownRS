@@ -1,12 +1,10 @@
 import { translate } from "$lib/i18n";
-import type { FileMetadata, WriteFileResult } from "$lib/types/api";
+import type { FileContent, FileMetadata, WriteFileResult } from "$lib/types/api";
 import { callBackend } from "./backend";
 import { AppError } from "./errorHandling";
 import { getFilename } from "./fileValidation";
 
-export async function readTextFile(
-  path: string,
-): Promise<{ content: string; encoding: string; has_bom: boolean } | null> {
+export async function readTextFile(path: string): Promise<FileContent | null> {
   return callBackend("read_text_file", { path }, "File:Read");
 }
 
