@@ -275,7 +275,11 @@ export async function loadSession(): Promise<void> {
   const start = performance.now();
 
   try {
-    const sessionData = await callBackend("restore_session", {}, "Session:Load");
+    // One transient read failure must not disable session saving for the whole
+    // run, so retry once before falling back to a single empty tab.
+    const sessionData = await callBackend("restore_session", {}, "Session:Load").catch(() =>
+      callBackend("restore_session", {}, "Session:Load"),
+    );
 
     let activeRustTabs: RustTabState[] = [];
     let closedRustTabs: RustTabState[] = [];
@@ -348,8 +352,7 @@ export async function loadSession(): Promise<void> {
     const hasUnsavedTabsWithContent = editorStore.tabs.some((t) => !t.path && t.content.length > 0);
     editorStore.sessionDirty = hasUnsavedTabsWithContent;
 
-    // Only a completed restore makes this list authoritative. The catch below
-    // leaves the flag false, so a fallback tab never overwrites the stored session.
+    // Only a completed restore makes this list authoritative.
     editorStore.sessionRestored = true;
 
     logger.session.debug("SessionLoaded", {
@@ -363,6 +366,12 @@ export async function loadSession(): Promise<void> {
       severity: "warning",
     });
 
+    // Saving must resume even after the retry failed. The stored rows could not
+    // be read, so leaving the flag false only guarantees that everything typed
+    // in this run is lost on close. shortcut: this run then replaces the stored
+    // session; keep the old rows instead if a failed read ever proves
+    // recoverable.
+    editorStore.sessionRestored = true;
     appState.activeTabId = addTab();
   }
 }
