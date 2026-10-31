@@ -37,10 +37,14 @@ export function updateTab(
 
   const tab = editorStore.tabs[index];
   const updates = updater(tab);
+  if (!updates) return true;
 
-  if (updates) {
-    Object.assign(editorStore.tabs[index], updates);
-  }
+  // Tab switches refresh metadata and file-check status with the same values;
+  // writing those and dirtying the session makes every switch trigger a save.
+  const changed = (Object.keys(updates) as (keyof EditorTab)[]).some((key) => tab[key] !== updates[key]);
+  if (!changed) return true;
+
+  Object.assign(editorStore.tabs[index], updates);
 
   if (markDirty) {
     editorStore.sessionDirty = true;
