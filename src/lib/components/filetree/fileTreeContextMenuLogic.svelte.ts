@@ -10,6 +10,7 @@ import type { FileEntry } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { createDirOnDisk, createFileOnDisk, renameFileOnDisk } from "$lib/utils/fileIO";
 import { openFile, renameFile, requestCloseTab } from "$lib/utils/fileSystem";
+import { resolveRenamedName } from "$lib/utils/fileValidation";
 
 // Open tabs at or inside a renamed path keep the old path; rewrite it so the
 // next save lands in the new location, and move the watchers along with them
@@ -124,7 +125,8 @@ export class FileTreeContextMenuLogic {
       } else if (tab) {
         await renameFile(tab.id, clean);
       } else {
-        await callBackend("rename_file", { oldPath: this.path, newPath: `${parent}/${clean}` }, "File:Write");
+        const newPath = `${parent}/${resolveRenamedName(this.name, clean)}`;
+        await callBackend("rename_file", { oldPath: this.path, newPath }, "File:Write");
       }
       refreshDirectoryIfInTree(parent);
     } catch {

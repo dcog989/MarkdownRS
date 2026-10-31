@@ -25,6 +25,7 @@ import { clearPaneTab, settlePanesAfterClose } from "$lib/stores/paneStore.svelt
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
+import { resolveRenamedName } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
 import {
   autoSaveCurrentFile,
@@ -212,13 +213,7 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
     const oldFileName = pathParts.pop() || "";
     const directory = pathParts.join("/");
 
-    let finalNewName = cleanNewName;
-    const oldExt = oldFileName.includes(".") ? oldFileName.split(".").pop() : "";
-    const newExt = cleanNewName.includes(".") ? cleanNewName.split(".").pop() : "";
-
-    if (oldExt && !newExt) {
-      finalNewName = `${cleanNewName}.${oldExt}`;
-    }
+    const finalNewName = resolveRenamedName(oldFileName, cleanNewName);
 
     const newPath = `${directory}/${finalNewName}`;
 

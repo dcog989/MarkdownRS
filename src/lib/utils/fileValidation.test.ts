@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatFileSize, getFilename, isMarkdownFile, isMarkdownTab, isTextFile } from "./fileValidation";
+import {
+  formatFileSize,
+  getFilename,
+  isMarkdownFile,
+  isMarkdownTab,
+  isTextFile,
+  resolveRenamedName,
+} from "./fileValidation";
 
 describe("getFilename", () => {
   it("extracts the trailing path segment on both separators", () => {
@@ -68,6 +75,20 @@ describe("isMarkdownFile", () => {
   it("rejects non-markdown extensions", () => {
     expect(isMarkdownFile("a.txt")).toBe(false);
     expect(isMarkdownFile("a.md.js")).toBe(false);
+  });
+});
+
+describe("resolveRenamedName", () => {
+  it("keeps the old extension when the new name has none", () => {
+    expect(resolveRenamedName("notes.md", "ideas")).toBe("ideas.md");
+  });
+
+  it("keeps the extension the user typed", () => {
+    expect(resolveRenamedName("notes.md", "ideas.txt")).toBe("ideas.txt");
+  });
+
+  it("does not invent an extension when the old name had none", () => {
+    expect(resolveRenamedName("README", "GUIDE")).toBe("GUIDE");
   });
 });
 

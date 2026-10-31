@@ -127,6 +127,17 @@ export function isMarkdownFile(path: string): boolean {
 }
 
 /**
+ * Keep the old extension when the new name has none, so renaming `notes.md`
+ * to `notes` does not silently turn it into a plain file. Used by every rename
+ * path so an open tab and an unopened file get the same name.
+ */
+export function resolveRenamedName(oldName: string, newName: string): string {
+  const oldExt = oldName.includes(".") ? oldName.split(".").pop() : "";
+  const newExt = newName.includes(".") ? newName.split(".").pop() : "";
+  return oldExt && !newExt ? `${newName}.${oldExt}` : newName;
+}
+
+/**
  * The single answer to "is this tab Markdown?": an explicit type choice wins,
  * then the path, and an untitled tab is Markdown.
  */
