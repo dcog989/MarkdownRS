@@ -144,7 +144,7 @@ function handleKeydown(e: KeyboardEvent) {
             {:else}
               <button
                 type="button"
-                class="btn-icon btn-icon--danger shrink-0 p-1.5 opacity-0 group-hover:opacity-100"
+                class="btn-icon btn-icon--danger shrink-0 p-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                 onclick={(e) => {
                   e.stopPropagation();
                   requestCloseTab(tab.id);

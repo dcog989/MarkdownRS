@@ -148,7 +148,7 @@ function toggleSortDirection() {
           <button
             type="button"
             onclick={(e) => handleRemove(path, e)}
-            class="btn-icon btn-icon--danger p-1.5 opacity-0 group-hover:opacity-100"
+            class="btn-icon btn-icon--danger p-1.5 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
             title={$_("fileHistory.removeFromHistory")}
           >
             <X size={16} />
