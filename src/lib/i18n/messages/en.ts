@@ -396,8 +396,9 @@ export const en = {
     tabsNamedFromContentTooltip: "Name tabs from first line of document content.",
     closedTabHistory: "Recently Closed on New Docs",
     closedTabHistoryTooltip: "Display a list of clickable recently closed files on new documents.",
-    fileHistoryLimit: "File History Limit",
-    fileHistoryLimitTooltip: "Maximum number of files to keep in history.",
+    fileHistoryLimit: "File History Display Limit",
+    fileHistoryLimitTooltip:
+      "Maximum number of recent files shown. Stored entries are only removed by Clear File History.",
     tabsCreatedAt: "Tabs Created At",
     tabsCreatedAtBeginning: "The Beginning",
     tabsCreatedAtRight: "The Right",
