@@ -20,7 +20,7 @@ export async function initializeTabFileState(tab: EditorTab, diskContentVerified
 
   // One read of the disk content per dirty episode: save and reload reset the
   // flag, and the watcher clears it when the file changes. Without this, every
-  // switch to a dirty tab re-read and re-hashed the whole file.
+  // switch re-read and re-hashed the whole file, clean or dirty.
   const baselineChecked = getTransientState(tab.id)?.fileCheckPerformed === true && !tab.fileCheckFailed;
 
   // One metadata read covers both existence and created/modified.
@@ -31,7 +31,7 @@ export async function initializeTabFileState(tab: EditorTab, diskContentVerified
   setFileCheckStatus(tab.id, true, false);
 
   if (!diskContentVerified) {
-    if (!tab.isDirty) {
+    if (!tab.isDirty && !baselineChecked) {
       const hasChanged = await checkAndReloadIfChanged(tab.id);
       if (hasChanged) {
         await reloadFileContent(tab.id);
