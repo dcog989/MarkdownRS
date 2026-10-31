@@ -15,7 +15,7 @@ export async function loadFileHistory() {
   });
 
   if (files) {
-    fileHistoryStore.files = files;
+    fileHistoryStore.files = files.slice(0, appContext.settings.fileHistoryLimit);
   }
   fileHistoryStore.isLoaded = true;
 }
