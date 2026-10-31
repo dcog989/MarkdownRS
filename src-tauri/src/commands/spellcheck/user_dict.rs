@@ -5,8 +5,11 @@ use anyhow::{Result, anyhow};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tauri::Manager;
-use tokio::fs::{self, OpenOptions};
-use tokio::io::AsyncWriteExt;
+use tokio::fs;
+use tokio::sync::Mutex;
+
+/// Serializes the read-modify-write of the shared dictionary file.
+static USER_DICT_WRITE: Mutex<()> = Mutex::const_new(());
 
 pub async fn add_to_dictionary_inner(app_handle: tauri::AppHandle, word: String) -> Result<()> {
     add_words_to_dictionary_inner(app_handle, vec![word]).await
@@ -22,20 +25,20 @@ pub async fn add_words_to_dictionary_inner(app_handle: tauri::AppHandle, words: 
         log::warn!("Failed to create app directory: {}", e);
     }
 
+    let _write_guard = USER_DICT_WRITE.lock().await;
+
     // Load the existing words once so repeated additions are deduplicated in a
     // single file read instead of one read+append per word.
-    let mut existing: HashSet<String> = if dict_path.exists() {
-        match fs::read_to_string(&dict_path).await {
-            Ok(c) => c
-                .lines()
-                .map(|l| l.trim().to_lowercase())
-                .filter(|l| !l.is_empty())
-                .collect(),
-            Err(_) => HashSet::new(),
-        }
-    } else {
-        HashSet::new()
+    let existing_content = match fs::read_to_string(&dict_path).await {
+        Ok(content) => content,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => String::new(),
+        Err(e) => return Err(anyhow!("Failed to read dictionary: {}", e)),
     };
+    let mut existing: HashSet<String> = existing_content
+        .lines()
+        .map(|l| l.trim().to_lowercase())
+        .filter(|l| !l.is_empty())
+        .collect();
 
     let mut new_words: Vec<String> = Vec::new();
     for word in words {
@@ -52,24 +55,18 @@ pub async fn add_words_to_dictionary_inner(app_handle: tauri::AppHandle, words: 
     }
 
     if !new_words.is_empty() {
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(dict_path)
-            .await
-            .map_err(|e| anyhow!("Failed to open dictionary: {}", e))?;
-
-        let mut buf = String::with_capacity(new_words.iter().map(|w| w.len() + 1).sum());
-        for w in &new_words {
-            buf.push_str(w);
-            buf.push('\n');
+        let mut content = existing_content;
+        if !content.is_empty() && !content.ends_with('\n') {
+            content.push('\n');
         }
-        file.write_all(buf.as_bytes())
+        for w in &new_words {
+            content.push_str(w);
+            content.push('\n');
+        }
+        utils::atomic_write(&dict_path, content.as_bytes())
             .await
             .map_err(|e| anyhow!("Failed to write words: {}", e))?;
-    }
 
-    if !new_words.is_empty() {
         let state = app_handle.state::<AppState>();
         let mut custom_dict = state.custom_dict.write_or_recover();
         let set = Arc::make_mut(&mut custom_dict);
