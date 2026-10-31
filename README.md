@@ -98,7 +98,6 @@ bun run check        # Full check: Svelte types, Biome lint, and cargo clippy
 bun run fix          # Apply all fixes, then run the full check
 bun run update       # Update packages + crates
 bun run dev          # Start dev server / HMR
-bun run preview      # Preview the production build
 bunx tauri build     # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 bun run clean        # Remove build artifacts, target, and node_modules
 bun run package      # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
