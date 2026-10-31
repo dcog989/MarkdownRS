@@ -11,7 +11,10 @@ export function buildLineMap(container: HTMLElement, totalLines: number): LineMa
 
   const elements = queryHTMLElements(container, "[data-sourcepos]");
 
-  const rawMap: LineMapEntry[] = [];
+  // DOM order is the only trustworthy order: footnotes render at the end of the
+  // document but keep the source line of their definition, so sorting by line
+  // would make y jump backwards and break the interpolation searches.
+  const lineMap: LineMapEntry[] = [];
   for (const el of elements) {
     const sourcepos = el.getAttribute("data-sourcepos");
     if (!sourcepos) continue;
@@ -22,24 +25,9 @@ export function buildLineMap(container: HTMLElement, totalLines: number): LineMa
 
     const rect = el.getBoundingClientRect();
     const y = rect.top - containerRect.top + scrollTop;
-    rawMap.push({ line, y });
-  }
-
-  let lineMap: LineMapEntry[];
-
-  if (rawMap.length > 0) {
-    rawMap.sort((a, b) => a.line - b.line);
-
-    const seen: Record<number, boolean> = {};
-    lineMap = [];
-    for (const entry of rawMap) {
-      if (!seen[entry.line]) {
-        seen[entry.line] = true;
-        lineMap.push(entry);
-      }
-    }
-  } else {
-    lineMap = [];
+    const prev = lineMap[lineMap.length - 1];
+    if (prev && (line <= prev.line || y < prev.y)) continue;
+    lineMap.push({ line, y });
   }
 
   if (lineMap.length === 0 || lineMap[0].line > 1) {
