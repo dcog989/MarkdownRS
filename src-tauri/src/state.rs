@@ -16,7 +16,8 @@ pub enum SpellcheckStatus {
 }
 
 /// The dictionary selection currently loaded into `speller`.
-/// `None` means the spellchecker has never been initialized.
+/// `None` means no set was fully loaded (never initialized, or the last attempt
+/// was missing a requested language).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SpellcheckConfig {
     dict_codes: Vec<String>,
@@ -51,8 +52,9 @@ pub struct AppState {
     pub custom_dict: RwLock<Arc<HashSet<String>>>,
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
     pub spellcheck_status: Mutex<SpellcheckStatus>,
-    /// The dictionary selection the current speller was built from, so a
-    /// re-init only happens when the requested selection actually changes.
+    /// The dictionary selection the current speller was built from completely,
+    /// so a re-init only happens when the requested selection actually changes.
+    /// Cleared when a requested language is missing, so the next init retries.
     #[cfg_attr(not(feature = "spellcheck"), allow(dead_code))]
     pub loaded_spellcheck_config: Mutex<Option<SpellcheckConfig>>,
     /// Monotonic id of the latest accepted spellcheck init request. A build

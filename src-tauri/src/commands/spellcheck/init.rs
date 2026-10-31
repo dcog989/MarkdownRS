@@ -152,6 +152,7 @@ async fn run_spellcheck_init(
     let mut progress = move |done: usize, total: usize| {
         emit_progress(&progress_handle, "download", done, total);
     };
+    let requested_language_count = dict_codes.len();
     let (language_dicts, technical_words) = super::download::download_and_collect_words(
         &client,
         dict_codes,
@@ -162,6 +163,7 @@ async fn run_spellcheck_init(
         &mut progress,
     )
     .await;
+    let downloaded_language_count = language_dicts.len();
 
     if state.spellcheck_cancel.load(Ordering::SeqCst) {
         log::info!("[SPELLCHECK-RUST] Spellcheck init cancelled");
@@ -191,6 +193,11 @@ async fn run_spellcheck_init(
             }
             if failed_languages > 0 {
                 clear_language_cache(&cache_dir).await;
+            }
+            if failed_languages > 0 || downloaded_language_count < requested_language_count {
+                // Missing a requested language: do not let this set satisfy the
+                // "already loaded" guard, so the next init retries it.
+                *state.loaded_spellcheck_config.lock_or_recover() = None;
             }
             let dict_count = dictionaries.len();
             let mut speller = state.speller.lock_or_recover();
