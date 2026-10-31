@@ -38,7 +38,7 @@ export function forceMarkdownRelint(view: EditorView) {
 // Backend linters report 1-based columns measured in Unicode scalar values,
 // while CodeMirror works in UTF-16 code units. Translate so diagnostics on
 // lines containing astral characters (e.g. emoji) stay aligned.
-function columnToCodeUnits(text: string, column: number): number {
+export function columnToCodeUnits(text: string, column: number): number {
   let units = 0;
   let charsSeen = 0;
   for (const ch of text) {
