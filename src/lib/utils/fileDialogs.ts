@@ -244,15 +244,9 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     // the content written below is the real file content.
     if (!tab.contentLoaded) {
       const loaded = await waitForTabContentLoad(tabId);
-      if (!loaded) {
-        if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        return false;
-      }
+      if (!loaded) return false;
       tab = getTab();
-      if (!tab) {
-        if (pendingSavePath) activeSaves.delete(pendingSavePath);
-        return false;
-      }
+      if (!tab) return false;
     }
 
     // An unchanged tab has nothing to write: rewriting the same bytes only
@@ -261,7 +255,6 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
     // tab that reads as clean here truly has no changes. Save-As and path-less
     // tabs still go through (the user is picking a path).
     if (!forceNewPath && tab.path && !tab.isDirty) {
-      if (pendingSavePath) activeSaves.delete(pendingSavePath);
       return true;
     }
 
@@ -308,7 +301,6 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
           cancelLabel: translate("common.cancel"),
         });
         if (result !== "save") {
-          if (pendingSavePath) activeSaves.delete(pendingSavePath);
           return false;
         }
       }
@@ -354,7 +346,6 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
       });
       if (!writeResult) {
         fileWatcher.setWriteLock(sanitizedPath, false);
-        if (pendingSavePath) activeSaves.delete(pendingSavePath);
         AppError.handle("File:Write", new Error(translate("fileOps.failedSave")), { showToast: true });
         return false;
       }
@@ -404,18 +395,20 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
         saveAs: forceNewPath,
       });
 
-      if (pendingSavePath) activeSaves.delete(pendingSavePath);
       return true;
     }
-    if (pendingSavePath) activeSaves.delete(pendingSavePath);
     return false;
   } catch (_e) {
-    if (pendingSavePath) activeSaves.delete(pendingSavePath);
     if (lockedPath) fileWatcher.setWriteLock(lockedPath, false);
     AppError.handle("File:Write", _e, {
       showToast: true,
       additionalInfo: { path: tab?.path },
     });
     return false;
+  } finally {
+    // Every exit path must release the lock, including the ones that return
+    // after the tab was closed mid-save: a stale entry would make every later
+    // save of this path return false silently.
+    if (pendingSavePath) activeSaves.delete(pendingSavePath);
   }
 }

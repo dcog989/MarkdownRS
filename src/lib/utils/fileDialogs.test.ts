@@ -72,6 +72,12 @@ vi.mock("$lib/utils/formatterRust", () => ({
   formatMarkdown: vi.fn().mockImplementation(async (s: string) => s),
 }));
 
+const lazyLoad = vi.hoisted(() => ({ ready: true }));
+
+vi.mock("$lib/services/tabLoadStateMachine", () => ({
+  waitForTabContentLoad: vi.fn(async () => lazyLoad.ready),
+}));
+
 vi.mock("@tauri-apps/plugin-dialog", () => ({
   open: vi.fn(),
   save: vi.fn(),
@@ -100,6 +106,7 @@ describe("save overwrite guard", () => {
     appContext.settings.formatOnSave = false;
     dialogStore.isOpen = false;
     fakeDisk.files.clear();
+    lazyLoad.ready = true;
     fakeDisk.files.set(SCRATCH, {
       content: ORIGINAL,
       mtime: fakeDisk.nextMtime(),
@@ -170,6 +177,23 @@ describe("save overwrite guard", () => {
     expect(await saveCurrentFile()).toBe(true);
     expect(dialogStore.isOpen).toBe(false);
     expect(fakeDisk.files.get(SCRATCH)?.mtime).toBe(mtimeBefore);
+  });
+
+  it("releases the save lock when a save aborts before writing", async () => {
+    await openFile(SCRATCH);
+    const tab = editorStore.tabs[0];
+    appContext.app.activeTabId = tab.id;
+
+    const { updateContent } = await import("$lib/stores/editorUpdates");
+    updateContent(tab.id, "# Scratch\n\nEdited\n", 3);
+
+    lazyLoad.ready = false;
+    tab.contentLoaded = false;
+    expect(await saveCurrentFile()).toBe(false);
+
+    lazyLoad.ready = true;
+    tab.contentLoaded = true;
+    expect(await saveCurrentFile()).toBe(true);
   });
 });
 
