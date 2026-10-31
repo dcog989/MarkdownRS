@@ -17,28 +17,31 @@ export function createSplitResize() {
 
   let containerEl = $state<HTMLElement | null>(null);
 
-  let _boundHandleResize: ((e: MouseEvent) => void) | null = null;
+  let _boundHandleResize: ((e: PointerEvent) => void) | null = null;
   let _boundStopResize: (() => void) | null = null;
 
   function registerContainer(el: HTMLElement) {
     containerEl = el;
   }
 
-  function startResize(e: MouseEvent) {
+  function startResize(e: PointerEvent) {
     e.preventDefault();
     isDragging = true;
     dragStart = e[clientAxis];
     initialSplit = appContext.settings.splitPercentage;
 
-    _boundHandleResize = (ev: MouseEvent) => handleResize(ev);
+    // Capture the pointer so releasing outside the window still ends the drag.
+    (e.currentTarget as HTMLElement | null)?.setPointerCapture?.(e.pointerId);
+
+    _boundHandleResize = (ev: PointerEvent) => handleResize(ev);
     _boundStopResize = () => stopResize();
 
-    window.addEventListener("mousemove", _boundHandleResize);
-    window.addEventListener("mouseup", _boundStopResize);
+    window.addEventListener("pointermove", _boundHandleResize);
+    window.addEventListener("pointerup", _boundStopResize);
     document.body.style.cursor = resizeCursor;
   }
 
-  function handleResize(e: MouseEvent) {
+  function handleResize(e: PointerEvent) {
     if (!isDragging || !containerEl) return;
     const rect = containerEl.getBoundingClientRect();
     const totalSize = rect[sizeAxis];
@@ -51,8 +54,8 @@ export function createSplitResize() {
   function stopResize() {
     if (!isDragging) return;
     isDragging = false;
-    if (_boundHandleResize) window.removeEventListener("mousemove", _boundHandleResize);
-    if (_boundStopResize) window.removeEventListener("mouseup", _boundStopResize);
+    if (_boundHandleResize) window.removeEventListener("pointermove", _boundHandleResize);
+    if (_boundStopResize) window.removeEventListener("pointerup", _boundStopResize);
     _boundHandleResize = null;
     _boundStopResize = null;
     document.body.style.cursor = "default";
@@ -88,8 +91,8 @@ export function createSplitResize() {
 
   function cleanup() {
     isDragging = false;
-    if (_boundHandleResize) window.removeEventListener("mousemove", _boundHandleResize);
-    if (_boundStopResize) window.removeEventListener("mouseup", _boundStopResize);
+    if (_boundHandleResize) window.removeEventListener("pointermove", _boundHandleResize);
+    if (_boundStopResize) window.removeEventListener("pointerup", _boundStopResize);
     _boundHandleResize = null;
     _boundStopResize = null;
     document.body.style.cursor = "default";

@@ -116,7 +116,7 @@ onDestroy(() => {
   splitResize.cleanup();
 });
 
-function onResizeMouseDown(e: MouseEvent) {
+function onResizePointerDown(e: PointerEvent) {
   if (mainContainer) splitResize.registerContainer(mainContainer);
   splitResize.startResize(e);
 }
@@ -141,11 +141,12 @@ function onPaneResizeKeyDown(e: KeyboardEvent) {
   appContext.settings.paneSplitPercentage = clampSplit(appContext.settings.paneSplitPercentage + delta);
 }
 
-function onPaneResizeMouseDown(e: MouseEvent) {
+function onPaneResizePointerDown(e: PointerEvent) {
   if (!mainContainer) return;
   e.preventDefault();
+  (e.currentTarget as HTMLElement | null)?.setPointerCapture?.(e.pointerId);
 
-  const onMove = (ev: MouseEvent) => {
+  const onMove = (ev: PointerEvent) => {
     if (!mainContainer) return;
     const rect = mainContainer.getBoundingClientRect();
     if (rect.width <= 0) return;
@@ -154,15 +155,15 @@ function onPaneResizeMouseDown(e: MouseEvent) {
   };
 
   const onUp = () => {
-    window.removeEventListener("mousemove", onMove);
-    window.removeEventListener("mouseup", onUp);
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
     document.body.style.cursor = "default";
     stopPaneResize = null;
   };
 
   stopPaneResize = onUp;
-  window.addEventListener("mousemove", onMove);
-  window.addEventListener("mouseup", onUp);
+  window.addEventListener("pointermove", onMove);
+  window.addEventListener("pointerup", onUp);
   document.body.style.cursor = "col-resize";
 }
 </script>
@@ -270,7 +271,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
                 aria-valuenow={Math.round(appContext.settings.paneSplitPercentage * 100)}
                 class="resize-handle"
                 style:cursor="col-resize"
-                onmousedown={onPaneResizeMouseDown}
+                onpointerdown={onPaneResizePointerDown}
                 ondblclick={resetPaneSplit}
                 onkeydown={onPaneResizeKeyDown}
               ></div>
@@ -349,7 +350,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
                   aria-valuenow={Math.round(appContext.settings.splitPercentage * 100)}
                   class="resize-handle"
                   style:cursor={splitResize.resizeCursor}
-                  onmousedown={onResizeMouseDown}
+                  onpointerdown={onResizePointerDown}
                   ondblclick={splitResize.resetSplit}
                   onkeydown={splitResize.handleKeyDown}
                 ></div>
