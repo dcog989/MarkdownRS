@@ -216,6 +216,14 @@ export async function reopenClosedTab(historyIndex: number): Promise<string | nu
   initTransientState(entry.tab.id, restoredTs);
   const needsDiskReload = entry.tab.contentLoaded === false;
 
+  // Closing cleared the pending count timer. Refresh it now so the reopened tab
+  // does not show a stale, permanently dimmed count.
+  if (entry.tab.contentLoaded && entry.tab.wordCountPending) {
+    entry.tab.wordCount = computeWordCount(entry.tab.content);
+    entry.tab.widestColumn = computeLineStats(entry.tab.content).widestColumn;
+    entry.tab.wordCountPending = false;
+  }
+
   // The stored title may have been content-derived under a setting that has
   // since changed; re-derive it from the current preference.
   if (!entry.tab.customTitle) {

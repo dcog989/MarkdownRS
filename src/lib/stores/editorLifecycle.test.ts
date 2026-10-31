@@ -261,4 +261,27 @@ describe("reopenClosedTab", () => {
 
     expect(vi.mocked(fileWatcher.watch)).toHaveBeenCalledWith("closed", "/closed.md");
   });
+
+  it("refreshes a reopened tab's counts instead of leaving them pending", async () => {
+    editorStore.closedTabsHistory = [
+      {
+        tab: {
+          ...tab("closed", false),
+          content: "one\ntwo longer",
+          contentLoaded: true,
+          wordCount: 0,
+          widestColumn: 0,
+          wordCountPending: true,
+        },
+        index: 0,
+      },
+    ];
+
+    await reopenClosedTab(0);
+
+    const reopened = editorStore.tabs.find((t) => t.id === "closed");
+    expect(reopened?.wordCount).toBe(3);
+    expect(reopened?.widestColumn).toBe(10);
+    expect(reopened?.wordCountPending).toBe(false);
+  });
 });
