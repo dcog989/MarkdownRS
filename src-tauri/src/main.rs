@@ -11,7 +11,6 @@ mod state;
 mod themes;
 mod utils;
 
-use tauri::Emitter;
 use tauri::Manager;
 
 fn main() {
@@ -52,11 +51,7 @@ fn main() {
                 let _ = window.set_focus();
                 let _ = window.unminimize();
 
-                if args.len() > 1 {
-                    let file_path = &args[1];
-                    log::info!("Opening file from command line: {}", file_path);
-                    let _ = window.emit("open-file-from-args", file_path);
-                }
+                bootstrap::window::queue_open_paths(window, bootstrap::window::cli_file_args(args.into_iter().skip(1)));
             }
         }))
         .plugin(tauri_plugin_fs::init())

@@ -3,6 +3,8 @@ use tauri::{Emitter, Listener};
 const DARK_BACKGROUND: &str = "#1e1e1e";
 const LIGHT_BACKGROUND: &str = "#fcfcfc";
 
+static FRONTEND_READY: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
 /// The page paints no background until the frontend has loaded the theme, so the
 /// window's own background is what fills the gap. Match it to the saved theme.
 pub fn apply_saved_background(window: &tauri::WebviewWindow, settings: Option<&toml::Value>) {
@@ -59,20 +61,50 @@ pub fn configure(window: &tauri::WebviewWindow) {
 pub fn configure(_window: &tauri::WebviewWindow) {}
 
 pub fn handle_cli_args(window: tauri::WebviewWindow) {
-    let Some(file_path) = std::env::args_os()
-        .skip(1)
-        .filter(|a| !a.to_string_lossy().starts_with('-'))
-        .map(|a| a.to_string_lossy().into_owned())
-        .next()
-    else {
-        return;
-    };
+    queue_open_paths(
+        &window,
+        cli_file_args(std::env::args_os().skip(1).map(|a| a.to_string_lossy().into_owned())),
+    );
 
     // The window is shown at creation. Wait for the frontend to report that its
     // listeners exist and the session is restored, rather than guessing.
     let emit_window = window.clone();
     window.listen("frontend-ready", move |_| {
-        log::info!("Opening file from initial launch: {}", file_path);
-        let _ = emit_window.emit("open-file-from-args", &file_path);
+        FRONTEND_READY.store(true, std::sync::atomic::Ordering::SeqCst);
+        emit_pending_open_paths(&emit_window);
     });
+}
+
+/// Non-flag arguments, whether the app is the first instance or a second one.
+pub fn cli_file_args(args: impl IntoIterator<Item = String>) -> Vec<String> {
+    args.into_iter().filter(|a| !a.starts_with('-')).collect()
+}
+
+/// Files from a second launch, held until the frontend is ready to receive them.
+pub fn queue_open_paths(window: &tauri::WebviewWindow, paths: Vec<String>) {
+    if paths.is_empty() {
+        return;
+    }
+
+    pending_open_paths()
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .extend(paths);
+
+    if FRONTEND_READY.load(std::sync::atomic::Ordering::SeqCst) {
+        emit_pending_open_paths(window);
+    }
+}
+
+fn pending_open_paths() -> &'static std::sync::Mutex<Vec<String>> {
+    static PENDING: std::sync::OnceLock<std::sync::Mutex<Vec<String>>> = std::sync::OnceLock::new();
+    PENDING.get_or_init(|| std::sync::Mutex::new(Vec::new()))
+}
+
+fn emit_pending_open_paths(window: &tauri::WebviewWindow) {
+    let paths = std::mem::take(&mut *pending_open_paths().lock().unwrap_or_else(|e| e.into_inner()));
+    for file_path in paths {
+        log::info!("Opening file from command line: {}", file_path);
+        let _ = window.emit("open-file-from-args", &file_path);
+    }
 }
