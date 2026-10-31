@@ -35,19 +35,29 @@ export async function renameFileOnDisk(oldPath: string, newPath: string): Promis
 }
 
 export async function createFileOnDisk(path: string): Promise<boolean> {
-  const result = await callBackend("create_file", { path }, "File:Write", undefined, {
-    report: true,
-    msg: translate("fileTree.failedCreateFile"),
-  });
-  return result !== null;
+  try {
+    await callBackend("create_file", { path }, "File:Write");
+    return true;
+  } catch (err) {
+    AppError.handle("File:Write", err, {
+      showToast: true,
+      userMessage: translate("fileTree.failedCreateFile"),
+    });
+    return false;
+  }
 }
 
 export async function createDirOnDisk(path: string): Promise<boolean> {
-  const result = await callBackend("create_dir", { path }, "File:Write", undefined, {
-    report: true,
-    msg: translate("fileTree.failedCreateDir"),
-  });
-  return result !== null;
+  try {
+    await callBackend("create_dir", { path }, "File:Write");
+    return true;
+  } catch (err) {
+    AppError.handle("File:Write", err, {
+      showToast: true,
+      userMessage: translate("fileTree.failedCreateDir"),
+    });
+    return false;
+  }
 }
 
 export async function writeTextFile(
