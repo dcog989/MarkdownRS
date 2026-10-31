@@ -18,7 +18,7 @@ import { _ } from "svelte-i18n";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import type { OperationId } from "$lib/config/textOperationsRegistry";
-import { translate } from "$lib/i18n";
+import { type MessageKey, translate } from "$lib/i18n";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { shortcutManager } from "$lib/utils/shortcuts";
@@ -62,12 +62,12 @@ let isLoadingSuggestions = $state(false);
 
 type MenuOption = {
   id?: OperationId;
-  label?: string;
+  label?: MessageKey;
   divider?: boolean;
 };
 
-function opLabel(id: OperationId): string {
-  return `textOps.op.${id}`;
+function opLabel(id: OperationId): MessageKey {
+  return `textOps.op.${id}` as MessageKey;
 }
 
 const menuOp = (id: OperationId): MenuOption => ({ id, label: opLabel(id) });
@@ -252,7 +252,7 @@ async function handleSendToBrowser() {
           {:else}
             {@const id = op.id}
             <button type="button" class="text-ui menu-item" onclick={() => handleOp(id)}>
-              <span class="flex-1">{translate(op.label ?? "")}</span>
+              <span class="flex-1">{op.label ? translate(op.label) : ""}</span>
               {#if id && opShortcut(id)}
                 <span class="text-ui-sm opacity-40">{opShortcut(id)}</span>
               {/if}

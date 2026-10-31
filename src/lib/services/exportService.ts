@@ -1,7 +1,7 @@
 import { homeDir, join } from "@tauri-apps/api/path";
 import { save } from "@tauri-apps/plugin-dialog";
 import { domToPng, domToSvg, domToWebp } from "modern-screenshot";
-import { translate } from "$lib/i18n";
+import { type MessageKey, translate } from "$lib/i18n";
 import type { EditorTab } from "$lib/stores/editorTypes";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
@@ -11,6 +11,12 @@ import { AppError } from "$lib/utils/errorHandling";
 import { logger } from "$lib/utils/logger";
 import { renderMarkdown } from "$lib/utils/markdownRust";
 import { buildExportHtml } from "./exportTemplates";
+
+const DOCUMENT_FILTER_KEYS: Record<"docx" | "epub" | "tex", MessageKey> = {
+  docx: "export.docxFilter",
+  epub: "export.epubFilter",
+  tex: "export.texFilter",
+};
 
 /** Save dialogs start in the user's home directory, falling back to a bare file name. */
 async function exportDefaultPath(fileName: string): Promise<string> {
@@ -140,7 +146,7 @@ export class ExportService {
   private async saveDocumentPath(tab: EditorTab, extension: "docx" | "epub" | "tex"): Promise<string | null> {
     return save({
       defaultPath: await exportDefaultPath(`${tab.title.replace(/\.[^/.]+$/, "")}.${extension}`),
-      filters: [{ name: translate(`export.${extension}Filter`), extensions: [extension] }],
+      filters: [{ name: translate(DOCUMENT_FILTER_KEYS[extension]), extensions: [extension] }],
     });
   }
 

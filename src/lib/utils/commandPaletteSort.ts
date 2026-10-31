@@ -1,6 +1,6 @@
 import type { Command } from "$lib/commands/commands";
 import { commandLabel } from "$lib/commands/helpers";
-import { translate } from "$lib/i18n";
+import { type MessageKey, translate } from "$lib/i18n";
 
 export type SortMode = "alphabetical" | "recent" | "most-used" | "categories";
 
@@ -8,7 +8,7 @@ export type SortDirection = "asc" | "desc";
 
 export const SORT_MODES: SortMode[] = ["alphabetical", "recent", "most-used", "categories"];
 
-export const SORT_LABEL_KEYS: Record<SortMode, string> = {
+export const SORT_LABEL_KEYS: Record<SortMode, MessageKey> = {
   alphabetical: "commandPalette.sortAZ",
   recent: "commandPalette.sortRecent",
   "most-used": "commandPalette.sortMostUsed",
@@ -21,7 +21,7 @@ function directed(result: number, direction: SortDirection): number {
 }
 
 function byLabel(a: Command, b: Command): number {
-  return translate(commandLabel(a)).localeCompare(translate(commandLabel(b)));
+  return commandLabel(a).localeCompare(commandLabel(b));
 }
 
 function byCategory(a: Command, b: Command): number {

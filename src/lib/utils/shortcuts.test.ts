@@ -10,7 +10,7 @@ function keydown(key: string, init: KeyboardEventInit = {}, target?: HTMLElement
 }
 
 function command(id: string, overrides: Partial<Command> = {}): Command {
-  return { id, label: id, category: "test", ...overrides };
+  return { id, labelKey: "command.save", category: "commandCategory.edit", ...overrides };
 }
 
 describe("resolveShortcut", () => {

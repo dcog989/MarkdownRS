@@ -8,7 +8,7 @@ import type { Command } from "$lib/commands/commands";
 import { commandLabel } from "$lib/commands/helpers";
 import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
-import { translate } from "$lib/i18n";
+import { type MessageKey, translate } from "$lib/i18n";
 import { recordCommandUsage, settingsState } from "$lib/stores/settingsState.svelte";
 import { SORT_LABEL_KEYS, SORT_MODES, sortCommands } from "$lib/utils/commandPaletteSort";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
@@ -28,12 +28,12 @@ let {
 let query = $state("");
 let inputRef: HTMLInputElement | undefined = $state();
 
-function categoryLabel(category: string): string {
+function categoryLabel(category: MessageKey): string {
   return translate(category);
 }
 
 let filteredCommands = $derived(
-  commands.filter((c: Command) => translate(commandLabel(c)).toLowerCase().includes(query.toLowerCase())),
+  commands.filter((c: Command) => commandLabel(c).toLowerCase().includes(query.toLowerCase())),
 );
 
 let sortDirection = $derived(settingsState.commandPaletteSortDirections[settingsState.commandPaletteSort] ?? "asc");
@@ -169,7 +169,7 @@ function toggleSortDirection() {
                 use:scrollIntoView={isSelected}
                 onclick={() => execute(command)}
               >
-                <div class="text-ui min-w-0 flex-1 truncate font-medium">{translate(commandLabel(command))}</div>
+                <div class="text-ui min-w-0 flex-1 truncate font-medium">{commandLabel(command)}</div>
                 {#if shortcut}
                   <span class="text-ui-sm shrink-0 opacity-60">{shortcut}</span>
                 {/if}

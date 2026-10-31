@@ -12,6 +12,7 @@ import {
   selectLine,
 } from "@codemirror/commands";
 import type { EditorView } from "@codemirror/view";
+import type { MessageKey } from "$lib/i18n";
 import { openFind, openReplace } from "$lib/stores/interfaceStore.svelte";
 import { isSelectionCommented, toggleSelectionComment } from "$lib/utils/commentToggle";
 import { getActiveEditorView } from "$lib/utils/editorCommands";
@@ -20,7 +21,7 @@ import type { Command } from "./types";
 
 interface EditorCommandDef {
   id: string;
-  labelKey: string | (() => string);
+  labelKey: MessageKey | (() => MessageKey);
   defaultKey: string;
   run: (view: EditorView) => boolean;
 }

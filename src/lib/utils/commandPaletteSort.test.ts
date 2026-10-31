@@ -3,26 +3,26 @@ import type { Command } from "$lib/commands/commands";
 import { sortCommands } from "./commandPaletteSort";
 
 const commands: Command[] = [
-  { id: "edit.save", label: "Save", category: "File" },
-  { id: "file.open", label: "Open", category: "File" },
-  { id: "view.toggle", label: "Toggle Preview", category: "View" },
-  { id: "edit.undo", label: "Undo", category: "Edit" },
+  { id: "edit.save", labelKey: "command.save", category: "commandCategory.file" },
+  { id: "file.open", labelKey: "fileTree.open", category: "commandCategory.file" },
+  { id: "view.toggle", labelKey: "command.showOutline", category: "commandCategory.view" },
+  { id: "edit.undo", labelKey: "command.undo", category: "commandCategory.edit" },
 ];
 
 describe("sortCommands", () => {
   it("sorts alphabetically by label ascending", () => {
     const sorted = sortCommands(commands, "alphabetical", "asc", {}, {});
-    expect(sorted.map((c) => c.label)).toEqual(["Open", "Save", "Toggle Preview", "Undo"]);
+    expect(sorted.map((c) => c.id)).toEqual(["file.open", "edit.save", "view.toggle", "edit.undo"]);
   });
 
   it("sorts alphabetically descending", () => {
     const sorted = sortCommands(commands, "alphabetical", "desc", {}, {});
-    expect(sorted.map((c) => c.label)).toEqual(["Undo", "Toggle Preview", "Save", "Open"]);
+    expect(sorted.map((c) => c.id)).toEqual(["edit.undo", "view.toggle", "edit.save", "file.open"]);
   });
 
   it("sorts by category then label", () => {
     const sorted = sortCommands(commands, "categories", "asc", {}, {});
-    expect(sorted.map((c) => c.label)).toEqual(["Undo", "Open", "Save", "Toggle Preview"]);
+    expect(sorted.map((c) => c.id)).toEqual(["edit.save", "edit.undo", "file.open", "view.toggle"]);
   });
 
   it("sorts by most recent usage with label tiebreak", () => {

@@ -106,8 +106,8 @@ export class KeyboardShortcutManager {
     return undefined;
   }
 
-  getShortcutsByCategory(): Map<string, Command[]> {
-    const grouped = new Map<string, Command[]>();
+  getShortcutsByCategory(): Map<Command["category"], Command[]> {
+    const grouped = new Map<Command["category"], Command[]>();
     for (const cmd of this.commands.values()) {
       if (!grouped.has(cmd.category)) {
         grouped.set(cmd.category, []);

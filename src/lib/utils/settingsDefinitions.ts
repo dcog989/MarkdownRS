@@ -1,3 +1,4 @@
+import type { MessageKey } from "$lib/i18n";
 import { DEFAULT_TAB_WIDTH_MAX, DEFAULT_TAB_WIDTH_MIN } from "$lib/stores/settingsState.svelte";
 import {
   onClosedTabHistoryChange,
@@ -11,18 +12,18 @@ import { BUILTIN_THEME_NAME } from "./themes";
 
 export type SettingDef = {
   key: string;
-  label: string;
+  label: MessageKey;
   type: string;
-  category: string;
+  category: MessageKey;
   defaultValue: unknown;
   options?: string[];
-  optionLabels?: string[];
+  optionLabels?: MessageKey[];
   min?: number;
   max?: number;
   step?: number;
-  tooltip?: string;
-  unit?: string;
-  labelWarning?: string;
+  tooltip?: MessageKey;
+  unit?: MessageKey;
+  labelWarning?: MessageKey;
   onChange?: (newValue: unknown, oldValue: unknown) => void;
 };
 

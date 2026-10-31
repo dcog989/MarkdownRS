@@ -1,5 +1,6 @@
 import type { Command } from "@codemirror/view";
 import type { Command as CommandDefinition } from "$lib/commands/types";
+import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { getActiveEditorView } from "$lib/utils/editorCommands";
 import { isMarkdownTab } from "$lib/utils/fileValidation";
@@ -16,6 +17,6 @@ export function runEditorCommand(command: Command): boolean {
 }
 
 export function commandLabel(command: CommandDefinition): string {
-  if (typeof command.labelKey === "function") return command.labelKey();
-  return command.labelKey ?? command.label ?? command.id;
+  const key = typeof command.labelKey === "function" ? command.labelKey() : command.labelKey;
+  return translate(key, command.labelValues ? { values: command.labelValues } : undefined);
 }

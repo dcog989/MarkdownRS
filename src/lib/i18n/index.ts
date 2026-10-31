@@ -56,6 +56,6 @@ export type TranslateOptions = {
   default?: string;
 };
 
-export function translate(key: MessageKey | (string & {}), options?: TranslateOptions): string {
+export function translate(key: MessageKey, options?: TranslateOptions): string {
   return get(_)(key, options);
 }
