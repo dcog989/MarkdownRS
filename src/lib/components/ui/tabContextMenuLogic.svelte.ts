@@ -269,7 +269,7 @@ export class TabContextMenuLogic {
     try {
       await navigator.clipboard.writeText(text);
     } catch {
-      showToast("error", translate("editor.copyFailed"));
+      showToast("error", translate("common.copyFailed"));
     }
   };
 

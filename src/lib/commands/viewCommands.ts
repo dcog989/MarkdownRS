@@ -40,7 +40,7 @@ export const viewCommands: Command[] = [
       e?.preventDefault();
       e?.stopImmediatePropagation();
       if (!isCurrentFileMarkdown()) {
-        showToast("warning", translate("tabBarMenu.previewNotAvailable"));
+        showToast("warning", translate("preview.notAvailable"));
         return;
       }
       toggleSplitView();

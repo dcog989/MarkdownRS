@@ -244,7 +244,6 @@ export const en = {
     fileHistory: "File History",
     settings: "Settings",
     about: "About MarkdownRS",
-    previewNotAvailable: "Preview not available for this file type",
   },
   tabContextMenu: {
     save: "Save",
@@ -615,7 +614,6 @@ export const en = {
     imagePasteSaveFirst: "Save the file before pasting images",
     imagePasteFailed: "Failed to paste image",
     imagePasteFileNotFound: "Image file not found: {path}",
-    copyFailed: "Could not copy to the clipboard",
   },
   preview: {
     switchHorizontal: "Switch to Horizontal Split",

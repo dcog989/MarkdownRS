@@ -355,7 +355,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
       try {
         await navigator.clipboard.writeText(doc.sliceString(from, to));
       } catch {
-        showToast("error", $_("editor.copyFailed"));
+        showToast("error", $_("common.copyFailed"));
         return;
       }
       // The write can outlive the edit; never delete from a changed document.
@@ -368,7 +368,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
       try {
         await navigator.clipboard.writeText(cmView.state.sliceDoc(from, to));
       } catch {
-        showToast("error", $_("editor.copyFailed"));
+        showToast("error", $_("common.copyFailed"));
       }
     }}
     onPaste={async () => {

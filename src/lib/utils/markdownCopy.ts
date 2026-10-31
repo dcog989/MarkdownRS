@@ -53,7 +53,7 @@ export function createCodeBlockCopyHandler(deps: CodeBlockCopyDeps): Extension {
       navigator.clipboard
         .writeText(code)
         .then(() => deps.showToast("success", deps.translate("preview.codeCopied")))
-        .catch(() => deps.showToast("error", deps.translate("editor.copyFailed")));
+        .catch(() => deps.showToast("error", deps.translate("common.copyFailed")));
 
       return true;
     },

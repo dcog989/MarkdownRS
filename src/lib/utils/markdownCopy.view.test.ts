@@ -6,7 +6,7 @@ import { type CodeBlockCopyDeps, createCodeBlockCopyHandler } from "./markdownCo
 import { createMarkdownDecorationsPlugin } from "./markdownExtensions";
 
 const TOAST_SUCCESS = "preview.codeCopied";
-const TOAST_FAILURE = "editor.copyFailed";
+const TOAST_FAILURE = "common.copyFailed";
 
 const originalGetClientRects = Range.prototype.getClientRects;
 const originalGetBoundingClientRect = Element.prototype.getBoundingClientRect;
