@@ -182,4 +182,21 @@ mod tests {
             .expect("read content");
         assert!(!content.contains("<br>"), "raw HTML leaked: {content}");
     }
+
+    #[test]
+    fn escapes_the_document_title_in_metadata() {
+        let bytes = markdown_to_epub("Body", "A & B <C>").expect("epub should build");
+        let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
+
+        let mut package = String::new();
+        archive
+            .by_name("OEBPS/content.opf")
+            .expect("package entry")
+            .read_to_string(&mut package)
+            .expect("read package");
+        assert!(
+            package.contains("<dc:title>A &amp; B &lt;C&gt;</dc:title>"),
+            "package was: {package}"
+        );
+    }
 }

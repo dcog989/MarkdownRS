@@ -317,4 +317,24 @@ mod tests {
         assert!(!latex.contains("textsuperscript{1}"), "latex was: {latex}");
         assert_eq!(latex.matches("A note.").count(), 1, "definition repeated: {latex}");
     }
+
+    #[test]
+    fn renders_table_alignment_and_header_rule() {
+        let latex = markdown_to_latex("| a | b | c |\n|:--|:-:|--:|\n| 1 | 2 | 3 |\n");
+
+        assert!(latex.contains("\\begin{tabular}{lcr}"), "latex was: {latex}");
+        assert!(latex.contains("a & b & c \\\\"), "latex was: {latex}");
+        assert!(latex.contains("\\hline"), "latex was: {latex}");
+    }
+
+    #[test]
+    fn escapes_prose_specials_in_code_spans() {
+        let latex = markdown_to_latex("`\\ { } ~ ^ & % $ #`\n");
+
+        assert!(
+            latex
+                .contains("\\texttt{\\textbackslash{} \\{ \\} \\textasciitilde{} \\textasciicircum{} \\& \\% \\$ \\#}"),
+            "latex was: {latex}"
+        );
+    }
 }
