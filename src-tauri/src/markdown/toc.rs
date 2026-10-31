@@ -9,14 +9,18 @@ static TOC_END_RE: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)<!--\s*(?:tocstop|/toc)\s*-->").expect("Invalid TOC_END_RE"));
 static H1_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"(?m)^#[\t ].*$").expect("Invalid H1_RE"));
 
-/// Per-line view of `content` (split on `\n`) with fenced-code tracking.
-/// `fenced[i]` is true when line `i` lies inside a fenced code block, so TOC
+/// Leading whitespace (in bytes; a leading tab counts as 1) that makes a line
+/// an indented code block.
+const INDENTED_CODE_INDENT: usize = 4;
+
+/// Per-line view of `content` (split on `\n`) with code tracking.
+/// `code[i]` is true when line `i` holds code (fenced or indented), so TOC
 /// markers and heading anchors are never picked up from code examples that
 /// happen to contain `# ...` or `<!-- toc -->` text.
 struct LineMap {
     starts: Vec<usize>,
     ends: Vec<usize>,
-    fenced: Vec<bool>,
+    code: Vec<bool>,
 }
 
 impl LineMap {
@@ -33,13 +37,13 @@ impl LineMap {
             return Self {
                 starts,
                 ends,
-                fenced: Vec::new(),
+                code: Vec::new(),
             };
         }
         Self {
             starts,
             ends,
-            fenced: compute_fenced(content),
+            code: mark_code_lines(content),
         }
     }
 
@@ -53,40 +57,56 @@ impl LineMap {
     }
 }
 
-/// Marks lines inside fenced code blocks. A fence is CommonMark-style: 3+
-/// identical backtick or tilde characters at up to 3 spaces of indentation;
-/// the closing fence must use the same character with at least the opening
-/// length. The opening and closing fence lines themselves are not flagged.
-fn compute_fenced(content: &str) -> Vec<bool> {
-    let mut fenced = Vec::with_capacity(content.len());
+/// Marks lines that hold code: fenced blocks and indented blocks. TOC markers
+/// inside a code sample are then never treated as real markers.
+///
+/// A fence is CommonMark-style: 3+ identical backtick or tilde characters at up
+/// to 3 spaces of indentation; the closing fence must use the same character
+/// with at least the opening length. The opening and closing fence lines
+/// themselves are not flagged. An indented code line is 4+ spaces at the start
+/// of a block (after a blank line or another code line), which also covers the
+/// first line of a `    <!-- toc -->` sample.
+fn mark_code_lines(content: &str) -> Vec<bool> {
+    let mut code = Vec::new();
     let mut open: Option<(char, usize)> = None;
+    let mut prev_blank = true;
+    let mut prev_code = false;
     for line in content.split_inclusive('\n') {
-        fenced.push(open.is_some());
+        let in_fence = open.is_some();
         let stripped = line.trim_start_matches(['\r', '\n']).trim_start();
-        if stripped.len() < 3 || line.len() - stripped.len() >= 4 {
-            continue;
+        let indent = line.len() - stripped.len();
+        let indented = !in_fence && indent >= INDENTED_CODE_INDENT && (prev_blank || prev_code);
+        let is_code = in_fence || indented;
+        code.push(is_code);
+
+        if indent < INDENTED_CODE_INDENT
+            && let Some((first, len)) = fence_run(stripped)
+        {
+            match open {
+                Some((fence_char, min_len)) if fence_char == first && len >= min_len => {
+                    open = None;
+                },
+                None => {
+                    open = Some((first, len));
+                },
+                _ => {},
+            }
         }
-        let Some(first) = stripped.chars().next() else {
-            continue;
-        };
-        if first != '`' && first != '~' {
-            continue;
-        }
-        let len = stripped.chars().take_while(|&c| c == first).count();
-        if len < 3 {
-            continue;
-        }
-        match open {
-            Some((fence_char, min_len)) if fence_char == first && len >= min_len => {
-                open = None;
-            },
-            None => {
-                open = Some((first, len));
-            },
-            _ => {},
-        }
+
+        prev_blank = stripped.is_empty();
+        prev_code = is_code;
     }
-    fenced
+    code
+}
+
+/// The fence character and run length when `line` opens or closes a fence.
+fn fence_run(line: &str) -> Option<(char, usize)> {
+    let first = line.chars().next()?;
+    if first != '`' && first != '~' {
+        return None;
+    }
+    let len = line.chars().take_while(|&c| c == first).count();
+    (len >= 3).then_some((first, len))
 }
 
 fn extract_headings(content: &str) -> Vec<HeadingEntry> {
@@ -106,11 +126,11 @@ fn generate_toc_markdown(entries: &[HeadingEntry]) -> String {
     lines.join("\n")
 }
 
-/// Byte offset just past the first ATX H1 heading outside a fenced code block
+/// Byte offset just past the first ATX H1 heading outside a code block
 /// (plus any following blank lines), or `0` when there is no such heading.
 fn find_after_first_h1(content: &str, lines: &LineMap) -> usize {
-    for i in 0..lines.fenced.len() {
-        if lines.fenced[i] {
+    for i in 0..lines.code.len() {
+        if lines.code[i] {
             continue;
         }
         if H1_RE.is_match(&content[lines.starts[i]..lines.ends[i]]) {
@@ -125,12 +145,68 @@ fn find_after_first_h1(content: &str, lines: &LineMap) -> usize {
     0
 }
 
-/// First match of `re` that lies on a non-fenced line.
-fn find_marker_on_line<'a>(content: &'a str, lines: &LineMap, re: &Regex) -> Option<regex::Match<'a>> {
-    re.find_iter(content).find(|m| !lines.fenced[lines.line_at(m.start())])
+/// True when `offset` points into a code line or an inline code span.
+fn is_in_code(content: &str, lines: &LineMap, offset: usize) -> bool {
+    let index = lines.line_at(offset);
+    if lines.code[index] {
+        return true;
+    }
+    inside_inline_code(
+        &content[lines.starts[index]..lines.ends[index]],
+        offset - lines.starts[index],
+    )
 }
 
-/// First match of `re` at or after `from` that lies on a non-fenced line.
+/// True when `offset` lies inside an inline code span opened and closed on the
+/// same line. A span opens with a backtick run and closes with the next run of
+/// the same length, so `` `<!-- toc -->` `` is text, not a marker.
+///
+/// shortcut: only same-line spans are checked; a span opened on an earlier line
+/// does not hide a marker, upgrade if multi-line code spans need to be skipped.
+fn inside_inline_code(line: &str, offset: usize) -> bool {
+    let runs = backtick_runs(line);
+    let mut i = 0;
+    while i < runs.len() {
+        let (open, len) = runs[i];
+        match runs[i + 1..].iter().position(|&(_, other)| other == len) {
+            Some(relative) => {
+                let close = runs[i + 1 + relative].0;
+                if offset > open && offset < close {
+                    return true;
+                }
+                i += relative + 2;
+            },
+            None => i += 1,
+        }
+    }
+    false
+}
+
+/// `(byte offset, run length)` of every backtick run on the line.
+fn backtick_runs(line: &str) -> Vec<(usize, usize)> {
+    let bytes = line.as_bytes();
+    let mut runs = Vec::new();
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'`' {
+            let start = i;
+            while i < bytes.len() && bytes[i] == b'`' {
+                i += 1;
+            }
+            runs.push((start, i - start));
+        } else {
+            i += 1;
+        }
+    }
+    runs
+}
+
+/// First match of `re` that lies outside code.
+fn find_marker_on_line<'a>(content: &'a str, lines: &LineMap, re: &Regex) -> Option<regex::Match<'a>> {
+    re.find_iter(content).find(|m| !is_in_code(content, lines, m.start()))
+}
+
+/// First match of `re` at or after `from` that lies outside code.
 fn find_marker_on_line_after<'a>(
     content: &'a str,
     lines: &LineMap,
@@ -138,7 +214,7 @@ fn find_marker_on_line_after<'a>(
     from: usize,
 ) -> Option<regex::Match<'a>> {
     re.find_iter(content)
-        .find(|m| m.start() >= from && !lines.fenced[lines.line_at(m.start())])
+        .find(|m| m.start() >= from && !is_in_code(content, lines, m.start()))
 }
 
 fn replace_toc_region(content: &str, toc_markdown: &str) -> String {
@@ -417,5 +493,45 @@ mod tests {
         assert!(!toc.contains("Author"));
         assert!(toc.contains("- [Title](#title)"));
         assert!(toc.contains("- [Section](#section)"));
+    }
+
+    #[test]
+    fn toc_marker_in_an_indented_code_block_is_not_a_marker() {
+        let content = "# Title\n\n    <!-- toc -->\n\n## Section\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(
+            result.contains("    <!-- toc -->"),
+            "code sample must be left alone: {result}"
+        );
+        assert!(
+            result.starts_with("# Title\n\n<!-- toc -->\n\n- [Title](#title)"),
+            "TOC must be inserted after the H1: {result}"
+        );
+        assert_eq!(result.matches("<!-- toc -->").count(), 2);
+    }
+
+    #[test]
+    fn toc_marker_in_an_inline_code_span_is_not_a_marker() {
+        let content = "# Title\n\nUse `<!-- toc -->` here.\n\n## Section\n\nBody.";
+        let result = generate_document_toc(content);
+
+        assert!(
+            result.contains("Use `<!-- toc -->` here."),
+            "inline code must be left alone: {result}"
+        );
+        assert!(
+            result.starts_with("# Title\n\n<!-- toc -->\n\n- [Title](#title)"),
+            "TOC must be inserted after the H1: {result}"
+        );
+    }
+
+    #[test]
+    fn toc_marker_after_an_inline_code_span_is_still_a_marker() {
+        let content = "# Title\n\n`code` <!-- toc -->\n\n- [Stale](#stale)\n\n<!-- tocstop -->\n\n## Section";
+        let result = generate_document_toc(content);
+
+        assert!(!result.contains("Stale"), "stale region must be replaced: {result}");
+        assert!(result.contains("- [Section](#section)"), "result was: {result}");
     }
 }
