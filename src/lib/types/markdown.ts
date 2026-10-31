@@ -8,7 +8,5 @@ export interface HeadingEntry {
 
 export interface RenderResult {
   html: string;
-  word_count: number;
-  char_count: number;
   headings: HeadingEntry[];
 }

@@ -5,7 +5,6 @@ pub mod frontmatter;
 pub mod harper;
 pub mod linkify;
 pub mod linter;
-pub mod metrics;
 pub mod renderer;
 pub mod toc;
 

@@ -30,8 +30,6 @@ export async function renderMarkdown(
     await logToBackend("error", `[Markdown] Render error: Rendering returned null`);
     return {
       html: `<div class="p-4 border border-danger text-danger"><strong>${translate("preview.renderFailed")}:</strong><br/>${translate("preview.renderNull")}</div>`,
-      word_count: 0,
-      char_count: 0,
       headings: [],
     };
   }

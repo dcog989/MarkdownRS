@@ -1,7 +1,6 @@
 use crate::markdown::callouts::transform_callouts;
 use crate::markdown::frontmatter;
 use crate::markdown::linkify::{linkify_file_paths_ast, linkify_wikilinks_ast};
-use crate::markdown::metrics::build_metrics;
 use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
 use anyhow::{Result, anyhow};
 use comrak::{Anchorizer, Arena, format_html_with_plugins, options::Plugins, parse_document};
@@ -15,14 +14,10 @@ pub struct MarkdownOptions {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RenderResult {
     pub html: String,
-    pub line_count: usize,
-    pub word_count: usize,
-    pub char_count: usize,
-    pub widest_column: usize,
     pub headings: Vec<HeadingEntry>,
 }
 
-/// Renders markdown to HTML with line number tracking and document metrics
+/// Renders markdown to HTML with line number tracking
 pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<RenderResult> {
     let comrak_options = options.flavor.to_comrak_options();
 
@@ -47,16 +42,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
 
     let html = transform_callouts(&html);
 
-    let (line_count, word_count, char_count, widest_column) = build_metrics(content);
-
-    Ok(RenderResult {
-        html,
-        line_count,
-        word_count,
-        char_count,
-        widest_column,
-        headings,
-    })
+    Ok(RenderResult { html, headings })
 }
 
 #[cfg(test)]
