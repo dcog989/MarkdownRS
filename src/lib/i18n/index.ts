@@ -51,10 +51,6 @@ export function resolveLocale(localeId: string): string {
   return base && SUPPORTED_LOCALES.includes(base as AppLocale) ? base : detectSystemLocale();
 }
 
-export function setAppLocale(localeId: string): void {
-  locale.set(resolveLocale(localeId));
-}
-
 export type TranslateOptions = {
   values?: Record<string, string | number | boolean | Date | null | undefined>;
   default?: string;
