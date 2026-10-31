@@ -72,6 +72,24 @@ fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push_str("\\begin{");
             out.push_str(environment);
             out.push_str("}\n");
+
+            // LaTeX numbers each enumerate nesting level with its own counter.
+            if list.list_type == ListType::Ordered && list.start > 1 {
+                const COUNTERS: [&str; 4] = ["enumi", "enumii", "enumiii", "enumiv"];
+                let depth = node
+                    .ancestors()
+                    .skip(1)
+                    .filter(|ancestor| {
+                        matches!(
+                            &ancestor.data.borrow().value,
+                            NodeValue::List(parent_list) if parent_list.list_type == ListType::Ordered
+                        )
+                    })
+                    .count()
+                    .min(COUNTERS.len() - 1);
+                out.push_str(&format!("\\setcounter{{{}}}{{{}}}\n", COUNTERS[depth], list.start - 1));
+            }
+
             render_blocks(node, out);
             out.push_str("\\end{");
             out.push_str(environment);
@@ -339,6 +357,20 @@ mod tests {
             latex
                 .contains("\\texttt{\\textbackslash{} \\{ \\} \\textasciitilde{} \\textasciicircum{} \\& \\% \\$ \\#}"),
             "latex was: {latex}"
+        );
+    }
+
+    #[test]
+    fn honours_an_ordered_list_start_number() {
+        let latex = markdown_to_latex("3. three\n4. four\n", MarkdownFlavor::Gfm);
+
+        assert!(
+            latex.contains("\\begin{enumerate}\n\\setcounter{enumi}{2}"),
+            "latex was: {latex}"
+        );
+        assert!(
+            !markdown_to_latex("1. one\n2. two\n", MarkdownFlavor::Gfm).contains("setcounter"),
+            "a list starting at 1 must not set a counter"
         );
     }
 }
