@@ -71,7 +71,7 @@ jobs:
           command: changelog
           args: --at ${{ github.ref_name }}
 
-      - name: Build and publish
+      - name: Build and upload draft
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -81,7 +81,7 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
           releaseBody: ${{ steps.cog.outputs.stdout }}
-          releaseDraft: false
+          releaseDraft: true
 
       - name: Build Arch package
         if: matrix.os == 'ubuntu-latest'
@@ -104,7 +104,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
-          draft: false
+          draft: true
           files: .pkg/*.pkg.tar.zst
           fail_on_unmatched_files: true
 
@@ -112,5 +112,15 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
         with:
-          draft: false
+          draft: true
           files: CHANGELOG.md
+
+  finalize:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Publish draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release edit "${{ github.ref_name }}" --draft=false -R "${{ github.repository }}"
