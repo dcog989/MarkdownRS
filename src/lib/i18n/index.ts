@@ -10,10 +10,6 @@ export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 // Sentinel value for the locale setting: follow the OS language on each start.
 export const SYSTEM_LOCALE = "system";
 
-export const LOCALE_NAMES: Record<AppLocale, string> = {
-  en: "English",
-};
-
 type DeepKey<T, Prefix extends string = ""> = {
   [K in keyof T & string]: T[K] extends string
     ? `${Prefix}${K}`

@@ -1,4 +1,3 @@
-import { LOCALE_NAMES, SUPPORTED_LOCALES, SYSTEM_LOCALE, setAppLocale } from "$lib/i18n";
 import { DEFAULT_TAB_WIDTH_MAX, DEFAULT_TAB_WIDTH_MIN } from "$lib/stores/settingsState.svelte";
 import {
   onClosedTabHistoryChange,
@@ -337,18 +336,6 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       defaultValue: false,
       tooltip: "settings.confirmationsSuppressedTooltip",
     },
-    {
-      key: "locale",
-      label: "settings.language",
-      type: "select",
-      category: "settings.category.interface",
-      defaultValue: "system",
-      options: [SYSTEM_LOCALE, ...SUPPORTED_LOCALES],
-      optionLabels: ["settings.languageSystem", ...SUPPORTED_LOCALES.map((l) => LOCALE_NAMES[l])],
-      tooltip: "settings.languageTooltip",
-      onChange: (value) => setAppLocale(String(value)),
-    },
-
     {
       key: "previewFontFamily",
       label: "settings.previewFontFamily",
