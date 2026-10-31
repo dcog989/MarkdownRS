@@ -82,7 +82,7 @@ function applyDiagnostics(view: EditorView, result: LintDiagnostic[]): Diagnosti
     return {
       from,
       to,
-      severity: "warning" as const,
+      severity: d.severity,
       message: d.rule_name ? `${d.rule_name}: ${d.message}` : d.message,
       source: d.source,
     };
