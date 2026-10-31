@@ -213,6 +213,38 @@ describe("bullet widgets", () => {
   });
 });
 
+describe("heading reveal", () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = "";
+  });
+
+  const DOC = "intro\n\n# Heading\n\noutro\n";
+
+  it("renders the raw heading size while the caret is inside it", async () => {
+    const { view, parent } = createCalloutView(DOC, true, DOC.indexOf("#") + 2);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-heading-raw")).not.toBeNull();
+    view.destroy();
+  });
+
+  it("keeps the raw heading size while a selection crosses it", async () => {
+    const { view, parent } = createCalloutView(DOC, true, 0);
+    view.dispatch({ selection: { anchor: 0, head: DOC.length } });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-heading-raw")).not.toBeNull();
+    view.destroy();
+  });
+
+  it("keeps the heading styled while the caret is elsewhere", async () => {
+    const { view, parent } = createCalloutView(DOC, true, 0);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelector(".cm-heading-raw")).toBeNull();
+    view.destroy();
+  });
+});
+
 describe("horizontal rule decorations", () => {
   beforeEach(mockLayout);
   afterEach(() => {

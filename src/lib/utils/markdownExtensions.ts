@@ -88,25 +88,18 @@ const bqMatchRe = /^\s*> ?/;
 const bulletMatchRe = /^(\s*)([-*+])\s/;
 const stRegex = /~~([^~]+)~~/g;
 
-function findCursorHeadingLines(view: EditorView): Set<number> {
-  const headings = new Set<number>();
-  const tree = syntaxTree(view.state);
-  for (const range of view.state.selection.ranges) {
-    const node = tree.resolveInner(range.from, -1);
-    let current: typeof node | null = node;
-    while (current) {
-      if (HEADING_NODE_NAMES.has(current.name)) {
-        const fromLine = view.state.doc.lineAt(current.from);
-        const toLine = view.state.doc.lineAt(current.to);
-        for (let i = fromLine.number; i <= toLine.number; i++) {
-          headings.add(i);
-        }
-        break;
-      }
-      current = current.parent;
-    }
+/**
+ * Marks a heading's lines raw while the caret or selection reveals it. Uses the
+ * same predicate as HeaderMark masking, so a selection crossing a heading shows
+ * its `#` markers and its raw size together.
+ */
+function collectCursorHeadingLines(walk: DecorationWalk, node: SyntaxNodeRef): void {
+  if (!isRevealed(walk.view, node.from, node.to)) return;
+  const fromLine = walk.view.state.doc.lineAt(node.from);
+  const toLine = walk.view.state.doc.lineAt(node.to);
+  for (let i = fromLine.number; i <= toLine.number; i++) {
+    walk.cursorHeadingLines.add(i);
   }
-  return headings;
 }
 
 function findHiddenMarkers(
@@ -247,6 +240,10 @@ function collectLinkMasks(walk: DecorationWalk, node: SyntaxNodeRef): void {
 
 /** Per-construct node dispatch; returns true when the subtree should be skipped. */
 function visitDecorationNode(walk: DecorationWalk, node: SyntaxNodeRef, rangeFrom: number, rangeTo: number): boolean {
+  if (HEADING_NODE_NAMES.has(node.name)) {
+    collectCursorHeadingLines(walk, node);
+    return false;
+  }
   switch (node.name) {
     case "Frontmatter":
       collectFrontmatterLines(walk, node);
@@ -458,7 +455,7 @@ function buildDecorations(
     calloutMarkers: [],
     calloutLines: new Map<number, string>(),
     tableSpans: collectTableSpans(view.state, view.visibleRanges),
-    cursorHeadingLines: findCursorHeadingLines(view),
+    cursorHeadingLines: new Set<number>(),
     tableLines: new Set<number>(),
     frontmatterLines: new Set<number>(),
     codeBlockLines: new Set<number>(),
