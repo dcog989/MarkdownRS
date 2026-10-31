@@ -27,14 +27,7 @@ import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { isValidFileName, resolveRenamedName } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
 import { normalizePath } from "$lib/utils/path";
-import {
-  autoSaveCurrentFile,
-  navigateToPath,
-  openFile,
-  openFileByPath,
-  saveCurrentFile,
-  saveCurrentFileAs,
-} from "./fileDialogs";
+import { autoSaveCurrentFile, navigateToPath, openFile, saveCurrentFile, saveCurrentFileAs } from "./fileDialogs";
 import { renameFileOnDisk } from "./fileIO";
 
 export {
@@ -45,7 +38,6 @@ export {
   loadSession,
   navigateToPath,
   openFile,
-  openFileByPath,
   persistSession,
   persistSessionDebounced,
   reloadFileContent,

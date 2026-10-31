@@ -7,7 +7,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
-import { loadSession, openFileByPath, persistSession, persistSessionDebounced } from "$lib/utils/fileSystem";
+import { loadSession, openFile, persistSession, persistSessionDebounced } from "$lib/utils/fileSystem";
 import { logger } from "$lib/utils/logger";
 import { initSettings, saveSettings, saveSettingsNow } from "$lib/utils/settings";
 import { formatDuration } from "$lib/utils/timing";
@@ -75,7 +75,7 @@ export function createAppInit() {
     const unlisteners: UnlistenFn[] = [];
 
     const unlisten1 = await listen<string>("open-file-from-args", async (event) => {
-      await openFileByPath(event.payload);
+      await openFile(event.payload);
     });
     unlisteners.push(unlisten1);
 
@@ -83,7 +83,7 @@ export function createAppInit() {
       // A drop during startup must not be overwritten by the session restore.
       await whenReady;
       for (const path of event.payload.paths) {
-        await openFileByPath(path);
+        await openFile(path);
       }
     });
     unlisteners.push(unlisten2);

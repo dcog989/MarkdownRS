@@ -10,7 +10,7 @@ import Modal from "$lib/components/ui/Modal.svelte";
 import ModalSearchHeader from "$lib/components/ui/ModalSearchHeader.svelte";
 import { fileHistoryStore, loadFileHistory, removeFromFileHistory } from "$lib/stores/fileHistoryStore.svelte";
 import { CONFIG } from "$lib/utils/config";
-import { openFileByPath } from "$lib/utils/fileSystem";
+import { openFile } from "$lib/utils/fileSystem";
 import { getFilename } from "$lib/utils/fileValidation";
 import { createListNavigation } from "$lib/utils/listNavigation.svelte";
 import { scrollIntoView } from "$lib/utils/modalUtils";
@@ -72,7 +72,7 @@ $effect(() => {
 });
 
 function handleOpenFile(path: string) {
-  openFileByPath(path);
+  openFile(path);
   onClose();
 }
 

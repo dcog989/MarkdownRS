@@ -146,10 +146,6 @@ export async function openFile(path?: string): Promise<void> {
   }
 }
 
-export async function openFileByPath(path: string): Promise<void> {
-  await openFile(path);
-}
-
 const EXTERNAL_LINK_RE = /^(?:https?:\/\/|www\.|mailto:)/i;
 
 /** Hrefs are percent-encoded by the renderer (or written encoded by authors); the resolver wants a real path. */

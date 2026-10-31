@@ -12,7 +12,7 @@ import RumdlConfigModal from "$lib/components/ui/RumdlConfigModal.svelte";
 import SettingsModal from "$lib/components/ui/SettingsModal.svelte";
 import ShortcutsModal from "$lib/components/ui/ShortcutsModal.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { openFileByPath } from "$lib/utils/fileSystem";
+import { openFile } from "$lib/utils/fileSystem";
 
 const paletteCommands: Command[] = commands.filter((c) => c.showInPalette !== false);
 </script>
@@ -43,7 +43,7 @@ const paletteCommands: Command[] = commands.filter((c) => c.showInPalette !== fa
   bind:isOpen={appContext.interface.showBookmarks}
   position="top"
   onClose={() => (appContext.interface.showBookmarks = false)}
-  onOpenFile={(path) => openFileByPath(path)}
+  onOpenFile={(path) => openFile(path)}
 />
 <ShortcutsModal
   bind:isOpen={appContext.interface.showShortcuts}
