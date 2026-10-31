@@ -1,7 +1,9 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
+import { translate } from "$lib/i18n";
 import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { addTab, editorStore } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
 import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
 import { CONFIG } from "$lib/utils/config";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
@@ -15,6 +17,9 @@ export function createAppInit() {
   let initError = $state<string | null>(null);
 
   let timers: { autoSave: number | null } = { autoSave: null };
+  // Settings are only safe to write back once the file has been read; a failed
+  // init must not overwrite it with defaults.
+  let settingsReady = false;
 
   async function initialize() {
     const appStartTime = performance.now();
@@ -25,6 +30,7 @@ export function createAppInit() {
 
       const settingsStart = performance.now();
       await initSettings();
+      settingsReady = true;
       logger.editor.debug("SettingsInitialized", { duration: formatDuration(settingsStart) });
 
       const sessionStart = performance.now();
@@ -43,16 +49,16 @@ export function createAppInit() {
       const msg = err instanceof Error ? err.message : String(err);
       initError = msg;
       isInitialized = true;
+      showToast("error", translate("app.startupFailed", { values: { error: msg } }));
     }
   }
 
   function startSessionPersistence() {
-    if (initError) return;
     timers.autoSave = window.setInterval(() => {
       if (editorStore.sessionDirty) {
         persistSession();
       }
-      saveSettings();
+      if (settingsReady) saveSettings();
     }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
   }
 
@@ -131,9 +137,6 @@ export function createAppInit() {
   return {
     get isInitialized() {
       return isInitialized;
-    },
-    get initError() {
-      return initError;
     },
     initialize,
     startSessionPersistence,

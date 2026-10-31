@@ -9,6 +9,7 @@ export const en = {
     rights: "MarkdownRS © since 2025. All rights reserved.",
     logoAlt: "MarkdownRS Logo",
     newFileHint: "Ctrl+N to create a new file",
+    startupFailed: "Startup failed: {error}",
   },
   common: {
     close: "Close",
