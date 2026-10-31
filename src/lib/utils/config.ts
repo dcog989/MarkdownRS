@@ -75,6 +75,10 @@ const DEFAULT_CONFIG = {
     // Keyboard navigation
     MRU_POPUP_DELAY_MS: 200, // Delay before showing MRU popup during tab cycling (TabBar)
 
+    // List row removal - one tick after the 200ms slide-out so the row is gone
+    // before the store drops it (BookmarksModal)
+    ROW_REMOVE_MS: 210,
+
     // Scroll behavior
     TAB_SCROLL_SETTLE_MS: 300, // Wait for scroll to settle before centering active tab (TabBar)
 

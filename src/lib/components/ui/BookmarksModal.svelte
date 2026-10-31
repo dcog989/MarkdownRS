@@ -51,6 +51,7 @@ let addTags = $state("");
 let browseError = $state("");
 let sortBy = $state<SortOption>("date-added");
 let sortDirection = $state<SortDirection>("desc");
+let deletingIds = $state(new Set<string>());
 
 function sortByField<T>(items: T[], getField: (item: T) => string, direction: SortDirection): void {
   items.sort((a, b) => {
@@ -69,6 +70,7 @@ $effect(() => {
     editingId = null;
     showAddForm = false;
     browseError = "";
+    deletingIds = new Set();
   }
 });
 
@@ -148,12 +150,20 @@ async function saveEdit(id: string) {
   editTags = "";
 }
 
-let deletingIds = $state(new Set<string>());
-
 async function handleDelete(id: string, e: MouseEvent) {
   e.stopPropagation();
   deletingIds = new Set([...deletingIds, id]);
-  setTimeout(() => deleteBookmark(id), 210);
+  setTimeout(() => {
+    void removeBookmark(id);
+  }, CONFIG.UI_TIMING.ROW_REMOVE_MS);
+}
+
+async function removeBookmark(id: string) {
+  await deleteBookmark(id);
+  deletingIds = new Set([...deletingIds].filter((deleted) => deleted !== id));
+  // A failed write leaves the row in SQLite only, so re-read instead of keeping
+  // a list that no longer matches the database.
+  await loadBookmarks();
 }
 
 function startAdd() {
