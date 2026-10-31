@@ -15,7 +15,22 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Tag matches package version
+        run: |
+          pkgver=$(sed -n 's/^pkgver=//p' PKGBUILD)
+          if [ "v$pkgver" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match PKGBUILD pkgver $pkgver"
+            exit 1
+          fi
+
   publish:
+    needs: verify
     strategy:
       fail-fast: false
       matrix:
