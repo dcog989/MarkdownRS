@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import Modal from "./Modal.svelte";
 
 const children = createRawSnippet(() => ({
-  render: () => '<button type="button">First</button><button type="button">Last</button>',
+  render: () => '<div><button type="button">First</button><button type="button">Last</button></div>',
 }));
 
 function renderModal(isOpen: boolean, onClose: () => void = () => {}) {
