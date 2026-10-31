@@ -34,15 +34,14 @@ img { max-width: 100%; }
 "#;
 
 pub fn markdown_to_epub(content: &str, title: &str) -> Result<Vec<u8>, String> {
-    let html = renderer::render_markdown(
+    let rendered = renderer::render_markdown(
         content,
         MarkdownOptions {
             flavor: MarkdownFlavor::Gfm,
             safe_html: true,
         },
     )
-    .map_err(|e| format!("Failed to render markdown: {e}"))?
-    .html;
+    .map_err(|e| format!("Failed to render markdown: {e}"))?;
 
     let title = title.trim();
     let title = if title.is_empty() { "Untitled" } else { title };
@@ -62,8 +61,26 @@ pub fn markdown_to_epub(content: &str, title: &str) -> Result<Vec<u8>, String> {
 {html}
 </body>
 </html>
-"#
+"#,
+        html = rendered.html
     );
+
+    let nav_items: String = if rendered.headings.is_empty() {
+        format!(r#"<li><a href="content.xhtml">{escaped_title}</a></li>"#)
+    } else {
+        rendered
+            .headings
+            .iter()
+            .map(|heading| {
+                format!(
+                    r#"<li><a href="content.xhtml#{}">{}</a></li>"#,
+                    escape_xml(&heading.anchor_id),
+                    escape_xml(&heading.text)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
 
     let nav_xhtml = format!(
         r#"<?xml version="1.0" encoding="utf-8"?>
@@ -76,7 +93,7 @@ pub fn markdown_to_epub(content: &str, title: &str) -> Result<Vec<u8>, String> {
 <nav epub:type="toc">
 <h1>{escaped_title}</h1>
 <ol>
-<li><a href="content.xhtml">{escaped_title}</a></li>
+{nav_items}
 </ol>
 </nav>
 </body>
@@ -181,6 +198,27 @@ mod tests {
             .read_to_string(&mut content)
             .expect("read content");
         assert!(!content.contains("<br>"), "raw HTML leaked: {content}");
+    }
+
+    #[test]
+    fn builds_a_toc_from_headings() {
+        let bytes = markdown_to_epub("# One\n\nText\n\n## Two\n", "Book").expect("epub should build");
+        let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).expect("valid zip");
+
+        let mut nav = String::new();
+        archive
+            .by_name("OEBPS/nav.xhtml")
+            .expect("nav entry")
+            .read_to_string(&mut nav)
+            .expect("read nav");
+        assert!(
+            nav.contains(r#"<li><a href="content.xhtml#one">One</a></li>"#),
+            "nav was: {nav}"
+        );
+        assert!(
+            nav.contains(r#"<li><a href="content.xhtml#two">Two</a></li>"#),
+            "nav was: {nav}"
+        );
     }
 
     #[test]
