@@ -12,7 +12,7 @@ vi.mock("$lib/utils/editorCommands", () => ({
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { editorStore } from "$lib/stores/editorStore.svelte";
 import { callBackendSafe } from "$lib/utils/backend";
-import { reloadFileContent } from "./fileMetadata";
+import { getCachedFileMetadata, reloadFileContent } from "./fileMetadata";
 
 const mockedCallBackendSafe = vi.mocked(callBackendSafe);
 
@@ -58,5 +58,31 @@ describe("reloadFileContent", () => {
     expect(editorStore.tabs[0].content).toBe("typed while loading");
     expect(editorStore.tabs[0].contentLoaded).toBe(true);
     expect(editorStore.tabs[0].isDirty).toBe(true);
+  });
+});
+
+describe("getCachedFileMetadata", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("reuses a fresh result", async () => {
+    const ok = (async () => ({ size: 1 })) as unknown as typeof callBackendSafe;
+    mockedCallBackendSafe.mockImplementation(ok);
+
+    await getCachedFileMetadata("/cached.md");
+    await getCachedFileMetadata("/cached.md");
+
+    expect(mockedCallBackendSafe).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not reuse a failed read", async () => {
+    const missing = (async () => null) as unknown as typeof callBackendSafe;
+    mockedCallBackendSafe.mockImplementation(missing);
+
+    await expect(getCachedFileMetadata("/missing.md")).rejects.toThrow();
+    await expect(getCachedFileMetadata("/missing.md")).rejects.toThrow();
+
+    expect(mockedCallBackendSafe).toHaveBeenCalledTimes(2);
   });
 });

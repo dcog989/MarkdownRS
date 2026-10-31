@@ -23,12 +23,18 @@ type FileMetadata = {
 const metadataCache = new Map<string, { expires: number; promise: Promise<FileMetadata> }>();
 const CACHE_TTL_MS = 500;
 
-async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
+export async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
   const now = Date.now();
   const cached = metadataCache.get(path);
 
   if (cached && now < cached.expires) {
     return cached.promise;
+  }
+
+  // Drop entries nobody can hit any more, so the map stays as small as the set
+  // of files touched in the last CACHE_TTL_MS.
+  for (const [key, entry] of metadataCache) {
+    if (now >= entry.expires) metadataCache.delete(key);
   }
 
   const promise = callBackendSafe("get_file_metadata", { path }, "File:Metadata").then((result) => {
@@ -38,6 +44,11 @@ async function getCachedFileMetadata(path: string): Promise<FileMetadata> {
     return result;
   });
   metadataCache.set(path, { expires: now + CACHE_TTL_MS, promise });
+
+  // A failed stat must not be reused: the next check should ask the disk again.
+  promise.catch(() => {
+    if (metadataCache.get(path)?.promise === promise) metadataCache.delete(path);
+  });
 
   return promise;
 }
