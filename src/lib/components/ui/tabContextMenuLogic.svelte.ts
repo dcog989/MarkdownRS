@@ -13,6 +13,7 @@ import { pushToMru, reorderTabs, togglePin, updateTabTitle } from "$lib/stores/e
 import type { EditorTab } from "$lib/stores/editorTypes";
 import { triggerScrollToTab } from "$lib/stores/interfaceStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
+import { showToast } from "$lib/stores/toastStore.svelte";
 import { AppError } from "$lib/utils/errorHandling";
 import { trashFileOnDisk } from "$lib/utils/fileIO";
 import {
@@ -244,26 +245,26 @@ export class TabContextMenuLogic {
     this.onClose();
   };
 
+  // writeText rejects when the webview denies clipboard access; unawaited it
+  // would surface as an unhandled rejection and a copy that silently did nothing.
+  private copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      showToast("error", translate("editor.copyFailed"));
+    }
+  };
+
   handleCopyTitle = async () => {
     const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
-    try {
-      if (tab) navigator.clipboard.writeText(tab.title);
-    } catch {
-      // clipboard write failed
-    } finally {
-      this.onClose();
-    }
+    if (tab) await this.copyToClipboard(tab.title);
+    this.onClose();
   };
 
   handleCopyPath = async () => {
     const tab = appContext.editor.tabs.find((t) => t.id === this.tabId);
-    try {
-      if (tab?.path) navigator.clipboard.writeText(tab.path);
-    } catch {
-      // clipboard write failed
-    } finally {
-      this.onClose();
-    }
+    if (tab?.path) await this.copyToClipboard(tab.path);
+    this.onClose();
   };
 
   handleRevealInFileManager = async () => {
