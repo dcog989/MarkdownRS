@@ -104,7 +104,8 @@ export const editorCommands: Command[] = [
     id: "editor.gotoMatchingBracket",
     labelKey: "command.gotoMatchingBracket",
     category: "commandCategory.editor",
-    defaultKey: "ctrl+shift+\\",
+    // Not ctrl+shift+\: Shift turns the key into "|", so it could never match.
+    defaultKey: "ctrl+alt+b",
     handler: () => runEditorCommand(cursorMatchingBracket),
   },
   {

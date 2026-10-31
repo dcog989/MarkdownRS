@@ -129,7 +129,8 @@ export const viewCommands: Command[] = [
     id: "view.toggleWhitespace",
     labelKey: () => (appContext.settings.showWhitespace ? "command.hideWhitespace" : "command.showWhitespace"),
     category: "commandCategory.view",
-    defaultKey: "ctrl+shift+8",
+    // Not ctrl+shift+8: Shift turns the key into "*", so it could never match.
+    defaultKey: "ctrl+alt+w",
     handler: () => {
       appContext.settings.showWhitespace = !appContext.settings.showWhitespace;
       saveSettings();
