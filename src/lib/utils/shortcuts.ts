@@ -98,14 +98,16 @@ export class KeyboardShortcutManager {
         if (isInput && !cmd.global) {
           continue;
         }
-        const result = await cmd.handler(e);
+        // Only an explicit `false` means "let the key through"; void/async handlers
+        // still consume it. Prevent before the handler can await, or the default
+        // action of the key has already run.
+        const result = cmd.handler(e);
         recordCommandUsage(cmd.id);
-        if (result === true) {
-          e.preventDefault();
-          e.stopPropagation();
-          return true;
-        }
-        return false;
+        if (result === false) return false;
+        e.preventDefault();
+        e.stopPropagation();
+        await result;
+        return true;
       }
     }
 
