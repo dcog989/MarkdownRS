@@ -9,6 +9,7 @@ export const settingsState = $state({
   availableThemes: [BUILTIN_THEME_NAME] as string[],
   customAccentColor: "",
   splitPercentage: 0.5,
+  paneSplitPercentage: 0.5,
   splitOrientation: "vertical" as "vertical" | "horizontal",
   tabCycling: "mru" as "mru" | "sequential",
   tabWidthMin: 120,

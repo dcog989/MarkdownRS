@@ -1,6 +1,10 @@
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
 
+export function clampSplit(ratio: number): number {
+  return Math.max(CONFIG.SPLIT.MIN_PERCENTAGE, Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, ratio));
+}
+
 export function createSplitResize() {
   let isDragging = $state(false);
   let dragStart = 0;
@@ -41,10 +45,7 @@ export function createSplitResize() {
     const currentPos = e[clientAxis];
     const deltaPixels = currentPos - dragStart;
     const deltaPercent = deltaPixels / totalSize;
-    let newSplit = initialSplit + deltaPercent;
-
-    newSplit = Math.max(CONFIG.SPLIT.MIN_PERCENTAGE, Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, newSplit));
-    appContext.settings.splitPercentage = newSplit;
+    appContext.settings.splitPercentage = clampSplit(initialSplit + deltaPercent);
   }
 
   function stopResize() {
@@ -58,7 +59,7 @@ export function createSplitResize() {
   }
 
   function resetSplit() {
-    appContext.settings.splitPercentage = 0.5;
+    appContext.settings.splitPercentage = CONFIG.SPLIT.DEFAULT_PERCENTAGE;
   }
 
   function keyboardDelta(key: string): number {
@@ -82,10 +83,7 @@ export function createSplitResize() {
     const delta = keyboardDelta(e.key);
     if (delta === 0) return;
     e.preventDefault();
-    appContext.settings.splitPercentage = Math.max(
-      CONFIG.SPLIT.MIN_PERCENTAGE,
-      Math.min(CONFIG.SPLIT.MAX_PERCENTAGE, appContext.settings.splitPercentage + delta),
-    );
+    appContext.settings.splitPercentage = clampSplit(appContext.settings.splitPercentage + delta);
   }
 
   function cleanup() {

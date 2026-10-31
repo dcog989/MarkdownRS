@@ -9,7 +9,7 @@ import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
 import AppLifecycle from "$lib/components/app/AppLifecycle.svelte";
 import Editor from "$lib/components/editor/Editor.svelte";
-import { createSplitResize } from "$lib/components/editor/logic/splitResize.svelte";
+import { clampSplit, createSplitResize } from "$lib/components/editor/logic/splitResize.svelte";
 import FileTree from "$lib/components/filetree/FileTree.svelte";
 import Preview from "$lib/components/preview/Preview.svelte";
 import Logo from "$lib/components/ui/Logo.svelte";
@@ -30,13 +30,9 @@ import { isMarkdownTab } from "$lib/utils/fileValidation";
 import { saveSettings } from "$lib/utils/settings";
 
 const splitResize = createSplitResize();
-const PANE_MIN_RATIO = 0.2;
-const PANE_MAX_RATIO = 0.8;
-
-let paneSplitPercentage = $state(0.5);
-let stopPaneResize: (() => void) | null = null;
 
 let mainContainer = $state<HTMLDivElement>();
+let stopPaneResize: (() => void) | null = null;
 
 function handleToggleFileTree() {
   toggleFileTree();
@@ -125,12 +121,8 @@ function onResizeMouseDown(e: MouseEvent) {
   splitResize.startResize(e);
 }
 
-function clampPaneSplit(ratio: number): number {
-  return Math.min(PANE_MAX_RATIO, Math.max(PANE_MIN_RATIO, ratio));
-}
-
 function resetPaneSplit() {
-  paneSplitPercentage = 0.5;
+  appContext.settings.paneSplitPercentage = CONFIG.SPLIT.DEFAULT_PERCENTAGE;
 }
 
 function onPaneResizeKeyDown(e: KeyboardEvent) {
@@ -146,7 +138,7 @@ function onPaneResizeKeyDown(e: KeyboardEvent) {
   if (delta === 0) return;
 
   e.preventDefault();
-  paneSplitPercentage = clampPaneSplit(paneSplitPercentage + delta);
+  appContext.settings.paneSplitPercentage = clampSplit(appContext.settings.paneSplitPercentage + delta);
 }
 
 function onPaneResizeMouseDown(e: MouseEvent) {
@@ -158,7 +150,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
     const rect = mainContainer.getBoundingClientRect();
     if (rect.width <= 0) return;
     const ratio = (ev.clientX - rect.left) / rect.width;
-    paneSplitPercentage = clampPaneSplit(ratio);
+    appContext.settings.paneSplitPercentage = clampSplit(ratio);
   };
 
   const onUp = () => {
@@ -245,7 +237,7 @@ function onPaneResizeMouseDown(e: MouseEvent) {
               <div
                 role="group"
                 class="flex min-h-0 min-w-0 flex-col"
-                style:flex={`0 0 ${paneSplitPercentage * 100}%`}
+                style:flex={`0 0 ${appContext.settings.paneSplitPercentage * 100}%`}
                 onfocusin={() => focusPane(0)}
               >
                 <div
@@ -273,9 +265,9 @@ function onPaneResizeMouseDown(e: MouseEvent) {
                 tabindex="0"
                 aria-orientation="vertical"
                 aria-label={$_("common.resizeSplitView")}
-                aria-valuemin={Math.round(PANE_MIN_RATIO * 100)}
-                aria-valuemax={Math.round(PANE_MAX_RATIO * 100)}
-                aria-valuenow={Math.round(paneSplitPercentage * 100)}
+                aria-valuemin={Math.round(CONFIG.SPLIT.MIN_PERCENTAGE * 100)}
+                aria-valuemax={Math.round(CONFIG.SPLIT.MAX_PERCENTAGE * 100)}
+                aria-valuenow={Math.round(appContext.settings.paneSplitPercentage * 100)}
                 class="resize-handle"
                 style:cursor="col-resize"
                 onmousedown={onPaneResizeMouseDown}
