@@ -1,5 +1,3 @@
-use std::fmt;
-
 /// Supported frontmatter formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FrontmatterFormat {
@@ -9,16 +7,6 @@ pub enum FrontmatterFormat {
     Toml,
     /// JSON, delimited by `;;;` or curly braces
     Json,
-}
-
-impl fmt::Display for FrontmatterFormat {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Yaml => write!(f, "yaml"),
-            Self::Toml => write!(f, "toml"),
-            Self::Json => write!(f, "json"),
-        }
-    }
 }
 
 /// A frontmatter block detected at the start of a document.

@@ -117,11 +117,6 @@ pub async fn get_rumdl_config_path(
     })
 }
 
-#[tauri::command]
-pub async fn get_markdown_flavors() -> Result<Vec<String>, String> {
-    Ok(MarkdownFlavor::all())
-}
-
 #[derive(Serialize)]
 pub struct RumdlConfigRead {
     pub target_path: String,

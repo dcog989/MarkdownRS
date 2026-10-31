@@ -253,10 +253,6 @@ export interface BackendCommands {
     };
     return: string;
   };
-  get_markdown_flavors: {
-    args: Record<string, never>;
-    return: string[];
-  };
   // Bookmarks
   add_bookmark: {
     args: { bookmark: Bookmark };

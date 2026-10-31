@@ -1,24 +1,10 @@
 use comrak::Options;
 use comrak::options::{Extension, Parse, Render};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumIter, IntoEnumIterator};
 
 /// Markdown flavor specification (for comrak rendering)
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-    Hash,
-    Default,
-    EnumIter,
-    Display
-)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, Default)]
 #[serde(rename_all = "lowercase")]
-#[strum(serialize_all = "lowercase")]
 pub enum MarkdownFlavor {
     /// Pure CommonMark (no extensions)
     CommonMark,
@@ -28,11 +14,6 @@ pub enum MarkdownFlavor {
 }
 
 impl MarkdownFlavor {
-    /// All supported flavors in canonical order.
-    pub fn all() -> Vec<String> {
-        Self::iter().map(|f| f.to_string()).collect()
-    }
-
     /// Convert string to MarkdownFlavor
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
