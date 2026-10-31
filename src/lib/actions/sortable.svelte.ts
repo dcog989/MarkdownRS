@@ -13,6 +13,12 @@ type SortableOptions<T> = {
 
 const DEFAULT_EDGE_SCROLL_MARGIN = 48;
 const DEFAULT_EDGE_SCROLL_STEP = 8;
+/**
+ * How far the pointer must travel before the tab under it is re-evaluated.
+ * Reading every tab's box forces a layout, so this keeps the sweep off most
+ * frames while still landing within a few pixels of the slot boundary.
+ */
+const SORT_RECHECK_PX = 8;
 
 /**
  * Pointer-based drag-to-reorder controller for a horizontal list.
@@ -38,6 +44,8 @@ export class SortableController<T> {
   private startX = 0;
   private rafId: number | null = null;
   private activeWrapper: HTMLElement | null = null;
+  /** Pointer x at the last layout sweep; null forces the next one. */
+  private lastSortX: number | null = null;
 
   private _handleMove = this.handleMove.bind(this);
   private _handleUp = this.handleUp.bind(this);
@@ -67,6 +75,7 @@ export class SortableController<T> {
     this.isDragging = false;
     this.startX = e.clientX;
     this.currentDragX = e.clientX;
+    this.lastSortX = null;
 
     const rect = wrapper.getBoundingClientRect();
     this.dragOffsetX = e.clientX - rect.left;
@@ -133,6 +142,7 @@ export class SortableController<T> {
   private reset() {
     this.isDragging = false;
     this.draggingId = null;
+    this.lastSortX = null;
     if (this.rafId) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
@@ -152,15 +162,21 @@ export class SortableController<T> {
     const margin = this.options.edgeScrollMargin ?? DEFAULT_EDGE_SCROLL_MARGIN;
     const step = this.options.edgeScrollStep ?? DEFAULT_EDGE_SCROLL_STEP;
     const rect = container.getBoundingClientRect();
+    const before = container.scrollLeft;
     if (this.currentDragX <= rect.left + margin) {
       container.scrollLeft -= step;
     } else if (this.currentDragX >= rect.right - margin) {
       container.scrollLeft += step;
     }
+    // Auto-scrolling moves the tabs under a still pointer, so the sweep must
+    // run even though the pointer has not travelled.
+    if (container.scrollLeft !== before) this.lastSortX = null;
   }
 
   private sortFromPointer() {
     if (!this.draggingId) return;
+    if (this.lastSortX !== null && Math.abs(this.currentDragX - this.lastSortX) < SORT_RECHECK_PX) return;
+    this.lastSortX = this.currentDragX;
 
     const items = this.options.items;
     const elements = this.itemElements;
