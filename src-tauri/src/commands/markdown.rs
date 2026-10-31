@@ -110,13 +110,7 @@ pub async fn get_rumdl_config_path(
 
     crate::timed_info!("[Markdown]", "get_rumdl_config_path", {
         run_blocking("discover rumdl config", move || {
-            let path = match (fp, pr) {
-                (Some(fp), Some(pr)) => {
-                    let file_dir = fp.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| pr.clone());
-                    config::discover_config_path(&file_dir, &pr)
-                },
-                _ => config::discover_user_config_path(),
-            };
+            let path = config::loaded_config_path(fp.as_deref(), pr.as_deref());
             Ok(path.map(|p| p.to_string_lossy().to_string()))
         })
         .await
