@@ -12,6 +12,25 @@ async fn resolve_symlink(path: &Path) -> std::io::Result<PathBuf> {
     }
 }
 
+/// Flushes the directory entry created by the rename so it survives a power
+/// loss. Best effort: some filesystems (network, FUSE) reject fsync on a
+/// directory, and the file content itself is already durable by then.
+#[cfg(unix)]
+async fn sync_parent_dir(target: &Path) {
+    let dir = target
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
+    match tokio::fs::File::open(dir).await {
+        Ok(handle) => {
+            if let Err(e) = handle.sync_all().await {
+                log::warn!("Failed to fsync directory '{}': {}", dir.display(), e);
+            }
+        },
+        Err(e) => log::warn!("Failed to open directory '{}' for fsync: {}", dir.display(), e),
+    }
+}
+
 pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
     let target = resolve_symlink(path).await?;
     let file_name = target
@@ -35,6 +54,12 @@ pub async fn atomic_write(path: &Path, content: &[u8]) -> std::io::Result<()> {
         let _ = fs::remove_file(&temp_path).await;
         return Err(e);
     }
+
+    // Until the parent directory is synced, a crash can still roll the rename
+    // back: the old file comes back even though the save reported success.
+    #[cfg(unix)]
+    sync_parent_dir(&target).await;
+
     Ok(())
 }
 
