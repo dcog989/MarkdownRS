@@ -1,10 +1,11 @@
-const NAV_KEYS = ["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Enter", "PageDown", "PageUp"];
+// Left/right are deliberately absent: this handler is bound to a modal's search
+// input, where they must move the text caret, and every list is one column.
+const NAV_KEYS = ["ArrowDown", "ArrowUp", "Enter", "PageDown", "PageUp"];
 const DEFAULT_PAGE_SIZE = 10;
 
 export function createListNavigation(
   getLength: () => number,
   onEnter: (index: number) => void,
-  columns = 1,
   pageSize = DEFAULT_PAGE_SIZE,
 ) {
   let selectedIndex = $state(0);
@@ -18,13 +19,9 @@ export function createListNavigation(
     e.preventDefault();
 
     if (e.key === "ArrowDown") {
-      selectedIndex = (selectedIndex + columns) % len;
+      selectedIndex = (selectedIndex + 1) % len;
     } else if (e.key === "ArrowUp") {
-      selectedIndex = (selectedIndex - columns + len) % len;
-    } else if (e.key === "ArrowRight") {
-      selectedIndex = Math.min(selectedIndex + 1, len - 1);
-    } else if (e.key === "ArrowLeft") {
-      selectedIndex = Math.max(selectedIndex - 1, 0);
+      selectedIndex = (selectedIndex - 1 + len) % len;
     } else if (e.key === "PageDown") {
       selectedIndex = Math.min(selectedIndex + pageSize, len - 1);
     } else if (e.key === "PageUp") {
