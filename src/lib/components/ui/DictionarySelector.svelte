@@ -101,6 +101,8 @@ function toggleDropdown() {
 
 function toggleDict(code: string) {
   if (selected.includes(code)) {
+    // The backend needs at least one dictionary; keep the last one selected.
+    if (selected.length === 1) return;
     selected = selected.filter((d) => d !== code);
   } else {
     selected = [...selected, code];
@@ -110,6 +112,7 @@ function toggleDict(code: string) {
 
 function removeDict(code: string, event: Event) {
   event.stopPropagation();
+  if (selected.length === 1) return;
   selected = selected.filter((d) => d !== code);
   onChange(selected);
 }
@@ -150,14 +153,16 @@ function handleKeydown(e: KeyboardEvent) {
         {#each selected as code (code)}
           <span class="bg-accent-primary/20 text-ui inline-flex items-center gap-1 rounded px-2 py-1 whitespace-nowrap">
             {availableDictionaries.find((d) => d.code === code)?.name || code}
-            <button
-              type="button"
-              onclick={(e) => removeDict(code, e)}
-              class="hover:text-danger flex items-center transition-colors"
-              aria-label={$_("dictionary.removeLanguage", { values: { code } })}
-            >
-              <X size={12} />
-            </button>
+            {#if selected.length > 1}
+              <button
+                type="button"
+                onclick={(e) => removeDict(code, e)}
+                class="hover:text-danger flex items-center transition-colors"
+                aria-label={$_("dictionary.removeLanguage", { values: { code } })}
+              >
+                <X size={12} />
+              </button>
+            {/if}
           </span>
         {/each}
       {/if}
