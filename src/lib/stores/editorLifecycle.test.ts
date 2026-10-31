@@ -9,6 +9,11 @@ vi.mock("$lib/utils/backend", () => ({
   callBackendSafe: vi.fn(),
 }));
 
+vi.mock("$lib/services/fileWatcher", () => ({
+  fileWatcher: { watch: vi.fn(), unwatch: vi.fn(), renew: vi.fn(), setWriteLock: vi.fn() },
+}));
+
+import { fileWatcher } from "$lib/services/fileWatcher";
 import { callBackend } from "$lib/utils/backend";
 import { readTextFile } from "$lib/utils/fileIO";
 import { getTransientState, initTransientState } from "./editorCache";
@@ -217,5 +222,18 @@ describe("reopenClosedTab", () => {
     expect(reopened?.content).toBe("unsaved text");
     expect(reopened?.contentLoaded).toBe(true);
     expect(reopened?.isDirty).toBe(true);
+  });
+
+  it("re-arms the file watcher for a reopened path", async () => {
+    editorStore.closedTabsHistory = [
+      {
+        tab: { ...tab("closed", false), path: "/closed.md", content: "text", contentLoaded: true },
+        index: 0,
+      },
+    ];
+
+    await reopenClosedTab(0);
+
+    expect(vi.mocked(fileWatcher.watch)).toHaveBeenCalledWith("closed", "/closed.md");
   });
 });

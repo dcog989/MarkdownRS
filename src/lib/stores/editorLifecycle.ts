@@ -1,5 +1,6 @@
 import { translate } from "$lib/i18n";
 import { normalizeLineEndings, reloadFileContent } from "$lib/services/fileMetadata";
+import { fileWatcher } from "$lib/services/fileWatcher";
 import { initializeTabLoadState } from "$lib/services/tabLoadStateMachine";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
@@ -241,6 +242,12 @@ export async function reopenClosedTab(historyIndex: number): Promise<string | nu
   appState.activeTabId = entry.tab.id;
 
   editorStore.sessionDirty = true;
+
+  if (entry.tab.path) {
+    // requestCloseTab unwatched this path; re-arm so external edits are seen
+    // again (the tab-switch hook skips large tabs).
+    void fileWatcher.watch(entry.tab.id, entry.tab.path);
+  }
 
   if (needsDiskReload) {
     // Content was dropped on close to save memory (see closeTab); pull it
