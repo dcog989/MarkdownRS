@@ -621,6 +621,7 @@ export const en = {
     switchVertical: "Switch to Vertical Split",
     closePreview: "Close Preview",
     notAvailable: "Preview not available for this file type",
+    largeFile: "Preview disabled for large files",
     rendering: "Rendering preview...",
     renderFailed: "Preview render failed",
     renderNull: "Rendering returned null",

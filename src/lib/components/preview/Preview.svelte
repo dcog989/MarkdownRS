@@ -44,6 +44,7 @@ let tabPath = $derived(activeTab?.path);
 let tabContent = $derived(activeTab?.content || "");
 
 let isMarkdown = $derived(isMarkdownTab(activeTab));
+let isLargeFile = $derived((activeTab?.sizeBytes ?? 0) > CONFIG.PERFORMANCE.LARGE_FILE_SIMPLE_MODE_BYTES);
 let flavor = $derived(appContext.settings.markdownFlavor);
 let theme = $derived(appContext.settings.theme);
 
@@ -68,6 +69,11 @@ $effect(() => {
   if (!isMarkdown) {
     // No preview is rendered for non-markdown tabs, so nothing will call
     // endTabSwitch; resume syncing now that the switch has settled.
+    scrollSync.endTabSwitch(0);
+    return;
+  }
+  if (isLargeFile) {
+    // Same as a non-markdown tab: no render will settle the tab switch.
     scrollSync.endTabSwitch(0);
     return;
   }
@@ -175,6 +181,13 @@ function injectHtml(node: HTMLElement, content: string) {
       >
         <FileText size={64} class="mb-4" />
         <p>{$_("preview.notAvailable")}</p>
+      </div>
+    {:else if isLargeFile}
+      <div
+        class="pointer-events-none absolute inset-0 flex flex-col items-center justify-center opacity-40 select-none"
+      >
+        <FileText size={64} class="mb-4" />
+        <p>{$_("preview.largeFile")}</p>
       </div>
     {:else if renderer.showSpinner || (renderer.isRendering && !renderer.htmlContent)}
       <div class="absolute inset-0 flex items-center justify-center opacity-50">
