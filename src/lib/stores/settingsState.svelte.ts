@@ -19,6 +19,9 @@ export const settingsState = $state({
    *  settings modal loads the theme list. */
   themeVariants: {} as Record<string, boolean>,
   customAccentColor: "",
+  /** Desktop accent colour as `#rrggbb`, read at startup. Empty when the OS
+   *  exposes none. Runtime only, never persisted. */
+  systemAccentColor: "",
   splitPercentage: 0.5,
   paneSplitPercentage: 0.5,
   splitOrientation: "vertical" as "vertical" | "horizontal",

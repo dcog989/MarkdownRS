@@ -93,14 +93,14 @@ LongSentences = true     # force a rule on
 Requires: [Rust](https://rustup.rs/), [bun](https://bun.com/), [Tauri](https://v2.tauri.app/start/prerequisites/).
 
 ```sh
-bun install          # Install dependencies
-bun run check        # Full check: Svelte types, Biome lint, and cargo clippy
-bun run fix          # Apply all fixes, then run the full check
-bun run update       # Update packages + crates
-bun run dev          # Start dev server / HMR
-bunx tauri build     # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
-bun run clean        # Remove build artifacts, target, and node_modules
-bun run package      # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
+bun install            # Install dependencies
+bun run check          # Full check: Svelte types, Biome lint, and cargo clippy
+bun run fix            # Apply all fixes, then run the full check
+bun run update         # Update packages + crates
+bun run dev            # Start dev server / HMR
+bunx tauri build       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+bun run clean          # Remove build artifacts, target, and node_modules
+sudo bun run package   # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
 ```
 
 ---

@@ -43,6 +43,58 @@ pub async fn get_theme_css(app_handle: tauri::AppHandle, theme_name: String) -> 
         .ok_or_else(|| format!("Theme '{theme_name}' not found"))
 }
 
+/// Desktop accent colour as `#rrggbb`, empty when the platform has no readable
+/// source. Only KDE keeps it in a file the app can read.
+#[tauri::command]
+pub async fn get_system_accent_color() -> Result<String, String> {
+    Ok(system_accent_color())
+}
+
+#[cfg(target_os = "linux")]
+fn system_accent_color() -> String {
+    dirs::config_dir()
+        .and_then(|dir| std::fs::read_to_string(dir.join("kdeglobals")).ok())
+        .and_then(|content| parse_kde_accent(&content))
+        .unwrap_or_default()
+}
+
+#[cfg(not(target_os = "linux"))]
+fn system_accent_color() -> String {
+    String::new()
+}
+
+/// Reads `AccentColor=r,g,b` from the `[General]` section of kdeglobals.
+#[cfg(target_os = "linux")]
+fn parse_kde_accent(kdeglobals: &str) -> Option<String> {
+    let mut in_general = false;
+    for line in kdeglobals.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            in_general = line == "[General]";
+            continue;
+        }
+        if !in_general {
+            continue;
+        }
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
+        if key.trim() != "AccentColor" {
+            continue;
+        }
+        let channels = value
+            .split(',')
+            .map(|channel| channel.trim().parse::<u8>().ok())
+            .collect::<Option<Vec<u8>>>()?;
+        return match channels.as_slice() {
+            // Plasma 6 writes RGB; tolerate a trailing alpha channel.
+            [r, g, b, ..] => Some(format!("#{r:02x}{g:02x}{b:02x}")),
+            _ => None,
+        };
+    }
+    None
+}
+
 #[tauri::command]
 pub async fn load_settings(app_handle: tauri::AppHandle) -> Result<serde_json::Value, String> {
     let content = match io::read_settings_file(&app_handle).await? {
@@ -137,5 +189,24 @@ pub async fn toggle_devtools(#[allow(unused_variables)] window: tauri::WebviewWi
         window.close_devtools();
     } else {
         window.open_devtools();
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::parse_kde_accent;
+
+    #[test]
+    fn parses_accent_from_the_general_section_only() {
+        let kdeglobals =
+            "[Colors:Window]\nAccentColor=1,2,3\n\n[General]\nColorSchemeHash=abc\nAccentColor=99,130,110\n";
+        assert_eq!(parse_kde_accent(kdeglobals).as_deref(), Some("#63826e"));
+    }
+
+    #[test]
+    fn rejects_missing_or_malformed_accent() {
+        assert_eq!(parse_kde_accent("[General]\nColorSchemeHash=abc\n"), None);
+        assert_eq!(parse_kde_accent("[General]\nAccentColor=99,130\n"), None);
+        assert_eq!(parse_kde_accent("[General]\nAccentColor=99,130,999\n"), None);
     }
 }

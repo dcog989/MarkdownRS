@@ -117,6 +117,7 @@ fn main() {
             commands::settings::get_available_themes,
             commands::settings::get_theme_variants,
             commands::settings::get_theme_css,
+            commands::settings::get_system_accent_color,
             commands::settings::load_settings,
             commands::settings::save_settings,
             commands::settings::set_log_level,

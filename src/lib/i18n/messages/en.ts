@@ -358,7 +358,7 @@ export const en = {
     themeVariantLightDark: "{theme} · Light/Dark",
     themeVariantDarkOnly: "{theme} · Dark only",
     customAccentColor: "Custom Accent Color",
-    customAccentColorTooltip: "Override the theme accent color. Leave empty for default theme.",
+    customAccentColorTooltip: "Override the accent color. Leave empty to follow the system accent color.",
     fontFamily: "Font Family",
     fontFamilyTooltip: "Font family for editor content.",
     fontSizePx: "Font Size",

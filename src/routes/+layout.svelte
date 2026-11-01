@@ -54,16 +54,16 @@ $effect(() => {
 });
 
 $effect(() => {
-  const customColor = appContext.settings.customAccentColor;
+  const accentColor = appContext.settings.customAccentColor || appContext.settings.systemAccentColor;
   const styleTagId = "custom-accent-styles";
   const existing = document.getElementById(styleTagId);
 
-  if (!customColor) {
+  if (!accentColor) {
     if (existing) existing.remove();
     return;
   }
 
-  const css = buildCustomAccentCss(customColor);
+  const css = buildCustomAccentCss(accentColor);
   if (!css) {
     if (existing) existing.remove();
     return;

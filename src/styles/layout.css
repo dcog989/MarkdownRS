@@ -12,6 +12,10 @@
   display: inline-block;
 }
 
+.block {
+  display: block;
+}
+
 .flex-col {
   flex-direction: column;
 }

@@ -7,10 +7,13 @@ import LoaderCircle from "lucide-svelte/icons/loader-circle";
 import RefreshCw from "lucide-svelte/icons/refresh-cw";
 import { _ } from "svelte-i18n";
 import Modal from "$lib/components/ui/Modal.svelte";
+import { settingsState } from "$lib/stores/settingsState.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import type { AppInfo } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
+import { saveSettings } from "$lib/utils/settings";
+import { onLogLevelChange } from "$lib/utils/settingsHandlers";
 
 interface Props {
   isOpen: boolean;
@@ -22,6 +25,8 @@ let { isOpen = $bindable(false), onClose, position = "top" }: Props = $props();
 
 let isChecking = $state(false);
 let updateStatus = $state<string | null>(null);
+
+const LOG_LEVELS = ["trace", "debug", "info", "warn", "error", "off"] as const;
 
 let appInfo = $state<AppInfo>({
   name: "MarkdownRS",
@@ -143,10 +148,28 @@ async function checkForUpdates() {
       {/each}
     </div>
 
-    <button type="button" class="btn-ghost btn-ghost--link btn-sm hover:underline" onclick={openLogFile}>
-      <span>{$_("about.openLogFile")}</span>
-      <ExternalLink size={12} />
-    </button>
+    <div class="flex items-center gap-3">
+      <select
+        value={settingsState.logLevel}
+        title={$_("settings.logLevelTooltip")}
+        aria-label={$_("settings.logLevel")}
+        onchange={(e) => {
+          const level = e.currentTarget.value as (typeof LOG_LEVELS)[number];
+          settingsState.logLevel = level;
+          saveSettings();
+          onLogLevelChange(level);
+        }}
+      >
+        {#each LOG_LEVELS as level (level)}
+          <option value={level}>{level}</option>
+        {/each}
+      </select>
+
+      <button type="button" class="btn-ghost btn-ghost--link btn-sm hover:underline" onclick={openLogFile}>
+        <span>{$_("about.openLogFile")}</span>
+        <ExternalLink size={12} />
+      </button>
+    </div>
 
     {#if updateStatus}
       <div class="text-ui text-accent-secondary py-1 text-center">

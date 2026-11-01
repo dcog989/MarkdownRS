@@ -3,7 +3,6 @@ import { DEFAULT_TAB_WIDTH_MAX, DEFAULT_TAB_WIDTH_MIN } from "$lib/stores/settin
 import {
   onClosedTabHistoryChange,
   onHarperChanged,
-  onLogLevelChange,
   onTabNameFromContentChange,
   onThemeChange,
   onThemeModeChange,
@@ -36,17 +35,6 @@ export function getSettingDefinitions(
   isWindows: boolean,
 ): SettingDef[] {
   return [
-    {
-      key: "logLevel",
-      label: "settings.logLevel",
-      type: "select",
-      category: "settings.category.system",
-      defaultValue: "info",
-      options: ["trace", "debug", "info", "warn", "error", "off"],
-      tooltip: "settings.logLevelTooltip",
-      onChange: onLogLevelChange,
-    },
-
     {
       key: "newFileTemplatePath",
       label: "settings.newFileTemplate",

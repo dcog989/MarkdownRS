@@ -43,8 +43,10 @@ $effect(() => {
   if (setting.type !== "color") return;
   void appContext.settings.theme;
   void appContext.settings.activeTheme;
+  const system = appContext.settings.systemAccentColor;
   const brand = getComputedStyle(document.documentElement).getPropertyValue("--color-brand-accent").trim();
-  resolvedDefaultAccent = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : "#7c5a73";
+  resolvedDefaultAccent =
+    system || (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(brand) ? brand.toLowerCase() : "#7c5a73");
 });
 
 function parseNumber(raw: string): number | null {

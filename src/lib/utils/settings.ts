@@ -11,6 +11,7 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
   "osPlatform",
   "availableThemes",
   "themeVariants",
+  "systemAccentColor",
   "writerMode",
 ]);
 
@@ -100,7 +101,7 @@ export function applyLegacySettingMappings(saved: Record<string, unknown>, targe
 /** Returns false when the file could not be read, so callers must not write the
  *  defaults back over it. A missing file is a successful load and yields `{}`. */
 export async function initSettings(): Promise<boolean> {
-  const [saved, appInfo] = await Promise.all([
+  const [saved, appInfo, systemAccent] = await Promise.all([
     callBackendSafe("load_settings", {}, "Settings:Load", {
       userMessage: translate("error.failedToLoadSettings"),
     }),
@@ -108,7 +109,15 @@ export async function initSettings(): Promise<boolean> {
       showToast: false,
       userMessage: translate("error.failedToGetAppInfo"),
     }),
+    callBackendSafe("get_system_accent_color", {}, "Settings:Load", {
+      showToast: false,
+      userMessage: translate("error.failedToLoadSettings"),
+    }),
   ]);
+
+  if (systemAccent) {
+    settingsState.systemAccentColor = systemAccent;
+  }
 
   if (appInfo?.os_platform) {
     appState.osPlatform = appInfo.os_platform as "windows" | "linux" | "macos";

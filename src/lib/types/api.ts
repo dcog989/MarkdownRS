@@ -293,6 +293,10 @@ export interface BackendCommands {
     args: { themeName: string };
     return: string;
   };
+  get_system_accent_color: {
+    args: Record<string, never>;
+    return: string;
+  };
   load_settings: {
     args: Record<string, never>;
     return: Record<string, unknown>;
