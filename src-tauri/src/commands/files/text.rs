@@ -1,5 +1,5 @@
 use crate::commands::settings::get_max_file_size_bytes;
-use crate::utils::{decode_text, encode_text, handle_io_error, validate_path_input};
+use crate::utils::{BINARY_FILE_ERROR, decode_text, encode_text, handle_io_error, looks_binary, validate_path_input};
 use encoding_rs::Encoding;
 use serde::Serialize;
 use std::path::PathBuf;
@@ -50,6 +50,13 @@ pub async fn read_text_file(path: String, app_handle: tauri::AppHandle) -> Resul
         let bytes = fs::read(&path)
             .await
             .map_err(|e| handle_io_error(Some(&path), "read file", e))?;
+
+        // The read is a lossy text decode and saving writes that text back, so
+        // a binary opened here would be destroyed by one keystroke plus Ctrl+S.
+        if looks_binary(&bytes) {
+            log::warn!("Refusing to read binary file as text: {}", path);
+            return Err(BINARY_FILE_ERROR.to_string());
+        }
 
         let (content, encoding, has_bom) = decode_text(bytes);
         Ok::<_, String>(FileContent {

@@ -4,7 +4,6 @@ import {
   getFilename,
   isMarkdownFile,
   isMarkdownTab,
-  isTextFile,
   isValidFileName,
   resolveRenamedName,
 } from "./fileValidation";
@@ -39,25 +38,6 @@ describe("formatFileSize", () => {
   it("rounds up to tenths for MB and GB", () => {
     expect(formatFileSize(1024 * 1024)).toBe("1 MB");
     expect(formatFileSize(1024 * 1024 * 1536)).toBe("1.5 GB");
-  });
-});
-
-describe("isTextFile", () => {
-  it("accepts supported text extensions case-insensitively", () => {
-    expect(isTextFile("notes.md")).toBe(true);
-    expect(isTextFile("main.rs")).toBe(true);
-    expect(isTextFile("README.MD")).toBe(true);
-    expect(isTextFile("config.json")).toBe(true);
-  });
-
-  it("accepts dotfiles and extensionless files", () => {
-    expect(isTextFile("/home/user/.gitignore")).toBe(true);
-    expect(isTextFile("/home/user/Makefile")).toBe(true);
-  });
-
-  it("rejects binary extensions", () => {
-    expect(isTextFile("image.png")).toBe(false);
-    expect(isTextFile("archive.zip")).toBe(false);
   });
 });
 

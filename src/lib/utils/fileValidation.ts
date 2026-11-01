@@ -106,21 +106,6 @@ export function formatFileSize(bytes: number): string {
 }
 
 /**
- * Check if path is likely a text file based on extension
- */
-export function isTextFile(path: string): boolean {
-  const filename = getFilename(path);
-
-  // Dotfiles often text (gitignore, env, etc)
-  if (filename.startsWith(".")) return true;
-  if (!filename.includes(".")) return true; // No extension often implies text/script
-
-  const extension = filename.split(".").pop()?.toLowerCase();
-  if (!extension) return false;
-  return SUPPORTED_TEXT_EXTENSIONS.includes(extension);
-}
-
-/**
  * Check if path is a markdown file
  */
 export function isMarkdownFile(path: string): boolean {

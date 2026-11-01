@@ -1,3 +1,7 @@
+/// Stable code for a file the UI must not open as text, so the toast can be
+/// translated instead of showing a raw English message.
+pub const BINARY_FILE_ERROR: &str = "BINARY_FILE";
+
 pub trait IntoTauriError<T> {
     fn to_tauri_result(self) -> Result<T, String>;
 }

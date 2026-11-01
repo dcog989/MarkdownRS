@@ -27,6 +27,42 @@ pub fn decode_text(raw_bytes: Vec<u8>) -> (String, String, bool) {
     (cow.into_owned(), detected.name().to_string(), false)
 }
 
+/// How many leading bytes are inspected, the same sample size git and most
+/// editors use.
+const BINARY_SAMPLE_LEN: usize = 8 * 1024;
+/// Above this share of control bytes a file is binary even without a NUL.
+const BINARY_CONTROL_RATIO: f64 = 0.10;
+
+/// NUL bytes are the one thing no text encoding produces (except BOM-marked
+/// UTF-16), so a name is never needed to tell a log from a PNG.
+pub fn looks_binary(raw_bytes: &[u8]) -> bool {
+    let sample = &raw_bytes[..raw_bytes.len().min(BINARY_SAMPLE_LEN)];
+    if sample.is_empty() {
+        return false;
+    }
+
+    let utf16_bom = matches!(
+        Encoding::for_bom(sample),
+        Some((encoding, _)) if encoding == encoding_rs::UTF_16LE || encoding == encoding_rs::UTF_16BE
+    );
+    if utf16_bom {
+        return false;
+    }
+
+    if sample.contains(&0) {
+        return true;
+    }
+
+    let controls = sample.iter().filter(|byte| is_binary_control(**byte)).count();
+    controls as f64 / sample.len() as f64 > BINARY_CONTROL_RATIO
+}
+
+/// C0 controls that text never contains; tab, newlines, form feed and ESC
+/// (ANSI colour in logs) are text.
+fn is_binary_control(byte: u8) -> bool {
+    matches!(byte, 0x00..=0x08 | 0x0E..=0x1A | 0x1C..=0x1F | 0x7F)
+}
+
 /// Re-encodes `text` into `encoding`, re-adding the BOM when `has_bom` is set.
 ///
 /// Returns `Err(())` when the text contains characters the encoding cannot
@@ -177,5 +213,37 @@ mod tests {
     fn encode_rejects_unrepresentable_characters() {
         let result = encode_text("caf\u{e9} \u{1F600}", encoding_rs::WINDOWS_1252, false);
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn plain_text_with_ansi_colours_is_not_binary() {
+        assert!(!looks_binary(b"2026-11-01 INFO started\tok\r\n\x1b[32mready\x1b[0m\n"));
+        assert!(!looks_binary(b""));
+    }
+
+    #[test]
+    fn nul_byte_marks_binary() {
+        assert!(looks_binary(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR"));
+    }
+
+    #[test]
+    fn bom_marked_utf16_is_text_despite_nuls() {
+        let mut bytes = b"\xFF\xFE".to_vec();
+        bytes.extend_from_slice(&[0x68, 0x00, 0x65, 0x00, 0x6C, 0x00, 0x6C, 0x00, 0x6F, 0x00]);
+        assert!(!looks_binary(&bytes));
+    }
+
+    #[test]
+    fn control_heavy_blob_without_nul_is_binary() {
+        let mut bytes = vec![0x01u8; 200];
+        bytes.extend_from_slice(&[b'a'; 100]);
+        assert!(looks_binary(&bytes));
+    }
+
+    #[test]
+    fn a_few_stray_controls_do_not_make_text_binary() {
+        let mut bytes = b"log line\n".repeat(100);
+        bytes.extend_from_slice(&[0x01, 0x02, 0x03]);
+        assert!(!looks_binary(&bytes));
     }
 }

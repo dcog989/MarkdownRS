@@ -33,7 +33,7 @@ import { extractSmartTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats, detectLineEnding } from "$lib/utils/textMetrics";
 import { formatDuration } from "$lib/utils/timing";
 import { getFileMetadata, readTextFile, resolveRelativePath, writeTextFile } from "./fileIO";
-import { getFilename, isMarkdownFile, isTextFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
+import { getFilename, isMarkdownFile, SUPPORTED_TEXT_EXTENSIONS } from "./fileValidation";
 import { formatMarkdown } from "./formatterRust";
 
 /** Paths with an open in flight; a double-click must not create two tabs. */
@@ -41,10 +41,9 @@ const openingPaths = new Set<string>();
 
 export async function openFile(path?: string): Promise<void> {
   const start = performance.now();
+  let targetPath = path;
 
   try {
-    let targetPath = path;
-
     if (!targetPath) {
       const selected = await open({
         multiple: false,
@@ -55,14 +54,6 @@ export async function openFile(path?: string): Promise<void> {
       });
       if (!selected || typeof selected !== "string") return;
       targetPath = selected;
-    }
-
-    // Reading is a lossy text decode and saving writes that text back, so a
-    // binary opened here is destroyed by one keystroke plus Ctrl+S.
-    // shortcut: extension-based only; an extensionless binary still passes, sniff content if that bites.
-    if (!isTextFile(targetPath)) {
-      showToast("error", translate("fileOps.notTextFile", { values: { name: getFilename(targetPath) } }));
-      return;
     }
 
     const sanitizedPath = normalizePath(targetPath);
@@ -86,6 +77,11 @@ export async function openFile(path?: string): Promise<void> {
       openingPaths.delete(sanitizedPath);
     }
   } catch (_err) {
+    // The backend refuses to decode binary bytes; the name never decides.
+    if (String(_err).includes("BINARY_FILE")) {
+      showToast("error", translate("fileOps.notTextFile", { values: { name: getFilename(targetPath ?? "") } }));
+      return;
+    }
     AppError.handle("File:Read", _err, {
       showToast: true,
       additionalInfo: { path },

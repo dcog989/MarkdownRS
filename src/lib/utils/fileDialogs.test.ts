@@ -1,7 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const fakeDisk = vi.hoisted(() => {
-  const files = new Map<string, { content: string; mtime: string; size: number; encoding: string; has_bom: boolean }>();
+  const files = new Map<
+    string,
+    { content: string; mtime: string; size: number; encoding: string; has_bom: boolean; binary?: boolean }
+  >();
   let mtimeCounter = 1000;
   const nextMtime = () => `20260812 / ${String(mtimeCounter++).padStart(6, "0")}`;
   return { files, nextMtime };
@@ -26,6 +29,7 @@ vi.mock("$lib/utils/backend", () => ({
       case "read_text_file": {
         const f = fakeDisk.files.get(path);
         if (!f) throw new Error("No such file");
+        if (f.binary) throw new Error("BINARY_FILE");
         return { content: f.content, encoding: f.encoding, has_bom: f.has_bom };
       }
       case "write_text_file": {
@@ -53,6 +57,7 @@ vi.mock("$lib/utils/backend", () => ({
     if (command === "read_text_file") {
       const f = fakeDisk.files.get(path);
       if (!f) throw new Error("No such file");
+      if (f.binary) throw new Error("BINARY_FILE");
       return { content: f.content, encoding: f.encoding, has_bom: f.has_bom };
     }
     return undefined;
@@ -214,6 +219,7 @@ describe("openFile", () => {
       size: 8,
       encoding: "windows-1252",
       has_bom: false,
+      binary: true,
     });
   });
 
@@ -221,6 +227,21 @@ describe("openFile", () => {
     await openFile("/tmp/shot.png");
 
     expect(editorStore.tabs).toHaveLength(0);
+  });
+
+  it("opens a rotated log file the extension list never knew", async () => {
+    const log = "/home/user/.local/state/colorpickle/log/colorpickle.log.2026-11-01";
+    fakeDisk.files.set(log, {
+      content: "2026-11-01 05:59:00 INFO started\n",
+      mtime: fakeDisk.nextMtime(),
+      size: 32,
+      encoding: "UTF-8",
+      has_bom: false,
+    });
+
+    await openFile(log);
+
+    expect(editorStore.tabs).toHaveLength(1);
   });
 
   it("opens one tab when the same file is opened twice at once", async () => {
