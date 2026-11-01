@@ -15,6 +15,10 @@ struct CachedTheme {
 /// for deleted/renamed themes never linger indefinitely.
 const MAX_CACHED_THEMES: usize = 32;
 
+/// A theme CSS without this selector has no light palette: applying it in light
+/// mode would leave dark theme variables under light app chrome.
+const LIGHT_THEME_SELECTOR: &str = r#"[data-theme="light"]"#;
+
 static THEME_CACHE: LazyLock<Mutex<HashMap<String, CachedTheme>>> = LazyLock::new(|| Mutex::new(HashMap::new()));
 
 fn keyed(name: &str) -> String {
@@ -60,6 +64,31 @@ pub async fn list_files(app_handle: &tauri::AppHandle) -> Result<Vec<String>, St
     Ok(themes)
 }
 
+/// A theme's light palette is a `[data-theme="light"]` block; a file without one
+/// is dark-only.
+pub fn supports_light(css: &str) -> bool {
+    css.contains(LIGHT_THEME_SELECTOR)
+}
+
+/// Every theme the picker can offer, keyed by file stem, with whether the theme
+/// defines a light palette.
+pub async fn list_variants(app_handle: &tauri::AppHandle) -> Result<HashMap<String, bool>, String> {
+    let themes_dir = crate::utils::themes_dir(&super::app_data_path(app_handle)?);
+    let mut variants: HashMap<String, bool> = crate::themes::bundled_theme_variants()
+        .iter()
+        .map(|&(name, supports_light)| (name.to_string(), supports_light))
+        .collect();
+
+    for name in list_files(app_handle).await? {
+        let light = resolve_css(&themes_dir, &name)
+            .await
+            .is_some_and(|css| supports_light(&css));
+        variants.insert(keyed(&name), light);
+    }
+
+    Ok(variants)
+}
+
 /// CSS for a theme, or `None` when no file and no bundled template match.
 /// A bundled name always wins, so shipped theme fixes reach existing installs;
 /// custom themes are new file names.
@@ -80,8 +109,8 @@ pub async fn startup_css(app_handle: &tauri::AppHandle, theme_name: &str) -> Opt
 async fn resolve_path(themes_dir: &Path, theme_name: &str) -> Option<PathBuf> {
     let keyed_name = keyed(theme_name);
     if !is_plain_name(theme_name) || !is_plain_name(&keyed_name) {
-        // Expected for the built-in "Auto (Light/Dark)" pseudo-theme, which has
-        // no CSS file: only a plain file stem can name one on disk.
+        // Expected for the built-in "One X" pseudo-theme, which has no CSS file:
+        // only a plain file stem can name one on disk.
         log::debug!(
             "Theme name is not a file name, using the built-in palette: {:?}",
             theme_name
@@ -173,6 +202,18 @@ mod tests {
         );
         assert_eq!(resolve_css(&dir, "Not A Theme").await, None);
         tokio::fs::remove_dir_all(&dir).await.ok();
+    }
+
+    #[test]
+    fn bundled_variants_match_theme_css() {
+        let variants = crate::themes::bundled_theme_variants();
+        assert!(variants.contains(&("github", true)));
+        assert!(variants.contains(&("catppuccin", false)));
+
+        for &(name, expected) in variants {
+            let css = crate::themes::lookup_template_css(name).expect(name);
+            assert_eq!(super::supports_light(css), expected, "{name}");
+        }
     }
 
     #[test]

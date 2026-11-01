@@ -16,7 +16,7 @@ import { logger } from "$lib/utils/logger";
 import { saveSettings } from "$lib/utils/settings";
 import { getSettingDefinitions, type SettingDef } from "$lib/utils/settingsDefinitions";
 import { shortcutManager } from "$lib/utils/shortcuts";
-import { BUILTIN_THEME_NAME, DEFAULT_THEME_NAMES, keyed } from "$lib/utils/themes";
+import { BUILTIN_THEME_NAME, byName, DEFAULT_THEME_NAMES, keyed } from "$lib/utils/themes";
 import Modal from "./Modal.svelte";
 import ModalSearchHeader from "./ModalSearchHeader.svelte";
 import SettingInput from "./SettingInput.svelte";
@@ -54,14 +54,18 @@ $effect(() => {
       }
     });
 
-    callBackend("get_available_themes", {}, "Settings:Load")
-      .then((customThemes) => {
+    Promise.all([
+      callBackend("get_available_themes", {}, "Settings:Load"),
+      callBackend("get_theme_variants", {}, "Settings:Load"),
+    ])
+      .then(([customThemes, themeVariants]) => {
+        if (themeVariants) appContext.settings.themeVariants = themeVariants;
         if (!customThemes) return;
         const defaults = DEFAULT_THEME_NAMES;
-        const customs = customThemes
-          .filter((t) => keyed(t) !== keyed(BUILTIN_THEME_NAME) && !defaults.some((d) => keyed(d) === keyed(t)))
-          .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...defaults, ...customs];
+        const customs = customThemes.filter(
+          (t) => keyed(t) !== keyed(BUILTIN_THEME_NAME) && !defaults.some((d) => keyed(d) === keyed(t)),
+        );
+        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...defaults, ...customs].sort(byName);
 
         if (!appContext.settings.availableThemes.includes(appContext.settings.activeTheme)) {
           appContext.settings.activeTheme = BUILTIN_THEME_NAME;
@@ -69,7 +73,7 @@ $effect(() => {
         }
       })
       .catch(() => {
-        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...DEFAULT_THEME_NAMES];
+        appContext.settings.availableThemes = [BUILTIN_THEME_NAME, ...DEFAULT_THEME_NAMES].sort(byName);
       });
   } else {
     searchQuery = "";
@@ -86,7 +90,9 @@ async function toggleContextMenu(enable: boolean) {
   }
 }
 
-let settingsDefinitions = $derived(getSettingDefinitions(appContext.settings.availableThemes, isWindows));
+let settingsDefinitions = $derived(
+  getSettingDefinitions(appContext.settings.availableThemes, appContext.settings.themeVariants, isWindows),
+);
 
 let sortedSettings = $derived(
   (settingsDefinitions as SettingDef[])

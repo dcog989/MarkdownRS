@@ -285,6 +285,10 @@ export interface BackendCommands {
     args: Record<string, never>;
     return: string[];
   };
+  get_theme_variants: {
+    args: Record<string, never>;
+    return: Record<string, boolean>;
+  };
   get_theme_css: {
     args: { themeName: string };
     return: string;

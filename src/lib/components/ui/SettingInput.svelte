@@ -206,7 +206,7 @@ $effect(() => {
     >
       {#each setting.options || [] as option, idx (option)}
         <option value={option}>
-          {setting.optionLabels?.[idx] ? $_(setting.optionLabels[idx]) : option}
+          {setting.getOptionLabel?.(option) ?? (setting.optionLabels?.[idx] ? $_(setting.optionLabels[idx]) : option)}
         </option>
       {/each}
     </select>

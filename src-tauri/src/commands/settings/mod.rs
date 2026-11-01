@@ -7,6 +7,7 @@ pub use io::get_max_file_size_bytes;
 
 use crate::state::{AppState, MAX_FILE_SIZE_UNSET};
 use crate::utils::{MutexExt, handle_error, parse_settings_toml};
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::Ordering;
 use tauri::Manager;
@@ -27,6 +28,11 @@ pub async fn get_app_info(app_handle: tauri::AppHandle) -> Result<AppInfo, Strin
 #[tauri::command]
 pub async fn get_available_themes(app_handle: tauri::AppHandle) -> Result<Vec<String>, String> {
     themes::list_files(&app_handle).await
+}
+
+#[tauri::command]
+pub async fn get_theme_variants(app_handle: tauri::AppHandle) -> Result<HashMap<String, bool>, String> {
+    themes::list_variants(&app_handle).await
 }
 
 #[tauri::command]

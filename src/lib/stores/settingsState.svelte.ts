@@ -1,17 +1,23 @@
-import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
+import { BUILTIN_THEME_NAME, themeSupportsLight } from "$lib/utils/themes";
 
 // Shared with the settings definitions so the shown default cannot drift from
 // the value the app actually starts with.
 export const DEFAULT_TAB_WIDTH_MIN = 120;
 export const DEFAULT_TAB_WIDTH_MAX = 240;
 
+/** Follow the OS appearance, or force one. Applies to every theme. */
+export type ThemeMode = "auto" | "dark" | "light";
+
 export const settingsState = $state({
   splitView: true,
   locale: "system",
   theme: "dark" as "dark" | "light",
-  themeMode: "auto" as "auto" | "dark" | "light",
+  themeMode: "auto" as ThemeMode,
   activeTheme: BUILTIN_THEME_NAME,
   availableThemes: [BUILTIN_THEME_NAME] as string[],
+  /** Theme file stem → whether that theme has a light palette. Filled when the
+   *  settings modal loads the theme list. */
+  themeVariants: {} as Record<string, boolean>,
   customAccentColor: "",
   splitPercentage: 0.5,
   paneSplitPercentage: 0.5,
@@ -88,14 +94,21 @@ export function toggleSplitView() {
   settingsState.splitView = !settingsState.splitView;
 }
 
-export function setTheme(newTheme: "dark" | "light") {
-  settingsState.activeTheme = BUILTIN_THEME_NAME;
-  settingsState.themeMode = newTheme;
-  settingsState.theme = newTheme;
+export function setTheme(mode: ThemeMode) {
+  // A dark-only theme has no light palette, so asking for light falls back to
+  // the built-in one instead of leaving a dark palette under light chrome.
+  if (mode === "light" && themeSupportsLight(settingsState.activeTheme, settingsState.themeVariants) === false) {
+    settingsState.activeTheme = BUILTIN_THEME_NAME;
+  }
+  settingsState.themeMode = mode;
+  syncThemeFromSystem();
 }
 
 export function syncThemeFromSystem() {
-  if (settingsState.themeMode !== "auto") return;
+  if (settingsState.themeMode !== "auto") {
+    settingsState.theme = settingsState.themeMode;
+    return;
+  }
   settingsState.theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 

@@ -1,3 +1,7 @@
+/// A theme CSS without this selector has no light palette: applying it in light
+/// mode would leave dark theme variables under light app chrome.
+const LIGHT_THEME_SELECTOR: &str = r#"[data-theme="light"]"#;
+
 fn main() {
     tauri_build::build();
 
@@ -24,6 +28,7 @@ fn main() {
     let dest_path = std::path::Path::new(&out_dir).join("generated_themes.rs");
 
     let mut lookup_arms = String::new();
+    let mut variant_entries = String::new();
     for name in &entries {
         lookup_arms.push_str(r#"        ""#);
         lookup_arms.push_str(name);
@@ -33,6 +38,13 @@ fn main() {
             r#".css"))),
 "#,
         );
+
+        let theme_path = themes_dir.join(format!("{name}.css"));
+        let supports_light = std::fs::read_to_string(&theme_path)
+            .map(|css| css.contains(LIGHT_THEME_SELECTOR))
+            .unwrap_or(false);
+        variant_entries.push_str(&format!("        ({name:?}, {supports_light}),\n"));
+        println!("cargo::rerun-if-changed={}", theme_path.display());
     }
 
     let code = format!(
@@ -41,8 +53,15 @@ fn main() {
 {lookup_arms}        _ => None,
     }}
 }}
+
+/// Bundled theme key paired with whether its CSS defines a light palette.
+pub fn bundled_theme_variants() -> &'static [(&'static str, bool)] {{
+    &[
+{variant_entries}    ]
+}}
 "#,
         lookup_arms = lookup_arms,
+        variant_entries = variant_entries,
     );
 
     std::fs::write(&dest_path, code).unwrap();

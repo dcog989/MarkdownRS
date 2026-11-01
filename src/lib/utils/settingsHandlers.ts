@@ -1,7 +1,7 @@
 import { translate } from "$lib/i18n";
 import { clearTabCaches } from "$lib/stores/editorCache";
 import { editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
-import { settingsState, syncThemeFromSystem } from "$lib/stores/settingsState.svelte";
+import { setTheme, settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { callBackend } from "$lib/utils/backend";
@@ -10,7 +10,7 @@ import { forceMarkdownRelint } from "$lib/utils/markdownLintExtension.svelte";
 import { extractSmartTitle, getBaseTitle } from "$lib/utils/smartTitle";
 import { spellcheckState } from "$lib/utils/spellcheck.svelte";
 import { invalidateSpellcheckCache, triggerImmediateLint } from "$lib/utils/spellcheckExtension.svelte";
-import { BUILTIN_THEME_NAME } from "$lib/utils/themes";
+import { BUILTIN_THEME_NAME, themeSupportsLight } from "$lib/utils/themes";
 
 export function reloadSpellcheck() {
   spellcheckState.clear();
@@ -39,10 +39,17 @@ export function onLogLevelChange(newValue: unknown) {
 }
 
 export function onThemeChange(newValue: unknown) {
-  if (newValue === BUILTIN_THEME_NAME) {
-    settingsState.themeMode = "auto";
-  }
-  syncThemeFromSystem();
+  const themeName = String(newValue);
+  if (themeName === BUILTIN_THEME_NAME) return;
+
+  // A dark-only theme has no light palette: pin the mode so light chrome never
+  // sits on top of dark theme variables. The mode select shows the change.
+  const darkOnly = themeSupportsLight(themeName, settingsState.themeVariants) === false;
+  if (darkOnly && settingsState.theme === "light") setTheme("dark");
+}
+
+export function onThemeModeChange(newValue: unknown) {
+  if (newValue === "auto" || newValue === "dark" || newValue === "light") setTheme(newValue);
 }
 
 /** Re-derive every open tab's title when "tabs named from content" is toggled.

@@ -6,9 +6,10 @@ import {
   onLogLevelChange,
   onTabNameFromContentChange,
   onThemeChange,
+  onThemeModeChange,
   reloadSpellcheck,
 } from "./settingsHandlers";
-import { BUILTIN_THEME_NAME } from "./themes";
+import { BUILTIN_THEME_NAME, formatThemeLabel } from "./themes";
 
 export type SettingDef = {
   key: string;
@@ -18,6 +19,8 @@ export type SettingDef = {
   defaultValue: unknown;
   options?: string[];
   optionLabels?: MessageKey[];
+  /** Display text for an option, when it is not a fixed i18n label. */
+  getOptionLabel?: (option: string) => string;
   min?: number;
   max?: number;
   step?: number;
@@ -27,7 +30,11 @@ export type SettingDef = {
   onChange?: (newValue: unknown, oldValue: unknown) => void;
 };
 
-export function getSettingDefinitions(availableThemes: string[], isWindows: boolean): SettingDef[] {
+export function getSettingDefinitions(
+  availableThemes: string[],
+  themeVariants: Record<string, boolean>,
+  isWindows: boolean,
+): SettingDef[] {
   return [
     {
       key: "logLevel",
@@ -56,8 +63,21 @@ export function getSettingDefinitions(availableThemes: string[], isWindows: bool
       category: "settings.category.interface",
       defaultValue: BUILTIN_THEME_NAME,
       options: availableThemes,
+      getOptionLabel: (theme) => formatThemeLabel(theme, themeVariants),
       tooltip: "settings.themeTooltip",
       onChange: onThemeChange,
+    },
+
+    {
+      key: "themeMode",
+      label: "settings.themeMode",
+      type: "select",
+      category: "settings.category.interface",
+      defaultValue: "auto",
+      options: ["auto", "light", "dark"],
+      optionLabels: ["settings.themeModeSystem", "settings.themeModeLight", "settings.themeModeDark"],
+      tooltip: "settings.themeModeTooltip",
+      onChange: onThemeModeChange,
     },
 
     {

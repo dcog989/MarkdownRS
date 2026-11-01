@@ -16,7 +16,7 @@ vi.mock("$lib/i18n", () => ({
 vi.mock("./themes", () => ({ applyThemeCss: vi.fn() }));
 vi.mock("$lib/stores/appState.svelte", () => ({ appState: { osPlatform: "linux" } }));
 vi.mock("$lib/stores/settingsState.svelte", () => ({
-  settingsState: { activeTheme: "Auto (Light/Dark)", splitView: true, editorFontSize: 14, locale: "system" },
+  settingsState: { activeTheme: "One X", splitView: true, editorFontSize: 14, locale: "system" },
   syncThemeFromSystem: vi.fn(),
 }));
 vi.mock("./backend", () => ({

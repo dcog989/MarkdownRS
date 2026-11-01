@@ -4,7 +4,11 @@ import { callBackendSafe } from "./backend";
 /** Built-in theme entry. Follows the OS light/dark mode only; its palette is
  *  the bundled app colors, not the user's OS colors. Not backed by a theme CSS
  *  file, so it must not collide with a user theme of the same name. */
-export const BUILTIN_THEME_NAME = "Auto (Light/Dark)";
+export const BUILTIN_THEME_NAME = "One X";
+
+export function byName(a: string, b: string): number {
+  return a.toLowerCase().localeCompare(b.toLowerCase());
+}
 
 export const DEFAULT_THEME_NAMES = [
   "Catppuccin",
@@ -19,10 +23,25 @@ export const DEFAULT_THEME_NAMES = [
   "Pink Palace",
   "Solarized",
   "Tokyo Night",
-].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+].sort(byName);
 
 export function keyed(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, "-");
+}
+
+/** Whether a theme defines a light palette, from the backend's theme scan.
+ *  `undefined` when the theme was never scanned, so callers can stay silent. */
+export function themeSupportsLight(name: string, variants: Record<string, boolean>): boolean | undefined {
+  if (keyed(name) === keyed(BUILTIN_THEME_NAME)) return true;
+  return variants[keyed(name)];
+}
+
+export function formatThemeLabel(name: string, variants: Record<string, boolean>): string {
+  const supportsLight = themeSupportsLight(name, variants);
+  if (supportsLight === undefined) return name;
+  return translate(supportsLight ? "settings.themeVariantLightDark" : "settings.themeVariantDarkOnly", {
+    values: { theme: name },
+  });
 }
 
 export async function getThemeCss(themeName: string): Promise<string> {
