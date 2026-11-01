@@ -5,6 +5,17 @@ use std::path::{Path, PathBuf};
 pub async fn resolve_path_relative(base_path: Option<String>, click_path: String) -> Result<String, String> {
     validate_path_input(&click_path)?;
 
+    // `~/…` is an explicit home-relative reference: expand it, then treat it as
+    // absolute instead of a sibling directory literally named `~`.
+    let click_path = match click_path.strip_prefix("~/") {
+        Some(rest) => dirs::home_dir()
+            .ok_or("Cannot resolve the home directory")?
+            .join(rest)
+            .to_string_lossy()
+            .into_owned(),
+        None => click_path,
+    };
+
     let click_is_absolute = Path::new(&click_path).is_absolute();
 
     // The base is either a document (anchor on its directory) or already a
@@ -135,6 +146,16 @@ mod tests {
             "a directory base must not allow escaping to its parent"
         );
         fs::remove_dir_all(&root).unwrap();
+    }
+
+    #[tokio::test]
+    async fn expands_a_home_relative_path() {
+        let home = dirs::home_dir().expect("home directory");
+
+        // `~/.` exists on every platform and needs no writes.
+        let result = resolve_path_relative(None, "~/.".to_string()).await;
+
+        assert_eq!(result.unwrap(), dunce::canonicalize(&home).unwrap().to_string_lossy());
     }
 
     #[tokio::test]
