@@ -236,7 +236,7 @@ const actions = $derived<Action[]>([
 
   <div class="flex flex-col gap-2 p-4">
     {#each actions as action (action.label)}
-      <div class="list-row flex items-center gap-3 rounded border p-3">
+      <div class="list-row flex items-center gap-3 rounded border">
         <button
           type="button"
           class="btn-base w-fit shrink-0"

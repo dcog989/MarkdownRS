@@ -184,10 +184,10 @@ function updateSetting(setting: SettingDef, value: unknown) {
       <div class="settings-grid">
         {#each sortedSettings as setting (setting.key)}
           <div class="settings-row hover-surface">
-            <div class="settings-category text-ui py-2.5 pl-3">
+            <div class="settings-category text-ui pl-3">
               {$_(setting.category)}
             </div>
-            <label for={setting.key} class="text-ui text-fg-default font-medium py-2.5 pl-8">
+            <label for={setting.key} class="text-ui text-fg-default font-medium pl-8">
               {$_(setting.label)}
               {#if setting.labelWarning}
                 <span
@@ -198,7 +198,7 @@ function updateSetting(setting: SettingDef, value: unknown) {
                 </span>
               {/if}
             </label>
-            <div class="w-full py-2.5 pl-8 pr-3">
+            <div class="w-full pl-8 pr-3">
               <SettingInput
                 {setting}
                 value={getSettingValue(setting.key, setting.defaultValue)}

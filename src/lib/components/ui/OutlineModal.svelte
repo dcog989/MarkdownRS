@@ -74,7 +74,7 @@ function select(heading: OutlineHeading | undefined) {
         {@const isSelected = index === Math.min(nav.selectedIndex, filtered.length - 1)}
         <button
           type="button"
-          class="list-row flex w-full items-center rounded border py-2 pr-3 text-left transition-colors"
+          class="list-row flex w-full items-center rounded border text-left transition-colors"
           class:border-transparent={isSelected}
           data-selected={isSelected}
           style:padding-left={`${1 + (heading.level - 1) * 0.75}rem`}

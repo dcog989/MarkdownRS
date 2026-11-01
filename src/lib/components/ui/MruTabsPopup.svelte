@@ -1,4 +1,5 @@
 <script lang="ts">
+import History from "lucide-svelte/icons/history";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
@@ -44,9 +45,12 @@ let mruTabs = $derived(
 
 <Modal {isOpen} {onClose} width={MODAL_CONSTRAINTS.SEARCH_WIDTH}>
   {#snippet header()}
-    <div>
-      <h3 class="text-fg-default text-lg font-semibold">{$_("mruTabs.title")}</h3>
-      <p class="text-ui-sm text-fg-muted mt-1">{$_("mruTabs.hint")}</p>
+    <div class="flex items-center gap-2">
+      <History size={16} class="text-accent-secondary" />
+      <div class="flex items-baseline gap-2">
+        <h3 class="text-fg-default text-lg font-semibold">{$_("mruTabs.title")}</h3>
+        <p class="text-ui-sm text-fg-muted">- {$_("mruTabs.hint")}</p>
+      </div>
     </div>
   {/snippet}
 
@@ -70,10 +74,10 @@ let mruTabs = $derived(
 
         <TabIcon {tab} variant="row" />
 
-        <div class="min-w-0 flex-1">
-          <div class="truncate font-medium">{tab.title}</div>
+        <div class="flex min-w-0 flex-1 items-center gap-2">
+          <span class="min-w-0 truncate font-medium">{tab.title}</span>
           {#if tab.path}
-            <div class="mru-path row-meta">{tab.path}</div>
+            <span class="mru-path row-meta min-w-0 flex-1 truncate" use:tooltip={tab.path}>{tab.path}</span>
           {/if}
         </div>
 

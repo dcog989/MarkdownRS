@@ -332,16 +332,25 @@ select {
 .ui-header {
   flex-shrink: 0;
   border-bottom: 1px solid var(--border-primary);
-  padding: 0.75rem 1rem;
+  padding: 0.25rem 1rem;
   background-color: var(--surface-3);
   color: var(--text-primary);
 }
 
-/* Selectable list rows: single source of truth for hover, selected state and
-   the inverse-color treatment applied to content inside a selected row.
-   Pair with .bg-row-even for the alternating tint. */
+/* Selectable list rows: single source of truth for row height, hover, selected
+   state and the inverse-color treatment applied to content inside a selected
+   row. Pair with .bg-row-even for the alternating tint. Call sites add display
+   and gap only; content taller than one line grows the row. */
 .list-row {
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
   color: var(--text-primary);
+}
+
+/* Rows whose content wraps to a second line (bookmarks) keep vertical breathing
+   room instead of centring a single line. */
+.list-row--stacked {
+  padding: 0.5rem 0.75rem;
 }
 
 .list-row:hover:not([data-selected="true"]) {
@@ -440,7 +449,6 @@ select {
   flex-shrink: 0;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
   text-align: left;
   font-size: 0.8125rem;
   transition-property: background-color;

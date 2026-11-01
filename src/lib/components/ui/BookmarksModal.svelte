@@ -312,7 +312,7 @@ function handleKeydown(e: KeyboardEvent) {
         {@const isSelected = index === nav.selectedIndex}
         <div
           out:slide={{ duration: 200 }}
-          class="list-row overflow-hidden rounded border p-3 transition-colors"
+          class="list-row list-row--stacked overflow-hidden rounded border transition-colors"
           class:border-transparent={isSelected}
           data-selected={isSelected}
           use:scrollIntoView={isSelected}

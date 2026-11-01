@@ -226,7 +226,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 {@const currentIndex = ++globalIndex.value}
                 {@const isSelected = currentIndex === nav.selectedIndex}
                 <div
-                  class="list-row group flex items-center justify-between gap-3 rounded border p-3 transition-colors"
+                  class="list-row group flex items-center justify-between gap-3 rounded border transition-colors"
                   class:border-transparent={isSelected}
                   data-selected={isSelected}
                   use:scrollIntoView={isSelected}

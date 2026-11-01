@@ -120,7 +120,7 @@ function handleKeydown(e: KeyboardEvent) {
           {@const isSelected = index === nav.selectedIndex}
           <div
             role="none"
-            class="list-row group flex w-full items-center gap-3 rounded border p-3 transition-colors"
+            class="list-row group flex w-full items-center gap-3 rounded border transition-colors"
             data-selected={isSelected}
             class:border-transparent={isSelected}
             use:scrollIntoView={isSelected}

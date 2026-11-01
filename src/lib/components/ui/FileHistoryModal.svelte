@@ -118,7 +118,7 @@ function toggleSortDirection() {
         {@const name = getFilename(path)}
         {@const dir = path.slice(0, path.length - name.length)}
         <div
-          class="list-row group flex items-center gap-3 rounded border p-3 transition-colors"
+          class="list-row group flex items-center gap-3 rounded border transition-colors"
           class:border-transparent={isSelected}
           data-selected={isSelected}
           use:scrollIntoView={isSelected}

@@ -163,9 +163,8 @@ function toggleSortDirection() {
               {@const shortcut = shortcutManager.getShortcutDisplay(command.id)}
               <button
                 type="button"
-                class="flex items-center gap-3 rounded border p-3 text-left transition-colors outline-none {isSelected
-                  ? "bg-accent-primary border-transparent text-fg-inverse"
-                  : "bg-bg-panel text-fg-default hover:bg-bg-hover"}"
+                class="list-row flex items-center gap-3 rounded border text-left transition-colors outline-none"
+                data-selected={isSelected}
                 use:scrollIntoView={isSelected}
                 onclick={() => execute(command)}
               >
