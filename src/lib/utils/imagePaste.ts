@@ -119,10 +119,8 @@ async function importImageFileChecked(view: EditorView, rawText: string): Promis
   if (!sourcePath) return false;
 
   const tabPath = getActiveTabPath(view);
-  if (!tabPath) {
-    showToast("error", translate("editor.imagePasteSaveFirst"));
-    return true;
-  }
+  // No note directory to import into: let the path text paste as-is.
+  if (!tabPath) return false;
 
   const meta = await callBackend("path_exists", { path: sourcePath }, "File:Metadata", undefined, {
     ignore: true,
