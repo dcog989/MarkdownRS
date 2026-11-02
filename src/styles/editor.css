@@ -75,6 +75,16 @@
   background: transparent;
 }
 
+/* Slight tint on the line under the pointer. A background-image overlays a code
+   block's own background-colour instead of replacing it. The active-line tint
+   already brightens dark themes and darkens light ones. */
+.cm-editor .cm-line:hover {
+  background-image: linear-gradient(
+    color-mix(in srgb, var(--active-line-bg) 60%, transparent),
+    color-mix(in srgb, var(--active-line-bg) 60%, transparent)
+  );
+}
+
 .cm-editor .cm-activeLine::before {
   content: "";
   position: absolute;
