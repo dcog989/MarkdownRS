@@ -13,8 +13,8 @@
       "dangerousDisableAssetCspModification": ["style-src"],
       "csp": {
         "style-src": "'self' 'unsafe-inline'",
-        "img-src": "'self' asset: http://asset.localhost blob: data:",
-        "media-src": "'self' asset: http://asset.localhost blob: data:"
+        "img-src": "'self' asset: http://asset.localhost blob: data: https: http:",
+        "media-src": "'self' asset: http://asset.localhost blob: data: https: http:"
       },
       "assetProtocol": {
         "enable": true,
