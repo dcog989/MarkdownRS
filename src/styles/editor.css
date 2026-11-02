@@ -418,6 +418,9 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
 .rendered-mode .cm-line:has(.cm-code-info) {
   display: flex;
   align-items: baseline;
+  /* The language badge is shorter than a text line; keep the opener at the
+     normal line height so revealing ```lang on selection doesn't shift. */
+  min-height: 1.4em;
 }
 
 .rendered-mode .cm-code-info {
@@ -495,9 +498,7 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
 }
 
 .cm-hr-raw {
-  display: inline;
   text-align: left;
-  padding: 0;
 }
 
 .cm-hr-raw::after {
