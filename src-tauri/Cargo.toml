@@ -69,6 +69,4 @@ opt-level = 3
 
 [profile.release]
 strip = true
-lto = "fat"
-panic = "abort"
-codegen-units = 1
+lto = "thin"
