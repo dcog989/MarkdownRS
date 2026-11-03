@@ -151,7 +151,7 @@ export async function initSettings(): Promise<boolean> {
 
   syncThemeFromSystem();
 
-  lastSavedState = JSON.stringify(getSettingsObject(false));
+  lastSavedState = JSON.stringify(getSettingsObject(true));
   return saved !== null;
 }
 
