@@ -6,11 +6,44 @@ pub mod user_dict;
 use crate::state::AppState;
 use crate::state::SpellcheckStatus;
 use crate::utils::{IntoTauriError, MutexExt, RwLockExt, handle_error};
+use spellbook::Dictionary;
 use std::collections::HashSet;
 use std::sync::Arc;
 use tauri::State;
 
 const MAX_SUGGESTIONS: usize = 5;
+
+/// Appends unique corrections from one dictionary into `out`. Ngram similarity is
+/// disabled: it scans the whole wordlist (~137 ms with two English dictionaries)
+/// and only adds corrections for distant typos.
+fn collect_suggestions(
+    dictionary: &Dictionary,
+    word: &str,
+    custom_snapshot: &HashSet<String>,
+    seen: &mut HashSet<String>,
+    out: &mut Vec<String>,
+) {
+    let mut suggestions = Vec::new();
+    dictionary
+        .suggester()
+        .with_ngram_suggestions(false)
+        .suggest(word, &mut suggestions);
+
+    for suggestion in suggestions {
+        // A valid word can be returned as its own "correction" by the
+        // suggester (e.g. a word cached as misspelled due to casing).
+        // Never offer the queried word itself back to the user.
+        if suggestion == word {
+            continue;
+        }
+        if custom_snapshot.contains(&suggestion.to_lowercase()) {
+            continue;
+        }
+        if seen.insert(suggestion.to_lowercase()) {
+            out.push(suggestion);
+        }
+    }
+}
 
 #[tauri::command]
 pub async fn add_words_to_dictionary(app_handle: tauri::AppHandle, words: Vec<String>) -> Result<bool, String> {
@@ -113,22 +146,7 @@ pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) 
                 let mut seen = HashSet::new();
                 let mut ordered = Vec::new();
                 for dictionary in dictionaries {
-                    let mut suggestions = Vec::new();
-                    dictionary.suggest(&word, &mut suggestions);
-                    for suggestion in suggestions {
-                        // A valid word can be returned as its own "correction" by the
-                        // suggester (e.g. a word cached as misspelled due to casing).
-                        // Never offer the queried word itself back to the user.
-                        if suggestion == word {
-                            continue;
-                        }
-                        if custom_snapshot.contains(&suggestion.to_lowercase()) {
-                            continue;
-                        }
-                        if seen.insert(suggestion.to_lowercase()) {
-                            ordered.push(suggestion);
-                        }
-                    }
+                    collect_suggestions(dictionary, &word, &custom_snapshot, &mut seen, &mut ordered);
                     if ordered.len() >= MAX_SUGGESTIONS {
                         break;
                     }
