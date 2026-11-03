@@ -48,7 +48,6 @@ const DEFAULT_CONFIG = {
 
   // Session & Auto-save
   SESSION: {
-    AUTO_SAVE_INTERVAL_MS: 5000, // Main auto-save interval for session persistence
     SAVE_DEBOUNCE_MS: 500,
   },
 

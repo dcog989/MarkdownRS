@@ -5,7 +5,6 @@ import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { editorStore } from "$lib/stores/editorStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
 import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
-import { CONFIG } from "$lib/utils/config";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { loadSession, openFile, persistSession, persistSessionDebounced } from "$lib/utils/fileSystem";
 import { logger } from "$lib/utils/logger";
@@ -16,7 +15,7 @@ export function createAppInit() {
   let isInitialized = $state(false);
   let initError = $state<string | null>(null);
 
-  let timers: { autoSave: number | null } = { autoSave: null };
+  let disposeSessionEffect: (() => void) | null = null;
   // Settings are only safe to write back once the file has been read; a failed
   // init must not overwrite it with defaults.
   let settingsReady = false;
@@ -55,19 +54,20 @@ export function createAppInit() {
   }
 
   function startSessionPersistence() {
-    timers.autoSave = window.setInterval(() => {
-      if (editorStore.sessionDirty) {
-        persistSession();
-      }
-      if (settingsReady) saveSettings();
-    }, CONFIG.SESSION.AUTO_SAVE_INTERVAL_MS);
+    if (disposeSessionEffect) return;
+    // No idle timer: the session is written only after something changed, so an
+    // untouched app performs no background work.
+    disposeSessionEffect = $effect.root(() => {
+      $effect(() => {
+        if (editorStore.sessionDirty) persistSessionDebounced();
+      });
+    });
   }
 
   function stopSessionPersistence() {
-    if (timers.autoSave !== null) {
-      clearInterval(timers.autoSave);
-      timers.autoSave = null;
-    }
+    persistSessionDebounced.clear();
+    disposeSessionEffect?.();
+    disposeSessionEffect = null;
   }
 
   async function setupEventListeners(whenReady: Promise<void>): Promise<() => void> {
