@@ -11,6 +11,7 @@ export interface AppInfo {
   logs_path: string;
   log_file_path: string;
   os_platform: string;
+  can_self_update: boolean;
 }
 
 export interface FileMetadata {

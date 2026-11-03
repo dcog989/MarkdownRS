@@ -1,5 +1,5 @@
 <script lang="ts">
-import { openPath } from "@tauri-apps/plugin-opener";
+import { openPath, openUrl } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import ExternalLink from "lucide-svelte/icons/external-link";
@@ -25,8 +25,12 @@ let { isOpen = $bindable(false), onClose, position = "top" }: Props = $props();
 
 let isChecking = $state(false);
 let updateStatus = $state<string | null>(null);
+let availableVersion = $state<string | null>(null);
 
 const LOG_LEVELS = ["trace", "debug", "info", "warn", "error", "off"] as const;
+
+const RELEASES_PAGE = "https://github.com/dcog989/MarkdownRS/releases/latest";
+const LATEST_RELEASE_API = "https://api.github.com/repos/dcog989/MarkdownRS/releases/latest";
 
 let appInfo = $state<AppInfo>({
   name: "MarkdownRS",
@@ -38,6 +42,7 @@ let appInfo = $state<AppInfo>({
   logs_path: "",
   log_file_path: "",
   os_platform: "",
+  can_self_update: false,
 });
 
 $effect(() => {
@@ -76,12 +81,52 @@ async function openLogFile() {
   }
 }
 
+function versionParts(version: string): number[] {
+  return version
+    .replace(/^v/, "")
+    .split(/[.+-]/)
+    .slice(0, 3)
+    .map((part) => Number.parseInt(part, 10) || 0);
+}
+
+function isNewerVersion(candidate: string, current: string): boolean {
+  const a = versionParts(candidate);
+  const b = versionParts(current);
+  for (let i = 0; i < 3; i++) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff !== 0) return diff > 0;
+  }
+  return false;
+}
+
+async function fetchLatestReleaseVersion(): Promise<string> {
+  const response = await fetch(LATEST_RELEASE_API, { headers: { Accept: "application/vnd.github+json" } });
+  if (!response.ok) throw new Error(`GitHub release check failed: ${response.status}`);
+  const data = (await response.json()) as { tag_name?: string };
+  if (!data.tag_name) throw new Error("GitHub release has no tag name");
+  return data.tag_name;
+}
+
 async function checkForUpdates() {
   if (isChecking) return;
   isChecking = true;
   updateStatus = $_("about.checking");
+  availableVersion = null;
 
   try {
+    // Non-AppImage Linux installs cannot replace their own binary; report the
+    // new version and let the user download it through their package source.
+    if (!appInfo.can_self_update) {
+      const latest = await fetchLatestReleaseVersion();
+      if (isNewerVersion(latest, appInfo.version)) {
+        availableVersion = latest;
+        updateStatus = $_("about.updateAvailable", { values: { version: latest } });
+      } else {
+        updateStatus = $_("about.upToDate");
+      }
+      return;
+    }
+
     const update = await check();
 
     if (update) {
@@ -96,7 +141,7 @@ async function checkForUpdates() {
     updateStatus = $_("about.checkFailed");
   } finally {
     isChecking = false;
-    if (updateStatus !== $_("about.restarting")) {
+    if (updateStatus !== $_("about.restarting") && !availableVersion) {
       setTimeout(() => {
         updateStatus = null;
       }, CONFIG.UI_TIMING.UPDATE_STATUS_HIDE_MS);
@@ -149,6 +194,7 @@ async function checkForUpdates() {
     </div>
 
     <div class="flex items-center gap-3">
+      <span class="text-fg-muted shrink-0 font-medium">{$_("settings.logLevel")}:</span>
       <select
         value={settingsState.logLevel}
         title={$_("settings.logLevelTooltip")}
@@ -175,6 +221,13 @@ async function checkForUpdates() {
       <div class="text-ui text-accent-secondary py-1 text-center">
         {updateStatus}
       </div>
+    {/if}
+
+    {#if availableVersion}
+      <button type="button" class="btn-base btn-sm btn-outline" onclick={() => openUrl(RELEASES_PAGE)}>
+        <ExternalLink size={12} />
+        <span>{$_("about.download")}</span>
+      </button>
     {/if}
 
     <div class="mt-4 text-center text-ui-sm">

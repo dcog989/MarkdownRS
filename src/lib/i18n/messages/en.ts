@@ -470,6 +470,8 @@ export const en = {
     restarting: "Restarting...",
     upToDate: "MarkdownRS is up to date.",
     checkFailed: "Failed to check for updates.",
+    updateAvailable: "{version} is available.",
+    download: "Download",
     data: "Data",
     config: "Config",
     cache: "Cache",

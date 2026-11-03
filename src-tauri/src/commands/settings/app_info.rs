@@ -20,6 +20,7 @@ pub struct AppInfo {
     pub logs_path: String,
     pub log_file_path: String,
     pub os_platform: String,
+    pub can_self_update: bool,
 }
 
 pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
@@ -46,6 +47,14 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
     }
     .to_string();
 
+    // The updater can only replace an AppImage on Linux; deb/rpm/pacman installs
+    // must update through the package manager instead.
+    let can_self_update = if cfg!(target_os = "linux") {
+        std::env::var_os("APPIMAGE").is_some()
+    } else {
+        true
+    };
+
     AppInfo {
         name: "MarkdownRS".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
@@ -56,5 +65,6 @@ pub fn collect(app_handle: &tauri::AppHandle) -> AppInfo {
         logs_path,
         log_file_path,
         os_platform,
+        can_self_update,
     }
 }
