@@ -8,6 +8,7 @@
 
 import type { EditorView } from "@codemirror/view";
 import { CONFIG } from "$lib/utils/config";
+import { logger } from "$lib/utils/logger";
 import { throttle } from "$lib/utils/timing";
 import type { AppEditorView } from "../../global";
 import { LineMapTracker } from "./lineMapTracker";
@@ -16,6 +17,8 @@ import { SmoothScroller } from "./smoothScroller";
 
 const CLEAR_SOURCE_DELAY_MS = 200;
 const PERSIST_SCROLL_THROTTLE_MS = 50;
+/** One frame at 60 Hz; a sync above this is dropped-frame territory. */
+const SLOW_SYNC_MS = 16;
 
 type SyncDirection = "editor-to-preview" | "preview-to-editor";
 
@@ -185,8 +188,26 @@ export class ScrollSyncManager {
   private sync(direction: SyncDirection) {
     if (!this.editor || !this.preview) return;
 
-    const source = direction === "editor-to-preview" ? this.editor.scrollDOM : this.preview;
-    const target = direction === "editor-to-preview" ? this.preview : this.editor.scrollDOM;
+    const start = performance.now();
+    this.syncNow(direction);
+
+    const duration = performance.now() - start;
+    if (duration >= SLOW_SYNC_MS) {
+      logger.editor.debug("SlowScrollSync", {
+        direction,
+        duration: Math.round(duration),
+        lineMapEntries: this.lineMap.length,
+      });
+    }
+  }
+
+  private syncNow(direction: SyncDirection) {
+    const editor = this.editor;
+    const preview = this.preview;
+    if (!editor || !preview) return;
+
+    const source = direction === "editor-to-preview" ? editor.scrollDOM : preview;
+    const target = direction === "editor-to-preview" ? preview : editor.scrollDOM;
 
     const scrollTop = source.scrollTop;
     const scrollHeight = source.scrollHeight;

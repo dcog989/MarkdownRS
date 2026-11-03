@@ -5,6 +5,8 @@ import { invoke } from "@tauri-apps/api/core";
  *
  * Provides structured logging with a batching mechanism to minimize IPC overhead.
  * Logs are collected and sent to the backend every 500ms or when the buffer is full.
+ * Until `startBatching()` runs, logs are sent immediately so startup timestamps
+ * and ordering stay accurate.
  */
 
 type LogLevel = "debug" | "info" | "warn" | "error";
@@ -30,11 +32,20 @@ class Logger {
   private flushTimer: number | null = null;
   private readonly MAX_BUFFER_SIZE = 50;
   private readonly FLUSH_INTERVAL_MS = 500;
+  // Startup logs bypass the buffer so their timestamps and cross-process
+  // ordering are real; AppLifecycle enables batching once the app is ready.
+  private batching = false;
+  private immediateQueue: Promise<void> = Promise.resolve();
 
   constructor() {
     if (typeof window !== "undefined") {
       window.addEventListener("beforeunload", () => this.flush());
     }
+  }
+
+  /** Switches from immediate backend sends to 500 ms batching. */
+  startBatching(): void {
+    this.batching = true;
   }
 
   private formatMetadata(metadata?: LogMetadata): string {
@@ -69,6 +80,12 @@ class Logger {
     }
 
     // Buffer for Backend Logger
+    if (!this.batching) {
+      // Chained so immediate logs keep their emission order.
+      this.immediateQueue = this.immediateQueue.then(() => logToBackend(level, message));
+      return;
+    }
+
     this.buffer.push({ level, message });
 
     // Errors flush now: the app can quit before the 500 ms timer fires, and an

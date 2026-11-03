@@ -38,7 +38,7 @@ pub async fn generate_document_toc(
 ) -> Result<String, String> {
     let content_size = content.len();
 
-    crate::timed_info!(
+    crate::timed_debug!(
         "[Markdown]",
         "generate_document_toc",
         {
@@ -91,15 +91,26 @@ pub async fn lint_markdown(
         project_root: pr,
     } = config::resolve_paths(file_path.as_deref(), &state);
 
-    run_blocking("lint markdown", move || {
-        let harper_options = crate::markdown::harper::HarperOptions {
-            enabled: harper_enabled.unwrap_or(true),
-            linter_overrides: harper_linters.unwrap_or_default(),
-        };
-        linter::lint_content(&content, fp.as_deref(), pr.as_deref(), &harper_options)
-            .map_err(|e| handle_error(None, "lint markdown", e))
-    })
-    .await
+    let content_size = content.len();
+    let harper_is_enabled = harper_enabled.unwrap_or(true);
+
+    crate::timed_debug!(
+        "[Markdown]",
+        "lint_markdown",
+        {
+            run_blocking("lint markdown", move || {
+                let harper_options = crate::markdown::harper::HarperOptions {
+                    enabled: harper_is_enabled,
+                    linter_overrides: harper_linters.unwrap_or_default(),
+                };
+                linter::lint_content(&content, fp.as_deref(), pr.as_deref(), &harper_options)
+                    .map_err(|e| handle_error(None, "lint markdown", e))
+            })
+            .await
+        },
+        size = content_size,
+        harper = harper_is_enabled,
+    )
 }
 
 #[tauri::command]
@@ -112,7 +123,7 @@ pub async fn get_rumdl_config_path(
         project_root: pr,
     } = config::resolve_paths(file_path.as_deref(), &state);
 
-    crate::timed_info!("[Markdown]", "get_rumdl_config_path", {
+    crate::timed_debug!("[Markdown]", "get_rumdl_config_path", {
         run_blocking("discover rumdl config", move || {
             let path = config::loaded_config_path(fp.as_deref(), pr.as_deref());
             Ok(path.map(|p| p.to_string_lossy().to_string()))
@@ -157,7 +168,7 @@ pub async fn read_rumdl_config(
     let scope = config::RumdlConfigScope::from_str(target.as_deref());
     ensure_project_scope_anchor(scope, fp.as_deref(), pr.as_deref())?;
 
-    crate::timed_info!("[Markdown]", "read_rumdl_config", {
+    crate::timed_debug!("[Markdown]", "read_rumdl_config", {
         run_blocking("read rumdl config", move || {
             let resolved = config::resolve_config_target(fp.as_deref(), pr.as_deref(), scope);
             let exists = resolved.exists();
@@ -194,7 +205,7 @@ pub async fn write_rumdl_config(
     let scope = config::RumdlConfigScope::from_str(target.as_deref());
     ensure_project_scope_anchor(scope, fp.as_deref(), pr.as_deref())?;
 
-    crate::timed_info!("[Markdown]", "write_rumdl_config", {
+    crate::timed_debug!("[Markdown]", "write_rumdl_config", {
         let (resolved, content) = run_blocking("validate rumdl config", move || {
             let resolved = config::resolve_config_target(fp.as_deref(), pr.as_deref(), scope);
             let validation_root = pr.as_deref().or_else(|| resolved.parent()).unwrap_or(Path::new("."));

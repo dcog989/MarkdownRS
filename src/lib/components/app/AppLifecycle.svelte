@@ -37,15 +37,11 @@ $effect(() => {
   }
 
   if (tab && !tab.contentLoaded && appInit.isInitialized) {
-    const loadStart = performance.now();
-    loadTabContentLazy(tab.id)
-      .then(() => {
-        logger.session.debug("TabContentLoaded", {
-          tabId: tab.id,
-          duration: formatDuration(loadStart),
-        });
-      })
-      .catch((err) => logger.editor.warn("TabContentLoadFailed", { tabId: tab.id, error: String(err) }));
+    // Duration and outcome are logged by loadTabContentInternal; this effect can
+    // re-run while the coalesced load is in flight, so it logs nothing itself.
+    void loadTabContentLazy(tab.id).catch((err) =>
+      logger.editor.warn("TabContentLoadFailed", { tabId: tab.id, error: String(err) }),
+    );
   }
 });
 
@@ -65,6 +61,11 @@ $effect(() => {
 });
 
 onMount(() => {
+  // performance.now() is measured from webview navigation start, so this is
+  // roughly the time from page load to the app component mounting.
+  const mountStart = performance.now();
+  logger.app.debug("WebviewMounted", { sinceNavigation: mountStart.toFixed(2) });
+
   let unlistenEvents: (() => void) | null = null;
 
   const initPromise = appInit.initialize();
@@ -78,6 +79,8 @@ onMount(() => {
     // can hand over a file passed on the command line without a timer.
     await listenersReady;
     await emit("frontend-ready");
+    logger.app.debug("FrontendReady", { duration: formatDuration(mountStart) });
+    logger.startBatching();
   });
 
   const handleBlur = () => appInit.handleBlur();

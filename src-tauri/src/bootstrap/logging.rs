@@ -43,7 +43,8 @@ fn build_log_spec(level: &str) -> LogSpecification {
     builder
         .default(parse_log_level(level))
         .module("tao", LevelFilter::Error)
-        .module("wry", LevelFilter::Error);
+        .module("wry", LevelFilter::Error)
+        .module("notify", LevelFilter::Warn);
     builder.build()
 }
 

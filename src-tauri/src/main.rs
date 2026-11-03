@@ -14,6 +14,8 @@ mod utils;
 use tauri::Manager;
 
 fn main() {
+    bootstrap::mark_start();
+
     let portable_config = portable::detect_portable_mode();
     let is_portable = portable_config.is_portable();
     let portable_data_dir_path = portable_config.data_dir().cloned();

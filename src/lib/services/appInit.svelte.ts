@@ -28,7 +28,10 @@ export function createAppInit() {
 
     try {
       // Bookmarks need no settings, so they load while the settings file is read.
-      const bookmarks = loadBookmarks();
+      const bookmarksStart = performance.now();
+      const bookmarks = loadBookmarks().then(() => {
+        logger.editor.debug("BookmarksLoaded", { duration: formatDuration(bookmarksStart) });
+      });
 
       const settingsStart = performance.now();
       // A failed read leaves defaults in memory; writing them back would

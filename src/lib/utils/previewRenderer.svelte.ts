@@ -1,7 +1,9 @@
 import { translate } from "$lib/i18n";
 import { cachePreviewHeadings } from "$lib/stores/previewHeadings.svelte";
 import { CONFIG } from "$lib/utils/config";
+import { logger } from "$lib/utils/logger";
 import { renderMarkdown } from "$lib/utils/markdownRust";
+import { formatDuration } from "$lib/utils/timing";
 
 /** Lifecycle hooks owned by the preview component, keeping the renderer free of
  *  scroll-sync and DOM-registration concerns. */
@@ -43,6 +45,7 @@ export class PreviewRenderer {
   }
 
   scheduleRender(content: string, flavor: string, tabPath: string | null | undefined, theme: string): () => void {
+    const scheduledAt = performance.now();
     this.cancelPending();
 
     this.renderError = "";
@@ -57,6 +60,7 @@ export class PreviewRenderer {
 
     this.debounceTimer = setTimeout(async () => {
       this.debounceTimer = null;
+      const renderStart = performance.now();
       try {
         const result = await renderMarkdown(content, flavor === "gfm", tabPath);
         if (epoch !== this.renderEpoch || !result) return;
@@ -67,6 +71,11 @@ export class PreviewRenderer {
         this.lastPath = tabPath;
         this.lastTheme = theme;
         cachePreviewHeadings(content, result.headings);
+        logger.editor.debug("PreviewRendered", {
+          duration: formatDuration(renderStart),
+          waitMs: Math.round(renderStart - scheduledAt),
+          size: result.html.length,
+        });
         this.callbacks.onContentRendered();
       } catch (err) {
         if (epoch !== this.renderEpoch) return;

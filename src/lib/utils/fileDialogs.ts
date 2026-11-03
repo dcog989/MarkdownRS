@@ -389,7 +389,7 @@ async function saveFile(forceNewPath: boolean, skipFormat = false): Promise<bool
 
       fileWatcher.setWriteLock(sanitizedPath, false);
 
-      logger.file.info("FileSaved", {
+      logger.file.debug("FileSaved", {
         duration: formatDuration(start),
         path: sanitizedPath,
         size: byteLength(diskContent),

@@ -19,7 +19,7 @@ fn is_current_generation(state: &AppState, generation_id: u64) -> bool {
 /// Applies `status` unless a newer init request superseded this build.
 fn finish_init(app_handle: &tauri::AppHandle, state: &AppState, generation_id: u64, status: SpellcheckStatus) {
     if !is_current_generation(state, generation_id) {
-        log::info!("[SPELLCHECK-RUST] Init superseded, discarding result");
+        log::debug!("[SPELLCHECK-RUST] Init superseded, discarding result");
         return;
     }
     set_spellcheck_status(app_handle, status);
@@ -166,7 +166,7 @@ async fn run_spellcheck_init(
     match dictionaries_result {
         Ok((dictionaries, failed_languages)) if !dictionaries.is_empty() => {
             if !is_current_generation(&state, generation_id) {
-                log::info!("[SPELLCHECK-RUST] Init superseded, discarding dictionaries");
+                log::debug!("[SPELLCHECK-RUST] Init superseded, discarding dictionaries");
                 return;
             }
             if failed_languages > 0 {
@@ -221,7 +221,7 @@ pub async fn init_spellchecker(
         let status = state.spellcheck_status.lock_or_recover();
         let loaded = state.loaded_spellcheck_config.lock_or_recover();
         if loaded.as_ref() == Some(&requested) && *status != SpellcheckStatus::Failed {
-            log::info!("[SPELLCHECK-RUST] Spellchecker already initializing or ready for requested dictionaries");
+            log::debug!("[SPELLCHECK-RUST] Spellchecker already initializing or ready for requested dictionaries");
             return Ok(());
         }
     }

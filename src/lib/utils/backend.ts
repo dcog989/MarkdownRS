@@ -1,6 +1,10 @@
 import { invoke } from "@tauri-apps/api/core";
 import type { BackendCommands, CommandName } from "$lib/types/api";
 import { AppError, type ErrorContext, type ErrorOptions } from "./errorHandling";
+import { logger } from "./logger";
+
+/** Commands slower than this are logged; keeps the threshold in one place. */
+const SLOW_CALL_MS = 100;
 
 export interface BackendCallOptions {
   report?: boolean;
@@ -46,8 +50,13 @@ export async function callBackend<K extends CommandName>(
   additionalInfo?: Record<string, unknown>,
   options?: BackendCallOptions,
 ): Promise<BackendCommands[K]["return"] | null> {
+  const callStart = performance.now();
   try {
     const result = await invoke<BackendCommands[K]["return"]>(command, args);
+    const duration = performance.now() - callStart;
+    if (duration >= SLOW_CALL_MS) {
+      logger.app.debug("SlowBackendCall", { command, duration: Math.round(duration) });
+    }
     return result;
   } catch (err) {
     // Never copy document text into the error log: `content` is the note body

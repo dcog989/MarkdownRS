@@ -233,7 +233,7 @@ pub async fn download_and_collect_words(
                             count += 1;
                         }
                     }
-                    log::info!("Loaded {}: {} words", code, count);
+                    log::debug!("Loaded {}: {} words", code, count);
                 },
                 Err(e) => log::warn!("Failed to load {}: {}", code, e),
             }

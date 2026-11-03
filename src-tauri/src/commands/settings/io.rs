@@ -106,11 +106,17 @@ pub async fn get_max_file_size_bytes(app_handle: &tauri::AppHandle) -> u64 {
 }
 
 pub async fn write_settings_file(path: &Path, settings: &serde_json::Value) -> Result<(), String> {
+    let start = std::time::Instant::now();
     let toml_str = toml::to_string_pretty(settings).map_err(|e| handle_error(None, "serialize settings to TOML", e))?;
     crate::utils::atomic_write(path, toml_str.as_bytes())
         .await
         .map_err(|e| handle_error(Some(&path.to_string_lossy()), "write settings file", e))?;
-    log::debug!("Settings saved successfully to {:?}", path);
+    log::debug!(
+        "Settings saved successfully to {:?} | duration={:?} | bytes={}",
+        path,
+        start.elapsed(),
+        toml_str.len()
+    );
     Ok(())
 }
 

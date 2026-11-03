@@ -78,7 +78,7 @@ impl Database {
         let conn = lock_conn!(self);
         let free_pages: i32 = conn.query_row("PRAGMA freelist_count", [], |row| row.get(0))?;
         if free_pages > 0 {
-            log::info!("Reclaiming {} free pages from the session database", free_pages);
+            log::debug!("Reclaiming {} free pages from the session database", free_pages);
             // The pragma yields one row per reclaimed page; `execute`/`execute_batch`
             // step only once, so they would free a single page and stop.
             let mut stmt = conn.prepare("PRAGMA incremental_vacuum")?;

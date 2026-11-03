@@ -29,7 +29,8 @@ pub async fn load_user_dictionary(app_handle: tauri::AppHandle) -> Result<Vec<St
 
 #[tauri::command]
 pub async fn check_words(state: State<'_, AppState>, words: Vec<String>) -> Result<Vec<String>, String> {
-    log::debug!("check_words called with {} words", words.len());
+    let word_count = words.len();
+    log::debug!("check_words called with {} words", word_count);
 
     let custom_snapshot = {
         let guard = state.custom_dict.read_or_recover();
@@ -38,40 +39,47 @@ pub async fn check_words(state: State<'_, AppState>, words: Vec<String>) -> Resu
 
     let speller = state.speller.clone();
 
-    let misspelled = tokio::task::spawn_blocking(move || {
-        let guard = speller.lock_or_recover();
-        let dictionaries = match guard.as_ref() {
-            Some(d) => d,
-            None => return Vec::new(),
-        };
+    let misspelled = crate::timed_debug!(
+        "[Spellcheck]",
+        "check_words",
+        {
+            tokio::task::spawn_blocking(move || {
+                let guard = speller.lock_or_recover();
+                let dictionaries = match guard.as_ref() {
+                    Some(d) => d,
+                    None => return Vec::new(),
+                };
 
-        let mut result = Vec::new();
-        for word in &words {
-            let clean = word.trim();
-            if clean.is_empty() {
-                continue;
-            }
+                let mut result = Vec::new();
+                for word in &words {
+                    let clean = word.trim();
+                    if clean.is_empty() {
+                        continue;
+                    }
 
-            let lower = clean.to_lowercase();
-            if custom_snapshot.contains(&lower) {
-                continue;
-            }
+                    let lower = clean.to_lowercase();
+                    if custom_snapshot.contains(&lower) {
+                        continue;
+                    }
 
-            // The frontend strips possessive suffixes before calling, so this
-            // only guards against a possessive word arriving directly.
-            if lower.strip_suffix("'s").is_some_and(|b| custom_snapshot.contains(b)) {
-                continue;
-            }
+                    // The frontend strips possessive suffixes before calling, so this
+                    // only guards against a possessive word arriving directly.
+                    if lower.strip_suffix("'s").is_some_and(|b| custom_snapshot.contains(b)) {
+                        continue;
+                    }
 
-            let correct_in_any = dictionaries.iter().any(|dict| dict.check(clean));
-            if !correct_in_any {
-                result.push(word.to_string());
-            }
-        }
-        result
-    })
-    .await
-    .map_err(|e| handle_error(None, "check spelling", e))?;
+                    let correct_in_any = dictionaries.iter().any(|dict| dict.check(clean));
+                    if !correct_in_any {
+                        result.push(word.to_string());
+                    }
+                }
+                result
+            })
+            .await
+            .map_err(|e| handle_error(None, "check spelling", e))?
+        },
+        words = word_count
+    );
 
     log::debug!("check_words returning {} misspelled words", misspelled.len());
     if !misspelled.is_empty() {
@@ -83,6 +91,7 @@ pub async fn check_words(state: State<'_, AppState>, words: Vec<String>) -> Resu
 
 #[tauri::command]
 pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) -> Result<Vec<String>, String> {
+    let word_len = word.len();
     let speller = state.speller.clone();
 
     let custom_snapshot = {
@@ -90,40 +99,47 @@ pub async fn get_spelling_suggestions(state: State<'_, AppState>, word: String) 
         Arc::clone(&guard)
     };
 
-    let suggestions = tokio::task::spawn_blocking(move || {
-        let guard = speller.lock_or_recover();
-        let dictionaries = match guard.as_ref() {
-            Some(d) => d,
-            None => return Vec::new(),
-        };
+    let suggestions = crate::timed_debug!(
+        "[Spellcheck]",
+        "get_spelling_suggestions",
+        {
+            tokio::task::spawn_blocking(move || {
+                let guard = speller.lock_or_recover();
+                let dictionaries = match guard.as_ref() {
+                    Some(d) => d,
+                    None => return Vec::new(),
+                };
 
-        let mut seen = HashSet::new();
-        let mut ordered = Vec::new();
-        for dictionary in dictionaries {
-            let mut suggestions = Vec::new();
-            dictionary.suggest(&word, &mut suggestions);
-            for suggestion in suggestions {
-                // A valid word can be returned as its own "correction" by the
-                // suggester (e.g. a word cached as misspelled due to casing).
-                // Never offer the queried word itself back to the user.
-                if suggestion == word {
-                    continue;
+                let mut seen = HashSet::new();
+                let mut ordered = Vec::new();
+                for dictionary in dictionaries {
+                    let mut suggestions = Vec::new();
+                    dictionary.suggest(&word, &mut suggestions);
+                    for suggestion in suggestions {
+                        // A valid word can be returned as its own "correction" by the
+                        // suggester (e.g. a word cached as misspelled due to casing).
+                        // Never offer the queried word itself back to the user.
+                        if suggestion == word {
+                            continue;
+                        }
+                        if custom_snapshot.contains(&suggestion.to_lowercase()) {
+                            continue;
+                        }
+                        if seen.insert(suggestion.to_lowercase()) {
+                            ordered.push(suggestion);
+                        }
+                    }
+                    if ordered.len() >= MAX_SUGGESTIONS {
+                        break;
+                    }
                 }
-                if custom_snapshot.contains(&suggestion.to_lowercase()) {
-                    continue;
-                }
-                if seen.insert(suggestion.to_lowercase()) {
-                    ordered.push(suggestion);
-                }
-            }
-            if ordered.len() >= MAX_SUGGESTIONS {
-                break;
-            }
-        }
-        ordered.into_iter().take(MAX_SUGGESTIONS).collect()
-    })
-    .await
-    .map_err(|e| handle_error(None, "get spelling suggestions", e))?;
+                ordered.into_iter().take(MAX_SUGGESTIONS).collect()
+            })
+            .await
+            .map_err(|e| handle_error(None, "get spelling suggestions", e))?
+        },
+        word = word_len
+    );
 
     Ok(suggestions)
 }

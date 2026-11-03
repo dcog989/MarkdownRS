@@ -21,6 +21,9 @@ const SETTINGS_EXCLUDED_KEYS = new Set([
 const SETTINGS_RUNTIME_KEYS = new Set(["commandUsage", "commandUsageCounts"]);
 
 let lastSavedState: string = "";
+// Includes the runtime keys, so close-time force saves stay a no-op when
+// nothing changed since the last write.
+let lastSavedFullState: string = "";
 
 function getSettingsObject(includeRuntime: boolean): Record<string, unknown> {
   const settings: Record<string, unknown> = {};
@@ -151,18 +154,22 @@ export async function initSettings(): Promise<boolean> {
 
   syncThemeFromSystem();
 
-  lastSavedState = JSON.stringify(getSettingsObject(true));
+  lastSavedState = JSON.stringify(getSettingsObject(false));
+  lastSavedFullState = JSON.stringify(getSettingsObject(true));
   return saved !== null;
 }
 
 // Writes run one at a time so a slower, older snapshot cannot finish last.
 let saveInFlight: Promise<void> = Promise.resolve();
 
-async function writeSettings(): Promise<void> {
+async function writeSettings(force = false): Promise<void> {
   const settingsToSave = getSettingsObject(true);
   const serialized = JSON.stringify(settingsToSave);
+  const comparable = JSON.stringify(getSettingsObject(false));
 
-  if (serialized === lastSavedState) {
+  // Runtime analytics alone never trigger a write; a forced save (close) still
+  // skips the write when nothing at all changed since the last one.
+  if (force ? serialized === lastSavedFullState : comparable === lastSavedState) {
     return;
   }
 
@@ -178,12 +185,13 @@ async function writeSettings(): Promise<void> {
   // returns nothing, so null means both success and failure; the error callback
   // is the only signal.
   if (!failed) {
-    lastSavedState = serialized;
+    lastSavedState = comparable;
+    lastSavedFullState = serialized;
   }
 }
 
-function saveSettingsImmediate(): Promise<void> {
-  const next = saveInFlight.then(writeSettings);
+function saveSettingsImmediate(force = false): Promise<void> {
+  const next = saveInFlight.then(() => writeSettings(force));
   // Keep the queue usable even if a write rejects.
   saveInFlight = next.catch(() => {});
   return next;
@@ -195,5 +203,5 @@ export const saveSettings = debounce(saveSettingsImmediate, 500);
 
 export function saveSettingsNow(): Promise<void> {
   (saveSettings as { clear?: () => void }).clear?.();
-  return saveSettingsImmediate();
+  return saveSettingsImmediate(true);
 }
