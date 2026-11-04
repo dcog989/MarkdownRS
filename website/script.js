@@ -137,3 +137,22 @@
     goTo(index, false);
   });
 })();
+
+(() => {
+  const header = document.querySelector(".site-header");
+  if (!header) return;
+
+  const SCROLL_DELTA_PX = 6;
+  let lastY = window.scrollY;
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      const y = window.scrollY;
+      if (y > lastY + SCROLL_DELTA_PX) header.classList.add("is-dimmed");
+      else if (y < lastY - SCROLL_DELTA_PX || y === 0) header.classList.remove("is-dimmed");
+      lastY = y;
+    },
+    { passive: true },
+  );
+})();

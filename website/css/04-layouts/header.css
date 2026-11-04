@@ -4,6 +4,7 @@
 
 @layer layouts {
   .site-header {
+    --header-alpha: 88%;
     position: sticky;
     top: 0;
     z-index: 50;
@@ -12,9 +13,32 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.9rem clamp(1rem, 5vw, 3.5rem);
-    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    background: color-mix(in srgb, var(--paper) var(--header-alpha), transparent);
     backdrop-filter: blur(10px);
     border-bottom: 2px solid var(--ink);
+    transition: background-color 220ms ease;
+  }
+
+  .site-header > * {
+    transition: opacity 220ms ease;
+  }
+
+  .site-header.is-dimmed {
+    --header-alpha: 72%;
+  }
+
+  .site-header.is-dimmed > * {
+    opacity: 0.55;
+  }
+
+  .site-header:hover,
+  .site-header:focus-within {
+    --header-alpha: 88%;
+  }
+
+  .site-header:hover > *,
+  .site-header:focus-within > * {
+    opacity: 1;
   }
 
   .brand {
