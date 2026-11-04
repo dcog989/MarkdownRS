@@ -28,6 +28,10 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      # The README plugin resizes the screenshots with ImageMagick.
+      - name: Install ImageMagick
+        run: sudo apt-get install -y --no-install-recommends imagemagick
+
       - name: Build website
         run: bunx --bun vite build --config website/vite.config.js
 

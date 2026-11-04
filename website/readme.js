@@ -159,10 +159,16 @@ export function renderReadme() {
   );
 
   const cli = screenshots.length > 0 ? imageCli() : null;
-  if (cli) mkdirSync(PUBLIC_DIR, { recursive: true });
+  if (screenshots.length > 0) mkdirSync(PUBLIC_DIR, { recursive: true });
   for (const shot of screenshots) {
     const source = join(REPO_ROOT, "assets", shot.file);
-    if (!cli || !existsSync(source)) continue;
+    if (!existsSync(source)) continue;
+    // Without ImageMagick the original is shipped as-is; a missing copy would
+    // leave the carousel pointing at files that were never written.
+    if (!cli) {
+      copyFileSync(source, join(PUBLIC_DIR, shot.file));
+      continue;
+    }
     shot.variants = resizeVariants(cli, source, shot.file);
     const largest = shot.variants[shot.variants.length - 1];
     const identify = ["-format", "%w %h", join(PUBLIC_DIR, largest.name)];
