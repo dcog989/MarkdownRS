@@ -94,7 +94,7 @@ export function getSettingDefinitions(
       min: 8,
       max: 32,
       tooltip: "settings.fontSizeTooltip",
-      unit: "settings.unitPx",
+      unit: "settings.unitPixels",
     },
     {
       key: "wrapGuideColumn",
@@ -116,7 +116,7 @@ export function getSettingDefinitions(
       max: 2000,
       step: 50,
       tooltip: "settings.autocompleteDelayTooltip",
-      unit: "settings.unitMs",
+      unit: "settings.unitMilliseconds",
     },
     {
       key: "showMinimap",
@@ -185,7 +185,7 @@ export function getSettingDefinitions(
       max: 9999,
       step: 10,
       tooltip: "settings.recentChangesTimespanTooltip",
-      unit: "settings.unitSecs",
+      unit: "settings.unitSeconds",
     },
     {
       key: "autoSaveInterval",
@@ -196,7 +196,7 @@ export function getSettingDefinitions(
       min: -1,
       max: 3600,
       tooltip: "settings.autoSaveIntervalTooltip",
-      unit: "settings.unitSecs",
+      unit: "settings.unitSeconds",
     },
     {
       key: "formatOnSave",
@@ -215,7 +215,7 @@ export function getSettingDefinitions(
       min: 80,
       max: 300,
       tooltip: "settings.tabWidthMinTooltip",
-      unit: "settings.unitPx",
+      unit: "settings.unitPixels",
     },
     {
       key: "tabWidthMax",
@@ -226,7 +226,7 @@ export function getSettingDefinitions(
       min: 100,
       max: 400,
       tooltip: "settings.tabWidthMaxTooltip",
-      unit: "settings.unitPx",
+      unit: "settings.unitPixels",
     },
     {
       key: "collapsePinnedTabs",
@@ -316,7 +316,7 @@ export function getSettingDefinitions(
       max: 5000,
       step: 50,
       tooltip: "settings.tooltipDelayTooltip",
-      unit: "settings.unitMs",
+      unit: "settings.unitMilliseconds",
     },
     {
       key: "findPanelOpacity",
@@ -362,7 +362,7 @@ export function getSettingDefinitions(
       min: 10,
       max: 32,
       tooltip: "settings.previewFontSizeTooltip",
-      unit: "settings.unitPx",
+      unit: "settings.unitPixels",
     },
     {
       key: "markdownFlavor",

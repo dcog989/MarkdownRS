@@ -1,5 +1,8 @@
 <script lang="ts">
 import { open } from "@tauri-apps/plugin-dialog";
+import Check from "lucide-svelte/icons/check";
+import ChevronDown from "lucide-svelte/icons/chevron-down";
+import ChevronUp from "lucide-svelte/icons/chevron-up";
 import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { tooltip } from "$lib/actions/tooltip";
@@ -70,6 +73,13 @@ function handleNumberInput(e: Event) {
   onChange(parsed);
 }
 
+const stepSize = $derived(setting.step ?? 1);
+
+function stepBy(direction: 1 | -1) {
+  const current = typeof value === "number" && Number.isFinite(value) ? value : Number(setting.defaultValue) || 0;
+  onChange(clampNumber(current + direction * stepSize));
+}
+
 function handleNumberBlur(e: Event) {
   const el = e.currentTarget as HTMLInputElement;
   const parsed = parseNumber(el.value);
@@ -136,7 +146,7 @@ $effect(() => {
       oninput={(e) => onChange(e.currentTarget.value)}
     />
   {:else if setting.type === "number"}
-    <div class={setting.unit ? "flex items-center gap-2" : "w-full"}>
+    <div class="unit-field" class:unit-field--labelled={setting.unit}>
       <Input
         id={setting.key}
         type="number"
@@ -146,13 +156,18 @@ $effect(() => {
         step={setting.step}
         oninput={handleNumberInput}
         onblur={handleNumberBlur}
-        class={setting.unit ? "min-w-0 flex-1" : ""}
       />
       {#if setting.unit}
-        <span class="text-ui-sm text-fg-muted shrink-0 font-mono opacity-80">
-          {$_(setting.unit)}
-        </span>
+        <span class="unit-suffix">{$_(setting.unit)}</span>
       {/if}
+      <div class="unit-steppers">
+        <button type="button" aria-label={$_("common.increase")} onclick={() => stepBy(1)}>
+          <ChevronUp size={12} />
+        </button>
+        <button type="button" aria-label={$_("common.decrease")} onclick={() => stepBy(-1)}>
+          <ChevronDown size={12} />
+        </button>
+      </div>
     </div>
   {:else if setting.type === "range"}
     <div class="flex items-center gap-3">
@@ -171,14 +186,21 @@ $effect(() => {
       </span>
     </div>
   {:else if setting.type === "boolean"}
-    <input
+    {@const checked = Boolean(value ?? setting.defaultValue)}
+    <button
       id={setting.key}
-      type="checkbox"
+      type="button"
       role="switch"
-      checked={Boolean(value ?? setting.defaultValue)}
-      aria-checked={Boolean(value ?? setting.defaultValue)}
-      onchange={(e) => onChange(e.currentTarget.checked)}
+      aria-checked={checked}
+      class="switch"
+      onclick={() => onChange(!checked)}
     >
+      <span class="switch-knob">
+        {#if checked}
+          <Check size={16} strokeWidth={3} />
+        {/if}
+      </span>
+    </button>
   {:else if setting.type === "color"}
     {@const displayColor = String(value ?? "") || resolvedDefaultAccent}
     <div class="flex items-center gap-2">
@@ -216,15 +238,21 @@ $effect(() => {
       <DictionarySelector selected={value as string[]} onChange={(dicts) => onChange(dicts)} />
     </div>
   {:else if setting.type === "custom-context-menu"}
-    <input
+    <button
       id={setting.key}
-      type="checkbox"
+      type="button"
       role="switch"
-      checked={isContextMenuEnabled}
       aria-checked={isContextMenuEnabled}
-      onchange={(e) => onToggleContextMenu?.(e.currentTarget.checked)}
+      class="switch"
       disabled={isCheckingContextMenu}
+      onclick={() => onToggleContextMenu?.(!isContextMenuEnabled)}
     >
+      <span class="switch-knob">
+        {#if isContextMenuEnabled}
+          <Check size={16} strokeWidth={3} />
+        {/if}
+      </span>
+    </button>
   {:else if setting.type === "file"}
     <div class="w-full min-w-0" bind:this={pathContainer}>
       <div class="flex items-center gap-2" use:tooltip={tooltipText}>
@@ -259,3 +287,65 @@ $effect(() => {
     </div>
   {/if}
 </div>
+
+<style>
+.unit-field {
+  position: relative;
+  width: 100%;
+}
+
+.unit-field :global(input) {
+  padding-inline-end: 1.75rem;
+}
+
+.unit-field--labelled :global(input) {
+  padding-inline-end: 7.5rem;
+}
+
+/* One stepper for every number field: the native WebKit control draws at the
+   input's content edge, so it cannot be placed after a unit label. */
+.unit-field :global(input[type="number"])::-webkit-inner-spin-button,
+.unit-field :global(input[type="number"])::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.unit-steppers {
+  position: absolute;
+  inset-block: 1px;
+  inset-inline-end: 1px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 1.25rem;
+}
+
+.unit-steppers button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 0;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+}
+
+.unit-steppers button:hover {
+  color: var(--text-primary);
+}
+
+.unit-suffix {
+  position: absolute;
+  inset-block: 0;
+  /* Clears the stepper column, which owns the right edge. */
+  inset-inline-end: 1.55rem;
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  font-family: ui-monospace, monospace;
+  color: var(--text-secondary);
+  opacity: 0.8;
+  pointer-events: none;
+}
+</style>

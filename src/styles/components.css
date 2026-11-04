@@ -254,39 +254,51 @@ input[type="checkbox"]:focus {
   outline-offset: 2px;
 }
 
-/* Switches: settings apply immediately, so a two-state control reads as on/off. */
-input[role="switch"] {
-  position: relative;
+/* Switches: settings apply immediately, so a two-state control reads as on/off.
+   The knob is a real element, not a pseudo-element: WebKit does not generate
+   content on form controls, so an input-based knob disappears in the Tauri
+   webview. */
+.switch {
+  /* Same box as every other input: 13px text at 1.5 line height, 6px vertical
+     padding and a 1px border, so the control lines up with the fields beside it. */
+  --switch-height: calc(0.8125rem * 1.5 + 0.75rem + 2px);
+  --switch-padding: 2px;
+  --switch-knob-size: calc(var(--switch-height) - 2px - (2 * var(--switch-padding)));
+  display: flex;
+  align-items: center;
   flex: none;
-  width: 2rem;
-  height: 1rem;
+  width: 3.5rem;
+  height: var(--switch-height);
+  padding: var(--switch-padding);
   border-radius: 999px;
   border: 1px solid var(--border-primary);
   background-color: var(--surface-input);
-  appearance: none;
-  -webkit-appearance: none;
   transition: background-color 150ms;
 }
 
-input[role="switch"]::after {
-  content: "";
-  position: absolute;
-  inset-block-start: 1px;
-  inset-inline-start: 1px;
-  width: 0.75rem;
-  height: 0.75rem;
+.switch-knob {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--switch-knob-size);
+  height: var(--switch-knob-size);
   border-radius: 50%;
   background-color: var(--text-secondary);
+  color: var(--accent-primary);
   transition: transform 150ms;
 }
 
-input[role="switch"]:checked {
+.switch[aria-checked="true"] {
   background-color: var(--accent-primary);
 }
 
-input[role="switch"]:checked::after {
-  transform: translateX(1rem);
+.switch[aria-checked="true"] .switch-knob {
+  transform: translateX(calc(3.5rem - var(--switch-knob-size) - 2 * var(--switch-padding) - 2px));
   background-color: var(--text-inverse);
+}
+
+.switch:disabled {
+  opacity: 0.5;
 }
 
 /* Radio Button Styling */
