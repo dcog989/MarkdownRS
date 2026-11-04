@@ -13,6 +13,9 @@ const DESKTOP_FILE_NAME: &str = "markdownrs.desktop";
 const ICON_NAME: &str = "markdownrs";
 const ICON_PNG: &[u8] = include_bytes!("../../icons/256x256.png");
 const MIME_TYPES: &str = "text/markdown;text/plain;";
+/// Made the default opener on first run. `text/plain` stays a supported type in
+/// the entry, but every `.txt` file is not taken over without being asked.
+const DEFAULT_MIME: &str = "text/markdown";
 const EXEC_RESERVED: &[char] = &[
     '"', '\'', '\\', '>', '<', '~', '|', '&', ';', '$', '*', '?', '#', '(', ')', '`', ' ',
 ];
@@ -62,11 +65,18 @@ fn install(appimage: &Path, data_dir: &Path) -> std::io::Result<()> {
     }
 
     let desktop_path = applications_dir.join(DESKTOP_FILE_NAME);
+    let first_run = !desktop_path.exists();
     if !has_current_exec(&desktop_path, appimage) {
         fs::write(&desktop_path, desktop_entry(appimage))?;
         // Builds the menu and MIME caches; absent on minimal systems.
         let _ = Command::new("update-desktop-database").arg(&applications_dir).status();
         log::info!("Registered AppImage in the application menu: {}", appimage.display());
+    }
+    // Only on the first install, so a default the user changes later survives.
+    if first_run {
+        let _ = Command::new("xdg-mime")
+            .args(["default", DESKTOP_FILE_NAME, DEFAULT_MIME])
+            .status();
     }
     Ok(())
 }
@@ -79,7 +89,7 @@ fn has_current_exec(desktop_path: &Path, appimage: &Path) -> bool {
 }
 
 fn exec_line(appimage: &Path) -> String {
-    format!("Exec={} %U", quote_exec(&appimage.to_string_lossy()))
+    format!("Exec={} %F", quote_exec(&appimage.to_string_lossy()))
 }
 
 fn desktop_entry(appimage: &Path) -> String {
@@ -144,7 +154,7 @@ mod tests {
     #[test]
     fn desktop_entry_points_at_running_file() {
         let entry = desktop_entry(Path::new("/opt/MarkdownRS_1.0.0.AppImage"));
-        assert!(entry.contains("Exec=/opt/MarkdownRS_1.0.0.AppImage %U\n"), "{}", entry);
+        assert!(entry.contains("Exec=/opt/MarkdownRS_1.0.0.AppImage %F\n"), "{}", entry);
         assert!(entry.contains("Icon=markdownrs\n"), "{}", entry);
         assert!(entry.contains("MimeType=text/markdown;text/plain;\n"), "{}", entry);
     }
