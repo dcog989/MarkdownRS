@@ -3,6 +3,30 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.68.0 - 2026-11-04
+
+#### Features
+
+- (2a4f5d1) make MarkdownRS the default .md handler on first run - dcog989
+
+#### Bug Fixes
+
+- (598d811) keep callout lines the same height when the raw marker is revealed - dcog989
+
+- (db5b0e2) put the unit inside the number field and spell it out. - dcog989
+
+- (98d338b) apply the KDE HIG review fixes across labels, dialogs, menus and focus - dcog989
+
+- (f47913d) scroll to headings for #anchor links instead of resolving them as file paths - dcog989
+
+- (5589a7d) dynamic header, tweaks - dcog989
+
+#### Refactoring
+
+- (c5822de) new design, generated from readme.md - dcog989
+
+- - -
+
 ## v1.67.0 - 2026-11-03
 
 #### Features
