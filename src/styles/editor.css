@@ -692,7 +692,20 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
+  /* Sized to one text line (editor line-height is 1.4), like the code-block
+     badge, so revealing the raw marker under the cursor cannot shift the block. */
+  height: 1.4em;
+  vertical-align: top;
   margin-right: 0.5em;
   font-weight: 600;
   color: var(--callout-accent);
+}
+
+.rendered-mode .cm-callout-title .callout-icon {
+  width: 1em;
+  height: 1em;
+}
+
+.rendered-mode .cm-callout {
+  min-height: 1.4em;
 }
