@@ -3,6 +3,7 @@ import ArrowLeft from "lucide-svelte/icons/arrow-left";
 import ArrowRight from "lucide-svelte/icons/arrow-right";
 import Bookmark from "lucide-svelte/icons/bookmark";
 import BookmarkX from "lucide-svelte/icons/bookmark-x";
+import ChevronRight from "lucide-svelte/icons/chevron-right";
 import Copy from "lucide-svelte/icons/copy";
 import Download from "lucide-svelte/icons/download";
 import FileDown from "lucide-svelte/icons/file-down";
@@ -99,7 +100,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         <button type="button" class="text-ui menu-item">
           <Download size={14} class="mr-2 opacity-70" />
           <span>{$_("tabContextMenu.export")}</span>
-          <span class="ml-auto opacity-60">›</span>
+          <ChevronRight size={16} class="ml-auto shrink-0 opacity-60" aria-hidden="true" />
         </button>
       {/snippet}
 
@@ -158,7 +159,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         <button type="button" class="text-ui menu-item">
           <Files size={14} class="mr-2 opacity-70" />
           <span>{$_("tabContextMenu.closeMany")}</span>
-          <span class="ml-auto opacity-60">›</span>
+          <ChevronRight size={16} class="ml-auto shrink-0 opacity-60" aria-hidden="true" />
         </button>
       {/snippet}
 
@@ -203,7 +204,7 @@ const ctx = new TabContextMenuLogic(tabId, onClose);
         <button type="button" class="text-ui menu-item {ctx.hasClosedTabs ? "" : "opacity-50"}">
           <Undo2 size={14} class="mr-2 opacity-70" />
           <span>{$_("tabContextMenu.reopenRecent")}</span>
-          <span class="ml-auto opacity-60">›</span>
+          <ChevronRight size={16} class="ml-auto shrink-0 opacity-60" aria-hidden="true" />
         </button>
       {/snippet}
 

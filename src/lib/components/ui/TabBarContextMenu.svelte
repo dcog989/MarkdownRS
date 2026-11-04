@@ -1,4 +1,5 @@
 <script lang="ts">
+import ChevronRight from "lucide-svelte/icons/chevron-right";
 import FilePlus from "lucide-svelte/icons/file-plus";
 import Files from "lucide-svelte/icons/files";
 import Save from "lucide-svelte/icons/save";
@@ -84,7 +85,7 @@ async function handleNewTab() {
         <button type="button" class="text-ui menu-item">
           <Files size={14} class="mr-2 opacity-70" />
           <span>{$_("tabBarContextMenu.closeMany")}</span>
-          <span class="ml-auto opacity-60">›</span>
+          <ChevronRight size={16} class="ml-auto shrink-0 opacity-60" aria-hidden="true" />
         </button>
       {/snippet}
 

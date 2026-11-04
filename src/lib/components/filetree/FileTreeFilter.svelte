@@ -63,6 +63,11 @@ let {
   outline: none;
 }
 
+.ft-filter-input:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
+}
+
 .ft-filter-clear {
   position: absolute;
   top: 50%;

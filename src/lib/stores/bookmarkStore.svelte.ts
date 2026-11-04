@@ -136,8 +136,7 @@ export function addBookmarkForActiveTab(): boolean {
       // A failed write reloaded the list and already showed an error, so the
       // row is gone; do not report success or "already bookmarked" for it.
       if (!bookmarkStore.bookmarks.some((b) => b.id === bookmark.id)) return;
-      if (isNew) showToast("success", translate("bookmarks.addedToast", { values: { title: tab.title } }));
-      else showToast("info", translate("bookmarks.alreadyToast", { values: { title: tab.title } }));
+      if (!isNew) showToast("info", translate("bookmarks.alreadyToast", { values: { title: tab.title } }));
     });
   } else {
     showToast("warning", translate("bookmarks.saveFirst"));

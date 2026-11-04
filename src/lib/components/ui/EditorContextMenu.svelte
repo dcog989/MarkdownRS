@@ -4,6 +4,7 @@ import ArrowUpDown from "lucide-svelte/icons/arrow-up-down";
 import BookPlus from "lucide-svelte/icons/book-plus";
 import BookText from "lucide-svelte/icons/book-text";
 import CaseSensitive from "lucide-svelte/icons/case-sensitive";
+import ChevronRight from "lucide-svelte/icons/chevron-right";
 import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
 import ClipboardPaste from "lucide-svelte/icons/clipboard-paste";
 import List from "lucide-svelte/icons/list";
@@ -243,7 +244,8 @@ async function handleSendToBrowser() {
       >
         {#snippet trigger()}
           <button type="button" class="text-ui menu-item">
-            <IconCmp size={14} /><span>{label}</span><span class="ml-auto opacity-50">›</span>
+            <IconCmp size={14} /><span>{label}</span>
+            <ChevronRight size={16} class="ml-auto shrink-0 opacity-50" aria-hidden="true" />
           </button>
         {/snippet}
         {#each ops as op, i (i)}

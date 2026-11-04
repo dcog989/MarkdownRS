@@ -30,6 +30,8 @@
         "title": "MarkdownRS",
         "width": 1200,
         "height": 800,
+        "minWidth": 640,
+        "minHeight": 480,
         "resizable": true,
         "decorations": true,
         "transparent": false,
@@ -53,7 +55,7 @@
     "resources": [],
     "copyright": "",
     "category": "Productivity",
-    "shortDescription": "The only Markdown editor you need.",
+    "shortDescription": "A fast, feature-rich Markdown editor.",
     "longDescription": "MarkdownRS is a fast, slim, cross-platform notepad, focused on editing Markdown documents.",
     "createUpdaterArtifacts": true,
     "linux": {

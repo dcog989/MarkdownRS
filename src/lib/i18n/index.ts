@@ -4,6 +4,8 @@ import { en } from "./messages/en";
 
 export type MessageKey = DeepKey<typeof en>;
 
+// English only. RTL layouts are untested: adding an RTL locale means auditing
+// every physical left/right offset before it can ship, so this stays a known gap.
 export const SUPPORTED_LOCALES = ["en"] as const;
 export type AppLocale = (typeof SUPPORTED_LOCALES)[number];
 

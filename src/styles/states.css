@@ -73,13 +73,10 @@
   outline-offset: 2px;
 }
 
-/* Context menu items - smart highlighting */
-.bg-bg-panel button:focus-visible {
-  outline: none;
-}
-
-/* Keyboard navigation: accent color highlight on focused item */
+/* Keyboard navigation: accent color replaces the outline only where the
+   highlight is guaranteed to paint; panels without the flag keep the outline. */
 .bg-bg-panel[data-keyboard-nav="true"] button:focus-visible {
+  outline: none;
   background-color: var(--accent-primary);
   color: var(--text-inverse);
 }

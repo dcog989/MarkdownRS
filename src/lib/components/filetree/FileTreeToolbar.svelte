@@ -74,7 +74,13 @@ function handleLockToggle() {
         <Lock size={14} />
       {/if}
     </button>
-    <button type="button" class="btn-icon h-6 w-6" use:tooltip={$_("fileTree.collapseAll")} onclick={collapseAll}>
+    <button
+      type="button"
+      class="btn-icon h-6 w-6"
+      aria-label={$_("fileTree.collapseAll")}
+      use:tooltip={$_("fileTree.collapseAll")}
+      onclick={collapseAll}
+    >
       <FoldVertical size={14} />
     </button>
     <button

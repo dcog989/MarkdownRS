@@ -194,7 +194,6 @@ export async function renameFile(tabId: string, newName: string): Promise<boolea
       await updateBookmark(bookmark.id, finalNewName, bookmark.tags, newPath);
     }
 
-    showToast("success", translate("fileOps.renamedTo", { values: { name: finalNewName } }));
     return true;
   } catch (err) {
     logger.file.warn("RenameFailed", { error: String(err) });

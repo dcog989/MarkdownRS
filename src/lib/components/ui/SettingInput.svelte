@@ -164,7 +164,7 @@ $effect(() => {
         max={setting.max}
         step={setting.step}
         oninput={(e) => onChange(Number(e.currentTarget.value))}
-        class="bg-border-primary accent-accent-primary h-1.5 flex-1 cursor-pointer appearance-none rounded-full"
+        class="bg-border-primary accent-accent-primary h-1.5 flex-1 appearance-none rounded-full"
       >
       <span class="text-ui-sm text-fg-muted w-10 text-right font-mono opacity-80">
         {Number(value ?? setting.defaultValue)}%
@@ -174,22 +174,21 @@ $effect(() => {
     <input
       id={setting.key}
       type="checkbox"
+      role="switch"
       checked={Boolean(value ?? setting.defaultValue)}
+      aria-checked={Boolean(value ?? setting.defaultValue)}
       onchange={(e) => onChange(e.currentTarget.checked)}
-      class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
     >
   {:else if setting.type === "color"}
     {@const displayColor = String(value ?? "") || resolvedDefaultAccent}
     <div class="flex items-center gap-2">
-      <label
-        class="relative block h-7 w-10 shrink-0 cursor-pointer overflow-hidden rounded border border-border-primary"
-      >
+      <label class="relative block h-7 w-10 shrink-0 overflow-hidden rounded border border-border-primary">
         <input
           id={setting.key}
           type="color"
           value={displayColor}
           oninput={(e) => onChange(e.currentTarget.value)}
-          class="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          class="absolute inset-0 h-full w-full opacity-0"
         >
         <span class="block h-full w-full" style:background={displayColor}></span>
       </label>
@@ -220,9 +219,10 @@ $effect(() => {
     <input
       id={setting.key}
       type="checkbox"
+      role="switch"
       checked={isContextMenuEnabled}
+      aria-checked={isContextMenuEnabled}
       onchange={(e) => onToggleContextMenu?.(e.currentTarget.checked)}
-      class="accent-accent-primary h-4 w-4 cursor-pointer rounded"
       disabled={isCheckingContextMenu}
     >
   {:else if setting.type === "file"}

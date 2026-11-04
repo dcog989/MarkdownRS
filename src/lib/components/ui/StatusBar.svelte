@@ -85,8 +85,9 @@ async function copyAllStats() {
 >
   <button
     type="button"
-    class="status-text text-fg-muted hover:text-fg-default hover-surface pointer-events-auto mr-2 flex shrink-0 cursor-pointer items-center border-r pr-2 group-hover:opacity-100"
+    class="status-text text-fg-muted hover:text-fg-default hover-surface pointer-events-auto mr-2 flex shrink-0 items-center border-r pr-2 group-hover:opacity-100"
     onclick={copyAllStats}
+    aria-label={$_("statusBar.copyAllStats")}
     use:tooltip={$_("statusBar.copyAllStats")}
   >
     <ClipboardCopy size={14} />
@@ -158,7 +159,7 @@ async function copyAllStats() {
 
       <button
         type="button"
-        class="hover:text-fg-default hover-surface cursor-pointer rounded px-1 transition-colors"
+        class="hover:text-fg-default hover-surface rounded px-1 transition-colors"
         onclick={toggleLineEnding}
         use:tooltip={$_(lineEnding === "LF" ? "statusBar.switchToCRLF" : "statusBar.switchToLF")}
       >
@@ -172,11 +173,12 @@ async function copyAllStats() {
 
       <button
         type="button"
-        class="hover:text-fg-default hover-surface flex cursor-pointer items-center rounded px-1 transition-colors {appContext
-          .settings.showWhitespace
+        class="hover:text-fg-default hover-surface flex items-center rounded px-1 transition-colors {appContext.settings
+          .showWhitespace
           ? "text-accent-secondary"
           : "text-inherit"}"
         onclick={toggleWhitespace}
+        aria-label={$_(appContext.settings.showWhitespace ? "command.hideWhitespace" : "command.showWhitespace")}
         use:tooltip={$_(appContext.settings.showWhitespace ? "command.hideWhitespace" : "command.showWhitespace")}
       >
         <Space size={14} />
@@ -184,7 +186,7 @@ async function copyAllStats() {
 
       <button
         type="button"
-        class="hover:text-fg-default hover-surface flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {appContext
+        class="hover:text-fg-default hover-surface flex items-center gap-1 rounded px-1 transition-colors {appContext
           .settings.wrapGuideColumn >= 0
           ? "text-accent-secondary"
           : "text-inherit"}"
@@ -199,7 +201,7 @@ async function copyAllStats() {
       {#if fileType === "markdown"}
         <button
           type="button"
-          class="hover:text-fg-default hover-surface flex cursor-pointer items-center rounded px-1 transition-colors {appContext
+          class="hover:text-fg-default hover-surface flex items-center rounded px-1 transition-colors {appContext
             .settings.viewMode === "rendered"
             ? "text-accent-secondary"
             : "text-inherit"}"
@@ -219,7 +221,7 @@ async function copyAllStats() {
       {#if canToggleFileType}
         <button
           type="button"
-          class="text-accent-secondary hover:text-accent-secondary hover-surface flex cursor-pointer items-center rounded px-1 transition-colors"
+          class="text-accent-secondary hover:text-accent-secondary hover-surface flex items-center rounded px-1 transition-colors"
           onclick={toggleFileType}
           use:tooltip={$_(
             fileType === "markdown" ? "command.switchToTextFileType" : "command.switchToMarkdownFileType",

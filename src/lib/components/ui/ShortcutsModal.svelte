@@ -233,7 +233,7 @@ const flatShortcuts = $derived(categories.flatMap(([, defs]) => defs));
                 >
                   <button
                     type="button"
-                    class="flex-1 cursor-pointer text-left transition-colors outline-none"
+                    class="flex-1 text-left transition-colors outline-none"
                     onclick={() => startRecording(def.id)}
                   >
                     {commandLabel(def)}

@@ -1,4 +1,8 @@
 <script lang="ts">
+// Dialogs are for decisions and short forms only. Bookmarks, File History,
+// Outline and Shortcuts are views shown here too: deliberate divergence from the
+// HIG, which prefers a panel, because this is a single-window app with no dock
+// area and the backdrop keeps keyboard focus contained.
 import X from "lucide-svelte/icons/x";
 import type { Snippet } from "svelte";
 import { _ } from "svelte-i18n";

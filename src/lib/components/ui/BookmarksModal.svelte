@@ -334,7 +334,7 @@ function handleKeydown(e: KeyboardEvent) {
             <div
               role="button"
               tabindex="0"
-              class="flex cursor-pointer items-start gap-3"
+              class="flex items-start gap-3"
               onclick={() => handleOpenBookmark(bookmark)}
               onkeydown={(e) => {
                 if (e.key === "Enter") handleOpenBookmark(bookmark);

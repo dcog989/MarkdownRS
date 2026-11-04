@@ -92,7 +92,7 @@ async function copyConfigPath() {
 <button
   bind:this={buttonEl}
   type="button"
-  class="hover:text-fg-default hover-surface relative flex cursor-pointer items-center gap-1 rounded px-1 transition-colors {color}"
+  class="hover:text-fg-default hover-surface relative flex items-center gap-1 rounded px-1 transition-colors {color}"
   use:tooltip={$_("lint.title")}
   onclick={() => (showPopup = true)}
 >

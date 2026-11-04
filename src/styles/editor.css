@@ -439,7 +439,6 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
   font-size: 0.75em;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  cursor: pointer;
   border: 1px solid var(--editor-border-secondary);
   border-radius: 4px;
   background-color: var(--editor-surface-active);

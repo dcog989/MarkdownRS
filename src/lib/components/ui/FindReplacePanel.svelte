@@ -497,7 +497,7 @@ onMount(() => {
           {#if tab}
             <button
               type="button"
-              class="bg-bg-hover hover:bg-bg-active flex w-full cursor-pointer items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
+              class="bg-bg-hover hover:bg-bg-active flex w-full items-center justify-between rounded border-none p-1.5 px-2 text-left transition-colors"
               onclick={() => navigateToTab(tabId)}
             >
               <span class="text-fg-default overflow-hidden text-ui text-ellipsis whitespace-nowrap">{tab.title}</span>

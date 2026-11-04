@@ -8,6 +8,7 @@ import FolderTree from "lucide-svelte/icons/folder-tree";
 import History from "lucide-svelte/icons/history";
 import Settings from "lucide-svelte/icons/settings";
 import Zap from "lucide-svelte/icons/zap";
+import { tick } from "svelte";
 import { _ } from "svelte-i18n";
 import { toggleWriterMode } from "$lib/stores/appState.svelte";
 import {
@@ -43,31 +44,61 @@ let shortcuts = $derived({
   fileTree: shortcutManager.getShortcutDisplay("view.toggleFileTree"),
 });
 
+let menuEl = $state<HTMLElement | null>(null);
+
 function closeMenu() {
   showMenu = false;
+}
+
+$effect(() => {
+  if (showMenu) void tick().then(() => menuItems()[0]?.focus());
+});
+
+function menuItems(): HTMLElement[] {
+  return [...(menuEl?.querySelectorAll<HTMLElement>("button:not([disabled])") ?? [])];
+}
+
+function onMenuKeydown(event: KeyboardEvent) {
+  const items = menuItems();
+  if (items.length === 0) return;
+  const index = items.indexOf(document.activeElement as HTMLElement);
+  switch (event.key) {
+    case "Escape":
+      closeMenu();
+      break;
+    case "ArrowDown":
+      items[(index + 1) % items.length]?.focus();
+      break;
+    case "ArrowUp":
+      items[(index - 1 + items.length) % items.length]?.focus();
+      break;
+    case "Home":
+      items[0]?.focus();
+      break;
+    case "End":
+      items[items.length - 1]?.focus();
+      break;
+    default:
+      return;
+  }
+  event.preventDefault();
 }
 </script>
 
 {#if showMenu}
+  <div aria-hidden="true" class="fixed inset-0 z-200" onclick={closeMenu}></div>
   <div
-    role="button"
-    tabindex="0"
-    aria-label={$_("tabBarMenu.closeMenu")}
-    class="fixed inset-0 z-200"
-    onclick={closeMenu}
-    onkeydown={(e) => {
-      if (e.key === "Enter" || e.key === " ") closeMenu();
-    }}
-  ></div>
-  <div
-    role="dialog"
+    bind:this={menuEl}
+    role="menu"
+    aria-label={$_("tabBar.menu")}
     tabindex="-1"
     class="bg-bg-panel border-border-secondary text-fg-default absolute top-full right-0 z-200 mt-1 rounded-lg border py-1 shadow-xl w-80"
     onclick={(e) => e.stopPropagation()}
-    onkeydown={() => {}}
+    onkeydown={onMenuKeydown}
   >
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleCommandPalette();
@@ -80,6 +111,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleBookmarks();
@@ -92,6 +124,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleFileHistory();
@@ -107,11 +140,12 @@ function closeMenu() {
 
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       class:opacity-50={!isPreviewAvailable}
-      class:cursor-not-allowed={!isPreviewAvailable}
+      disabled={!isPreviewAvailable}
+      aria-disabled={!isPreviewAvailable}
       onclick={() => {
-        if (!isPreviewAvailable) return;
         toggleSplitView();
         saveSettings();
         closeMenu();
@@ -128,6 +162,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         void toggleSplitPane();
@@ -139,6 +174,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleFileTree();
@@ -153,6 +189,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleWriterMode();
@@ -168,6 +205,7 @@ function closeMenu() {
 
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleSettings();
@@ -179,6 +217,7 @@ function closeMenu() {
     </button>
     <button
       type="button"
+      role="menuitem"
       class="text-ui menu-item"
       onclick={() => {
         toggleAbout();

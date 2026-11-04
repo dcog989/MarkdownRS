@@ -126,7 +126,7 @@ function toggleSortDirection() {
           <div
             role="button"
             tabindex="0"
-            class="flex min-w-0 flex-1 cursor-pointer items-center"
+            class="flex min-w-0 flex-1 items-center"
             use:tooltip={path}
             onclick={() => handleOpenFile(path)}
             onkeydown={(e) => {

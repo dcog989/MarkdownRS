@@ -66,10 +66,7 @@ const paths = $derived([
 ] as const);
 
 function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text).then(
-    () => showToast("success", $_("common.copied")),
-    () => showToast("error", $_("common.copyFailed")),
-  );
+  navigator.clipboard.writeText(text).catch(() => showToast("error", $_("common.copyFailed")));
 }
 
 async function openLogFile() {
