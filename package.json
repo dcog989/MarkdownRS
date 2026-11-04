@@ -24,7 +24,7 @@
     "pkg-install": "sudo pacman -U --noconfirm \".pkg/MarkdownRS-$(sed -n 's/^pkgver=//p' PKGBUILD)-1-x86_64.pkg.tar.zst\"",
     "test": "echo \"Running Tests...\" && vitest run && cd src-tauri && cargo test",
     "update": "bun update --latest && cd src-tauri && cargo upgrade && cargo update --verbose",
-    "website": "bunx --bun vite build --config website/vite.config.js && bun x serve website/dist"
+    "website": "vite --config website/vite.config.js"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

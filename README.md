@@ -4,7 +4,7 @@ A Markdown editor that focuses performance and a clean, minimal UI that still pr
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
-![screenshot 1](assets/screen-1.webp)
+![screenshot 1](assets/screen-1.webp) ![screenshot 2](assets/screen-2.webp) ![screenshot 3](assets/screen-3.webp)
 
 The only Markdown editor you need? Many people are saying so.
 
@@ -101,6 +101,8 @@ bun run dev            # Start dev server / HMR
 bunx tauri build       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 bun run clean          # Remove build artifacts, target, and node_modules
 sudo bun run package   # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
+#
+bun run website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
 
 ---
