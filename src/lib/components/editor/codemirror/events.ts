@@ -1,7 +1,9 @@
 import { syntaxTree } from "@codemirror/language";
 import { EditorView } from "@codemirror/view";
+import { decodeHref } from "$lib/utils/fileDialogs";
 import { extractPathAtPos, extractWikilinkAtPos } from "$lib/utils/filePathExtension";
 import { navigateToPath } from "$lib/utils/fileSystem";
+import { jumpToAnchor } from "$lib/utils/outline";
 
 export type ContextMenuCallback = (event: MouseEvent, view: EditorView) => void;
 
@@ -72,6 +74,10 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
         if (targetString) {
           event.preventDefault();
           event.stopImmediatePropagation();
+
+          if (targetString.startsWith("#") && jumpToAnchor(view, decodeHref(targetString.slice(1)))) {
+            return true;
+          }
 
           navigateToPath(targetString);
           return true;

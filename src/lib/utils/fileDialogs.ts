@@ -177,6 +177,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
   const activeTab = appContext.editor.tabs.find((t) => t.id === appContext.app.activeTabId);
 
   if (!clickedPath) return;
+  if (clickedPath.startsWith("#")) return;
   if (clickedPath.length > MAX_LINK_LENGTH || clickedPath.includes("\n")) {
     showToast("error", translate("fileOps.invalidLink"));
     return;

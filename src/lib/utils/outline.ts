@@ -37,3 +37,21 @@ export function jumpToHeading(view: EditorView, from: number): void {
   });
   view.focus();
 }
+
+/** GFM anchor for heading text, matching comrak's anchorizer for headings without repeated punctuation. */
+export function headingAnchor(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-");
+}
+
+/** Jumps to the heading whose anchor matches; false when no heading does. */
+export function jumpToAnchor(view: EditorView, anchor: string): boolean {
+  const id = anchor.toLowerCase();
+  const heading = collectOutlineHeadings(view.state).find((h) => headingAnchor(h.text) === id);
+  if (!heading) return false;
+  jumpToHeading(view, heading.from);
+  return true;
+}

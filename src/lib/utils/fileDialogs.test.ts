@@ -288,6 +288,16 @@ describe("navigateToPath", () => {
     );
   });
 
+  it("treats #anchors as in-document links instead of file paths", async () => {
+    const { callBackend } = await import("$lib/utils/backend");
+    const callsBefore = vi.mocked(callBackend).mock.calls.length;
+
+    await navigateToPath("#usage");
+
+    expect(vi.mocked(callBackend).mock.calls.length).toBe(callsBefore);
+    expect(openPath).not.toHaveBeenCalled();
+  });
+
   it("reports a link it will not follow instead of failing silently", async () => {
     const { toastStore } = await import("$lib/stores/toastStore.svelte");
     const toastsBefore = toastStore.toasts.length;
