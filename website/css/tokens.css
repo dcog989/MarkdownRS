@@ -1,0 +1,160 @@
+/* --------------------------------------------------------------------------
+ * Tokens — design tokens for the scaffold.
+ *
+ * Colors use light-dark() and follow the declared color-scheme, so no
+ * @media (prefers-color-scheme) duplication is required. Every consumer
+ * references a token as var(--token, fallback) so files also work standalone.
+ */
+
+@layer tokens {
+  :root {
+    color-scheme: light dark;
+
+    /* Font families */
+    --font-sans: sans-serif;
+    --font-serif: serif;
+    --font-mono: monospace;
+
+    /* Type scale — fluid from --text-xl up so display text scales with the viewport */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-md: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: clamp(1.25rem, 1.11rem + 0.62vw, 1.5rem);
+    --text-2xl: clamp(1.5rem, 1.26rem + 1.09vw, 2rem);
+    --text-3xl: clamp(1.875rem, 1.5rem + 1.7vw, 2.5rem);
+    --text-4xl: clamp(2.25rem, 1.7rem + 2.5vw, 3.25rem);
+    --text-5xl: clamp(3rem, 2.2rem + 3.6vw, 4.5rem);
+    --text-6xl: clamp(3.75rem, 2.7rem + 4.7vw, 5.5rem);
+
+    /* Line heights */
+    --leading-tight: 1.25;
+    --leading-base: 1.5;
+    --leading-relaxed: 1.75;
+
+    /* Spacing scale */
+    --space-0: 0;
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-5: 1.25rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+    --space-10: 2.5rem;
+    --space-12: 3rem;
+    --space-16: 4rem;
+    --space-20: 5rem;
+
+    /* Vertical rhythm — space between stacked flow content.
+       Single source of truth; consumed by the .flow utility. Headings scale
+       their own top space in em, so they are not tokenised here. */
+    --flow-space: var(--space-6);
+
+    /* Layout */
+    --container-max: 72rem;
+    --measure: 65ch;
+    --measure-narrow: 24ch;
+    --gutter: clamp(var(--space-4), 4vw, var(--space-8));
+
+    /* Radii */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+
+    /* Borders */
+    --border-width: 1px;
+    --border-style: solid;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px light-dark(rgb(0 0 0 / 0.06), rgb(0 0 0 / 0.4));
+    --shadow-md: 0 4px 12px light-dark(rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.5));
+    --shadow-lg: 0 12px 32px light-dark(rgb(0 0 0 / 0.12), rgb(0 0 0 / 0.6));
+
+    /* Brand ramps
+       Sage is the logo accent (#5a7c63); rose is its complement (hue + 180).
+       Every step keeps chroma low so the whole scheme stays muted. */
+    --sage-1: #203325;
+    --sage-2: #394d3f;
+    --sage-3: #55695a;
+    --sage-4: #718776;
+    --sage-5: #8fa594;
+
+    --rose-1: #362934;
+    --rose-2: #51424e;
+    --rose-3: #6d5e6a;
+    --rose-4: #8b7a88;
+    --rose-5: #aa98a6;
+
+    /* Links take their own hue, #5a737c, kept at the same low chroma. */
+    --slate-1: #2f464f;
+    --slate-2: #445c65;
+    --slate-3: #5a737c;
+    --slate-4: #77919a;
+    --slate-5: #95b0ba;
+
+    /* Semantic colors (light-dark aware) */
+    --color-bg: light-dark(#f8fbf8, #171c18);
+    --color-surface: light-dark(#edf1ee, #252a26);
+    --color-surface-raised: light-dark(#ffffff, #2c332d);
+    --color-text: light-dark(var(--sage-1), #edf1ee);
+    --color-text-muted: light-dark(#606561, #a9b0ab);
+    --color-text-inverse: light-dark(#ffffff, var(--sage-1));
+    --color-border: light-dark(#dde1de, #3f4440);
+    /* The header sits a step below the page, not above it. */
+    --color-header-bg: light-dark(#e9eeea, #12170f);
+    /* Solid brand surfaces (buttons) use sage in both schemes; the complement
+       carries links and marks, so the two hues read as one family. */
+    --color-accent: light-dark(#7c5a73, #bd97b2);
+    --color-accent-hover: light-dark(#6a4b62, #cbaec4);
+    --color-accent-soft: light-dark(#7c5a73, #bd97b2);
+    --color-accent-contrast: light-dark(#ffffff, #2a1e28);
+    --color-complement: light-dark(var(--sage-2), var(--sage-5));
+    /* Link slate, a step more saturated than the muted ramp. */
+    --color-link: light-dark(#2d6070, #7aaec0);
+    /* The logo's own colour (the pentagon, #7c5a73); the dark scheme lightens
+       it at the same chroma so headings stay legible. */
+    --color-brand: light-dark(#7c5a73, #bd97b2);
+    --color-success: light-dark(#4a7350, #8fb894);
+    --color-warning: light-dark(#7d6335, #d6b87a);
+    --color-danger: light-dark(#8a4747, #d49a9a);
+    --color-danger-contrast: light-dark(#ffffff, #2a1010);
+    --color-info: light-dark(#46697d, #93b6c9);
+    --color-mark-bg: light-dark(#efeafa, #3b3446);
+    --color-mark-text: light-dark(var(--rose-1), #f0eaf6);
+
+    /* Focus */
+    --focus-ring-color: var(--color-accent-soft);
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+
+    /* Motion */
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 400ms;
+    --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+    --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+
+    /* Z-index scale */
+    --z-base: 0;
+    --z-raised: 10;
+    --z-sticky: 100;
+    --z-overlay: 200;
+    --z-modal: 300;
+    --z-toast: 400;
+    --z-max: 9999;
+  }
+
+  /* Manual theme override — set data-theme="light" or "dark" on <html>.
+     When absent (or "system"), the :root color-scheme above follows the OS. */
+  :root[data-theme="light"] {
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+  }
+}

@@ -1,6 +1,6 @@
 # MarkdownRS
 
-A fast, feature-rich Markdown editor with a clean, minimal UI.
+![MarkdownRS logo](static/logo-48.svg) A feature-rich Markdown editor, focused on performance and minimal UI.
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
@@ -10,9 +10,9 @@ A fast, feature-rich Markdown editor with a clean, minimal UI.
 
 ### Performance
 
-- **Native core:** Rust, Tauri and SQLite; no Electron, no bundled browser engine.
-- **Startup:** a usable editor in milliseconds.
-- **Cached math:** KaTeX output keyed by expression hash; unchanged expressions are never re-rendered.
+- **Native core:** Rust, Tauri and SQLite.
+- **Startup:** in milliseconds, tuned for minimal resource usage.
+- **Cached math:** KaTeX expressions are cached, never re-rendered.
 
 ### Editing
 
@@ -133,7 +133,7 @@ sudo bun run package   # build, pack, then install (rerun `bun run pkg-install` 
 bun run website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
 
-## LLM Use
+### LLM Use
 
 Large Language Models were used to assist with code generation and documentation. All output was subject to human review, automated testing, manual testing, and adversarial reviews.
 

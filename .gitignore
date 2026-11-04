@@ -11,3 +11,4 @@ node_modules/
 pkg/
 src-tauri/gen/
 src-tauri/target/
+website/public/assets/

@@ -368,7 +368,7 @@ describe("FileTree", () => {
     fileTreeStore.children.set("/root/sub", [{ ...entry("deep.md"), path: "/root/sub/deep.md" }]);
 
     render(FileTree);
-    const input = screen.getByPlaceholderText("Filter files...");
+    const input = screen.getByPlaceholderText("Filter files");
     await fireEvent.input(input, { target: { value: "deep" } });
 
     expect(await screen.findByText("deep.md")).toBeTruthy();
@@ -386,7 +386,7 @@ describe("FileTree", () => {
     fileTreeStore.children.set("/root/sub", [{ ...entry("match.md"), path: "/root/sub/match.md" }]);
 
     render(FileTree);
-    const input = screen.getByPlaceholderText("Filter files...");
+    const input = screen.getByPlaceholderText("Filter files");
     await fireEvent.input(input, { target: { value: "match" } });
     // Wait for the debounced search before clicking a filter row.
     await waitFor(() => expect(treeViewStore.filterRows.length).toBeGreaterThan(0));
@@ -406,7 +406,7 @@ describe("FileTree", () => {
     // '/root/deep' has no cached children; the filter must list it on demand.
 
     render(FileTree);
-    const input = screen.getByPlaceholderText("Filter files...");
+    const input = screen.getByPlaceholderText("Filter files");
     await fireEvent.input(input, { target: { value: "hidden" } });
 
     await waitFor(() => expect(mockedListDirectory).toHaveBeenCalledWith("/root/deep", false));
