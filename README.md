@@ -1,31 +1,73 @@
 # MarkdownRS
 
-A Markdown editor that focuses performance and a clean, minimal UI that still provides a full feature set for technical and general users.
+A fast, feature-rich Markdown editor with a clean, minimal UI.
 
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE) [![GitHub Issues](https://img.shields.io/github/issues/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/issues) [![GitHub Stars](https://img.shields.io/github/stars/dcog989/MarkdownRS.svg)](https://github.com/dcog989/MarkdownRS/stargazers)
 
-![screenshot 1](assets/screen-1.webp) ![screenshot 2](assets/screen-2.webp) ![screenshot 3](assets/screen-3.webp)
-
-The only Markdown editor you need? Many people are saying so.
+![screenshot 1](assets/screen-1.webp) ![screenshot 2](assets/screen-2.webp) ![screenshot 3](assets/screen-3.webp) ![screenshot 4](assets/screen-4.webp) ![screenshot 5](assets/screen-5.webp) ![screenshot 6](assets/screen-6.webp) ![screenshot 7](assets/screen-7.webp) ![screenshot 8](assets/screen-8.webp) ![screenshot 9](assets/screen-9.webp)
 
 ## Features
 
-- *Editing* — GFM and CommonMark, raw or rendered mode, find & replace across open documents, line sorting and case/whitespace tools, optional colour swatches.
-- *Live preview* — split view with bi-directional synchronized scrolling.
-- *Math and diagrams* — KaTeX math and Mermaid diagrams render in the preview, fully offline.
-- *Documents* — multi-tab with pinning, file tree with drag and drop, tagged bookmarks with filter search, new-file templates.
-- *Auto-save* — session persistence with hot-exit support.
-- *Formatting* — rumdl linting and auto-formatting ([usage](#usage)).
-- *Grammar* — optional Harper grammar check ([usage](#usage)).
-- *Customisation* — command palette, custom shortcuts, built-in and custom themes.
-- *Export* — PDF, DOCX, EPUB, LaTeX, PNG, WebP, HTML.
-- *Performance* — Tauri / Rust / SQLite backend; TypeScript / Svelte / CodeMirror frontend.
+### Performance
+
+- **Native core:** Rust, Tauri and SQLite; no Electron, no bundled browser engine.
+- **Startup:** a usable editor in milliseconds.
+- **Cached math:** KaTeX output keyed by expression hash; unchanged expressions are never re-rendered.
+
+### Editing
+
+- **Markdown:** GitHub Flavored Markdown and CommonMark, raw or rendered mode.
+- **Editor:** CodeMirror 6 with syntax highlighting, multi-cursor, bracket matching, whitespace display.
+- **Find and replace:** across all open tabs, with match case, whole word and regex.
+- **Lint and format:** embedded rumdl, rules edited in-app ([usage](#usage)).
+- **Grammar:** optional Harper check, per-rule overrides in `settings.toml` ([usage](#usage)).
+- **Text tools:** sort lines, case transforms, move or duplicate a line, comment toggle, frontmatter insertion.
+- **Emoji:** picker.
+
+### Preview
+
+- **Split view:** bi-directional synchronised scrolling.
+- **Math:** KaTeX inline and display, rendered offline.
+- **Diagrams:** Mermaid fences, rendered offline.
+- **Outline:** heading list that jumps to the section.
+- **Writer mode:** the editor alone, no chrome.
+- **Minimap:** scroll overview of the document.
+
+### Documents
+
+- **Tabs:** multi-tab editing with pinning and drag reordering; switch by number, by MRU, or reopen the last closed.
+- **File tree:** live directory tree backed by a filesystem watcher.
+- **Bookmarks:** tagged, stored in SQLite.
+- **File history:** recently opened files.
+- **Templates:** new files from per-type templates.
+- **Hot exit:** unsaved buffers, scroll position and open tabs survive a close or crash.
+
+### Export
+
+- **Documents:** PDF, DOCX, EPUB, LaTeX.
+- **Images:** PNG, WebP, SVG.
+- **Web:** standalone HTML.
+
+### Customisation
+
+- **Themes:** built-in and custom, light, dark, or follow the OS.
+- **Command palette:** every command searchable.
+- **Shortcuts:** fully customisable, with reference sheet.
+- **Zoom:** in, out and reset.
+- **Spellcheck:** 44 downloadable dictionaries.
+- **Toggles:** word wrap, minimap, whitespace and line-length guide.
+- **Settings:** persisted in `settings.toml`.
+
+### System Integration
+
+- **Auto-update:** signed updates from GitHub Releases.
+- **Packages:** AppImage, `.deb`, `.rpm`, pacman, Windows NSIS.
 
 ---
 
-## Installation
+## Install
 
-Download relevant package from [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/latest).
+Download [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/latest):
 
 | Platform | Format | Install |
 |----------|--------|---------|
@@ -34,34 +76,22 @@ Download relevant package from [GitHub Latest Release](https://github.com/dcog98
 | Fedora / RHEL | `.rpm` | `sudo dnf install ./MarkdownRS-*.rpm` |
 | Arch / CachyOS | `.pkg.tar.zst` | `sudo pacman -U MarkdownRS-*.pkg.tar.zst` |
 | Arch / CachyOS | `PKGBUILD` (local build) | `bun install && bun run package` |
-| Windows | NSIS `.exe` | Download and run the installer from the [latest release](https://github.com/dcog989/MarkdownRS/releases/latest) |
+| Windows | NSIS `.exe` | run the `.exe` |
 
-The AppImage installs nothing: the first run adds itself to the application menu, with a Markdown/`.txt` handler. Move the file anywhere persistent before the first run; later runs repoint the menu entry if it moves. To make it the default Markdown handler:
-
-```sh
-xdg-mime default markdownrs.desktop text/markdown
-```
+> [!NOTE]
+> The AppImage does not install anything, so copy the file to a permanent directory. The first run adds itself to the application menu, and makes itself the default Markdown handler.
 
 ---
 
 ## Usage
 
-### Math
-
-| Style   | Syntax |
-|---------|--------|
-| Inline  | `$...$`, `\(...\)` |
-| Display | `$$...$$`, `\[...\]`, ```` ```math ```` fence |
-
-Math renders to HTML via KaTeX `renderToString` and is cached by expression hash, so unchanged expressions are never re-rendered. KaTeX CSS and fonts are bundled for offline use.
-
-### Formatting
+### Lint & Format
 
 The embedded [rumdl](https://github.com/rvben/rumdl/) lints and formats Markdown; rules can be configured with the built-in editor. Config files (`.rumdl.toml` or `rumdl.toml`) can sit at project or home level; without one, the built-in defaults apply.
 
 ### Grammar
 
-The [Harper](https://writewithharper.com/) grammar check is optional. Rules can be edited in `settings.toml`:
+[Harper](https://writewithharper.com/) grammar checker rules can be edited in `settings.toml`:
 
 ```toml
 [harperLinters]
@@ -69,28 +99,26 @@ OxfordComma = false      # disable a rule
 LongSentences = true     # force a rule on
 ```
 
+### Math
+
+Math renders using standard [KaTeX](https://katex.org/) notation.
+
 ---
 
-## Technical
+## Development
 
-### Dev Stack
+### Tech Stack
 
-- [bun](https://bun.com/)
-- [Biome](https://biomejs.dev/)
-- [CodeMirror](https://codemirror.net/)
-- [Lefthook](https://github.com/evilmartians/lefthook)
-- [Node.js](https://nodejs.org/)
-- [Rust](https://www.rust-lang.org/)
-- [SQLite](https://sqlite.org/)
-- [Svelte](https://svelte.dev/)
-- [Tauri](https://v2.tauri.app/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vite.dev/)
-- [Vitest](https://vitest.dev/)
+| Layer | Stack |
+|-------|-------|
+| Core | [Rust](https://www.rust-lang.org/), [Tauri](https://v2.tauri.app/), [SQLite](https://sqlite.org/) |
+| UI | [Svelte](https://svelte.dev/), [TypeScript](https://www.typescriptlang.org/) |
+| Editor | [CodeMirror](https://codemirror.net/) |
+| Build | [Vite](https://vite.dev/), [bun](https://bun.com/), [Node.js](https://nodejs.org/) |
+| Quality | [Vitest](https://vitest.dev/), [Biome](https://biomejs.dev/) |
+| Workflow | [Lefthook](https://github.com/evilmartians/lefthook), [Cocogitto](https://docs.cocogitto.io/) |
 
-### Development
-
-Requires: [Rust](https://rustup.rs/), [bun](https://bun.com/), [Tauri](https://v2.tauri.app/start/prerequisites/).
+### Build & Run
 
 ```sh
 bun install            # Install dependencies
@@ -105,8 +133,12 @@ sudo bun run package   # build, pack, then install (rerun `bun run pkg-install` 
 bun run website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
 
+## LLM Use
+
+Large Language Models were used to assist with code generation and documentation. All output was subject to human review, automated testing, manual testing, and adversarial reviews.
+
 ---
 
 ## License
 
-[GNU General Public License v3](https://github.com/dcog989/MarkdownRS/blob/main/LICENSE).
+[GNU General Public License v3.0](LICENSE).
