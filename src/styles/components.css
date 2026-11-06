@@ -192,6 +192,16 @@ select:focus {
   border-color: var(--accent-primary);
 }
 
+/* Fields signal focus on their own border; the global `*:focus-visible` ring
+   would paint 2px outside the field. */
+input[type="text"]:focus-visible,
+input[type="number"]:focus-visible,
+input[type="search"]:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+}
+
 /* Error state: overrides the base and focus border, so it needs to match the
    global element selector's specificity (and win by source order). */
 input.border-danger,
