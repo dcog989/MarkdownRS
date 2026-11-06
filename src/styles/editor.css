@@ -400,6 +400,14 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
   font-variant-ligatures: none;
 }
 
+/* Fenced code reads as one colour. Language tokenizers and the light-theme
+   fallback paint `quote`, definition and meta tokens with prose/other-theme
+   colours, which makes a block look inconsistently coloured. Token spans
+   inherit the code foreground; the language badge keeps its own colour. */
+.cm-editor .cm-code-block span:not(.cm-code-info) {
+  color: inherit;
+}
+
 .cm-frontmatter {
   color: var(--editor-fg);
   opacity: 0.7;
