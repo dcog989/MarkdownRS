@@ -246,9 +246,10 @@
 }
 
 /* URLs inside a link carry both `cm-link` and `cm-url` (the parser tags the
-   whole Link subtree as link); exclude them so the URL keeps its own hue. */
+   whole Link subtree as link); exclude them so the URL keeps its own hue.
+   Link text shares the URL hue so `[text](url)` reads as one blue link. */
 .markdown-mode .cm-link:not(.cm-url) {
-  color: var(--editor-link);
+  color: var(--editor-url);
 }
 
 .markdown-mode .cm-file-path {
