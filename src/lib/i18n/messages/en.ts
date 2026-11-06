@@ -86,6 +86,8 @@ export const en = {
       "upper-case-first": "Upper case first",
       "lower-case-first": "lower case first",
       "toggle-bullets": "Bullet Points",
+      "add-bullets": "Add Bullet Points",
+      "remove-bullets": "Remove Bullet Points",
       "add-numbers": "Add Numbering",
       "add-checkboxes": "Add Checkboxes",
       "generate-toc": "Generate Table of Contents",

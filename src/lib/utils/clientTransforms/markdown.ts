@@ -7,11 +7,14 @@ const LIST_MARKER_RE = /^(\s*)(-|\*|\+|[0-9]+\.|- \[[ x]\])\s+/;
 const BLOCKQUOTE_RE = /^>\s?/;
 const CODE_FENCE_RE = /^```/;
 
+export function hasBullets(text: string): boolean {
+  const nonEmpty = text.split("\n").filter((l) => l.trim());
+  return nonEmpty.length > 0 && nonEmpty.every((l) => BULLET_RE.test(l.trim()));
+}
+
 export function toggleBullets(text: string): string {
   const lines = text.split("\n");
-  const nonEmpty = lines.filter((l) => l.trim());
-  const allHaveBullets = nonEmpty.length > 0 && nonEmpty.every((l) => BULLET_RE.test(l.trim()));
-  if (allHaveBullets) {
+  if (hasBullets(text)) {
     return lines.map((l) => l.replace(LIST_MARKER_RE, "$1")).join("\n");
   }
   return lines

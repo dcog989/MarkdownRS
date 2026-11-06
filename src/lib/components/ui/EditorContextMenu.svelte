@@ -22,6 +22,7 @@ import type { OperationId } from "$lib/config/textOperationsRegistry";
 import type { MessageKey } from "$lib/i18n";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
+import { hasBullets } from "$lib/utils/clientTransforms";
 import { shortcutManager } from "$lib/utils/shortcuts";
 import { SPELLCHECK_WORD_PATTERN, spellcheckState } from "$lib/utils/spellcheck.svelte";
 
@@ -112,13 +113,16 @@ const caseOps: MenuOption[] = [
   menuOp("swap-case"),
 ];
 
-const formatOps: MenuOption[] = [
+const formatOps = $derived<MenuOption[]>([
   menuOp("indent-lines"),
   menuOp("unindent-lines"),
   menuOp("trim-whitespace"),
   menuOp("normalize-whitespace"),
   { divider: true },
-  menuOp("toggle-bullets"),
+  {
+    id: "toggle-bullets",
+    label: hasBullets(selectedText) ? "textOps.op.remove-bullets" : "textOps.op.add-bullets",
+  },
   menuOp("add-numbers"),
   menuOp("add-checkboxes"),
   { divider: true },
@@ -130,7 +134,7 @@ const formatOps: MenuOption[] = [
   { divider: true },
   menuOp("hard-wrap"),
   menuOp("wrap-quotes"),
-];
+]);
 
 const transformOps: MenuOption[] = [
   menuOp("join-lines"),

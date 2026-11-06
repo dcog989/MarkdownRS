@@ -27,6 +27,7 @@ export {
   addCheckboxes,
   addNumbers,
   decreaseHeading,
+  hasBullets,
   increaseHeading,
   removeListMarkers,
   toggleBlockquote,
