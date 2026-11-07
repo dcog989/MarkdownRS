@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { type CodeBlockCopyDeps, createCodeBlockCopyHandler } from "./markdownCopy";
 import { createMarkdownDecorationsPlugin } from "./markdownExtensions";
 
+const TOAST_SUCCESS = "preview.codeCopied";
 const TOAST_FAILURE = "common.copyFailed";
 
 const originalGetClientRects = Range.prototype.getClientRects;
@@ -88,7 +89,7 @@ describe("code block copy handler", () => {
     await clickCodeInfo(view, parent, doc.indexOf("js"));
 
     expect(written).toEqual(["const x = 1;"]);
-    expect(toasts).toEqual([]);
+    expect(toasts).toEqual([["success", TOAST_SUCCESS]]);
     view.destroy();
   });
 
