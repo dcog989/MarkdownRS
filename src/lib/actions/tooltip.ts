@@ -1,5 +1,5 @@
 import { appContext } from "$lib/stores/state.svelte";
-import { getCursorPosition, hideTooltip, showTooltip } from "$lib/stores/tooltipStore.svelte";
+import { hideTooltip, showTooltip } from "$lib/stores/tooltipStore.svelte";
 
 export type TooltipContent = string | undefined | null;
 export type TooltipParam = TooltipContent | { content: TooltipContent; instant?: boolean };
@@ -10,10 +10,28 @@ export type TooltipParam = TooltipContent | { content: TooltipContent; instant?:
 // change identity every render) can't clobber what is on screen.
 let activeNode: HTMLElement | null = null;
 
+// Pending show timers across every tooltipped node. The window-exit signal
+// clears them directly: WebKitGTK can skip the hovered element's mouseleave
+// when the pointer leaves the window, so its timer would otherwise fire after
+// the pointer is gone and show the tooltip.
+const pendingTimers = new Set<number>();
+
+export function cancelPendingTooltips() {
+  for (const id of pendingTimers) clearTimeout(id);
+  pendingTimers.clear();
+}
+
 export function tooltip(node: HTMLElement, param: TooltipParam) {
   let timer: number | null = null;
   let content: TooltipContent = null;
   let instant = false;
+
+  function clearTimer() {
+    if (timer === null) return;
+    clearTimeout(timer);
+    pendingTimers.delete(timer);
+    timer = null;
+  }
 
   function applyParam(p: TooltipParam) {
     if (p && typeof p === "object") {
@@ -28,41 +46,38 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
   applyParam(param);
 
   function handleMouseEnter(e: MouseEvent) {
-    if (!content) return;
+    // Hovering an inactive window must not pop a tooltip. KDE windows keep
+    // receiving pointer events while another window has focus.
+    if (!content || !document.hasFocus()) return;
 
-    // Clear any pending show before re-arming: window re-entry fires a
-    // synthetic mouseenter and a real one can arrive shortly after, orphaning
-    // the first timer. The orphaned timer would show the tooltip after the
-    // cursor has already left, leaving it stuck open.
-    if (timer) {
-      clearTimeout(timer);
-    }
+    // Clear any pending show before re-arming: a second mouseenter can arrive
+    // before the first timer fires, orphaning it.
+    clearTimer();
 
     // Instant tooltips (e.g. memory warnings) ignore the configured delay.
     if (instant) {
       activeNode = node;
-      const { x, y } = getCursorPosition();
-      showTooltip(content as string, x ?? e.clientX, y ?? e.clientY);
+      showTooltip(content as string, e.clientX, e.clientY);
       return;
     }
 
     const delay = appContext.settings.tooltipDelay;
-    timer = window.setTimeout(() => {
+    const x = e.clientX;
+    const y = e.clientY;
+    const id = window.setTimeout(() => {
+      pendingTimers.delete(id);
       timer = null;
+      // Focus can move during the delay; don't show into an inactive window.
+      if (!document.hasFocus()) return;
       activeNode = node;
-      // Anchor to the cursor's current position: on window re-entry the
-      // synthetic mouseenter carries the entry point, which is stale by the
-      // time the delay elapses.
-      const { x, y } = getCursorPosition();
-      showTooltip(content as string, x ?? e.clientX, y ?? e.clientY);
+      showTooltip(content as string, x, y);
     }, delay);
+    timer = id;
+    pendingTimers.add(id);
   }
 
   function handleMouseLeave() {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
+    clearTimer();
     if (activeNode === node) {
       activeNode = null;
     }
@@ -79,10 +94,7 @@ export function tooltip(node: HTMLElement, param: TooltipParam) {
 
   return {
     update(newParam: TooltipParam) {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
+      clearTimer();
       applyParam(newParam);
       if (!content) {
         hideTooltip();

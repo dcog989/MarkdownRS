@@ -60,6 +60,9 @@ let isMarkdown = $derived(isMarkdownTab(activeTab));
 let showPreview = $derived(appContext.settings.splitView && isMarkdown && !splitPaneActive);
 let showWriterTabDropdown = $state(false);
 let showWriterMenu = $state(false);
+
+// JS-driven so window-exit cleanup can clear it; CSS :hover sticks when
+// WebKitGTK skips mouseleave on a fast exit.
 let peekHovered = $state(false);
 
 // activeTabId is the focused document for every command and status read, so
@@ -107,10 +110,8 @@ function activatePane(index: 0 | 1) {
   if (id) getEditorInstance(id)?.focus();
 }
 
-// JS-driven so the native cursor-left cleanup can clear it; CSS-only :hover
-// sticks when WebKitGTK skips mouseleave on a fast window exit. Lives here, not
-// in the conditionally-rendered edge, so it survives the edge unmounting while
-// hovered (clicking the edge to re-open the tree never fires mouseleave).
+// Reset when the tree is shown: the edge unmounts without a mouseleave, so a
+// stale flag would paint the next collapsed edge as hovered.
 $effect(() => {
   if (appContext.settings.fileTreeVisible) {
     peekHovered = false;

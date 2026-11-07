@@ -1,10 +1,11 @@
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { cancelPendingTooltips } from "$lib/actions/tooltip";
 import { translate } from "$lib/i18n";
 import { loadBookmarks } from "$lib/stores/bookmarkStore.svelte";
 import { editorStore } from "$lib/stores/editorStore.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
-import { activateHoverAtPoint, clearStuckHoverState, setCursorPosition } from "$lib/stores/tooltipStore.svelte";
+import { hideTooltip } from "$lib/stores/tooltipStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { loadSession, openFile, persistSession, persistSessionDebounced } from "$lib/utils/fileSystem";
 import { logger } from "$lib/utils/logger";
@@ -89,31 +90,24 @@ export function createAppInit() {
     });
     unlisteners.push(unlisten2);
 
-    // GTK's leave-notify-event fires reliably on cursor exit, unlike
-    // WebKitGTK's DOM mouseout/mouseleave.
+    // WebKitGTK can skip the page's mouseleave when the pointer leaves the
+    // window, so drop pending and visible tooltips and replay the leave on the
+    // stale :hover chain, which resets JS-driven hover state (peek edge,
+    // minimap) that CSS alone can't clear.
     const unlisten3 = await listen("window-cursor-left", () => {
-      clearStuckHoverState();
+      cancelPendingTooltips();
+      hideTooltip();
+      for (const el of document.querySelectorAll<HTMLElement>(":hover")) {
+        el.dispatchEvent(new MouseEvent("mouseleave", { bubbles: false, cancelable: true, relatedTarget: null }));
+      }
     });
     unlisteners.push(unlisten3);
-
-    // GTK's enter-notify-event reports the cursor position on re-entry, where
-    // WebKitGTK skips the initial mouseenter for the element under the cursor.
-    const unlisten4 = await listen<[number, number]>("window-cursor-enter", (event) => {
-      activateHoverAtPoint(event.payload[0], event.payload[1]);
-    });
-    unlisteners.push(unlisten4);
 
     // Closing the window must wait for the final session and settings write:
     // the async IPC is not guaranteed to finish if the webview is torn down.
     unlisteners.push(await getCurrentWindow().onCloseRequested(handleCloseRequested));
 
-    // Track the cursor position so tooltips anchor to where the pointer is when
-    // their show-delay elapses, not where it was when the element was entered.
-    const handleCursorMove = (e: MouseEvent) => setCursorPosition(e.clientX, e.clientY);
-    window.addEventListener("mousemove", handleCursorMove);
-
     return () => {
-      window.removeEventListener("mousemove", handleCursorMove);
       for (const unlisten of unlisteners) {
         unlisten();
       }
@@ -121,6 +115,8 @@ export function createAppInit() {
   }
 
   function handleBlur() {
+    cancelPendingTooltips();
+    hideTooltip();
     persistSession();
     if (settingsReady) saveSettings();
   }

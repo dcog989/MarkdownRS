@@ -34,22 +34,13 @@ pub fn configure(window: &tauri::WebviewWindow) {
         gtk_window.set_titlebar(None::<&gtk::Widget>);
     }
 
-    // WebKitGTK doesn't dispatch DOM mouseout/mouseleave on fast window exit
-    // (tauri-apps/tauri#5179), so native leave-notify on the webview widget is
-    // the reliable trigger; hooking the outer GtkWindow misses it because the
-    // webview's own GdkWindow absorbs the crossing events. On re-entry it also
-    // skips the initial hover for the element under the cursor, so enter-notify
-    // reports the cursor position for the frontend to re-activate it.
+    // WebKitGTK can skip the page's mouseleave when the pointer leaves the
+    // window, so a pending tooltip would otherwise appear after the pointer is
+    // gone. The native leave-notify is the reliable exit signal.
     let emit_window = window.clone();
     let _ = window.with_webview(move |webview| {
         let webview = webview.inner();
-        webview.add_events(EventMask::LEAVE_NOTIFY_MASK | EventMask::ENTER_NOTIFY_MASK);
-        let enter_window = emit_window.clone();
-        webview.connect_enter_notify_event(move |_, event| {
-            let (x, y) = event.position();
-            let _ = enter_window.emit("window-cursor-enter", (x, y));
-            gtk::glib::Propagation::Proceed
-        });
+        webview.add_events(EventMask::LEAVE_NOTIFY_MASK);
         webview.connect_leave_notify_event(move |_, _| {
             let _ = emit_window.emit("window-cursor-left", ());
             gtk::glib::Propagation::Proceed
