@@ -1,6 +1,6 @@
 import { closeCompletion } from "@codemirror/autocomplete";
 import type { Extension } from "@codemirror/state";
-import { EditorState } from "@codemirror/state";
+import { EditorState, Transaction } from "@codemirror/state";
 import { initializeTabFileState } from "$lib/services/tabFileStateInit";
 import type { EditorMetrics } from "$lib/stores/editorMetrics.svelte";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
@@ -196,6 +196,9 @@ export class TabSyncManager {
       changes,
       effects: isInitialPopulate ? undefined : view.scrollSnapshot().map(changes),
       userEvent: "input.type.sync",
+      // Loading the document is the undo baseline, not an edit: without this,
+      // Ctrl+Z on a freshly loaded tab deletes its whole content.
+      annotations: isInitialPopulate ? Transaction.addToHistory.of(false) : undefined,
     });
 
     if (isInitialPopulate) {
