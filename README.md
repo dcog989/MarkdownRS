@@ -69,14 +69,14 @@
 
 Download [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/latest):
 
-| Platform | Format | Install |
-|----------|--------|---------|
-| Linux | AppImage | `chmod +x MarkdownRS_*.AppImage && ./MarkdownRS_*.AppImage` |
-| Debian / Ubuntu | `.deb` | `sudo apt install ./MarkdownRS_*.deb` |
-| Fedora / RHEL | `.rpm` | `sudo dnf install ./MarkdownRS-*.rpm` |
-| Arch / CachyOS | `.pkg.tar.zst` | `sudo pacman -U MarkdownRS-*.pkg.tar.zst` |
-| Arch / CachyOS | `PKGBUILD` (local build) | `bun install && bun run package` |
-| Windows | NSIS `.exe` | run the `.exe` |
+| Platform        | Format                   | Install                                                     |
+| --------------- | ------------------------ | ----------------------------------------------------------- |
+| Linux           | AppImage                 | `chmod +x MarkdownRS_*.AppImage && ./MarkdownRS_*.AppImage` |
+| Debian / Ubuntu | `.deb`                   | `sudo apt install ./MarkdownRS_*.deb`                       |
+| Fedora / RHEL   | `.rpm`                   | `sudo dnf install ./MarkdownRS-*.rpm`                       |
+| Arch / CachyOS  | `.pkg.tar.zst`           | `sudo pacman -U MarkdownRS-*.pkg.tar.zst`                   |
+| Arch / CachyOS  | `PKGBUILD` (local build) | `bun install && bun run package`                            |
+| Windows         | NSIS `.exe`              | run the `.exe`                                              |
 
 > [!NOTE]
 > The AppImage does not install anything, so copy the file to a permanent directory. The first run adds itself to the application menu, and makes itself the default Markdown handler.
@@ -109,14 +109,14 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 
 ### Tech Stack
 
-| Layer | Stack |
-|-------|-------|
-| Core | [Rust](https://www.rust-lang.org/), [Tauri](https://v2.tauri.app/), [SQLite](https://sqlite.org/) |
-| UI | [Svelte](https://svelte.dev/), [TypeScript](https://www.typescriptlang.org/) |
-| Editor | [CodeMirror](https://codemirror.net/) |
-| Build | [Vite](https://vite.dev/), [bun](https://bun.com/), [Node.js](https://nodejs.org/) |
-| Quality | [Vitest](https://vitest.dev/), [Biome](https://biomejs.dev/) |
-| Workflow | [Lefthook](https://github.com/evilmartians/lefthook), [Cocogitto](https://docs.cocogitto.io/) |
+| Layer    | Stack                                                                                             |
+| -------- | ------------------------------------------------------------------------------------------------- |
+| Core     | [Rust](https://www.rust-lang.org/), [Tauri](https://v2.tauri.app/), [SQLite](https://sqlite.org/) |
+| UI       | [Svelte](https://svelte.dev/), [TypeScript](https://www.typescriptlang.org/)                      |
+| Editor   | [CodeMirror](https://codemirror.net/)                                                             |
+| Build    | [Vite](https://vite.dev/), [bun](https://bun.com/), [Node.js](https://nodejs.org/)                |
+| Quality  | [Vitest](https://vitest.dev/), [Biome](https://biomejs.dev/)                                      |
+| Workflow | [Lefthook](https://github.com/evilmartians/lefthook), [Cocogitto](https://docs.cocogitto.io/)     |
 
 ### Build & Run
 
