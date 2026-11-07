@@ -3,6 +3,26 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.69.0 - 2026-11-07
+
+#### Features
+
+- (98ce6d1) label the bullets action by selection state - dcog989
+
+#### Bug Fixes
+
+- (0a6af2a) keep loaded document out of undo history - dcog989
+
+- (acd526c) render fenced code in one consistent colour - dcog989
+
+- (bd799d4) keep input focus indicator inside the field - dcog989
+
+- (64bbb19) paint link text with the URL hue - dcog989
+
+- (864611c) ship screenshots when ImageMagick is unavailable [skip ci] - dcog989
+
+- - -
+
 ## v1.68.0 - 2026-11-04
 
 #### Features
