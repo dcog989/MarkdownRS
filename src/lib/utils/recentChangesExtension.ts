@@ -1,5 +1,5 @@
 import type { Extension } from "@codemirror/state";
-import { type EditorView, GutterMarker, gutter, ViewPlugin, type ViewUpdate } from "@codemirror/view";
+import { type BlockInfo, type EditorView, GutterMarker, gutter, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 import type { ContextMenuCallback } from "$lib/components/editor/codemirror/events";
 import { appContext } from "$lib/stores/state.svelte";
 import { CONFIG } from "$lib/utils/config";
@@ -11,11 +11,73 @@ import type { LineChangeTracker } from "$lib/utils/lineChangeTracker.svelte";
 /// line numbers have a little breathing room.
 const MIN_GUTTER_WIDTH_LINES = 99999;
 
+// Lucide corner-down-right, inlined because gutter markers build DOM directly.
+const WRAP_INDICATOR_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 10 5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg>';
+
+/** How many continuation rows a soft-wrapped line has, and their height. */
+interface WrapRows {
+  count: number;
+  height: number;
+}
+
+/** The `.cm-line` element containing `pos`, including the document start. */
+function lineElementAt(view: EditorView, pos: number): HTMLElement | null {
+  const { node, offset } = view.domAtPos(pos);
+  const start = node instanceof Element ? node : node.parentElement;
+  const line = start?.closest(".cm-line");
+  if (line) return line as HTMLElement;
+
+  // domAtPos returns the content element itself for a position before the
+  // first line's first child.
+  const child = node.childNodes[offset] ?? node.childNodes[offset - 1];
+  return child instanceof Element ? child.closest<HTMLElement>(".cm-line") : null;
+}
+
+// Widgets that lay out their own rows; a line containing one has no soft-wrap
+// rows to mark.
+const MULTILINE_WIDGET_SELECTOR = ".cm-table-widget, .cm-image-widget";
+
+/** Measures a soft-wrapped line's continuation rows, or null if it doesn't wrap. */
+function measureWrapRows(view: EditorView, line: BlockInfo): WrapRows | null {
+  // Cheap gate: only blocks taller than one default row can wrap.
+  if (line.height <= view.defaultLineHeight * 1.5) return null;
+
+  try {
+    const lineEl = lineElementAt(view, line.from);
+    if (!lineEl || lineEl.querySelector(MULTILINE_WIDGET_SELECTOR)) return null;
+
+    const range = document.createRange();
+    range.selectNodeContents(lineEl);
+    const lineTop = lineEl.getBoundingClientRect().top;
+    const tolerance = view.defaultLineHeight / 2;
+
+    // Inline boxes on the same row can differ by a pixel; merge tops closer
+    // together than half a row.
+    const tops: number[] = [];
+    for (const rect of range.getClientRects()) {
+      if (rect.height <= 0) continue;
+      const top = rect.top - lineTop;
+      if (tops.length === 0 || top - tops[tops.length - 1] > tolerance) tops.push(top);
+    }
+
+    // Wrapped rows share one row height, so the first gap describes them all.
+    return tops.length > 1 ? { count: tops.length - 1, height: tops[1] - tops[0] } : null;
+  } catch {
+    // Gutter markers are built before CodeMirror maps the new state onto the
+    // document DOM (view construction and setState), so domAtPos can throw.
+    // The measure pass that follows re-renders the gutter against the current
+    // DOM; a throw here must never deactivate the gutter plugin.
+    return null;
+  }
+}
+
 class LineNumberMarker extends GutterMarker {
   constructor(
     private lineNo: number,
     private alpha: number,
     private deletionAlpha: number,
+    private wrap: WrapRows | null = null,
   ) {
     super();
   }
@@ -39,6 +101,18 @@ class LineNumberMarker extends GutterMarker {
       span.appendChild(delMarker);
     }
 
+    const wrap = this.wrap;
+    if (wrap) {
+      for (let row = 1; row <= wrap.count; row++) {
+        const indicator = document.createElement("span");
+        indicator.className = "cm-wrap-indicator";
+        indicator.style.top = `${row * wrap.height}px`;
+        indicator.style.height = `${wrap.height}px`;
+        indicator.innerHTML = WRAP_INDICATOR_SVG;
+        span.appendChild(indicator);
+      }
+    }
+
     return span;
   }
 
@@ -46,7 +120,9 @@ class LineNumberMarker extends GutterMarker {
     return (
       this.lineNo === other.lineNo &&
       Math.abs(this.alpha - other.alpha) < 0.01 &&
-      Math.abs(this.deletionAlpha - other.deletionAlpha) < 0.01
+      Math.abs(this.deletionAlpha - other.deletionAlpha) < 0.01 &&
+      this.wrap?.count === other.wrap?.count &&
+      Math.abs((this.wrap?.height ?? 0) - (other.wrap?.height ?? 0)) < 0.5
     );
   }
 }
@@ -194,7 +270,7 @@ export function createRecentChangesHighlighter(
           );
         }
 
-        return new LineNumberMarker(lineNo, alpha, deletionAlpha);
+        return new LineNumberMarker(lineNo, alpha, deletionAlpha, measureWrapRows(view, line));
       },
       initialSpacer: (view) => new LineNumberMarker(Math.max(view.state.doc.lines, MIN_GUTTER_WIDTH_LINES), 0, 0),
       updateSpacer: (spacer, update) => {
