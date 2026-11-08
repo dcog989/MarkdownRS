@@ -290,7 +290,10 @@ function collectTableLines(walk: DecorationWalk): void {
   }
 }
 
-/** Paints per-line decorations; table, frontmatter, and code-block lines skip the WYSIWYG decorators. */
+/**
+ * Paints per-line decorations; table and frontmatter lines skip the WYSIWYG
+ * decorators. Code-block lines keep the block style and gain only color swatches.
+ */
 function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   if (walk.tableLines.has(line.number)) return;
   if (walk.frontmatterLines.has(line.number)) {
@@ -299,6 +302,7 @@ function visitDecorationLine(walk: DecorationWalk, line: Line): void {
   }
   if (walk.codeBlockLines.has(line.number)) {
     walk.ranges.push(codeBlockLineDeco.range(line.from));
+    collectColorSwatches(walk, line);
     return;
   }
   if (walk.cursorHeadingLines.has(line.number)) {

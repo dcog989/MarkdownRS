@@ -343,3 +343,31 @@ describe("horizontal rule decorations", () => {
     view.destroy();
   });
 });
+
+describe("color swatches", () => {
+  beforeEach(mockLayout);
+  afterEach(() => {
+    restoreLayout();
+    document.body.innerHTML = "";
+  });
+
+  it("paints swatches in prose, inline code and fenced code", async () => {
+    const parent = document.createElement("div");
+    parent.style.width = "800px";
+    parent.style.height = "600px";
+    document.body.appendChild(parent);
+    const state = EditorState.create({
+      doc: "Text #ff0000\n\n`#00ff00`\n\n```\n#0000ff\n```\n",
+      selection: { anchor: 0 },
+      extensions: [
+        markdown({ base: markdownLanguage, extensions: editorMarkdownExtensions }),
+        syntaxHighlighting(highlightStyle),
+        createMarkdownDecorationsPlugin(true, () => "", true),
+      ],
+    });
+    const view = new EditorView({ state, parent });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(parent.querySelectorAll(".cm-color-swatch:not(.cm-color-swatch-invalid)").length).toBe(3);
+    view.destroy();
+  });
+});

@@ -59,17 +59,18 @@ function hasValidBoundary(text: string, index: number, isHex: boolean): boolean 
 }
 
 /**
- * Appends a prefix swatch decoration for every color literal on the line. Skips
- * code, links, and raw HTML so swatches only decorate prose color values.
+ * Appends a prefix swatch decoration for every color literal on the line. In
+ * prose, skips links and raw HTML; code is included so code snippets show their
+ * colors too.
  */
 export function collectColorSwatches(walk: DecorationWalk, line: Line): void {
   if (!walk.colorSwatches) return;
-  if (isVisibleInCodeBlock(walk.tree, line.from)) return;
 
   for (const { literal, index } of findColorLiterals(line.text)) {
     const start = line.from + index;
-    if (isVisibleInCodeBlock(walk.tree, start)) continue;
-    if (isInsideNode(walk.tree, start, SKIP_ANCESTORS)) continue;
+    // A code block's language parser can emit nodes named Comment/URL; those
+    // must not hide a swatch inside code.
+    if (!isVisibleInCodeBlock(walk.tree, start) && isInsideNode(walk.tree, start, SKIP_ANCESTORS)) continue;
     const color = resolveSwatchColor(literal);
     if (!color) continue;
     walk.ranges.push(Decoration.widget({ widget: new ColorSwatchWidget(color), side: -1 }).range(start));
