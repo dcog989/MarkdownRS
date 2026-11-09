@@ -35,6 +35,13 @@ describe("extractPathAtPos", () => {
   it("does not match a path suffix inside a word", () => {
     expect(extractPathAtPos("my notes/ideas.md rocks", 4)).toBeNull();
   });
+
+  it("does not treat prose between backticked paths as a path", () => {
+    const text =
+      "Logs are written to `~/.local/state/colorpickle/log/`, one file per day named `colorpickle.log.<date>`; the 7 most recent are kept.";
+    expect(extractPathAtPos(text, text.indexOf("one file per day"))).toBeNull();
+    expect(extractPathAtPos(text, text.indexOf("~/.local"))).toBe("~/.local/state/colorpickle/log/");
+  });
 });
 
 describe("extractWikilinkAtPos", () => {
