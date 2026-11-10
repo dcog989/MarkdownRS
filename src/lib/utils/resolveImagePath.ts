@@ -27,6 +27,14 @@ function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
+function decodePath(src: string): string {
+  try {
+    return decodeURIComponent(src);
+  } catch {
+    return src;
+  }
+}
+
 /**
  * Resolves an image `src` attribute from markdown to a value usable in an
  * `<img>` tag. Remote/data URIs pass through unchanged, `static/` references
@@ -36,7 +44,8 @@ function isTauriRuntime(): boolean {
 export function resolveImageSrc(src: string, baseDir: string): string {
   if (!src || /^(https?|data|blob|asset|tauri):/i.test(src)) return src;
 
-  const clean = src.replace(/\\/g, "/");
+  // comrak percent-encodes spaces and non-ASCII characters in hrefs.
+  const clean = decodePath(src).replace(/\\/g, "/");
 
   if (clean.includes("../static/") || clean.includes("./static/")) {
     return `/${clean.split("/").pop()}`;

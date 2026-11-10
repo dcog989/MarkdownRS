@@ -624,7 +624,6 @@ export const en = {
     spellcheckError: "Spellcheck encountered an error — results may be incomplete",
     imagePasteSaveFirst: "Save the file before pasting images",
     imagePasteFailed: "Failed to paste image",
-    imagePasteFileNotFound: "Image file not found: {path}",
   },
   preview: {
     switchHorizontal: "Switch to Horizontal Split",

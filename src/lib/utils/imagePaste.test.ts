@@ -10,17 +10,7 @@ vi.mock("$lib/utils/backend", () => ({
   callBackendSafe: vi.fn(async () => null),
 }));
 
-import { buildFileName, extractImagePath, relativeTo, sanitizeFileName, uniqueFileName } from "./imagePaste";
-
-describe("sanitizeFileName", () => {
-  it("lowercases, dashes unsafe characters and keeps the extension", () => {
-    expect(sanitizeFileName("Screenshot 2026 (1).PNG")).toBe("screenshot-2026-1.png");
-  });
-
-  it("falls back to image when the stem has no usable characters", () => {
-    expect(sanitizeFileName("$$.png")).toBe("image.png");
-  });
-});
+import { buildFileName, extractImagePath, imagePathFromClipboard, relativeTo, uniqueFileName } from "./imagePaste";
 
 describe("extractImagePath", () => {
   it("decodes file:// URIs, including percent escapes and Windows drives", () => {
@@ -33,6 +23,17 @@ describe("extractImagePath", () => {
     expect(extractImagePath("hello world")).toBeNull();
     expect(extractImagePath("./local/shot.png")).toBeNull();
     expect(extractImagePath("https://example.com/shot.png")).toBeNull();
+  });
+});
+
+describe("imagePathFromClipboard", () => {
+  it("accepts a single local image path, including spaces", () => {
+    expect(imagePathFromClipboard("/home/user/my shot.png")).toBe("/home/user/my shot.png");
+    expect(imagePathFromClipboard("file:///home/user/my%20shot.png")).toBe("/home/user/my shot.png");
+  });
+
+  it("rejects clipboard text with extra lines", () => {
+    expect(imagePathFromClipboard("/home/user/shot.png\nplain text")).toBeNull();
   });
 });
 

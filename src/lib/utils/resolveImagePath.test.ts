@@ -26,6 +26,11 @@ describe("resolveImageSrc", () => {
     expect(resolveImageSrc("../../pic.png", "/home/user/docs/notes")).toBe("/home/user/pic.png");
   });
 
+  it("resolves percent-encoded local paths", () => {
+    expect(resolveImageSrc("img/my%20photo.png", "/home/user/docs")).toBe("/home/user/docs/img/my photo.png");
+    expect(resolveImageSrc("img/caf%C3%A9.png", "/home/user/docs")).toBe("/home/user/docs/img/café.png");
+  });
+
   it("keeps absolute paths as-is", () => {
     expect(resolveImageSrc("/abs/pic.png", "/home/user/docs")).toBe("/abs/pic.png");
     expect(resolveImageSrc("C:\\pics\\pic.png", "/home/user/docs")).toBe("C:/pics/pic.png");

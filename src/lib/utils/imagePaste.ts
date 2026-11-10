@@ -1,4 +1,3 @@
-import { EditorSelection, type TransactionSpec } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import type { Image } from "@tauri-apps/api/image";
 import { readImage, readText } from "@tauri-apps/plugin-clipboard-manager";
@@ -48,13 +47,14 @@ export function createImagePasteExtension() {
   return EditorView.domEventHandlers({
     paste: (event, view) => {
       event.preventDefault();
-      pasteFromClipboard(view).catch(handlePasteError);
+      const text = event.clipboardData?.getData("text/plain") ?? "";
+      pasteFromClipboard(view, text).catch(handlePasteError);
       return true;
     },
   });
 }
 
-export async function pasteFromClipboard(view: EditorView): Promise<void> {
+export async function pasteFromClipboard(view: EditorView, clipboardText = ""): Promise<void> {
   let image: Image | null = null;
   try {
     image = await readImage();
@@ -65,7 +65,7 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
   if (image) {
     const tabPath = getActiveTabPath(view);
     if (!tabPath) {
-      const text = await safeReadText();
+      const text = clipboardText || (await safeReadText());
       if (text.length > 0) {
         dispatchPastedText(view, text);
         return;
@@ -83,18 +83,19 @@ export async function pasteFromClipboard(view: EditorView): Promise<void> {
     return;
   }
 
-  const text = await safeReadText();
-  if (text.length > 0) {
-    try {
-      if (await importImageFileChecked(view, text)) return;
-    } catch (err) {
-      handlePasteError(err);
-      return;
-    }
-    dispatchPastedText(view, text);
+  const text = clipboardText || (await safeReadText());
+  if (!text) {
+    handlePasteError(new Error("Clipboard has neither text nor an image"));
     return;
   }
-  handlePasteError(new Error("Clipboard has neither text nor an image"));
+
+  const sourcePath = imagePathFromClipboard(text);
+  if (sourcePath && (await pathExists(sourcePath))) {
+    insertImagePath(view, sourcePath);
+    return;
+  }
+
+  dispatchPastedText(view, text);
 }
 
 async function safeReadText(): Promise<string> {
@@ -106,58 +107,24 @@ async function safeReadText(): Promise<string> {
 }
 
 /**
- * Handles the case where the clipboard holds a reference to an existing image
- * file (e.g. copying a file in the OS file manager pastes a `file://` URI)
- * instead of an image bitmap: imports a copy of that file into the note's
- * assets folder and inserts a relative markdown reference.
+ * Returns the local image path a clipboard holds, but only when the whole
+ * clipboard is one path. Extra lines mean the user pasted prose, not an image.
  */
-async function importImageFileChecked(view: EditorView, rawText: string): Promise<boolean> {
-  const firstLine = rawText.split(/\r?\n/, 1)[0]?.trim();
-  if (!firstLine) return false;
-
-  const sourcePath = extractImagePath(firstLine);
-  if (!sourcePath) return false;
-
-  const tabPath = getActiveTabPath(view);
-  // No note directory to import into: let the path text paste as-is.
-  if (!tabPath) return false;
-
-  const meta = await callBackend("path_exists", { path: sourcePath }, "File:Metadata", undefined, {
-    ignore: true,
-  });
-  if (!meta) {
-    showToast("error", translate("editor.imagePasteFileNotFound", { values: { path: sourcePath } }));
-    return true;
-  }
-
-  const directory = dirname(tabPath);
-  let targetPath: string;
-  try {
-    targetPath = await serializedPaste(async () => {
-      const sourceName = sanitizeFileName(sourcePath.replace(/\\/g, "/").split("/").pop() ?? "image");
-      const name = await uniqueFileName(directory, sourceName);
-      await callBackend("copy_file", { fromPath: sourcePath, toPath: name }, "File:Write");
-      return name;
-    });
-  } catch (err) {
-    handlePasteError(err);
-    return true;
-  }
-
-  const relativeRef = relativeTo(targetPath, directory);
-  insertImageMarkdown(view, relativeRef);
-  return true;
+export function imagePathFromClipboard(rawText: string): string | null {
+  const trimmed = rawText.trim();
+  if (!trimmed || /[\r\n]/.test(trimmed)) return null;
+  return extractImagePath(trimmed);
 }
 
-export function sanitizeFileName(name: string): string {
-  const dot = name.lastIndexOf(".");
-  const stem = dot > 0 ? name.slice(0, dot) : name;
-  const ext = dot > 0 ? name.slice(dot) : "";
-  const clean = stem
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `${clean || "image"}${ext.toLowerCase()}`;
+async function pathExists(path: string): Promise<boolean> {
+  const exists = await callBackend("path_exists", { path }, "File:Metadata", undefined, { ignore: true });
+  return exists === true;
+}
+
+function insertImagePath(view: EditorView, sourcePath: string): void {
+  const tabPath = getActiveTabPath(view);
+  const directory = tabPath ? dirname(tabPath) : "";
+  insertImageMarkdown(view, directory ? relativeTo(sourcePath, directory) : sourcePath);
 }
 
 export function extractImagePath(text: string): string | null {
@@ -269,27 +236,16 @@ async function imageToPngBytes(image: Image): Promise<Uint8Array> {
 }
 
 function dispatchPastedText(view: EditorView, text: string): void {
-  const { state } = view;
-  const pasted = state.toText(text);
-  const byLine = pasted.lines === state.selection.ranges.length;
-  let spec: TransactionSpec;
-  if (byLine) {
-    let i = 1;
-    spec = state.changeByRange((range) => {
-      const line = pasted.line(i++);
-      return {
-        changes: { from: range.from, to: range.to, insert: line.text },
-        range: EditorSelection.cursor(range.from + line.length),
-      };
-    });
-  } else {
-    spec = state.replaceSelection(text);
-  }
-  view.dispatch(spec, {
+  view.dispatch(view.state.replaceSelection(text), {
     userEvent: "input.paste",
     scrollIntoView: true,
   });
   view.focus();
+}
+
+/** Percent-encode each segment so spaces and punctuation survive Markdown. */
+function encodeMarkdownPath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
 }
 
 function insertImageMarkdown(view: EditorView, relativeRef: string): void {
@@ -298,7 +254,7 @@ function insertImageMarkdown(view: EditorView, relativeRef: string): void {
       .split("/")
       .pop()
       ?.replace(/\.\w+$/, "") ?? "image";
-  const markdown = `![${alt}](${relativeRef})`;
+  const markdown = `![${alt}](${encodeMarkdownPath(relativeRef)})`;
   const sel = view.state.selection.main;
   view.dispatch({
     changes: { from: sel.from, to: sel.to, insert: markdown },
