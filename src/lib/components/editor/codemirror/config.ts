@@ -13,7 +13,7 @@ import { commands } from "$lib/commands/commands";
 import { cmHandlerMap } from "$lib/components/editor/codemirror/editorBindings";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { emojiAutocompleteKeymap, emojiCompletion } from "$lib/utils/emojiCompletion";
+import { emojiCompletion, emojiCompletionTrigger } from "$lib/utils/emojiCompletion";
 import { fenceCursorPlugin, fenceLanguageCompletion } from "$lib/utils/fenceLanguageCompletion";
 import { KEY_NAMES, resolveShortcut } from "$lib/utils/shortcuts";
 
@@ -64,7 +64,7 @@ export async function smartCompleteAnyWord(context: CompletionContext): Promise<
 export function getAutocompletionConfig() {
   if (appContext.settings.autocompleteDelay < 0) return [];
   return [
-    emojiAutocompleteKeymap,
+    emojiCompletionTrigger,
     fenceCursorPlugin,
     autocompletion({
       activateOnTyping: true,
