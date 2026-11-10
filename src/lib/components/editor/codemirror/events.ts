@@ -46,31 +46,6 @@ export function createEditorEventHandlers(onContextMenu?: ContextMenuCallback) {
           targetString = extractPathAtPos(line.text, posInLine) || "";
         }
 
-        // 4. Fallback: heuristic regex matching on the current line (Word-based, fails on spaces)
-        if (!targetString) {
-          const line = view.state.doc.lineAt(pos);
-          const text = line.text;
-          const posInLine = pos - line.from;
-
-          if (posInLine >= 0 && posInLine < text.length && /\S/.test(text[posInLine])) {
-            let start = posInLine;
-            while (start > 0 && /\S/.test(text[start - 1])) start--;
-            let end = posInLine;
-            while (end < text.length && /\S/.test(text[end])) end++;
-
-            targetString = text.slice(start, end).trim();
-            // Strip wrapping brackets common in markdown/text
-            targetString = targetString.replace(/^[<([]+|[>)\]]+$/g, "");
-
-            // Strip trailing punctuation
-            if (!/^https?:\/\//i.test(targetString)) {
-              targetString = targetString.replace(/[.,;:!?)\]]+$/, "");
-            } else {
-              targetString = targetString.replace(/[.,;!?)\]]+$/, "");
-            }
-          }
-        }
-
         if (targetString) {
           event.preventDefault();
           event.stopImmediatePropagation();
