@@ -286,11 +286,17 @@ describe("horizontal rule decorations", () => {
     view.destroy();
   });
 
-  it("treats a --- line under text as a horizontal rule, not a setext heading", async () => {
+  it("treats a --- line under text as a setext heading, not a horizontal rule", async () => {
     const { view, parent } = createCalloutView("Title\n---\nBody\n", true);
     await new Promise((r) => setTimeout(r, 50));
-    expect(lineWithText(parent, "---")?.querySelector(".cm-hr")).not.toBeNull();
-    expect(parent.querySelector(".cm-h2")).toBeNull();
+    let hasSetext = false;
+    syntaxTree(view.state).iterate({
+      enter: (node) => {
+        if (node.name === "SetextHeading2") hasSetext = true;
+      },
+    });
+    expect(hasSetext).toBe(true);
+    expect(parent.querySelector(".cm-hr")).toBeNull();
     view.destroy();
   });
 

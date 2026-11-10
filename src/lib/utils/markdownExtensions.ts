@@ -30,13 +30,24 @@ const HEADING_NODE_NAMES = new Set([
   "ATXHeading4",
   "ATXHeading5",
   "ATXHeading6",
+  "SetextHeading1",
+  "SetextHeading2",
 ]);
 
 const MARKER_CONFIG: Array<{ marker: string; parents: ReadonlySet<string> }> = [
   { marker: "EmphasisMark", parents: new Set(["Emphasis", "StrongEmphasis"]) },
   {
     marker: "HeaderMark",
-    parents: new Set(["ATXHeading1", "ATXHeading2", "ATXHeading3", "ATXHeading4", "ATXHeading5", "ATXHeading6"]),
+    parents: new Set([
+      "ATXHeading1",
+      "ATXHeading2",
+      "ATXHeading3",
+      "ATXHeading4",
+      "ATXHeading5",
+      "ATXHeading6",
+      "SetextHeading1",
+      "SetextHeading2",
+    ]),
   },
   { marker: "LinkMark", parents: new Set(["Autolink"]) },
   { marker: "QuoteMark", parents: new Set(["Blockquote"]) },

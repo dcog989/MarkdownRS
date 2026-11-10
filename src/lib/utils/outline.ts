@@ -8,9 +8,10 @@ export interface OutlineHeading {
   from: number;
 }
 
-const ATX_HEADING_RE = /^ATXHeading([1-6])$/;
+const HEADING_RE = /^(?:ATXHeading|SetextHeading)([1-6])$/;
 const LEADING_MARKERS_RE = /^\s*#{1,6}\s*/;
 const TRAILING_MARKERS_RE = /(?:^#+|\s+#+)\s*$/;
+const SETEXT_UNDERLINE_RE = /\n[=-]+\s*$/;
 
 /** Headings from the editor's own parser, so the outline exists with the preview closed. */
 export function collectOutlineHeadings(state: EditorState): OutlineHeading[] {
@@ -19,9 +20,14 @@ export function collectOutlineHeadings(state: EditorState): OutlineHeading[] {
 
   syntaxTree(state).iterate({
     enter: (node) => {
-      const match = ATX_HEADING_RE.exec(node.name);
+      const match = HEADING_RE.exec(node.name);
       if (!match) return;
-      const text = doc.sliceString(node.from, node.to).replace(LEADING_MARKERS_RE, "").replace(TRAILING_MARKERS_RE, "");
+      let text = doc.sliceString(node.from, node.to);
+      if (node.name.startsWith("SetextHeading")) {
+        text = text.replace(SETEXT_UNDERLINE_RE, "").replace(/\s+/g, " ").trim();
+      } else {
+        text = text.replace(LEADING_MARKERS_RE, "").replace(TRAILING_MARKERS_RE, "");
+      }
       headings.push({ level: Number(match[1]), text, from: node.from });
       return false;
     },

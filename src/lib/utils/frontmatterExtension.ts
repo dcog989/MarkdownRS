@@ -55,9 +55,7 @@ export const frontmatterExtension: MarkdownExtension = {
 };
 
 /**
- * Editor parser extensions. Setext headings are disabled so a bare `---` under
- * a line is always a thematic break (horizontal rule); without this, typing
- * above a rule turns the preceding text into an H2. Matches the renderer, which
- * sets comrak's `parse.ignore_setext`.
+ * Editor parser extensions. Frontmatter is parsed as its own block; everything
+ * else follows the standard Markdown grammar, including setext headings.
  */
-export const editorMarkdownExtensions: MarkdownExtension = [frontmatterExtension, { remove: ["SetextHeading"] }];
+export const editorMarkdownExtensions: MarkdownExtension = frontmatterExtension;

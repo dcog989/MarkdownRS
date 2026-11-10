@@ -29,8 +29,11 @@ describe("collectOutlineHeadings", () => {
     expect(collectOutlineHeadings(state).map((heading) => heading.text)).toEqual(["Real"]);
   });
 
-  it("ignores setext headings, matching the renderer", () => {
-    expect(collectOutlineHeadings(stateOf("Title\n=====\n\nBody\n"))).toEqual([]);
+  it("includes setext headings", () => {
+    expect(collectOutlineHeadings(stateOf("Title\n=====\n\nSub\n---\n\nBody\n"))).toEqual([
+      { level: 1, text: "Title", from: 0 },
+      { level: 2, text: "Sub", from: 14 },
+    ]);
   });
 
   it("keeps a literal trailing hash that has no preceding space", () => {
