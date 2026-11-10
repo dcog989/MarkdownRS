@@ -47,6 +47,8 @@ let searchInputRef = $state<HTMLInputElement>();
 let panelRef = $state<HTMLDivElement>();
 let wasOpen = false;
 let isMouseOver = $state(false);
+// True between a keystroke and the debounced search, when match counts are stale.
+let searchPending = $state(false);
 let panelOpacity = $derived(isMouseOver ? 1 : appContext.settings.findPanelOpacity / 100);
 let inputBackground = $derived(`color-mix(in srgb, var(--surface-input) ${panelOpacity * 100}%, transparent)`);
 let hasMatches = $derived(
@@ -138,6 +140,7 @@ function executeSearch(view: EditorView) {
 }
 
 const debouncedSearch = debounce((view: EditorView) => {
+  searchPending = false;
   executeSearch(view);
 }, CONFIG.EDITOR.SEARCH_DEBOUNCE_MS);
 
@@ -147,6 +150,7 @@ const debouncedReplace = debounce((view: EditorView) => {
 
 function onInput() {
   if (!cmView) return;
+  searchPending = true;
   debouncedSearch(cmView);
 }
 
@@ -335,7 +339,9 @@ onMount(() => {
           type="text"
           bind:value={searchState.findText}
           aria-label={$_("findReplace.find")}
-          class={searchState.regexError || (searchState.findText && !hasMatches) ? "border-danger" : ""}
+          class={searchState.regexError || (searchState.findText && !hasMatches && !searchPending)
+            ? "border-danger"
+            : ""}
           style={`padding-right: 8rem; background-color: ${inputBackground}`}
           oninput={onInput}
           spellcheck="false"
