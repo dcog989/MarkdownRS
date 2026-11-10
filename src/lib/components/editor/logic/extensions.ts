@@ -39,7 +39,12 @@ const defaultFallbackHighlighting = syntaxHighlighting(defaultHighlightStyle, {
 });
 
 export const markdownExtensions = [
-  markdown({ base: markdownLanguage, extensions: editorMarkdownExtensions, codeLanguages: languages }),
+  markdown({
+    base: markdownLanguage,
+    extensions: editorMarkdownExtensions,
+    codeLanguages: languages,
+    addKeymap: false,
+  }),
 ];
 
 /** Base directory of the tab a view belongs to, for resolving relative image sources. */

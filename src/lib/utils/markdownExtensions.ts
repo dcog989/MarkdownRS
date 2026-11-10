@@ -18,7 +18,6 @@ import {
   isVisibleInCodeBlock,
 } from "./markdownDecorationCore";
 import { imageWidgetDecoration, imageWidgetPointer } from "./markdownImageWidget";
-import { renderedModeKeymap } from "./markdownListKeymap";
 import { maskedLinkPointer, wrapBoundaryPointer } from "./markdownPointerResolvers";
 import { collectTableSpans, createTableWidgetField, tableWidgetPointer } from "./markdownTableWidget";
 import { renderedPointerHandler } from "./renderedPointer";
@@ -537,7 +536,6 @@ export function createMarkdownDecorationsPlugin(
       ? [
           createTableWidgetField(),
           renderedPointerHandler([tableWidgetPointer, imageWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
-          renderedModeKeymap,
         ]
       : []),
   ];

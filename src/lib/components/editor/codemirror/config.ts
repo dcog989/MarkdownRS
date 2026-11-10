@@ -7,6 +7,7 @@ import {
   completionKeymap,
 } from "@codemirror/autocomplete";
 import { defaultKeymap, historyKeymap, indentLess, indentMore } from "@codemirror/commands";
+import { insertNewlineContinueMarkup } from "@codemirror/lang-markdown";
 import { indentUnit } from "@codemirror/language";
 import { EditorSelection } from "@codemirror/state";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
@@ -192,6 +193,9 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...(completionKeymap as KeyBinding[]),
     ...(historyKeymap.filter((binding) => !filteredKeys.has(canonicalKey(binding.key ?? ""))) as KeyBinding[]),
     ...(closeBracketsKeymap as KeyBinding[]),
+    // lang-markdown's keymap is disabled; keep its Enter continuation without
+    // re-introducing deleteMarkupBackward on Backspace.
+    { key: "Enter", run: insertNewlineContinueMarkup },
     ...(defaultKeymap.filter(
       (binding) => binding.key !== "Tab" && !filteredKeys.has(canonicalKey(binding.key ?? "")),
     ) as KeyBinding[]),
