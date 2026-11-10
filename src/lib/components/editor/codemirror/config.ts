@@ -6,10 +6,8 @@ import {
   completeAnyWord,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap, indentLess, indentMore } from "@codemirror/commands";
+import { defaultKeymap, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { insertNewlineContinueMarkup } from "@codemirror/lang-markdown";
-import { indentUnit } from "@codemirror/language";
-import { EditorSelection } from "@codemirror/state";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
 import { commands } from "$lib/commands/commands";
 import { cmHandlerMap } from "$lib/components/editor/codemirror/editorBindings";
@@ -98,27 +96,6 @@ export function createWrapExtension(isLargeFile = false) {
   return extensions;
 }
 
-// Tab indents the selected lines via CodeMirror's `indentMore`, or inserts the
-// configured indent at each cursor (no built-in inserts `indentUnit` as spaces;
-// `insertTab` inserts a literal tab). Shift+Tab is `indentLess`.
-const handleTabKey = (view: EditorView) => {
-  const { state } = view;
-
-  if (state.selection.ranges.some((range) => !range.empty)) {
-    return indentMore(view);
-  }
-
-  const indentStr = state.facet(indentUnit) || "    ";
-  view.dispatch({
-    ...state.changeByRange((range) => ({
-      changes: { from: range.from, insert: indentStr },
-      range: EditorSelection.cursor(range.from + indentStr.length),
-    })),
-    scrollIntoView: true,
-  });
-  return true;
-};
-
 const commandDefaultKeys = new Map<string, string>();
 for (const cmd of commands) {
   if (cmd.defaultKey) {
@@ -199,6 +176,6 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     ...(defaultKeymap.filter(
       (binding) => binding.key !== "Tab" && !filteredKeys.has(canonicalKey(binding.key ?? "")),
     ) as KeyBinding[]),
-    { key: "Tab", run: handleTabKey, shift: indentLess },
+    indentWithTab,
   ]);
 }
