@@ -15,6 +15,8 @@ import { type DecorationWalk, isInsideNode, isVisibleInCodeBlock } from "./markd
 const COLOR_LITERAL_RE =
   /#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\b|\b(?:rgba?|hsla?|hsva?|hsba?|hwb|lab|lch|oklab|oklch|okhsl|okhsv|device-cmyk|cmyk|color)\([^()\n]*\)/gi;
 
+/** The scanner regex anchored to a whole string, so lookalikes like `not-a-color()` are rejected. */
+const SINGLE_LITERAL_RE = new RegExp(`^(?:${COLOR_LITERAL_RE.source})$`, "i");
 const FUNCTION_RE = /^([a-z-]+)\(([^()]*)\)$/i;
 const CONVERTED_FUNCTIONS = new Set(["okhsl", "okhsv", "hsv", "hsb", "cmyk", "device-cmyk"]);
 
@@ -95,6 +97,7 @@ export function findColorLiterals(text: string): Array<{ literal: string; index:
 /** Returns a CSS color for the swatch, or null when the literal is unusable. */
 export function resolveSwatchColor(literal: string): string | null {
   if (literal[0] === "#") return literal;
+  if (!SINGLE_LITERAL_RE.test(literal)) return null;
   const fn = FUNCTION_RE.exec(literal);
   if (!fn) return null;
 

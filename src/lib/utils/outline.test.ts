@@ -32,7 +32,7 @@ describe("collectOutlineHeadings", () => {
   it("includes setext headings", () => {
     expect(collectOutlineHeadings(stateOf("Title\n=====\n\nSub\n---\n\nBody\n"))).toEqual([
       { level: 1, text: "Title", from: 0 },
-      { level: 2, text: "Sub", from: 14 },
+      { level: 2, text: "Sub", from: 13 },
     ]);
   });
 
