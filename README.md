@@ -79,7 +79,7 @@ Download [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/
 | Windows         | NSIS `.exe`              | run the `.exe`                                              |
 
 > [!NOTE]
-> The AppImage does not install anything, so copy the file to a permanent directory. The first run adds itself to the application menu, and makes itself the default Markdown handler.
+> Copy the AppImage to a permanent directory. The first run adds MarkdownRS to the application menu, and makes it the default Markdown handler.
 
 ---
 

@@ -1,14 +1,9 @@
-**/.kate-swp
 .pkg/
-.DS_Store
-.assets/
 .docs/
 .svelte-kit
 [Dd]ist/
 build
-coverage/
 node_modules/
-pkg/
 src-tauri/gen/
 src-tauri/target/
 website/public/assets/
