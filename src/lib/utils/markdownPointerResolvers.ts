@@ -1,5 +1,6 @@
 import { syntaxTree } from "@codemirror/language";
 import type { EditorView } from "@codemirror/view";
+import { isRevealed } from "./markdownDecorationCore";
 import type { PointerResolver } from "./renderedPointer";
 
 /**
@@ -8,7 +9,6 @@ import type { PointerResolver } from "./renderedPointer";
  */
 function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
   const doc = view.state.doc;
-  const cursor = view.state.selection.main.head;
   const line = doc.lineAt(pos);
   let target: number | null = null;
 
@@ -17,17 +17,19 @@ function maskedLinkClickTarget(view: EditorView, pos: number): number | null {
     to: line.to,
     enter: (node) => {
       if (target != null) return;
+      // A revealed link paints its raw `(url)` text, so clicks must land where
+      // they land instead of being snapped past the hidden mask.
       if (node.name === "Autolink") {
-        if (cursor > node.from && cursor < node.to) return;
+        if (isRevealed(view, node.from, node.to)) return;
         const linkMarks = node.node.getChildren("LinkMark");
         const maskStart = linkMarks[linkMarks.length - 1]?.from ?? node.to;
         if (pos >= maskStart && pos <= node.to) target = node.to;
         return;
       }
       if (node.name !== "Link") return;
+      if (isRevealed(view, node.from, node.to)) return;
       const urlNode = node.node.getChild("URL");
       if (!urlNode) return;
-      if (cursor > node.from && cursor < node.to) return;
       const linkMarks = node.node.getChildren("LinkMark");
       const textEnd = linkMarks[1]?.from ?? urlNode.from;
       const after = doc.sliceString(urlNode.to, urlNode.to + 1);
