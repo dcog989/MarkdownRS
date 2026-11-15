@@ -17,10 +17,10 @@ import {
   isRevealed,
   isVisibleInCodeBlock,
 } from "./markdownDecorationCore";
-import { imageWidgetDecoration, imageWidgetPointer } from "./markdownImageWidget";
+import { imageWidgetDecoration } from "./markdownImageWidget";
 import { maskedLinkPointer, wrapBoundaryPointer } from "./markdownPointerResolvers";
-import { collectTableSpans, createTableWidgetField, tableWidgetPointer } from "./markdownTableWidget";
-import { renderedPointerHandler } from "./renderedPointer";
+import { collectTableSpans, createTableWidgetField } from "./markdownTableWidget";
+import { renderedPointerHandler, renderedWidgetPointer } from "./renderedPointer";
 import { resolveImageSrc } from "./resolveImagePath";
 
 const HEADING_NODE_NAMES = new Set([
@@ -546,7 +546,7 @@ export function createMarkdownDecorationsPlugin(
     ...(rendered
       ? [
           createTableWidgetField(),
-          renderedPointerHandler([tableWidgetPointer, imageWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
+          renderedPointerHandler([renderedWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
         ]
       : []),
   ];

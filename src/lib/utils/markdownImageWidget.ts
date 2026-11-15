@@ -1,7 +1,6 @@
 import type { Range } from "@codemirror/state";
 import { Decoration, WidgetType } from "@codemirror/view";
-import { widgetPointerAction } from "./editorWidgetClick";
-import type { PointerResolver } from "./renderedPointer";
+import { registerWidgetOffset } from "./renderedPointer";
 
 /** Inline placeholder shown when an image fails to load. Inlined (rather than
  *  set as an `<img>` source) so `currentColor` follows the editor theme. */
@@ -31,6 +30,8 @@ export class ImageWidget extends WidgetType {
     const root = document.createElement("span");
     root.className = "cm-image-widget";
     root.dataset.from = String(this.from);
+    root.dataset.renderedWidget = "";
+    registerWidgetOffset(root, () => this.from);
 
     const img = document.createElement("img");
     img.src = this.src;
@@ -59,9 +60,3 @@ export class ImageWidget extends WidgetType {
 export function imageWidgetDecoration(from: number, to: number, src: string, alt: string): Range<Decoration> {
   return Decoration.replace({ widget: new ImageWidget(from, src, alt) }).range(from, to);
 }
-
-export const imageWidgetPointer: PointerResolver = (_view, event) =>
-  widgetPointerAction(event, ".cm-image-widget", (widget) => {
-    const from = Number(widget.dataset.from);
-    return Number.isFinite(from) ? from : null;
-  });

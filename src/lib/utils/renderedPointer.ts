@@ -25,6 +25,41 @@ export interface PointerAction {
 /** Maps a rendered-mode mousedown to a caret correction, or null to defer to CodeMirror. */
 export type PointerResolver = (view: EditorView, event: MouseEvent) => PointerAction | null;
 
+/** Translates a pointer inside a rendered widget into a document offset. */
+type WidgetOffset = (event: MouseEvent) => number | null;
+
+/** Offset maps for the rendered widgets currently in the DOM. */
+const widgetOffsets = new WeakMap<Element, WidgetOffset>();
+
+/** Registers how a rendered widget maps a click to a source offset. */
+export function registerWidgetOffset(root: Element, offsetAt: WidgetOffset): void {
+  widgetOffsets.set(root, offsetAt);
+}
+
+/** Offset of a point within an element's rendered text, null when unavailable. */
+export function textOffsetAt(event: MouseEvent, element: Element): number | null {
+  const range = (
+    document as Document & { caretRangeFromPoint?: (x: number, y: number) => Range }
+  ).caretRangeFromPoint?.(event.clientX, event.clientY);
+  if (!range || !element.contains(range.startContainer)) return null;
+  range.setStart(element, 0);
+  return range.toString().length;
+}
+
+/**
+ * Single resolver for rendered widgets (tables, images, ...). Each widget
+ * registers its own rendered-text → source mapping when it enters the DOM, so
+ * pointer handling is one lookup instead of one resolver per widget type.
+ */
+export const renderedWidgetPointer: PointerResolver = (_view, event) => {
+  const target = event.target instanceof Element ? event.target : null;
+  const root = target?.closest("[data-rendered-widget]");
+  const offsetAt = root ? widgetOffsets.get(root) : undefined;
+  if (!offsetAt) return null;
+  const targetPos = offsetAt(event);
+  return targetPos == null ? null : { target: targetPos, apply: "now", intercept: true };
+};
+
 interface PendingMouseup {
   target: number;
   assoc: number;

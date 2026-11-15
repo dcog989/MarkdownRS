@@ -88,21 +88,37 @@ describe("renderCell", () => {
 
 describe("renderTable", () => {
   it("renders a table with header and body rows", () => {
-    const html = renderTable("| Name | Price |\n| --- | ---: |\n| A | 1.5 |");
+    const { html } = renderTable("| Name | Price |\n| --- | ---: |\n| A | 1.5 |");
     expect(html).toBe(
       '<table><thead><tr><th>Name</th><th style="text-align:right">Price</th></tr></thead><tbody><tr><td>A</td><td style="text-align:right">1.5</td></tr></tbody></table>',
     );
   });
 
   it("renders cell emphasis inside the table", () => {
-    const html = renderTable("| A | B |\n| --- | --- |\n| **bold** | `code` |");
+    const { html } = renderTable("| A | B |\n| --- | --- |\n| **bold** | `code` |");
     expect(html).toContain("<td><strong>bold</strong></td>");
     expect(html).toContain("<td><code>code</code></td>");
   });
 
   it("strips blockquote prefixes from rows", () => {
-    const html = renderTable("| Q | A |\n> | --- | --- |\n> | x | y |");
+    const { html } = renderTable("| Q | A |\n> | --- | --- |\n> | x | y |");
     expect(html).toContain("<th>Q</th>");
     expect(html).toContain("<td>x</td>");
+  });
+
+  it("maps rendered characters to their source offsets", () => {
+    const { cells } = renderTable("| A |\n| --- |\n| a **b** `c` |");
+    expect(cells.map((cell) => cell.map)).toEqual([[0], [0, 1, 4, 7, 9]]);
+    expect(cells.map((cell) => cell.offset)).toEqual([2, 16]);
+  });
+
+  it("maps link labels to their source offsets", () => {
+    const { cells } = renderTable("| A |\n| --- |\n| see [x](#a) |");
+    expect(cells[1].map).toEqual([0, 1, 2, 3, 5]);
+  });
+
+  it("maps characters inside formatted link labels", () => {
+    const { cells } = renderTable("| A |\n| --- |\n| [`x`](#a) |");
+    expect(cells[1].map).toEqual([2]);
   });
 });
