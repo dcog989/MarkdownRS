@@ -3,6 +3,48 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.70.0 - 2026-11-15
+
+#### Features
+
+- (2d67275) require one character before opening emoji completion - dcog989
+
+- (6150d1b) paint color swatches inside inline and fenced code - dcog989
+
+- (3d9a4b7) paint okhsl, okhsv, cmyk, hsv and hsb color swatches - dcog989
+
+- (b271fa8) mark soft-wrapped lines in the gutter - dcog989
+
+#### Bug Fixes
+
+- (d94d3ab) reject non-color literals and correct setext outline offset - dcog989
+
+- (5ba96ec) stop Ctrl+Click opening arbitrary words - dcog989
+
+- (8f6e4a9) restore standard setext heading support - dcog989
+
+- (5243b35) stop copying pasted image paths - dcog989
+
+- (1c5a21a) remove lang-markdown Backspace binding - dcog989
+
+- (8caf18c) let the default keymap handle ctrl+delete - dcog989
+
+- (4610958) stop no-match border flashing before the debounced search runs - dcog989
+
+- (31f7358) stop file-path highlighting crossing backticks - dcog989
+
+- (94c23f2) suppress tooltips on inactive windows and drop the hover workaround stack - dcog989
+
+- (70672c3) restore code block copy toast and pointer cursor - dcog989
+
+#### Refactoring
+
+- (f9a8a06) trim frontmatter lines with str::trim_suffix - dcog989
+
+- (bc26927) use indentWithTab for line indentation - dcog989
+
+- - -
+
 ## v1.69.0 - 2026-11-07
 
 #### Features
