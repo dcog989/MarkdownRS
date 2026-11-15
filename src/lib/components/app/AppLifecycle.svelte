@@ -1,6 +1,6 @@
 <script lang="ts">
-import { invoke } from "@tauri-apps/api/core";
 import { emit } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { onDestroy, onMount } from "svelte";
 import { _ } from "svelte-i18n";
 import Logo from "$lib/components/ui/Logo.svelte";
@@ -60,7 +60,7 @@ $effect(() => {
       ? `${dirtyMarker}${$_("app.titleWithFolder", { values: { name, folder } })}`
       : `${dirtyMarker}${name}`;
   }
-  invoke("set_window_title", { title });
+  void getCurrentWindow().setTitle(title);
 });
 
 $effect(() => {

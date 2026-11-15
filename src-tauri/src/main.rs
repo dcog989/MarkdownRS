@@ -135,7 +135,6 @@ fn main() {
             commands::data::import_bookmarks,
             commands::data::import_file_history,
             commands::data::delete_orphan_files,
-            commands::window::set_window_title,
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|e| {

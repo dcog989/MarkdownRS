@@ -28,11 +28,7 @@ pub fn apply_saved_background(window: &tauri::WebviewWindow, settings: Option<&t
 #[cfg(target_os = "linux")]
 pub fn configure(window: &tauri::WebviewWindow) {
     use gtk::gdk::EventMask;
-    use gtk::prelude::{GtkWindowExt, WidgetExt, WidgetExtManual};
-
-    if let Ok(gtk_window) = window.gtk_window() {
-        gtk_window.set_titlebar(None::<&gtk::Widget>);
-    }
+    use gtk::prelude::{WidgetExt, WidgetExtManual};
 
     // WebKitGTK can skip the page's mouseleave when the pointer leaves the
     // window, so a pending tooltip would otherwise appear after the pointer is

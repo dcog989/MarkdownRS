@@ -10,4 +10,3 @@ pub mod session;
 pub mod settings;
 #[cfg(feature = "spellcheck")]
 pub mod spellcheck;
-pub mod window;
