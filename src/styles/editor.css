@@ -635,6 +635,12 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
 .rendered-mode .cm-table-widget a {
   color: var(--editor-link);
   text-decoration: underline;
+  /* Same affordance as .cm-link-text: hand only while Ctrl/Cmd is held. */
+  cursor: text;
+}
+
+.cm-editor.cm-modifier-down .cm-table-widget a {
+  cursor: pointer;
 }
 
 .rendered-mode .cm-table-widget del {

@@ -3,6 +3,9 @@ import type { Range } from "@codemirror/state";
 import { type EditorState, StateField } from "@codemirror/state";
 import { Decoration, type DecorationSet, EditorView, WidgetType } from "@codemirror/view";
 import { escapeHtml } from "$lib/utils/dom";
+import { decodeHref } from "$lib/utils/fileDialogs";
+import { navigateToPath } from "$lib/utils/fileSystem";
+import { jumpToAnchor } from "$lib/utils/outline";
 import { widgetPointerAction } from "./editorWidgetClick";
 import type { PointerResolver } from "./renderedPointer";
 
@@ -64,11 +67,15 @@ export function parseAlignment(delimiter: string): TableAlignment[] {
 const PLACEHOLDER_START = "\uE000";
 const PLACEHOLDER_END = "\uE001";
 
+const HAS_SCHEME = /^[a-z][a-z0-9+.-]*:/i;
+const SAFE_SCHEME = /^(https?|mailto):/i;
+const EXTERNAL_HREF = /^https?:\/\//i;
+
 // shortcut: cells render a small markdown subset — code, strike, emphasis, links
-// and autolinks; images, inline HTML, bare URLs, math, footnotes, reference
-// links, backslash escapes and nested emphasis do not match the preview.
-// Upgrade when a divergence reaches a user: render cells through the preview
-// pipeline rather than adding more patterns here.
+// (external, relative and `#anchor`) and autolinks; images, inline HTML, bare
+// URLs, math, footnotes, reference links, backslash escapes and nested emphasis
+// do not match the preview. Upgrade when a divergence reaches a user: render
+// cells through the preview pipeline rather than adding more patterns here.
 export function renderCell(cell: string): string {
   const codeSpans: string[] = [];
   const escaped = escapeHtml(cell);
@@ -84,9 +91,13 @@ export function renderCell(cell: string): string {
   html = html.replace(/\b_([^_\n]+)_\b/g, "<em>$1</em>");
   // The URL may reach here unescaped (only &, < and > are escaped above), so
   // quotes are re-escaped to keep it inside the href attribute.
-  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)\]]+)\)/g, (_match, text: string, url: string) => {
+  html = html.replace(/\[([^\]]+)\]\(([^\s)]+)\)/g, (_match, text: string, url: string) => {
+    // Relative paths and `#anchors` have no scheme; reject schemes a table cell
+    // must not be able to invoke.
+    if (HAS_SCHEME.test(url) && !SAFE_SCHEME.test(url)) return _match;
     const href = url.replace(/"/g, "&quot;");
-    return `<a href="${href}" target="_blank" rel="noreferrer">${text}</a>`;
+    const external = EXTERNAL_HREF.test(url) ? ' target="_blank" rel="noreferrer"' : "";
+    return `<a href="${href}"${external}>${text}</a>`;
   });
   // GFM autolinks: `<https://...>` and `<mail@example.com>`. The cell was
   // HTML-escaped above, so the angle brackets are `&lt;`/`&gt;`; a URL cannot
@@ -210,12 +221,33 @@ class MarkdownTableWidget extends WidgetType {
     return false;
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const wrapper = document.createElement("div");
     wrapper.className = "cm-table-widget";
     wrapper.dataset.from = String(this.from);
     wrapper.dataset.to = String(this.to);
     wrapper.innerHTML = this.html;
+    // Same Ctrl/Cmd+Click as rendered links in the document body. The table is a
+    // widget, so the source position under the pointer cannot resolve the link.
+    wrapper.addEventListener("mousedown", (event) => {
+      if (event.button !== 0 || !(event.ctrlKey || event.metaKey)) return;
+      const target = event.target instanceof Element ? event.target : null;
+      const href = target?.closest("a")?.getAttribute("href");
+      if (!href) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (href.startsWith("#")) {
+        jumpToAnchor(view, decodeHref(href.slice(1)));
+      } else {
+        void navigateToPath(href);
+      }
+    });
+    // Link activation is the click event's default, which mousedown cannot
+    // cancel; block it so a plain click can never navigate the webview.
+    wrapper.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : null;
+      if (target?.closest("a")) event.preventDefault();
+    });
     return wrapper;
   }
 }

@@ -47,6 +47,17 @@ describe("renderCell", () => {
     );
   });
 
+  it("renders relative and anchor links", () => {
+    expect(renderCell("[music](#music)")).toBe('<a href="#music">music</a>');
+    expect(renderCell("[readme](src/music/README.md)")).toBe('<a href="src/music/README.md">readme</a>');
+    expect(renderCell("[`src/a.py`](#a)")).toBe('<a href="#a"><code>src/a.py</code></a>');
+  });
+
+  it("does not link unsafe schemes", () => {
+    expect(renderCell("[x](javascript:alert(1))")).toBe("[x](javascript:alert(1))");
+    expect(renderCell("[x](data:text/html,hi)")).toBe("[x](data:text/html,hi)");
+  });
+
   it("renders url and email autolinks", () => {
     expect(renderCell("<https://example.com/a?b=1&c=2>")).toBe(
       '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noreferrer">https://example.com/a?b=1&amp;c=2</a>',
