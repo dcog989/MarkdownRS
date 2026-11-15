@@ -18,6 +18,27 @@
   caret-color: currentColor;
 }
 
+/* WebKitGTK 2.54's Skia compositor keeps an infinite *composited* animation
+   (CodeMirror's opacity-based caret blink) running at ~5% of a core for as long
+   as the editor is focused. Animating `visibility` instead keeps the blink on
+   the WebProcess main thread. `!important` is required because CodeMirror
+   writes `animation-duration` inline. Remove both once
+   https://bugs.webkit.org/show_bug.cgi?id=328919 is fixed. */
+.cm-editor.cm-focused > .cm-scroller > .cm-cursorLayer {
+  animation: mr-caret-blink 1.2s linear infinite !important;
+}
+
+@keyframes mr-caret-blink {
+  0%,
+  49.99% {
+    visibility: visible;
+  }
+  50%,
+  100% {
+    visibility: hidden;
+  }
+}
+
 /* Reserve space for the overlaid status bar so the last line clears it, and
    for the find bar so line 1 starts below the bar while scrolled content
    still shows through it. The extra `.cm-scroller` class outranks
