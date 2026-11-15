@@ -5,6 +5,11 @@ edition = "2024"
 description = "The only Markdown editor you need."
 license = "GPL-3.0-only"
 
+[features]
+default = ["pdf-export", "spellcheck"]
+pdf-export = ["dep:office_oxide", "dep:pdf_oxide"]
+spellcheck = ["dep:reqwest"]
+
 [dependencies]
 anyhow = "1.0"
 chardetng = "1.0"
@@ -14,14 +19,14 @@ dirs = "7"
 dunce = "1"
 encoding_rs = "0.8"
 flexi_logger = { version = "0.31", default-features = false, features = ["colors"] }
-harper-core = "3.0"
+harper-core = "3.2"
 log = "0.4"
-office_oxide = { version = "0.1.16", default-features = false, optional = true }
+office_oxide = { version = "0.1.17", default-features = false, optional = true }
 pdf_oxide = { version = "0.3", optional = true }
 regex = "1.13"
 reqwest = { version = "0.13", optional = true }
 rumdl = "0.3"
-rusqlite = { version = "0.41", features = ["bundled"] }
+rusqlite = { version = "0.42", features = ["bundled"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 spellbook = "0.4"
@@ -53,10 +58,9 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 [target.'cfg(target_os = "windows")'.dependencies]
 winreg = "0.56"
 
-[features]
-default = ["pdf-export", "spellcheck"]
-pdf-export = ["dep:office_oxide", "dep:pdf_oxide"]
-spellcheck = ["dep:reqwest"]
+[lints.cargo]
+# Deliberate failure, not a warning: rustc `-D warnings` does not cover Cargo lints.
+unused_dependencies = "deny"
 
 [profile.dev]
 opt-level = 1
