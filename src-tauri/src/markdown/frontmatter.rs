@@ -75,7 +75,7 @@ pub fn extract_frontmatter(content: &str) -> Option<Frontmatter> {
     // Opening delimiter is line 1; `line_count` tracks the current line number.
     for (line_count, segment) in (2..).zip(segments) {
         offset += segment.len();
-        let line = segment.strip_suffix('\n').unwrap_or(segment);
+        let line = segment.trim_suffix('\n');
 
         let is_closing = if brace_depth > 0 {
             for c in line.chars() {
