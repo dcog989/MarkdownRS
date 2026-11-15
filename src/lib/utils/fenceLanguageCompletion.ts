@@ -24,11 +24,20 @@ const COMMON_LANGUAGES = new Set([
   "yaml",
 ]);
 
+// @codemirror/language-data has no plain-text mode, but the renderer treats
+// these fence labels as unhighlighted text.
+const PLAIN_TEXT_LABELS = ["text", "plaintext"];
+
 const LANGUAGE_OPTIONS: Completion[] = buildLanguageOptions();
 
 function buildLanguageOptions(): Completion[] {
   const seen = new Set<string>();
   const options: Completion[] = [];
+
+  for (const label of PLAIN_TEXT_LABELS) {
+    seen.add(label);
+    options.push({ label, detail: "Plain text", boost: 1, apply: applyLanguage });
+  }
 
   for (const lang of languages) {
     const candidates = [lang.name, ...(lang.alias ?? [])];
