@@ -35,7 +35,7 @@
 - Package: `just package` (makepkg from `PKGBUILD`)
 - Clean: `just clean` (build artifacts and `node_modules`)
 - Release: `cog bump --auto` (Cocogitto, external Rust binary — `cargo install cocogitto` / `pacman -S cocogitto`; config in `cog.toml`, `tag_prefix = "v"`). Bumps the version from conventional commits, syncs manifests via `bash scripts/sync_version.sh`, writes `CHANGELOG.md` (template `changelog.tpl`), commits and tags, then pushes. Manual version: `cog bump --version 1.2.3`.
-- Update crates: `bun run crates` (requires `cargo-edit`, external Rust binary — `cargo install cargo-edit` / `pacman -S cargo-edit`).
+- Update crates: `just crates` (requires `cargo-edit`, external Rust binary — `cargo install cargo-edit` / `pacman -S cargo-edit`).
 
 ### Tools
 

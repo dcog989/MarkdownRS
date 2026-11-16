@@ -88,3 +88,7 @@ website:
 # Bump the version from conventional commits and tag it.
 release:
     cog bump --auto
+
+# Full Tauri bundles: AppImage, deb, rpm, NSIS.
+bundle:
+    bunx tauri build
