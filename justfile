@@ -92,3 +92,21 @@ release:
 # Full Tauri bundles: AppImage, deb, rpm, NSIS.
 bundle:
     bunx tauri build
+
+# Verify commit messages in a range (`just commits origin/main..HEAD`).
+commits range="origin/main..HEAD":
+    cog check {{range}}
+
+# Regenerate the SvelteKit types before a type check.
+sync:
+    bunx svelte-kit sync
+
+# Static website into website/dist.
+website-build:
+    bunx --bun vite build --config website/vite.config.js
+
+# App frontend only (no Tauri bundle).
+frontend-build:
+    bunx --bun vite build
+
+# Verify commit messages in a range (`just commits origin/main..HEAD`).
