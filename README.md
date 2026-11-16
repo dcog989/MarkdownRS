@@ -124,9 +124,9 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 bun install            # Install dependencies
 just check             # Full check: tests, Svelte types, Biome lint, and cargo clippy
 just format            # Apply all fixes, then run the full check
-just update         # Update packages + crates
+just update            # Update packages + crates
 just dev               # Start dev server / HMR
-just bundle       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+just bundle            # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 just clean             # Remove build artifacts, target, and node_modules
 just package           # build and pack
 just install           # install the built package (sudo)

@@ -313,7 +313,7 @@ export async function loadSession(): Promise<void> {
       }
     }
 
-    if (settingsState.enableClosedTabHistory && closedRustTabs.length > 0) {
+    if (closedRustTabs.length > 0) {
       closedRustTabs.sort((a, b) => (a.sort_index ?? 0) - (b.sort_index ?? 0));
 
       editorStore.closedTabsHistory = closedRustTabs.map((t) => {

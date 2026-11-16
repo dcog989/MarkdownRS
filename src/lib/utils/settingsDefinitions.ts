@@ -1,7 +1,6 @@
 import type { MessageKey } from "$lib/i18n";
 import { DEFAULT_TAB_WIDTH_MAX, DEFAULT_TAB_WIDTH_MIN } from "$lib/stores/settingsState.svelte";
 import {
-  onClosedTabHistoryChange,
   onHarperChanged,
   onTabNameFromContentChange,
   onThemeChange,
@@ -262,7 +261,6 @@ export function getSettingDefinitions(
       category: "settings.category.files",
       defaultValue: true,
       tooltip: "settings.closedTabHistoryTooltip",
-      onChange: onClosedTabHistoryChange,
     },
     {
       key: "fileHistoryLimit",

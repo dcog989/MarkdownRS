@@ -1,5 +1,4 @@
 import { translate } from "$lib/i18n";
-import { clearTabCaches } from "$lib/stores/editorCache";
 import { editorStore, updateTabFields } from "$lib/stores/editorStore.svelte";
 import { setTheme, settingsState } from "$lib/stores/settingsState.svelte";
 import { appContext } from "$lib/stores/state.svelte";
@@ -64,17 +63,4 @@ export function onTabNameFromContentChange(newValue: unknown) {
       updateTabFields(tab.id, { title: targetTitle });
     }
   }
-}
-
-/** Turning off closed-tab history frees the stored buffers now; the next
- *  session save clears their persisted rows too. */
-export function onClosedTabHistoryChange(newValue: unknown) {
-  if (newValue) return;
-  for (const entry of editorStore.closedTabsHistory) {
-    clearTabCaches(entry.tab.id);
-  }
-  editorStore.closedTabsHistory = [];
-  // Without this the persist below would skip (nothing else is dirty), leaving
-  // the closed-tab text in session.db even though the setting is off.
-  editorStore.sessionDirty = true;
 }

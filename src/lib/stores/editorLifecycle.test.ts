@@ -197,13 +197,13 @@ describe("closeTab history", () => {
     settingsState.enableClosedTabHistory = true;
   });
 
-  it("does not keep history when closed-tab history is disabled", () => {
+  it("keeps history when the new-doc list is disabled so reopen still works", () => {
     settingsState.enableClosedTabHistory = false;
     editorStore.tabs = [{ ...tab("a", false), path: "/a.md", content: "text" }];
 
     closeTab("a");
 
-    expect(editorStore.closedTabsHistory).toHaveLength(0);
+    expect(editorStore.closedTabsHistory).toHaveLength(1);
   });
 
   it("keeps the transient state of a history entry so its content is not rewritten", () => {

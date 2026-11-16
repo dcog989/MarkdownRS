@@ -134,7 +134,9 @@ export function closeTab(id: string) {
   const transient = getTransientState(id);
   let storedInHistory = false;
 
-  if (settingsState.enableClosedTabHistory && (tab.path || (tab.content && tab.content.trim().length > 0))) {
+  // History is always kept: the "Recently Closed on New Docs" setting only
+  // controls that list's visibility, and Reopen Last Closed depends on it.
+  if (tab.path || (tab.content && tab.content.trim().length > 0)) {
     const limit = CONFIG.EDITOR.CLOSED_TABS_HISTORY_LIMIT;
     const historyState = getHistoryState(id);
 
