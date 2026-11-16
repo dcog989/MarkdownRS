@@ -55,7 +55,7 @@ $effect(() => {
   let title = `${dirtyMarker}${tab?.title || appName}`;
   if (path) {
     const name = getFilename(path);
-    const folder = getFilename(dirname(path));
+    const folder = dirname(path);
     title = folder
       ? `${dirtyMarker}${$_("app.titleWithFolder", { values: { name, folder } })}`
       : `${dirtyMarker}${name}`;
