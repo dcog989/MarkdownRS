@@ -128,7 +128,7 @@ bun run update         # Update packages + crates
 just dev               # Start dev server / HMR
 bunx tauri build       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 just clean             # Remove build artifacts, target, and node_modules
-sudo just package      # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
+just package           # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
 #
 bun run website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
