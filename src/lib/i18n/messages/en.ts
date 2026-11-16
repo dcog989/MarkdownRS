@@ -2,7 +2,7 @@ export const en = {
   app: {
     name: "MarkdownRS",
     loading: "Loading MarkdownRS…",
-    titleWithFolder: "{name} — {folder}",
+    titleWithApp: "{name} — {app}",
     tagline: "The only Markdown editor you need.",
     quote: "I didn't get where I am today... without knowing a damned fine editor when I see one.",
     giants: "Giants' Shoulders = Node / Vite / Rust / Tauri / Svelte / rumdl",

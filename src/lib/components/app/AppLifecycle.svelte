@@ -9,10 +9,8 @@ import { setupAutoSave } from "$lib/services/autoSave.svelte";
 import { loadTabContentLazy } from "$lib/services/tabLoadStateMachine";
 import type { EditorTab } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { getFilename } from "$lib/utils/fileValidation";
 import { logger } from "$lib/utils/logger";
 import { mruCycling } from "$lib/utils/mruCycling.svelte";
-import { dirname } from "$lib/utils/path";
 import { formatDuration } from "$lib/utils/timing";
 
 let { children } = $props();
@@ -49,17 +47,10 @@ $effect(() => {
 
 $effect(() => {
   const tab = activeTab;
-  const path = tab?.path || "";
   const dirtyMarker = tab?.isDirty ? "*" : "";
   const appName = $_("app.name");
-  let title = `${dirtyMarker}${tab?.title || appName}`;
-  if (path) {
-    const name = getFilename(path);
-    const folder = dirname(path);
-    title = folder
-      ? `${dirtyMarker}${$_("app.titleWithFolder", { values: { name, folder } })}`
-      : `${dirtyMarker}${name}`;
-  }
+  const name = tab?.path || tab?.title;
+  const title = name ? `${dirtyMarker}${$_("app.titleWithApp", { values: { name, app: appName } })}` : appName;
   void getCurrentWindow().setTitle(title);
 });
 
