@@ -110,3 +110,15 @@ frontend-build:
     bunx --bun vite build
 
 # Verify commit messages in a range (`just commits origin/main..HEAD`).
+
+# Biome over a file list, as the pre-commit hook passes it.
+format-staged *files:
+    bunx biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {{files}}
+
+# rustfmt over a file list, as the pre-commit hook passes it.
+format-rust-staged *files:
+    cargo fmt --manifest-path src-tauri/Cargo.toml -- {{files}}
+
+# Verify a commit message file, as the commit-msg hook passes it.
+commit-check file:
+    cog verify --file {{file}}
