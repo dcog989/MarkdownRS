@@ -1,8 +1,8 @@
 # Verify the repo: frontend and Rust checks, the same set CI runs.
 default: check
 
-# Full check: Svelte types, Biome lint, and Clippy.
-check:
+# Full check: tests, Svelte types, Biome lint, and Clippy.
+check: sync test
     bun run check
 
 # Linter alone.
@@ -28,6 +28,10 @@ dev:
 # makepkg from PKGBUILD.
 package:
     bun run package
+
+# Install the built package with pacman.
+install: package
+    bun run pkg-install
 
 # Remove build artifacts and node_modules.
 clean:
@@ -77,10 +81,6 @@ icons:
 pack:
     bun run pack
 
-# package.json script: pkg-install.
-pkg-install:
-    bun run pkg-install
-
 # package.json script: website.
 website:
     bun run website
@@ -108,8 +108,6 @@ website-build:
 # App frontend only (no Tauri bundle).
 frontend-build:
     bunx --bun vite build
-
-# Verify commit messages in a range (`just commits origin/main..HEAD`).
 
 # Biome over a file list, as the pre-commit hook passes it.
 format-staged *files:

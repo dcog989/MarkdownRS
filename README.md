@@ -75,7 +75,7 @@ Download [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/
 | Debian / Ubuntu | `.deb`                   | `sudo apt install ./MarkdownRS_*.deb`                       |
 | Fedora / RHEL   | `.rpm`                   | `sudo dnf install ./MarkdownRS-*.rpm`                       |
 | Arch / CachyOS  | `.pkg.tar.zst`           | `sudo pacman -U MarkdownRS-*.pkg.tar.zst`                   |
-| Arch / CachyOS  | `PKGBUILD` (local build) | `bun install && just package`                               |
+| Arch / CachyOS  | `PKGBUILD` (local build) | `bun install && just install`                               |
 | Windows         | NSIS `.exe`              | run the `.exe`                                              |
 
 > [!NOTE]
@@ -122,13 +122,14 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 
 ```sh
 bun install            # Install dependencies
-just check             # Full check: Svelte types, Biome lint, and cargo clippy
+just check             # Full check: tests, Svelte types, Biome lint, and cargo clippy
 just format            # Apply all fixes, then run the full check
 just update         # Update packages + crates
 just dev               # Start dev server / HMR
 just bundle       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 just clean             # Remove build artifacts, target, and node_modules
-just package           # build, pack, then install (rerun `just pkg-install` if the password prompt is missed)
+just package           # build and pack
+just install           # install the built package (sudo)
 #
 just website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
