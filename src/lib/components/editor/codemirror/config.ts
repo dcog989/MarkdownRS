@@ -6,7 +6,7 @@ import {
   completeAnyWord,
   completionKeymap,
 } from "@codemirror/autocomplete";
-import { defaultKeymap, historyKeymap, indentWithTab } from "@codemirror/commands";
+import { defaultKeymap, deleteGroupForward, historyKeymap, indentWithTab } from "@codemirror/commands";
 import { insertNewlineContinueMarkup } from "@codemirror/lang-markdown";
 import { EditorView, type KeyBinding, keymap } from "@codemirror/view";
 import { commands } from "$lib/commands/commands";
@@ -105,6 +105,27 @@ for (const cmd of commands) {
 
 const IS_MAC = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
 
+// CodeMirror's deleteGroupForward stops at the line end, so Ctrl+Delete there
+// removes only the line break. Extend it over the next line's indentation so
+// the caret lands on its first word, as other editors do.
+export function deleteWordForwardAtLineEnd(view: EditorView): boolean {
+  const { state } = view;
+  const cursor = state.selection.main;
+  const line = state.doc.lineAt(cursor.head);
+  if (!cursor.empty || cursor.head !== line.to || line.number === state.doc.lines) {
+    return deleteGroupForward(view);
+  }
+  const next = state.doc.line(line.number + 1);
+  const indent = /^[ \t]*/.exec(next.text)?.[0].length ?? 0;
+  view.dispatch({
+    changes: { from: cursor.head, to: next.from + indent },
+    selection: { anchor: cursor.head },
+    scrollIntoView: true,
+    userEvent: "delete.forward",
+  });
+  return true;
+}
+
 // Settings and CodeMirror's default map write the same chord in different
 // orders ("Mod-Shift-k" vs "Shift-Mod-k"), so compare them in one form.
 export function canonicalKey(key: string): string {
@@ -173,6 +194,7 @@ export function getEditorKeymap(customKeymap: KeyBinding[] = []) {
     // lang-markdown's keymap is disabled; keep its Enter continuation without
     // re-introducing deleteMarkupBackward on Backspace.
     { key: "Enter", run: insertNewlineContinueMarkup },
+    { key: "Mod-Delete", mac: "Alt-Delete", run: deleteWordForwardAtLineEnd },
     ...(defaultKeymap.filter(
       (binding) => binding.key !== "Tab" && !filteredKeys.has(canonicalKey(binding.key ?? "")),
     ) as KeyBinding[]),
