@@ -2,13 +2,15 @@
 import ChevronRight from "lucide-svelte/icons/chevron-right";
 import FilePlus from "lucide-svelte/icons/file-plus";
 import Files from "lucide-svelte/icons/files";
+import History from "lucide-svelte/icons/history";
 import Save from "lucide-svelte/icons/save";
+import Undo2 from "lucide-svelte/icons/undo-2";
 import { _ } from "svelte-i18n";
 import ContextMenu from "$lib/components/ui/ContextMenu.svelte";
 import Submenu from "$lib/components/ui/Submenu.svelte";
 import { createNewFile } from "$lib/stores/editorStore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
-import { closeManyTabs, saveAllFiles } from "$lib/utils/fileSystem";
+import { closeManyTabs, saveAllFiles, triggerReopenClosedTab } from "$lib/utils/fileSystem";
 import { shortcutManager } from "$lib/utils/shortcuts";
 
 let {
@@ -21,9 +23,10 @@ let {
   onClose: () => void;
 } = $props();
 
-let activeSubmenu = $state<"close" | null>(null);
+let activeSubmenu = $state<"close" | "restore" | null>(null);
 let newTabShortcut = $derived(shortcutManager.getShortcutDisplay("file.new"));
 let saveAllShortcut = $derived(shortcutManager.getShortcutDisplay("file.saveAll"));
+let reopenShortcut = $derived(shortcutManager.getShortcutDisplay("file.reopenClosedTab"));
 
 // Save All writes pinned tabs too, so it keeps the plain dirty check.
 let hasUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty));
@@ -33,6 +36,7 @@ let hasSavedTabs = $derived(appContext.editor.tabs.some((t) => !t.isDirty && !t.
 let hasCloseableUnsavedTabs = $derived(appContext.editor.tabs.some((t) => t.isDirty && !t.isPinned));
 let hasPinnedTabs = $derived(appContext.editor.tabs.some((t) => t.isPinned));
 let hasUnpinnedTabs = $derived(appContext.editor.tabs.some((t) => !t.isPinned));
+let hasClosedTabs = $derived(appContext.editor.closedTabsHistory.length > 0);
 
 async function handleCloseMany(mode: "saved" | "unsaved" | "all" | "unpinned") {
   await closeManyTabs(mode);
@@ -48,6 +52,23 @@ async function handleNewTab() {
   const newTabId = await createNewFile();
   appContext.app.activeTabId = newTabId;
   onClose();
+}
+
+async function handleReopenLastClosed() {
+  await triggerReopenClosedTab(0);
+  onClose();
+}
+
+async function handleReopenClosed(tabId: string) {
+  // Resolve at click time: the list can shift while the submenu is open.
+  const index = appContext.editor.closedTabsHistory.findIndex((entry) => entry.tab.id === tabId);
+  await triggerReopenClosedTab(index);
+  onClose();
+}
+
+const MAX_TITLE_LENGTH = 20;
+function formatTitle(title: string): string {
+  return title.length > MAX_TITLE_LENGTH ? `${title.substring(0, MAX_TITLE_LENGTH)}...` : title;
 }
 </script>
 
@@ -113,6 +134,46 @@ async function handleNewTab() {
       <button type="button" class="text-ui menu-item" onclick={() => handleCloseMany("all")}>
         {$_("tabBarContextMenu.closeAll")}
       </button>
+    </Submenu>
+
+    <div class="bg-border-primary my-1 h-px"></div>
+
+    <button type="button" class="text-ui menu-item" disabled={!hasClosedTabs} onclick={handleReopenLastClosed}>
+      <History size={14} class="opacity-70" /><span class="flex-1">{$_("tabContextMenu.reopenLastClosed")}</span>
+      {#if reopenShortcut}
+        <span class="text-ui-sm opacity-40">{reopenShortcut}</span>
+      {/if}
+    </button>
+
+    <Submenu
+      show={activeSubmenu === "restore"}
+      side={_submenuSide}
+      onOpen={() => (activeSubmenu = "restore")}
+      onClose={() => {
+        if (activeSubmenu === "restore") activeSubmenu = null;
+      }}
+    >
+      {#snippet trigger()}
+        <button type="button" class="text-ui menu-item {hasClosedTabs ? "" : "opacity-50"}">
+          <Undo2 size={14} class="mr-2 opacity-70" />
+          <span>{$_("tabContextMenu.reopenRecent")}</span>
+          <ChevronRight size={16} class="ml-auto shrink-0 opacity-60" aria-hidden="true" />
+        </button>
+      {/snippet}
+
+      {#if hasClosedTabs}
+        {#each appContext.editor.closedTabsHistory as entry (entry.tab.id)}
+          <button
+            type="button"
+            class="text-ui menu-item justify-between"
+            onclick={() => handleReopenClosed(entry.tab.id)}
+          >
+            <span>{formatTitle(entry.tab.customTitle || entry.tab.title)}</span>
+          </button>
+        {/each}
+      {:else}
+        <div class="text-fg-muted px-3 py-2 text-ui">{$_("tabContextMenu.historyEmpty")}</div>
+      {/if}
     </Submenu>
   {/snippet}
 </ContextMenu>
