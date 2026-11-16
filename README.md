@@ -122,13 +122,13 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 
 ```sh
 bun install            # Install dependencies
-bun run check          # Full check: Svelte types, Biome lint, and cargo clippy
-bun run fix            # Apply all fixes, then run the full check
+just check             # Full check: Svelte types, Biome lint, and cargo clippy
+just format            # Apply all fixes, then run the full check
 bun run update         # Update packages + crates
-bun run dev            # Start dev server / HMR
+just dev               # Start dev server / HMR
 bunx tauri build       # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
-bun run clean          # Remove build artifacts, target, and node_modules
-sudo bun run package   # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
+just clean             # Remove build artifacts, target, and node_modules
+sudo just package      # build, pack, then install (rerun `bun run pkg-install` if the password prompt is missed)
 #
 bun run website        # Start website dev server (HMR) @ http://localhost:5173/
 ```
