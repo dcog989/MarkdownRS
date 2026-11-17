@@ -17,4 +17,8 @@ describe("extractSmartTitle", () => {
   it("uses the first content line when there is no frontmatter", () => {
     expect(extractSmartTitle("# Hello\nWorld")).toBe("Hello");
   });
+
+  it("drops leading HTML tags from the title line", () => {
+    expect(extractSmartTitle("<div><b>Hello")).toBe("Hello");
+  });
 });

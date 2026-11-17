@@ -11,6 +11,8 @@ const REPO_ROOT = join(SITE_ROOT, "..");
 const PUBLIC_DIR = join(SITE_ROOT, "public", "assets");
 const REPO_URL = "https://github.com/dcog989/MarkdownRS/blob/main";
 const REPO_ASSET = /!\[([^\]]*)\]\((?:assets|static)\/([^)]+)\)/g;
+// A line made of nothing but images: the README's screenshot run.
+const SCREENSHOT_LINE = /^(?:\s*!\[[^\]]*\]\([^)]+\))+\s*$/m;
 // Carousel slides render at about 430 px wide, so 960 px covers 2x displays.
 const SLIDE_WIDTHS = [480, 960];
 
@@ -49,13 +51,24 @@ function localAssets(markdown) {
   return markdown.replace(REPO_ASSET, (_match, alt, file) => `![${alt}](assets/${file})`);
 }
 
+/** Text of a rendered fragment with its inline markup dropped. */
+function plainText(fragment) {
+  let text = "";
+  let inTag = false;
+  for (const char of fragment) {
+    if (char === "<") inTag = true;
+    else if (char === ">") inTag = false;
+    else if (!inTag) text += char;
+  }
+  return text;
+}
+
 /** marked emits headings without ids; the README's in-page links need them. */
 function headingIds(html) {
   const seen = new Map();
   return html.replace(/<h([1-6])>([\s\S]*?)<\/h\1>/g, (_match, level, inner) => {
     const base =
-      inner
-        .replace(/<[^>]+>/g, "")
+      plainText(inner)
         .trim()
         .toLowerCase()
         .replace(/[^\p{L}\p{N}\s-]/gu, "")
@@ -142,7 +155,7 @@ export function renderReadme() {
   const source = readFileSync(join(REPO_ROOT, "README.md"), "utf8");
 
   // The screenshot run is the only line made of nothing but images.
-  const run = source.split("\n").find((line) => /^(?:\s*!\[[^\]]*\]\([^)]+\)\s*)+$/.test(line) && line.includes("!["));
+  const run = source.split("\n").find((line) => SCREENSHOT_LINE.test(line));
   const screenshots = run
     ? [...run.matchAll(/!\[([^\]]*)\]\((?:assets|static)\/([^)]+)\)/g)].map((match) => ({
         alt: match[1],
@@ -153,9 +166,7 @@ export function renderReadme() {
   // Strip before copying: the brand mark is in the header and the screenshots
   // become the carousel, so neither original needs to ship.
   const markdown = localAssets(
-    source
-      .replace(/^!\[[^\]]*\]\([^)]*logo[^)]*\)\s*/im, "")
-      .replace(/^(?:\s*!\[[^\]]*\]\([^)]+\)\s*)+$/m, "<!--SCREENSHOTS-->"),
+    source.replace(/^!\[[^\]]*\]\([^)]*logo[^)]*\)\s*/im, "").replace(SCREENSHOT_LINE, "<!--SCREENSHOTS-->"),
   );
 
   const cli = screenshots.length > 0 ? imageCli() : null;

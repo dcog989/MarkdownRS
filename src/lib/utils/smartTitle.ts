@@ -36,6 +36,20 @@ function stripFrontmatter(content: string): string {
   return closing === -1 ? content : lines.slice(closing + 1).join("\n");
 }
 
+/**
+ * Drops leading HTML tags, and the whitespace after each, so a first line like
+ * `<div>Title` is not titled as markup. Inline and trailing markup is left alone.
+ */
+function stripLeadingTags(line: string): string {
+  let rest = line;
+  while (rest.startsWith("<")) {
+    const close = rest.indexOf(">");
+    if (close === -1) break;
+    rest = rest.slice(close + 1).trimStart();
+  }
+  return rest;
+}
+
 export function extractSmartTitle(content: string): string | null {
   const body = stripFrontmatter(content.slice(0, TITLE_SCAN_LIMIT));
   const trimmed = body.trim();
@@ -48,10 +62,7 @@ export function extractSmartTitle(content: string): string | null {
 
   if (!firstLine) return null;
 
-  const title = firstLine
-    .replace(/^#+\s*/, "")
-    .replace(/^(?:<[^>]+>\s*)+/, "")
-    .trim();
+  const title = stripLeadingTags(firstLine.replace(/^#+\s*/, "")).trim();
   if (title.length === 0) return null;
 
   return title;
