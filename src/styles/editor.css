@@ -25,6 +25,7 @@
    writes `animation-duration` inline. Remove both once
    https://bugs.webkit.org/show_bug.cgi?id=328919 is fixed. */
 .cm-editor.cm-focused > .cm-scroller > .cm-cursorLayer {
+  /* biome-ignore lint/complexity/noImportantStyles: overrides CodeMirror's inline animation-duration */
   animation: mr-caret-blink 1.2s linear infinite !important;
 }
 
