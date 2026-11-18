@@ -121,17 +121,20 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 ### Build & Run
 
 ```sh
-bun install            # Install dependencies
-just check             # Full check: tests, Svelte types, Biome lint, and cargo clippy
-just format            # Apply all fixes, then run the full check
-just update            # Update packages + crates
-just dev               # Start dev server / HMR
-just bundle            # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
-just clean             # Remove build artifacts, target, and node_modules
-just package           # build and pack
-just install           # install the built package (sudo)
-#
-just website        # Start website dev server (HMR) @ http://localhost:5173/
+bun install        # Install dependencies
+just --list        # all recipes
+
+just               # Verify the repo: frontend and Rust checks, the same set CI runs.
+just bundle        # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
+just check         # Full check: tests, Svelte types, Biome lint, and cargo clippy
+just clean         # Remove build artifacts, target, and node_modules
+just dev           # Start dev server / HMR
+just format        # Apply all fixes, then run the full check
+just install       # build and install
+just package       # build and pack
+just update        # Update packages + crates
+
+just website       # Start website dev server (HMR) @ http://localhost:5173/
 ```
 
 ### LLM Use

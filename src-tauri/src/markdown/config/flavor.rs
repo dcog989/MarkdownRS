@@ -1,5 +1,4 @@
 use comrak::Options;
-use comrak::options::{Extension, Parse, Render};
 use serde::{Deserialize, Serialize};
 
 /// Markdown flavor specification (for comrak rendering)
@@ -30,34 +29,25 @@ impl MarkdownFlavor {
 
     /// Get central comrak options for this flavor
     pub fn to_comrak_options(self) -> Options<'static> {
-        let mut options = Options {
-            extension: match self {
-                Self::CommonMark => Extension::default(),
-                Self::Gfm => Extension {
-                    strikethrough: true,
-                    table: true,
-                    autolink: true,
-                    tasklist: true,
-                    subscript: true,
-                    footnotes: true,
-                    math_dollars: true,
-                    math_latex: true,
-                    math_code: true,
-                    ..Default::default()
-                },
-            },
-            parse: Parse {
-                smart: true,
-                default_info_string: None,
-                ..Default::default()
-            },
-            render: Render {
-                r#unsafe: true,
-                escape: false,
-                sourcepos: true,
-                ..Default::default()
-            },
-        };
+        let mut options = Options::default();
+
+        if let Self::Gfm = self {
+            options.extension.strikethrough = true;
+            options.extension.table = true;
+            options.extension.autolink = true;
+            options.extension.tasklist = true;
+            options.extension.subscript = true;
+            options.extension.footnotes = true;
+            options.extension.math_dollars = true;
+            options.extension.math_dollars_block = true;
+            options.extension.math_latex = true;
+            options.extension.math_code = true;
+        }
+
+        options.parse.smart = true;
+        options.render.r#unsafe = true;
+        options.render.escape = false;
+        options.render.sourcepos = true;
         options.extension.header_id_prefix = Some(String::new());
         options
     }

@@ -134,6 +134,17 @@ mod tests {
     }
 
     #[test]
+    fn display_math_block_keeps_contents_literal() {
+        // A `$$` fence on its own line is a block: Markdown inside must not be
+        // parsed, or `*` and `#` would split the formula.
+        let html = render_gfm("$$\n*not emphasis*\n\n# not a heading\n$$\n");
+        assert!(html.contains(r#"<div data-math-style="display""#), "html was: {html}");
+        assert!(html.contains("*not emphasis*"), "html was: {html}");
+        assert!(!html.contains("<em>"), "html was: {html}");
+        assert!(!html.contains("<h1"), "html was: {html}");
+    }
+
+    #[test]
     fn leaves_plain_markdown_untouched() {
         let html = render_gfm("Hello *world*.\n");
         assert!(!html.contains("data-math-style"));

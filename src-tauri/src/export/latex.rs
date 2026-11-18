@@ -124,8 +124,18 @@ fn render_block<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push_str(literal);
             out.push_str(&format!("\n\\end{{{environment}}}\n\n"));
         },
-        NodeValue::ThematicBreak => out.push_str("\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par\n\n"),
+        NodeValue::ThematicBreak(_) => out.push_str("\\par\\noindent\\rule{\\linewidth}{0.4pt}\\par\n\n"),
         NodeValue::Table(_) => render_table(node, out),
+        NodeValue::MathBlock(math) => {
+            out.push_str("\\[\n");
+            // TeX rejects a paragraph break inside display math, so blank lines
+            // allowed by the block fence cannot be carried into the export.
+            for line in math.literal.lines().filter(|line| !line.trim().is_empty()) {
+                out.push_str(line);
+                out.push('\n');
+            }
+            out.push_str("\\]\n\n");
+        },
         NodeValue::Math(math) if math.display_math => {
             out.push_str("\\[\n");
             out.push_str(&math.literal);
@@ -163,7 +173,7 @@ fn render_table<'a>(node: &'a AstNode<'a>, out: &mut String) {
     out.push_str("}\n");
 
     for row in node.children() {
-        let is_header = matches!(row.data.borrow().value, NodeValue::TableRow(true));
+        let is_header = matches!(&row.data.borrow().value, NodeValue::TableRow(table_row) if table_row.header);
         for (index, cell) in row.children().enumerate() {
             if index > 0 {
                 out.push_str(" & ");
@@ -195,9 +205,9 @@ fn render_inline<'a>(node: &'a AstNode<'a>, out: &mut String) {
             out.push_str(&escape_text(&code.literal));
             out.push('}');
         },
-        NodeValue::Emph => wrap(node, out, "\\emph{"),
-        NodeValue::Strong => wrap(node, out, "\\textbf{"),
-        NodeValue::Strikethrough => wrap(node, out, "\\sout{"),
+        NodeValue::Emph(_) => wrap(node, out, "\\emph{"),
+        NodeValue::Strong(_) => wrap(node, out, "\\textbf{"),
+        NodeValue::Strikethrough(_) => wrap(node, out, "\\sout{"),
         NodeValue::Underline => wrap(node, out, "\\underline{"),
         NodeValue::Superscript => wrap(node, out, "\\textsuperscript{"),
         NodeValue::Subscript => wrap(node, out, "\\textsubscript{"),
@@ -242,7 +252,7 @@ fn render_inline<'a>(node: &'a AstNode<'a>, out: &mut String) {
                 out.push('}');
             },
         },
-        NodeValue::HtmlInline(_) | NodeValue::Raw(_) | NodeValue::ShortCode(_) => {},
+        NodeValue::HtmlInline(_) | NodeValue::Raw(_) => {},
         _ => render_inlines(node, out),
     }
 }
@@ -360,6 +370,17 @@ mod tests {
         assert!(latex.contains("\\begin{tabular}{lcr}"), "latex was: {latex}");
         assert!(latex.contains("a & b & c \\\\"), "latex was: {latex}");
         assert!(latex.contains("\\hline"), "latex was: {latex}");
+    }
+
+    #[test]
+    fn renders_display_math_block() {
+        let latex = markdown_to_latex("$$\n*not emphasis*\n\nsecond line\n$$\n", MarkdownFlavor::Gfm);
+
+        assert!(
+            latex.contains("\\[\n*not emphasis*\nsecond line\n\\]"),
+            "latex was: {latex}"
+        );
+        assert!(!latex.contains("\\emph{"), "latex was: {latex}");
     }
 
     #[test]

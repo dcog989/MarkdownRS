@@ -14,7 +14,7 @@ spellcheck = ["dep:reqwest"]
 anyhow = "1.0"
 chardetng = "1.0"
 chrono = "0.4"
-comrak = "0.59"
+comrak = { version = "1.0", default-features = false }
 dirs = "7"
 dunce = "1"
 encoding_rs = "0.8"
@@ -41,7 +41,7 @@ tauri-plugin-updater = "2.14"
 tauri-plugin-window-state = "2.5"
 tokio = { version = "1", features = ["fs", "io-util", "sync"] }
 toml = "1.2"
-trash = "5.3"
+trash = "5.4"
 uuid = { version = "1", features = ["v4"] }
 zip = { version = "9", default-features = false }
 
