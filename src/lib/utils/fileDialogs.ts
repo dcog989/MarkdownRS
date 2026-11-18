@@ -1,5 +1,5 @@
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { translate } from "$lib/i18n";
 import {
   hasFileChanged,
@@ -28,6 +28,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import { runFlushFunctions } from "$lib/utils/editorCommands";
 import { AppError } from "$lib/utils/errorHandling";
 import { logger } from "$lib/utils/logger";
+import { openExternalUrl } from "$lib/utils/openExternal";
 import { normalizePath } from "$lib/utils/path";
 import { extractSmartTitle } from "$lib/utils/smartTitle";
 import { byteLength, computeLineStats, detectLineEnding } from "$lib/utils/textMetrics";
@@ -186,7 +187,7 @@ export async function navigateToPath(clickedPath: string): Promise<void> {
   try {
     if (EXTERNAL_LINK_RE.test(clickedPath)) {
       const url = /^www\./i.test(clickedPath) ? `https://${clickedPath}` : clickedPath;
-      await openUrl(url);
+      await openExternalUrl(url);
       return;
     }
 

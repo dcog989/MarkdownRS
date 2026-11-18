@@ -88,17 +88,21 @@ vi.mock("@tauri-apps/plugin-dialog", () => ({
   save: vi.fn(),
 }));
 
-vi.mock("@tauri-apps/plugin-opener", () => ({
-  openPath: vi.fn(),
-  openUrl: vi.fn(),
+vi.mock("$lib/utils/openExternal", () => ({
+  openExternalUrl: vi.fn(),
 }));
 
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+vi.mock("@tauri-apps/plugin-opener", () => ({
+  openPath: vi.fn(),
+}));
+
+import { openPath } from "@tauri-apps/plugin-opener";
 import { initI18n } from "$lib/i18n";
 import { dialogStore } from "$lib/stores/dialogStore.svelte";
 import { editorStore } from "$lib/stores/editorStoreCore.svelte";
 import { appContext } from "$lib/stores/state.svelte";
 import { navigateToPath, openFile, saveCurrentFile } from "$lib/utils/fileDialogs";
+import { openExternalUrl } from "$lib/utils/openExternal";
 
 // Toasts are translated, so i18n must be initialised before any test runs.
 beforeAll(() => {
@@ -264,8 +268,8 @@ describe("navigateToPath", () => {
     await navigateToPath("https://example.com/docs");
     await navigateToPath("mailto:me@example.com");
 
-    expect(openUrl).toHaveBeenNthCalledWith(1, "https://example.com/docs");
-    expect(openUrl).toHaveBeenNthCalledWith(2, "mailto:me@example.com");
+    expect(openExternalUrl).toHaveBeenNthCalledWith(1, "https://example.com/docs");
+    expect(openExternalUrl).toHaveBeenNthCalledWith(2, "mailto:me@example.com");
     expect(openPath).not.toHaveBeenCalled();
   });
 
@@ -301,11 +305,11 @@ describe("navigateToPath", () => {
   it("reports a link it will not follow instead of failing silently", async () => {
     const { toastStore } = await import("$lib/stores/toastStore.svelte");
     const toastsBefore = toastStore.toasts.length;
-    const opensBefore = vi.mocked(openUrl).mock.calls.length;
+    const opensBefore = vi.mocked(openExternalUrl).mock.calls.length;
 
     await navigateToPath(`https://example.com/${"a".repeat(2000)}`);
 
-    expect(vi.mocked(openUrl).mock.calls.length).toBe(opensBefore);
+    expect(vi.mocked(openExternalUrl).mock.calls.length).toBe(opensBefore);
     expect(toastStore.toasts.length).toBe(toastsBefore + 1);
   });
 });

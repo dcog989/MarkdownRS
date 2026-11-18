@@ -1,5 +1,4 @@
 <script lang="ts">
-import { openUrl } from "@tauri-apps/plugin-opener";
 import ArrowUpDown from "lucide-svelte/icons/arrow-up-down";
 import BookPlus from "lucide-svelte/icons/book-plus";
 import BookText from "lucide-svelte/icons/book-text";
@@ -23,6 +22,7 @@ import type { MessageKey } from "$lib/i18n";
 import { performTextTransform } from "$lib/stores/editorStore.svelte";
 import { recordCommandUsage } from "$lib/stores/settingsState.svelte";
 import { hasBullets } from "$lib/utils/clientTransforms";
+import { openExternalUrl } from "$lib/utils/openExternal";
 import { shortcutManager } from "$lib/utils/shortcuts";
 import { SPELLCHECK_WORD_PATTERN, spellcheckState } from "$lib/utils/spellcheck.svelte";
 
@@ -221,10 +221,10 @@ async function handleSendToBrowser() {
 
   if (isUrl) {
     const url = text.startsWith("www.") ? `https://${text}` : text;
-    await openUrl(url);
+    await openExternalUrl(url);
   } else {
     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
-    await openUrl(searchUrl);
+    await openExternalUrl(searchUrl);
   }
   closeMenuAndReset();
 }

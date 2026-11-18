@@ -6,6 +6,7 @@ pub mod export;
 pub mod files;
 pub mod logging;
 pub mod markdown;
+pub mod opener;
 pub mod session;
 pub mod settings;
 #[cfg(feature = "spellcheck")]

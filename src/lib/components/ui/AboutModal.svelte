@@ -1,5 +1,5 @@
 <script lang="ts">
-import { openPath, openUrl } from "@tauri-apps/plugin-opener";
+import { openPath } from "@tauri-apps/plugin-opener";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check } from "@tauri-apps/plugin-updater";
 import ExternalLink from "lucide-svelte/icons/external-link";
@@ -12,6 +12,7 @@ import { showToast } from "$lib/stores/toastStore.svelte";
 import type { AppInfo } from "$lib/types/api";
 import { callBackend } from "$lib/utils/backend";
 import { CONFIG } from "$lib/utils/config";
+import { openExternalUrl } from "$lib/utils/openExternal";
 import { saveSettings } from "$lib/utils/settings";
 import { onLogLevelChange } from "$lib/utils/settingsHandlers";
 
@@ -221,7 +222,7 @@ async function checkForUpdates() {
     {/if}
 
     {#if availableVersion}
-      <button type="button" class="btn-base btn-sm btn-outline" onclick={() => openUrl(RELEASES_PAGE)}>
+      <button type="button" class="btn-base btn-sm btn-outline" onclick={() => openExternalUrl(RELEASES_PAGE)}>
         <ExternalLink size={12} />
         <span>{$_("about.download")}</span>
       </button>
