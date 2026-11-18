@@ -6,8 +6,9 @@ import CaseSensitive from "lucide-svelte/icons/case-sensitive";
 import ChevronRight from "lucide-svelte/icons/chevron-right";
 import ClipboardCopy from "lucide-svelte/icons/clipboard-copy";
 import ClipboardPaste from "lucide-svelte/icons/clipboard-paste";
+import Hash from "lucide-svelte/icons/hash";
 import List from "lucide-svelte/icons/list";
-import Rotate3d from "lucide-svelte/icons/rotate-3d";
+import Rows3 from "lucide-svelte/icons/rows-3";
 import Scissors from "lucide-svelte/icons/scissors";
 import Search from "lucide-svelte/icons/search";
 import Sparkles from "lucide-svelte/icons/sparkles";
@@ -58,7 +59,7 @@ let {
   onReplaceWord?: (newWord: string) => void;
 } = $props();
 
-let activeSubmenu = $state<"sort" | "case" | "format" | "transform" | null>(null);
+let activeSubmenu = $state<"sort" | "case" | "markup" | "spacing" | "rewrite" | null>(null);
 let suggestions = $state<string[]>([]);
 let isLoadingSuggestions = $state(false);
 
@@ -113,12 +114,7 @@ const caseOps: MenuOption[] = [
   menuOp("swap-case"),
 ];
 
-const formatOps = $derived<MenuOption[]>([
-  menuOp("indent-lines"),
-  menuOp("unindent-lines"),
-  menuOp("trim-whitespace"),
-  menuOp("normalize-whitespace"),
-  { divider: true },
+const markupOps = $derived<MenuOption[]>([
   {
     id: "toggle-bullets",
     label: hasBullets(selectedText) ? "textOps.op.remove-bullets" : "textOps.op.add-bullets",
@@ -131,21 +127,28 @@ const formatOps = $derived<MenuOption[]>([
   { divider: true },
   menuOp("increase-heading"),
   menuOp("decrease-heading"),
-  { divider: true },
-  menuOp("hard-wrap"),
-  menuOp("wrap-quotes"),
 ]);
 
-const transformOps: MenuOption[] = [
+const spacingOps: MenuOption[] = [
+  menuOp("indent-lines"),
+  menuOp("unindent-lines"),
+  { divider: true },
+  menuOp("trim-whitespace"),
+  menuOp("normalize-whitespace"),
+];
+
+const rewriteOps: MenuOption[] = [
+  menuOp("hard-wrap"),
   menuOp("join-lines"),
   menuOp("split-sentences"),
   menuOp("smart-paragraphs"),
   { divider: true },
+  menuOp("wrap-quotes"),
+  { divider: true },
+  menuOp("remove-all-spaces"),
   menuOp("remove-duplicates"),
   menuOp("remove-unique"),
-  { divider: true },
   menuOp("remove-blank"),
-  menuOp("remove-all-spaces"),
 ];
 
 $effect(() => {
@@ -235,7 +238,7 @@ async function handleSendToBrowser() {
     {#snippet opSubmenu(
       IconCmp: typeof ArrowUpDown,
       label: string,
-      key: "sort" | "case" | "format" | "transform",
+      key: "sort" | "case" | "markup" | "spacing" | "rewrite",
       ops: MenuOption[],
     )}
       <Submenu
@@ -362,9 +365,10 @@ async function handleSendToBrowser() {
     {#if selectedText}
       <div class="bg-border-primary my-1 h-px"></div>
       {@render opSubmenu(CaseSensitive, $_("editorContextMenu.changeCase"), "case", caseOps)}
-      {@render opSubmenu(TextAlignStart, $_("editorContextMenu.formatLines"), "format", formatOps)}
+      {@render opSubmenu(Hash, $_("editorContextMenu.markup"), "markup", markupOps)}
+      {@render opSubmenu(TextAlignStart, $_("editorContextMenu.spacing"), "spacing", spacingOps)}
+      {@render opSubmenu(Rows3, $_("editorContextMenu.rewrite"), "rewrite", rewriteOps)}
       {@render opSubmenu(ArrowUpDown, $_("editorContextMenu.sortLines"), "sort", sortOps)}
-      {@render opSubmenu(Rotate3d, $_("editorContextMenu.transformLines"), "transform", transformOps)}
     {/if}
 
     <div class="bg-border-primary my-1 h-px"></div>
