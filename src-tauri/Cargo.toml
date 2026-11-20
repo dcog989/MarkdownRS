@@ -14,15 +14,15 @@ spellcheck = ["dep:reqwest"]
 anyhow = "1.0"
 chardetng = "1.0"
 chrono = "0.4"
-comrak = { version = "1.0", default-features = false }
+comrak = { version = "1.1", default-features = false }
 dirs = "7"
 dunce = "1"
 encoding_rs = "0.8"
-flexi_logger = { version = "0.31", default-features = false, features = ["colors"] }
+flexi_logger = { version = "0.32", default-features = false, features = ["colors"] }
 harper-core = { version = "3.2", default-features = false, features = ["concurrent"] }
 log = "0.4"
 office_oxide = { version = "0.1.17", default-features = false, optional = true }
-pdf_oxide = { version = "0.3", optional = true, default-features = false, features = ["icc"] }
+pdf_oxide = { version = "0.3", default-features = false, features = ["icc"], optional = true }
 regex = "1.13"
 reqwest = { version = "0.13", optional = true }
 rumdl = { version = "0.3", default-features = false, features = ["parallel"] }
@@ -39,7 +39,7 @@ tauri-plugin-process = "2.4"
 tauri-plugin-single-instance = "2.5"
 tauri-plugin-updater = "2.14"
 tauri-plugin-window-state = "2.5"
-tokio = { version = "1", features = ["fs", "io-util", "sync", "macros"] }
+tokio = { version = "1", features = ["fs", "io-util", "macros", "sync"] }
 toml = "1.2"
 trash = "5.4"
 uuid = { version = "1", features = ["v4"] }
