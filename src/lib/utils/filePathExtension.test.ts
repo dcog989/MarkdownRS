@@ -42,6 +42,12 @@ describe("extractPathAtPos", () => {
     expect(extractPathAtPos(text, text.indexOf("one file per day"))).toBeNull();
     expect(extractPathAtPos(text, text.indexOf("~/.local"))).toBe("~/.local/state/colorpickle/log/");
   });
+
+  // A backslash is both a separator and a path character, which used to make the quoted-path branch backtrack exponentially.
+  it("scans a quote followed by many backslash-separated segments quickly", () => {
+    const text = `"/${"a\\".repeat(32)}!`;
+    expect(extractPathAtPos(text, 0)).toBeNull();
+  }, 500);
 });
 
 describe("extractWikilinkAtPos", () => {
