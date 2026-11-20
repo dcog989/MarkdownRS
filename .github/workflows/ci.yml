@@ -26,6 +26,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
       - name: Install cocogitto
         uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
@@ -73,11 +78,6 @@ jobs:
 
       - name: Sync SvelteKit
         run: just sync
-
-      - name: Install just
-        uses: taiki-e/install-action@v2
-        with:
-          tool: just
 
       - name: Check
         run: just check
@@ -130,13 +130,13 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Sync SvelteKit
-        run: just sync
-
       - name: Install just
         uses: taiki-e/install-action@v2
         with:
           tool: just
+
+      - name: Sync SvelteKit
+        run: just sync
 
       - name: Run tests
         run: just test
