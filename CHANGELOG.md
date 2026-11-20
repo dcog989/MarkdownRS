@@ -3,6 +3,44 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.71.0 - 2026-11-20
+#### Features
+- (**tabs**) add reopen last closed + recent to the tab bar context menu - (dcb046b) - dcog989
+- (**ui**) show the file path and app name in the window title - (8df8f4c) - dcog989
+- (**ui**) show the full directory path in the window title - (de79a1e) - dcog989
+#### Bug Fixes
+- (**build**) run tests in check and keep system install out of package - (6df87bb) - dcog989
+- (**editor**) extend Ctrl+Delete over the next line's indentation - (320fb44) - dcog989
+- (**editor**) keep caret blink without the WebKitGTK compositor cost - (b57c34f) - dcog989
+- (**editor**) place the caret in a revealed link's raw URL - (b3f9bd8) - dcog989
+- (**editor**) let plain clicks place the caret on rendered table links - (d2f3a74) - dcog989
+- (**editor**) offer text and plaintext in fence language autocomplete - (510ce9d) - dcog989
+- (**links**) open external URLs through GTK so the browser takes focus - (81f7b79) - dcog989
+- (**linux**) drop Wayland title workaround now that tao 0.36 fixed CSD - (3e8dc10) - dcog989
+- (**security**) replace multi-character regex sanitizers with character scans - (4d6f782) - dcog989
+- (**tabs**) keep closed-tab history when the recently-closed list is off - (d9deac2) - dcog989
+#### Performance Improvements
+- (**deps**) drop unused comrak, harper, rumdl and pdf_oxide feature weight - (87ba702) - dcog989
+#### Refactoring
+- (**editor**) split line operations menu by effect into Markup, Spacing and Rewrite - (e1ad131) - dcog989
+- (**editor**) centralize rendered widget pointer mapping - (3fbc3cf) - dcog989
+#### Miscellaneous Chores
+- (**build**) call just from the git hooks - (905eac8) - dcog989
+- (**build**) call just from the git hooks - (11b6167) - dcog989
+- (**build**) close the remaining raw-command gaps - (8c658bc) - dcog989
+- (**build**) call the just recipes from CI, hooks and docs - (181164c) - dcog989
+- (**build**) wrap the remaining dev scripts in just - (6c050a8) - dcog989
+- (**build**) add an update recipe - (fb7dc90) - dcog989
+- (**build**) add a justfile for the common dev tasks - (bba19da) - dcog989
+- (**cog**) drop the custom changelog template - (1924631) - dcog989
+- (**deps**) upgrade comrak to v1 and trim its default features - (8a064cb) - dcog989
+- updates - (0e5286a) - dcog989
+- package updates - (e295b98) - dcog989
+#### Style
+- (**editor**) suppress noImportantStyles warning for caret blink - (c68e4f3) - dcog989
+
+- - -
+
 ## v1.70.0 - 2026-11-15
 
 #### Features
