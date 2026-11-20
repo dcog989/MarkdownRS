@@ -120,10 +120,9 @@ Math renders using standard [KaTeX](https://katex.org/) notation.
 
 ### Build & Run
 
-```sh
-bun install        # Install dependencies
-just --list        # all recipes
+Install dependencies: `bun install`
 
+```sh
 just               # Verify the repo: frontend and Rust checks, the same set CI runs.
 just bundle        # Build distributable bundles (.deb, .rpm, .AppImage, NSIS)
 just check         # Full check: tests, Svelte types, Biome lint, and cargo clippy
