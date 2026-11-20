@@ -23,4 +23,3 @@ post_bump_hooks = [
 
 [changelog]
 path = "CHANGELOG.md"
-template = "changelog.tpl"
