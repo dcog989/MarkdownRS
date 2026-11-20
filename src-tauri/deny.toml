@@ -7,7 +7,7 @@ ignore = [
   "RUSTSEC-2024-0436",
   # No upstream fix: updater 2.14 pins zip 4 (Windows), harper-core 3.0 (latest) pins zip 8.6, rumdl 0.3 pulls serde_yaml -> unsafe-libyaml, tauri-plugin-opener 2.7 / single-instance 2.5 (latest) pull zbus 5 -> zvariant 5
   "RUSTSEC-2024-0449",
-  # Same harper-core 3.0 zip 8.6 pin; only reachable through ZipArchive::extract() on an untrusted archive, harper extracts its own bundled dictionaries
+  # Same harper-core 3.2 (latest) zip 8.6 pin; only reachable through ZipArchive::extract() / ZipStreamReader on an untrusted archive, harper only reads its own bundled dictionaries
   "RUSTSEC-2026-0429",
   "RUSTSEC-2026-0367",
   "RUSTSEC-2026-0368",
@@ -15,6 +15,12 @@ ignore = [
   "RUSTSEC-2026-0370",
   "RUSTSEC-2026-0371",
   "RUSTSEC-2026-0372",
+  "RUSTSEC-2026-0545",
+  "RUSTSEC-2026-0546",
+  "RUSTSEC-2026-0547",
+  "RUSTSEC-2026-0548",
+  # chrono is unmaintained with no safe upgrade; we only format timestamps, swap to jiff when it gets in the way
+  "RUSTSEC-2026-0543",
 ]
 
 [licenses]
