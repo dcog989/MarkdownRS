@@ -72,5 +72,8 @@ split-debuginfo = "unpacked"
 opt-level = 3
 
 [profile.release]
+opt-level = 3
 strip = true
 lto = "thin"
+panic = "abort"
+codegen-units = 1
