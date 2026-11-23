@@ -9,7 +9,7 @@ pub mod renderer;
 pub mod toc;
 
 use comrak::nodes::{AstNode, NodeValue};
-use comrak::{Anchorizer, Arena, parse_document};
+use comrak::{Anchorizer, Arena, html::escape_href, parse_document};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -23,10 +23,13 @@ pub(crate) fn parse_headings(content: &str, flavor: config::MarkdownFlavor) -> V
     let comrak_options = flavor.to_comrak_options();
     let arena = Arena::new();
     let root = parse_document(&arena, content, &comrak_options);
-    extract_headings_from_ast(root, &mut Anchorizer::new())
+    extract_headings_from_ast(root)
 }
 
-pub(crate) fn extract_headings_from_ast<'a>(root: &'a AstNode<'a>, anchorizer: &mut Anchorizer) -> Vec<HeadingEntry> {
+pub(crate) fn extract_headings_from_ast<'a>(root: &'a AstNode<'a>) -> Vec<HeadingEntry> {
+    let mut anchorizer = Anchorizer::new();
+    reserve_written_ids(root, &mut anchorizer);
+
     root.descendants()
         .filter_map(|node| {
             if let NodeValue::Heading(heading) = &node.data.borrow().value {
@@ -47,6 +50,37 @@ pub(crate) fn extract_headings_from_ast<'a>(root: &'a AstNode<'a>, anchorizer: &
             }
         })
         .collect()
+}
+
+fn href_escaped(value: &str) -> String {
+    let mut out = String::new();
+    escape_href(&mut out, value, false).expect("writing to a String cannot fail");
+    out
+}
+
+/// Reserves the IDs comrak writes before anchorizing headings, mirroring
+/// `reserve_written_ids` in its HTML renderer for the extensions enabled here
+/// (footnotes). Without this, a heading whose slug matches a footnote ID takes
+/// the footnote's anchor and the generated link points nowhere.
+///
+/// `Anchorizer::reserve` is crate-private, so `anchorize` doubles as the
+/// reservation: canonical slugs are inserted verbatim, and a slug that gets
+/// rewritten can never collide with a heading slug in the first place.
+fn reserve_written_ids<'a>(root: &'a AstNode<'a>, anchorizer: &mut Anchorizer) {
+    let mut probe = Anchorizer::new();
+    for node in root.descendants() {
+        let reserved = match &node.data.borrow().value {
+            NodeValue::FootnoteDefinition(definition) => format!("fn-{}", href_escaped(&definition.name)),
+            NodeValue::FootnoteReference(reference) if reference.ref_num > 1 => {
+                format!("fnref-{}-{}", href_escaped(&reference.name), reference.ref_num)
+            },
+            NodeValue::FootnoteReference(reference) => format!("fnref-{}", href_escaped(&reference.name)),
+            _ => continue,
+        };
+        if probe.anchorize(&reserved) == reserved {
+            anchorizer.anchorize(&reserved);
+        }
+    }
 }
 
 /// Visible text of a heading: like comrak's `collect_text`, but raw-HTML
@@ -108,5 +142,21 @@ mod tests {
         assert_eq!(html_text_content("&amp;lt;"), "&lt;");
         assert_eq!(html_text_content("&amp;amp;"), "&amp;");
         assert_eq!(html_text_content("<b>a &amp; b</b>"), "a & b");
+    }
+
+    #[test]
+    fn heading_anchor_avoids_footnote_id_collision() {
+        let result = crate::markdown::renderer::render_markdown(
+            "# fn-1\n\nText[^1]\n\n[^1]: note\n",
+            crate::markdown::renderer::MarkdownOptions {
+                flavor: config::MarkdownFlavor::Gfm,
+                ..Default::default()
+            },
+        )
+        .expect("render should succeed");
+
+        assert_eq!(result.headings[0].anchor_id, "fn-1-1", "html was {}", result.html);
+        assert!(result.html.contains(r#"<h1 id="fn-1-1""#), "html was {}", result.html);
+        assert!(result.html.contains(r#"id="fn-1""#), "html was {}", result.html);
     }
 }

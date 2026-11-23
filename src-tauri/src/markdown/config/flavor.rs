@@ -34,9 +34,11 @@ impl MarkdownFlavor {
         if let Self::Gfm = self {
             options.extension.strikethrough = true;
             options.extension.table = true;
+            options.extension.grid_table = true;
             options.extension.autolink = true;
             options.extension.tasklist = true;
             options.extension.ofm_callouts = true;
+            options.extension.ofm_comments = true;
             options.extension.subscript = true;
             options.extension.footnotes = true;
             options.extension.math_dollars = true;

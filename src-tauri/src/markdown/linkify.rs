@@ -16,11 +16,11 @@ static PATH_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     .expect("Invalid PATH_REGEX pattern")
 });
 
-// Matches wikilinks: `[[target]]` or `[[label|target]]`.
-// The target (group 1) may be a note name or a relative path; the label
-// (group 2) is optional display text.
+// Matches wikilinks: `[[target]]` or `[[label|target]]`. The target (group 2)
+// may be a note name or a relative path; the label (group 3) is optional
+// display text. A leading `!` (group 1) marks an embed, which is left literal.
 static WIKILINK_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"\[\[([^\[\]|]+)(?:\|([^\[\]|]+))?\]\]").expect("Invalid WIKILINK_REGEX pattern"));
+    LazyLock::new(|| Regex::new(r"(!?)\[\[([^\[\]|]+)(?:\|([^\[\]|]+))?\]\]").expect("Invalid WIKILINK_REGEX pattern"));
 
 const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
 
@@ -166,17 +166,21 @@ fn linkify_text_nodes<'a>(
 }
 
 /// Builds a wikilink splice for a `[[target]]` / `[[label|target]]` match, or
-/// `None` when the target is blank. The whole `[[...]]` span is consumed.
+/// `None` when the target is blank or the link is an embed (`![[target]]`).
+/// The whole `[[...]]` span is consumed.
 fn build_wikilink_link(cap: &regex::Captures<'_>) -> Option<Splice> {
     let full = cap.get(0)?;
-    let target = cap.get(1)?.as_str().trim();
+    if !cap.get(1)?.as_str().is_empty() {
+        return None;
+    }
+    let target = cap.get(2)?.as_str().trim();
 
     if target.is_empty() {
         return None;
     }
 
     let display = cap
-        .get(2)
+        .get(3)
         .map(|m| m.as_str().trim())
         .filter(|s| !s.is_empty())
         .unwrap_or(target);
@@ -247,6 +251,14 @@ mod tests {
         let html = render_gfm("See [[notes/foo]] for details.\n");
         assert!(html.contains(r#"<a href="notes/foo" class="wikilink""#));
         assert!(html.contains(">notes/foo</a>"));
+    }
+
+    #[test]
+    fn leaves_embed_wikilinks_literal() {
+        let html = render_gfm("![[image.png]] and ![[note|label]]\n");
+        assert!(!html.contains("class=\"wikilink\""), "embeds must not linkify: {html}");
+        assert!(html.contains("![[image.png]]"), "{html}");
+        assert!(html.contains("![[note|label]]"), "{html}");
     }
 
     #[test]

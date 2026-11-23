@@ -3,7 +3,7 @@ use crate::markdown::frontmatter;
 use crate::markdown::linkify::{linkify_file_paths_ast, linkify_wikilinks_ast};
 use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
 use anyhow::{Result, anyhow};
-use comrak::{Anchorizer, Arena, format_html_with_plugins, options::Plugins, parse_document};
+use comrak::{Arena, format_html_with_plugins, options::Plugins, parse_document};
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 
@@ -42,7 +42,7 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     linkify_wikilinks_ast(&arena, root);
     linkify_file_paths_ast(&arena, root);
 
-    let headings = extract_headings_from_ast(root, &mut Anchorizer::new());
+    let headings = extract_headings_from_ast(root);
 
     let mut html = String::new();
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
