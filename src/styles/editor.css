@@ -684,6 +684,16 @@ div:not(.markdown-mode) > .cm-editor.cm-modifier-down .cm-line:has(.cm-url:hover
   text-decoration: line-through;
 }
 
+.rendered-mode .cm-table-widget .cm-table-image {
+  max-width: 100%;
+  max-height: 240px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  vertical-align: middle;
+  border-radius: 4px;
+}
+
 /* Rendered mode: inline image widget */
 .rendered-mode .cm-image-widget > img {
   max-width: 100%;

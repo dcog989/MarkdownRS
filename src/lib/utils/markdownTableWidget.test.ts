@@ -58,6 +58,17 @@ describe("renderCell", () => {
     expect(renderCell("[x](data:text/html,hi)")).toBe("[x](data:text/html,hi)");
   });
 
+  it("renders images with the raw source kept for later resolution", () => {
+    expect(renderCell("![alt](img/pic.png)")).toBe(
+      '<img class="cm-table-image" data-raw-src="img/pic.png" alt="alt" draggable="false">',
+    );
+    expect(renderCell("![](https://example.com/a.png)")).toContain('data-raw-src="https://example.com/a.png"');
+  });
+
+  it("does not render images with unsafe schemes", () => {
+    expect(renderCell("![x](javascript:alert(1))")).toBe("![x](javascript:alert(1))");
+  });
+
   it("renders url and email autolinks", () => {
     expect(renderCell("<https://example.com/a?b=1&c=2>")).toBe(
       '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noreferrer">https://example.com/a?b=1&amp;c=2</a>',

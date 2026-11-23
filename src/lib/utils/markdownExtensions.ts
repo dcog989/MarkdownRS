@@ -545,7 +545,7 @@ export function createMarkdownDecorationsPlugin(
     linkTextTheme,
     ...(rendered
       ? [
-          createTableWidgetField(),
+          createTableWidgetField(getTabDirectory),
           renderedPointerHandler([renderedWidgetPointer, maskedLinkPointer, wrapBoundaryPointer]),
         ]
       : []),

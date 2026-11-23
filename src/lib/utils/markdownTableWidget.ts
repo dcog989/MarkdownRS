@@ -6,7 +6,9 @@ import { escapeHtml } from "$lib/utils/dom";
 import { decodeHref } from "$lib/utils/fileDialogs";
 import { navigateToPath } from "$lib/utils/fileSystem";
 import { jumpToAnchor } from "$lib/utils/outline";
+import type { GetTabDirectory } from "./markdownDecorationCore";
 import { registerWidgetOffset, textOffsetAt } from "./renderedPointer";
+import { resolveImageSrc } from "./resolveImagePath";
 
 export type TableAlignment = "left" | "center" | "right" | "none";
 
@@ -74,6 +76,7 @@ interface RenderedInline {
 }
 
 const CODE_SPAN = /^(`+)([\s\S]*?)\1/;
+const IMAGE = /^!\[([^\]]*)\]\(([^\s)]+)\)/;
 const LINK_TARGET = /^\(([^\s)]+)\)/;
 const AUTOLINK = /^<((?:https?:\/\/)[^<>\s]+|[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})>/;
 const EMAIL = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -97,10 +100,10 @@ const isWordChar = (ch: string): boolean => /\w/.test(ch);
 
 /**
  * Renders the inline subset a table cell supports — code, strike, emphasis,
- * links and autolinks — and records the source offset of every rendered
+ * links, images and autolinks — and records the source offset of every rendered
  * character, so a click in the widget can be mapped back to the raw cell.
- * Images, inline HTML, bare URLs, math, footnotes and reference links are not
- * part of the subset.
+ * Inline HTML, bare URLs, math, footnotes and reference links are not part of
+ * the subset.
  */
 function renderInline(source: string): RenderedInline {
   const html: string[] = [];
@@ -126,6 +129,24 @@ function renderInline(source: string): RenderedInline {
       html.push(`<code>${escapeHtml(content)}</code>`);
       for (let k = 0; k < content.length; k++) map.push(i + code[1].length + k);
       i += code[0].length;
+      continue;
+    }
+
+    const image = IMAGE.exec(rest);
+    if (image) {
+      const [, alt, url] = image;
+      // Same scheme gate as links: a cell must not be able to load its own URL scheme.
+      if (HAS_SCHEME.test(url) && !SAFE_SCHEME.test(url)) {
+        text(image[0], i);
+      } else {
+        // The source is resolved against the tab directory when the widget enters
+        // the DOM, where the view (and its tab) is known; a bare relative src
+        // here would fire a request against the app origin first.
+        html.push(
+          `<img class="cm-table-image" data-raw-src="${escapeHtml(url)}" alt="${escapeHtml(alt)}" draggable="false">`,
+        );
+      }
+      i += image[0].length;
       continue;
     }
 
@@ -315,6 +336,7 @@ class MarkdownTableWidget extends WidgetType {
     private readonly to: number,
     private readonly html: string,
     private readonly cells: RenderedCell[],
+    private readonly getTabDirectory: GetTabDirectory,
   ) {
     super();
   }
@@ -334,6 +356,16 @@ class MarkdownTableWidget extends WidgetType {
     wrapper.dataset.to = String(this.to);
     wrapper.dataset.renderedWidget = "";
     wrapper.innerHTML = this.html;
+
+    const images = wrapper.querySelectorAll<HTMLImageElement>("img[data-raw-src]");
+    if (images.length > 0) {
+      const directory = this.getTabDirectory(view);
+      images.forEach((img) => {
+        const rawSrc = img.dataset.rawSrc ?? "";
+        delete img.dataset.rawSrc;
+        img.src = resolveImageSrc(rawSrc, directory);
+      });
+    }
 
     const cellInfo = new Map<Element, RenderedCell>();
     wrapper.querySelectorAll("td, th").forEach((cell, index) => {
@@ -375,10 +407,10 @@ class MarkdownTableWidget extends WidgetType {
   }
 }
 
-function buildTableDecorations(state: EditorState): DecorationSet {
+function buildTableDecorations(state: EditorState, getTabDirectory: GetTabDirectory): DecorationSet {
   const ranges: Range<Decoration>[] = [];
   for (const table of findTableWidgetRanges(state)) {
-    ranges.push(tableWidgetDeco(table.from, table.to, table.html, table.cells));
+    ranges.push(tableWidgetDeco(table.from, table.to, table.html, table.cells, getTabDirectory));
     const lineStart = state.doc.lineAt(table.from).from;
     if (lineStart < table.from) {
       ranges.push(Decoration.replace({}).range(lineStart, table.from));
@@ -387,14 +419,22 @@ function buildTableDecorations(state: EditorState): DecorationSet {
   return Decoration.set(ranges, true);
 }
 
-function tableWidgetDeco(from: number, to: number, html: string, cells: RenderedCell[]): Range<Decoration> {
-  return Decoration.replace({ widget: new MarkdownTableWidget(from, to, html, cells) }).range(from, to);
+function tableWidgetDeco(
+  from: number,
+  to: number,
+  html: string,
+  cells: RenderedCell[],
+  getTabDirectory: GetTabDirectory,
+): Range<Decoration> {
+  return Decoration.replace({
+    widget: new MarkdownTableWidget(from, to, html, cells, getTabDirectory),
+  }).range(from, to);
 }
 
-export function createTableWidgetField(): StateField<DecorationSet> {
+export function createTableWidgetField(getTabDirectory: GetTabDirectory): StateField<DecorationSet> {
   return StateField.define<DecorationSet>({
     create(state) {
-      return buildTableDecorations(state);
+      return buildTableDecorations(state, getTabDirectory);
     },
     update(decorations, tr) {
       // The background parser grows the syntax tree asynchronously via
@@ -407,7 +447,7 @@ export function createTableWidgetField(): StateField<DecorationSet> {
       }
       // shortcut: a doc change re-renders every table in the document, not only the
       // changed ones; add per-table HTML reuse if typing in table-heavy files lags.
-      return buildTableDecorations(tr.state);
+      return buildTableDecorations(tr.state, getTabDirectory);
     },
     provide: (field) => EditorView.decorations.compute([field], (state) => state.field(field)),
   });

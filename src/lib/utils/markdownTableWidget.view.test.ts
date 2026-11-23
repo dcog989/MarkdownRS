@@ -84,7 +84,7 @@ function restoreLayout() {
   Object.defineProperty(window, "innerHeight", originalInnerHeight ?? { value: 0, configurable: true });
 }
 
-function createEditor(doc: string, cursorPos: number) {
+function createEditor(doc: string, cursorPos: number, directory = "") {
   const parent = document.createElement("div");
   parent.style.width = "800px";
   parent.style.height = "600px";
@@ -92,7 +92,7 @@ function createEditor(doc: string, cursorPos: number) {
   const state = EditorState.create({
     doc,
     selection: { anchor: cursorPos },
-    extensions: [markdown({ base: markdownLanguage }), createMarkdownDecorationsPlugin(true, () => "")],
+    extensions: [markdown({ base: markdownLanguage }), createMarkdownDecorationsPlugin(true, () => directory)],
   });
   const view = new EditorView({ state, parent });
   return { view, parent };
@@ -194,6 +194,17 @@ describe("table widget integration", () => {
 
     const head = view.state.selection.main.head;
     expect(view.state.doc.sliceString(head, head + 3)).toBe("1.5");
+    view.destroy();
+  });
+
+  it("resolves a table cell image against the tab directory", async () => {
+    const source = `Intro\n\n| Pic |\n| --- |\n| ![shot](img/a.png) |\n`;
+    const { view, parent } = createEditor(source, 0, "/home/user/docs");
+    await nextFrame();
+
+    const img = parent.querySelector<HTMLImageElement>(".cm-table-widget img.cm-table-image");
+    expect(img?.getAttribute("src")).toBe("/home/user/docs/img/a.png");
+    expect(img?.hasAttribute("data-raw-src")).toBe(false);
     view.destroy();
   });
 });
