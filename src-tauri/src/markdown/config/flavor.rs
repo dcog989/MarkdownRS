@@ -36,6 +36,7 @@ impl MarkdownFlavor {
             options.extension.table = true;
             options.extension.autolink = true;
             options.extension.tasklist = true;
+            options.extension.ofm_callouts = true;
             options.extension.subscript = true;
             options.extension.footnotes = true;
             options.extension.math_dollars = true;

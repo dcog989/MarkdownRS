@@ -1,4 +1,4 @@
-use crate::markdown::callouts::transform_callouts;
+use crate::markdown::callouts::inject_icons;
 use crate::markdown::frontmatter;
 use crate::markdown::linkify::{linkify_file_paths_ast, linkify_wikilinks_ast};
 use crate::markdown::{HeadingEntry, config::MarkdownFlavor, extract_headings_from_ast};
@@ -48,8 +48,8 @@ pub fn render_markdown(content: &str, options: MarkdownOptions) -> Result<Render
     format_html_with_plugins(root, &comrak_options, &mut html, &Plugins::default())
         .map_err(|e| anyhow!("Failed to render markdown: {}", e))?;
 
-    let html = if html.contains("<blockquote") {
-        transform_callouts(&html)
+    let html = if html.contains("class=\"callout\"") {
+        inject_icons(&html)
     } else {
         html
     };

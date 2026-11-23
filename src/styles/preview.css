@@ -231,13 +231,15 @@
   text-decoration: none;
 }
 
-/* Callouts (GitHub alerts) */
+/* Callouts (Obsidian / GitHub alerts) */
 .preview-root .callout {
   margin: 1em 0;
   padding: 0.5em 1em;
   border-left: 4px solid var(--callout-accent);
   border-radius: 4px;
   background-color: oklch(from var(--callout-accent) l c h / 0.08);
+  /* Fallback for custom callout types, which have no accent variable. */
+  --callout-accent: var(--editor-callout-note-accent);
 }
 
 .preview-root .callout > .callout-title {
@@ -254,36 +256,27 @@
   color: var(--callout-accent);
 }
 
-.preview-root .callout > p:not(.callout-title) {
+.preview-root .callout-content > p {
   margin: 0.5em 0;
 }
 
-.preview-root .callout > blockquote {
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  font-style: normal;
-  color: inherit;
-}
-
-.preview-root .callout-note {
+.preview-root .callout[data-callout="note"] {
   --callout-accent: var(--editor-callout-note-accent);
 }
 
-.preview-root .callout-tip {
+.preview-root .callout[data-callout="tip"] {
   --callout-accent: var(--editor-callout-tip-accent);
 }
 
-.preview-root .callout-important {
+.preview-root .callout[data-callout="important"] {
   --callout-accent: var(--editor-callout-important-accent);
 }
 
-.preview-root .callout-warning {
+.preview-root .callout[data-callout="warning"] {
   --callout-accent: var(--editor-callout-warning-accent);
 }
 
-.preview-root .callout-caution {
+.preview-root .callout[data-callout="caution"] {
   --callout-accent: var(--editor-callout-caution-accent);
 }
 
