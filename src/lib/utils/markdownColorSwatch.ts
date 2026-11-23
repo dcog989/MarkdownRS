@@ -2,9 +2,9 @@ import type { Line } from "@codemirror/state";
 import { Decoration, WidgetType } from "@codemirror/view";
 import { colordx, extend } from "@colordx/core";
 import cmyk from "@colordx/core/plugins/cmyk";
-import { hsvToRgbChannels } from "@colordx/core/plugins/hsv";
-import { okhslToRgbChannels } from "@colordx/core/plugins/okhsl";
-import { okhsvToRgbChannels } from "@colordx/core/plugins/okhsv";
+import hsv from "@colordx/core/plugins/hsv";
+import okhsl from "@colordx/core/plugins/okhsl";
+import okhsv from "@colordx/core/plugins/okhsv";
 import { type DecorationWalk, isInsideNode, isVisibleInCodeBlock } from "./markdownDecorationCore";
 
 /**
@@ -20,8 +20,8 @@ const SINGLE_LITERAL_RE = new RegExp(`^(?:${COLOR_LITERAL_RE.source})$`, "i");
 const FUNCTION_RE = /^([a-z-]+)\(([^()]*)\)$/i;
 const CONVERTED_FUNCTIONS = new Set(["okhsl", "okhsv", "hsv", "hsb", "cmyk", "device-cmyk"]);
 
-// The CMYK parser is opt-in; register it once for device-cmyk() and cmyk().
-extend([cmyk]);
+// The non-CSS color spaces are opt-in parsers; register them once.
+extend([cmyk, hsv, okhsl, okhsv]);
 
 /** Ancestors whose text should never receive a swatch (links, code, raw HTML). */
 const SKIP_ANCESTORS = new Set(["Link", "Image", "Autolink", "URL", "HTMLBlock", "HTMLTag", "Comment"]);
@@ -107,8 +107,7 @@ export function resolveSwatchColor(literal: string): string | null {
 
   if (base === "cmyk" || base === "device-cmyk") {
     // Colordx only parses the CSS spelling; alias the short form.
-    const converted = colordx(base === "cmyk" ? `device-cmyk(${fn[2]})` : literal);
-    return converted.isValid() ? converted.toHex8() : null;
+    return toHex8(base === "cmyk" ? `device-cmyk(${fn[2]})` : literal);
   }
 
   const parts = fn[2]
@@ -123,13 +122,15 @@ export function resolveSwatchColor(literal: string): string | null {
   const alpha = parts[3] === undefined ? 1 : parseUnit(parts[3]);
   if (h === null || second === null || third === null || alpha === null) return literal;
 
-  const rgb =
-    base === "okhsl"
-      ? okhslToRgbChannels(h, second * 100, third * 100)
-      : base === "okhsv"
-        ? okhsvToRgbChannels(h, second * 100, third * 100)
-        : hsvToRgbChannels(h, second * 100, third * 100);
-  return formatRgb(rgb, alpha);
+  // Colordx parses these spaces from their CSS spelling; percentages also take
+  // the 0..1 fractions colorjs.io-style tools emit.
+  const cssName = base === "hsb" ? "hsv" : base;
+  return toHex8(`${cssName}(${h} ${second * 100}% ${third * 100}% / ${alpha})`);
+}
+
+function toHex8(literal: string): string | null {
+  const color = colordx(literal);
+  return color.isValid() ? color.toHex8() : null;
 }
 
 /** Hue in degrees, or turns for a bare value in 0..1. Accepts deg/°/turn/%. */
@@ -156,10 +157,4 @@ function parseUnit(token: string): number | null {
   const n = Number(token);
   if (!Number.isFinite(n)) return null;
   return n > 1 ? n / 100 : n;
-}
-
-function formatRgb([r, g, b]: [number, number, number], alpha: number): string {
-  const toByte = (v: number) => Math.round(Math.min(1, Math.max(0, v)) * 255);
-  const channels = `${toByte(r)} ${toByte(g)} ${toByte(b)}`;
-  return alpha < 1 ? `rgb(${channels} / ${alpha})` : `rgb(${channels})`;
 }

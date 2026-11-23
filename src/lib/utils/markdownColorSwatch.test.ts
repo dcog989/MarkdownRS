@@ -55,22 +55,22 @@ describe("resolveSwatchColor", () => {
   });
 
   it("converts okhsl", () => {
-    expect(resolveSwatchColor("Okhsl(144 0.78 0.85)")).toBe("rgb(146 239 145)");
-    expect(resolveSwatchColor("okhsl(144 78% 85%)")).toBe("rgb(146 239 145)");
+    expect(resolveSwatchColor("Okhsl(144 0.78 0.85)")).toBe("#92ef91ff");
+    expect(resolveSwatchColor("okhsl(144 78% 85%)")).toBe("#92ef91ff");
   });
 
   it("converts okhsv", () => {
-    expect(resolveSwatchColor("okhsv(25 0.3 0.16)")).toBe("rgb(39 25 24)");
+    expect(resolveSwatchColor("okhsv(25 0.3 0.16)")).toBe("#271918ff");
   });
 
   it("converts hsv and hsb", () => {
-    expect(resolveSwatchColor("hsv(120 100% 50%)")).toBe("rgb(0 128 0)");
-    expect(resolveSwatchColor("hsv(120 1 0.5)")).toBe("rgb(0 128 0)");
-    expect(resolveSwatchColor("hsb(120, 100%, 50%)")).toBe("rgb(0 128 0)");
+    expect(resolveSwatchColor("hsv(120 100% 50%)")).toBe("#008000ff");
+    expect(resolveSwatchColor("hsv(120 1 0.5)")).toBe("#008000ff");
+    expect(resolveSwatchColor("hsb(120, 100%, 50%)")).toBe("#008000ff");
   });
 
   it("keeps alpha", () => {
-    expect(resolveSwatchColor("hsv(120 100% 50% / 0.5)")).toBe("rgb(0 128 0 / 0.5)");
+    expect(resolveSwatchColor("hsv(120 100% 50% / 0.5)")).toBe("#00800080");
   });
 
   it("converts device-cmyk and cmyk", () => {
