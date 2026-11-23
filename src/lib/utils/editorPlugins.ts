@@ -112,6 +112,29 @@ export const selectionStatePlugin = ViewPlugin.fromClass(
   },
 );
 
+/** Blink keyframes in src/styles/editor.css. Two names so that swapping them
+ *  restarts the animation, the same trick CodeMirror uses for its own caret. */
+const CURSOR_BLINK_ANIMATIONS = ["mr-caret-blink", "mr-caret-blink2"] as const;
+
+/**
+ * Restarts the caret blink on every selection change so the caret stays solid
+ * while the arrow keys are held. The stylesheet animation is `!important` to
+ * outrank CodeMirror's inline duration, so the name is swapped with the same
+ * priority.
+ */
+export const caretBlinkPlugin = ViewPlugin.fromClass(
+  class {
+    blink = 0;
+    update(update: ViewUpdate) {
+      if (!update.selectionSet) return;
+      const layer = update.view.dom.querySelector<HTMLElement>(".cm-cursorLayer");
+      if (!layer) return;
+      this.blink = (this.blink + 1) % CURSOR_BLINK_ANIMATIONS.length;
+      layer.style.setProperty("animation-name", CURSOR_BLINK_ANIMATIONS[this.blink], "important");
+    }
+  },
+);
+
 function hasNonEmptySelection(view: EditorView): boolean {
   return view.state.selection.ranges.some((range) => !range.empty);
 }

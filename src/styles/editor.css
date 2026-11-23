@@ -22,7 +22,8 @@
    (CodeMirror's opacity-based caret blink) running at ~5% of a core for as long
    as the editor is focused. Animating `visibility` instead keeps the blink on
    the WebProcess main thread. `!important` is required because CodeMirror
-   writes `animation-duration` inline. Remove both once
+   writes `animation-duration` inline; caretBlinkPlugin swaps the animation name
+   at the same priority to restart it on every move. Remove both once
    https://bugs.webkit.org/show_bug.cgi?id=328919 is fixed. */
 .cm-editor.cm-focused > .cm-scroller > .cm-cursorLayer {
   /* biome-ignore lint/complexity/noImportantStyles: overrides CodeMirror's inline animation-duration */
@@ -30,6 +31,20 @@
 }
 
 @keyframes mr-caret-blink {
+  0%,
+  49.99% {
+    visibility: visible;
+  }
+  50%,
+  100% {
+    visibility: hidden;
+  }
+}
+
+/* Identical to the first name: the caret plugin swaps between the two to
+   restart the animation on each selection change, which keeps the caret solid
+   while the arrow keys are held. */
+@keyframes mr-caret-blink2 {
   0%,
   49.99% {
     visibility: visible;

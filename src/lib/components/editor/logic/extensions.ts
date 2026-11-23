@@ -20,7 +20,13 @@ import { prefetchHoverHandler, smartBacktickHandler } from "$lib/components/edit
 import { translate } from "$lib/i18n";
 import { appContext } from "$lib/stores/state.svelte";
 import { showToast } from "$lib/stores/toastStore.svelte";
-import { newlinePlugin, rulerPlugin, selectionStatePlugin, selectionWhitespacePlugin } from "$lib/utils/editorPlugins";
+import {
+  caretBlinkPlugin,
+  newlinePlugin,
+  rulerPlugin,
+  selectionStatePlugin,
+  selectionWhitespacePlugin,
+} from "$lib/utils/editorPlugins";
 import { generateDynamicTheme } from "$lib/utils/editorTheme";
 import { linkPlugin } from "$lib/utils/filePathExtension";
 import { createFoldExtensions } from "$lib/utils/foldExtension";
@@ -97,7 +103,9 @@ export function createBaseExtensions(config: ExtensionsConfig): Extension[] {
     highlightActiveLine(),
     // Blink is restored in src/styles/editor.css, which replaces CodeMirror's
     // composited opacity animation with a main-thread `visibility` one.
+    // caretBlinkPlugin restarts it on each move so the caret stays solid.
     drawSelection(),
+    caretBlinkPlugin,
     selectionStatePlugin,
     c.historyComp.of(history({ minDepth: appContext.settings.undoDepth })),
     search({ top: true }),
