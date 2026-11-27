@@ -31,6 +31,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["src/styles/components.css"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noDescendingSpecificity": "off"
+          }
+        }
+      }
     }
   ]
 }
