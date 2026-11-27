@@ -8,7 +8,7 @@ env:
   CARGO_TERM_COLOR: always
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,20 +17,71 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
 
-      - name: Tag matches package version
+      - name: Tag is on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+
+      # sync_version.sh is idempotent: any diff means a manifest disagrees with the tag.
+      - name: Manifests match the tag
         run: |
-          pkgver=$(sed -n 's/^pkgver=//p' PKGBUILD)
-          if [ "v$pkgver" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match PKGBUILD pkgver $pkgver"
+          bash scripts/sync_version.sh "${GITHUB_REF_NAME#v}"
+          git diff --exit-code -- package.json src-tauri/Cargo.toml src-tauri/Cargo.lock PKGBUILD
+
+      # A tag is pushed next to the main commit, so CI may still be running. Wait for it.
+      - name: CI passed for this commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          run_id=''
+          for _ in $(seq 1 24); do
+            run_id=$(gh run list --workflow=ci.yml --commit "$GITHUB_SHA" --limit 1 --json databaseId --jq '.[0].databaseId')
+            if [ -n "$run_id" ]; then break; fi
+            sleep 5
+          done
+          if [ -z "$run_id" ]; then
+            echo "::error::no CI run exists for $GITHUB_SHA"
             exit 1
+          fi
+          gh run watch "$run_id" --exit-status --interval 15
+
+  notes:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+
+      # Create the draft once so the matrix legs only upload assets and never race on the body.
+      - name: Generate release notes
+        uses: cocogitto/cocogitto-action@52d0023b4396897f1815648e553db2ab8d782f3a
+        with:
+          command: changelog
+          args: --at ${{ github.ref_name }}
+
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file CHANGELOG.md
+          else
+            gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md CHANGELOG.md
           fi
 
   publish:
-    needs: verify
+    needs: [verify, notes]
     strategy:
       fail-fast: false
       matrix:
@@ -40,23 +91,25 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
 
       - name: Setup bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version-file: package.json
 
       - name: Cache node_modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: node_modules
-          key: bun-${{ hashFiles('bun.lock') }}-v1
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-v1
           restore-keys: |
-            bun-${{ hashFiles('bun.lock') }}-
-            bun-
+            ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-bun-
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
@@ -79,14 +132,7 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Generate release notes
-        id: cog
-        uses: cocogitto/cocogitto-action@52d0023b4396897f1815648e553db2ab8d782f3a
-        with:
-          command: changelog
-          args: --at ${{ github.ref_name }}
-
-      - name: Build and upload draft
+      - name: Build and upload
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,23 +141,22 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: ${{ steps.cog.outputs.stdout }}
           releaseDraft: true
 
+      # base-devel ships the keyring and makedepends; a full upgrade avoids the -Sy partial-upgrade window.
       - name: Build Arch package
         if: matrix.os == 'ubuntu-latest'
         run: |
           mkdir -p .pkg
           cp PKGBUILD .pkg/
           docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
+            -v "${{ github.workspace }}:/workspace" \
             -w /workspace/.pkg \
-            archlinux:latest \
+            archlinux:base-devel \
             bash -c "
-              pacman -Sy --noconfirm archlinux-keyring
-              pacman -Su --noconfirm base-devel webkit2gtk-4.1
+              pacman -Syu --noconfirm webkit2gtk-4.1 gtk3
               useradd -m builder
-              chown -R builder:builder /workspace
+              chown -R builder:builder /workspace/.pkg
               su builder -c 'makepkg -f --noconfirm'
             "
 
@@ -123,19 +168,37 @@ jobs:
           files: .pkg/*.pkg.tar.zst
           fail_on_unmatched_files: true
 
-      - name: Upload CHANGELOG
-        if: matrix.os == 'ubuntu-latest'
-        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3
-        with:
-          draft: true
-          files: CHANGELOG.md
-
   finalize:
     needs: publish
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
     steps:
+      - name: Download draft assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release download "$GITHUB_REF_NAME" --dir dist --clobber
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          rm -f SHA256SUMS
+          sha256sum -- * > SHA256SUMS
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-path: dist/*
+
+      - name: Upload checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" dist/SHA256SUMS --clobber
+
       - name: Publish draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit "${{ github.ref_name }}" --draft=false -R "${{ github.repository }}"
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false --latest

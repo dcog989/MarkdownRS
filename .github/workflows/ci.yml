@@ -8,7 +8,6 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE26: true
 
 permissions:
   contents: read
@@ -18,16 +17,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  workflows:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Install actionlint
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
+        with:
+          tool: actionlint
+
+      - name: Lint workflows
+        run: actionlint
+
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
 
       - name: Install just
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: just
 
@@ -46,15 +59,17 @@ jobs:
 
       - name: Setup bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version-file: package.json
 
       - name: Cache node_modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: node_modules
-          key: bun-${{ hashFiles('bun.lock') }}-v1
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-v1
           restore-keys: |
-            bun-${{ hashFiles('bun.lock') }}-
-            bun-
+            ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-bun-
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
@@ -76,9 +91,7 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Sync SvelteKit
-        run: just sync
-
+      # `just check` runs sync, tests, types, Biome and Clippy.
       - name: Check
         run: just check
 
@@ -92,51 +105,34 @@ jobs:
           log-level: warn
           manifest-path: src-tauri/Cargo.toml
 
-  test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version-file: package.json
 
       - name: Cache node_modules
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: node_modules
-          key: bun-${{ hashFiles('bun.lock') }}-v1
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-v1
           restore-keys: |
-            bun-${{ hashFiles('bun.lock') }}-
-            bun-
+            ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}-
+            ${{ runner.os }}-bun-
 
       - name: Cache Rust
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
         with:
           workspaces: "./src-tauri -> target"
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libappindicator3-dev \
-            librsvg2-dev \
-            patchelf \
-            libssl-dev \
-            libgtk-3-dev \
-            mold
-
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
-      - name: Install just
-        uses: taiki-e/install-action@v2
-        with:
-          tool: just
-
-      - name: Sync SvelteKit
-        run: just sync
-
-      - name: Run tests
-        run: just test
+      # Windows ships an NSIS installer; compile it here so a release is not the first attempt.
+      - name: Build binary
+        run: bun run build

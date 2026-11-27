@@ -3,6 +3,7 @@
   "description": "The only Markdown editor you need.",
   "version": "1.71.0",
   "private": true,
+  "packageManager": "bun@1.4.5",
   "type": "module",
   "scripts": {
     "bench": "vitest bench",

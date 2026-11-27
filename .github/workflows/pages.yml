@@ -3,7 +3,14 @@ name: Deploy website to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["website/**", "bun.lock", "package.json"]
+    # readme.js renders README.md and copies assets/ into the site at build time.
+    paths:
+      - "website/**"
+      - "README.md"
+      - "assets/**"
+      - "static/**"
+      - "bun.lock"
+      - "package.json"
   workflow_dispatch:
 
 permissions:
@@ -19,11 +26,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Setup bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version-file: package.json
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -33,7 +45,7 @@ jobs:
         run: sudo apt-get install -y --no-install-recommends imagemagick
 
       - name: Install just
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
         with:
           tool: just
 
@@ -46,4 +58,5 @@ jobs:
           path: website/dist
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346
