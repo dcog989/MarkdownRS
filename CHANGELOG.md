@@ -3,6 +3,27 @@
 All notable changes to this project will be documented in this file. See [conventional commits](https://www.conventionalcommits.org/) for commit guidelines.
 
 - - -
+## v1.71.1 - 2026-11-27
+#### Bug Fixes
+- (**build**) optimised compile - (42a65d6) - dcog989
+- (**editor**) render images inside tables in rendered mode - (7e9dcfd) - dcog989
+- (**editor**) keep caret visible while moving with arrow keys - (7224f3e) - dcog989
+- (**markdown**) correct embed wikilinks and TOC footnote anchors - (f8be8a2) - dcog989
+#### Continuous Integration
+- gate releases on CI, split notes from build, harden packaging - (bb9c3ef) - dcog989
+#### Refactoring
+- (**color-swatch**) parse okhsl/okhsv/hsv with colordx plugins - (8dbfedc) - dcog989
+- (**markdown**) parse callouts with comrak ofm_callouts - (578999c) - dcog989
+#### Miscellaneous Chores
+- updates, readme refined - (dcf1ea6) - dcog989
+- sync with scaffold - (c4684bc) - dcog989
+- updates - (902dc67) - dcog989
+#### Style
+- silence noDescendingSpecificity for deliberately ordered component CSS - (890b676) - dcog989
+- reformat inline styles for Biome 2, drop redundant scrollbar hover selector - (d8d52b0) - dcog989
+
+- - -
+
 ## v1.71.0 - 2026-11-20
 #### Features
 - (**tabs**) add reopen last closed + recent to the tab bar context menu - (dcb046b) - dcog989
