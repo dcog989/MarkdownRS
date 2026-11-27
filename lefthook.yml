@@ -14,10 +14,10 @@ pre-commit:
 pre-push:
   parallel: true
   commands:
+    # `just check` already runs the whole test suite; running it twice in parallel made the
+    # view tests race their 50ms render budget and fail the push.
     full-check:
       run: just check
-    tests:
-      run: just test
 
 commit-msg:
   commands:

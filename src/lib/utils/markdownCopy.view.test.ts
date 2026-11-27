@@ -56,11 +56,23 @@ function createDeps(toasts: Array<[string, string]>): CodeBlockCopyDeps {
 
 const nextFrame = () => new Promise<void>((resolve) => setTimeout(resolve, 50));
 
+const RENDER_TIMEOUT_MS = 2000;
+
+/** Decorations land on CodeMirror's schedule, so poll instead of betting on one frame. */
+async function waitForElement(parent: HTMLElement, selector: string): Promise<Element> {
+  const deadline = Date.now() + RENDER_TIMEOUT_MS;
+  for (;;) {
+    const element = parent.querySelector(selector);
+    if (element) return element;
+    if (Date.now() >= deadline) throw new Error(`${selector} was never rendered`);
+    await nextFrame();
+  }
+}
+
 async function clickCodeInfo(view: EditorView, parent: HTMLElement, infoPos: number) {
   vi.spyOn(view, "posAtCoords").mockReturnValue(infoPos);
-  const info = parent.querySelector(".cm-code-info");
-  expect(info).not.toBeNull();
-  info?.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: 10, clientY: 10 }));
+  const info = await waitForElement(parent, ".cm-code-info");
+  info.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, clientX: 10, clientY: 10 }));
   await nextFrame();
 }
 
@@ -85,7 +97,6 @@ describe("code block copy handler", () => {
       written.push(text);
     });
 
-    await nextFrame();
     await clickCodeInfo(view, parent, doc.indexOf("js"));
 
     expect(written).toEqual(["const x = 1;"]);
@@ -102,7 +113,6 @@ describe("code block copy handler", () => {
       written.push(text);
     });
 
-    await nextFrame();
     await clickCodeInfo(view, parent, doc.indexOf("js"));
 
     expect(written).toEqual(["const x = 1;"]);
@@ -119,7 +129,6 @@ describe("code block copy handler", () => {
       throw new Error("denied");
     });
 
-    await nextFrame();
     await clickCodeInfo(view, parent, doc.indexOf("js"));
 
     expect(written).toEqual(["const x = 1;"]);

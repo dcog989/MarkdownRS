@@ -1,4 +1,4 @@
-import { syntaxTree } from "@codemirror/language";
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import type { EditorState } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 
@@ -13,12 +13,16 @@ const LEADING_MARKERS_RE = /^\s*#{1,6}\s*/;
 const TRAILING_MARKERS_RE = /(?:^#+|\s+#+)\s*$/;
 const SETEXT_UNDERLINE_RE = /\n[=-]+\s*$/;
 
+/** The incremental tree can stop early; the outline needs the whole document. */
+const FULL_PARSE_BUDGET_MS = 250;
+
 /** Headings from the editor's own parser, so the outline exists with the preview closed. */
 export function collectOutlineHeadings(state: EditorState): OutlineHeading[] {
   const headings: OutlineHeading[] = [];
   const doc = state.doc;
+  const tree = ensureSyntaxTree(state, doc.length, FULL_PARSE_BUDGET_MS) ?? syntaxTree(state);
 
-  syntaxTree(state).iterate({
+  tree.iterate({
     enter: (node) => {
       const match = HEADING_RE.exec(node.name);
       if (!match) return;
