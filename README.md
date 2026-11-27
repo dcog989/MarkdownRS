@@ -69,17 +69,16 @@
 
 Download [GitHub Latest Release](https://github.com/dcog989/MarkdownRS/releases/latest):
 
-| Platform        | Format                   | Install                                                     |
-| --------------- | ------------------------ | ----------------------------------------------------------- |
-| Linux           | AppImage                 | `chmod +x MarkdownRS_*.AppImage && ./MarkdownRS_*.AppImage` |
-| Debian / Ubuntu | `.deb`                   | `sudo apt install ./MarkdownRS_*.deb`                       |
-| Fedora / RHEL   | `.rpm`                   | `sudo dnf install ./MarkdownRS-*.rpm`                       |
-| Arch / CachyOS  | `.pkg.tar.zst`           | `sudo pacman -U MarkdownRS-*.pkg.tar.zst`                   |
-| Arch / CachyOS  | `PKGBUILD` (local build) | `bun install && just install`                               |
-| Windows         | NSIS `.exe`              | run the `.exe`                                              |
+| Platform        | Format         | Install                                                     |
+| --------------- | -------------- | ----------------------------------------------------------- |
+| Arch / CachyOS  | `.pkg.tar.zst` | `sudo pacman -U MarkdownRS-*.pkg.tar.zst`                   |
+| Debian / Ubuntu | `.deb`         | `sudo apt install ./MarkdownRS_*.deb`                       |
+| Fedora / RHEL   | `.rpm`         | `sudo dnf install ./MarkdownRS-*.rpm`                       |
+| Linux           | AppImage       | `chmod +x MarkdownRS_*.AppImage && ./MarkdownRS_*.AppImage` |
+| Windows         | NSIS `.exe`    | run the `.exe`                                              |
 
 > [!NOTE]
-> Copy the AppImage to a permanent directory. The first run adds MarkdownRS to the application menu, and makes it the default Markdown handler.
+> Copy the AppImage to a permanent directory; the first run adds MarkdownRS to the application menu, and makes it the default Markdown handler.
 
 ---
 
@@ -135,10 +134,6 @@ just update        # Update packages + crates
 
 just website       # Start website dev server (HMR) @ http://localhost:5173/
 ```
-
-### LLM Use
-
-Large Language Models were used to assist with code generation and documentation. All output was subject to human review, automated testing, manual testing, and adversarial reviews.
 
 ---
 
