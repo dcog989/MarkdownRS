@@ -70,14 +70,23 @@ jobs:
           command: changelog
           args: --at ${{ github.ref_name }}
 
+      # cog rewrites the whole changelog; the release body wants only this version's section.
+      - name: Extract this version's notes
+        run: |
+          awk -v header="## $GITHUB_REF_NAME " '
+            index($0, header) == 1 { keep = 1 }
+            keep && /^## v[0-9]/ && index($0, header) != 1 { exit }
+            keep
+          ' CHANGELOG.md > notes.md
+
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
-            gh release edit "$GITHUB_REF_NAME" --notes-file CHANGELOG.md
+            gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
           else
-            gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes-file CHANGELOG.md CHANGELOG.md
+            gh release create "$GITHUB_REF_NAME" --draft --title "$GITHUB_REF_NAME" --notes-file notes.md CHANGELOG.md
           fi
 
   publish:
