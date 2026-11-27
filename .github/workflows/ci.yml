@@ -23,13 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Install actionlint
-        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39
-        with:
-          tool: actionlint
-
       - name: Lint workflows
-        run: actionlint
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12
 
   check:
     runs-on: ubuntu-latest
