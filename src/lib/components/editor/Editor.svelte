@@ -299,7 +299,7 @@ let showEmptyState = $derived(activeTab && !activeTab.path && activeTab.content.
     {#if appContext.settings.enableClosedTabHistory && appContext.editor.closedTabsHistory.length > 0}
       <div
         class="pointer-events-none absolute inset-0 z-20 flex items-start justify-center"
-        style="padding-top: 7.5rem"
+        style="padding-top: 7.5rem;"
       >
         <div
           class="bg-bg-panel border-border-secondary pointer-events-auto max-h-96 min-w-75 overflow-y-auto rounded-lg border shadow-xl"

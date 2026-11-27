@@ -599,8 +599,7 @@ select {
     background-color var(--transition-normal) ease;
 }
 
-.scrollbar-track:hover .scrollbar-thumb,
-.scrollbar-thumb:hover {
+.scrollbar-track:hover .scrollbar-thumb {
   width: var(--scrollbar-thumb-hover-width);
   background-color: var(--scrollbar-thumb-hover);
 }
